@@ -1,16 +1,13 @@
-"use client"
+"use client";
 import React from "react";
-import {
-  AppstoreOutlined,
-  MailOutlined,
-  SettingOutlined,
-} from "@ant-design/icons";
+import { Mail, AppWindow, Settings, PanelLeft } from "lucide-react";
 import { Menu } from "antd";
+import Assets from "@/assets";
 const items = [
   {
     key: "sub1",
     label: "Navigation One",
-    icon: <MailOutlined />,
+    icon: <Mail size={16} />,
     children: [
       {
         key: "g1",
@@ -35,7 +32,7 @@ const items = [
   {
     key: "sub2",
     label: "Navigation Two",
-    icon: <AppstoreOutlined />,
+    icon: <AppWindow size={16} />,
     children: [
       { key: "5", label: "Option 5" },
       { key: "6", label: "Option 6" },
@@ -55,7 +52,7 @@ const items = [
   {
     key: "sub4",
     label: "Navigation Three",
-    icon: <SettingOutlined />,
+    icon: <Settings size={16} />,
     children: [
       { key: "9", label: "Option 9" },
       { key: "10", label: "Option 10" },
@@ -78,14 +75,23 @@ const CustomSidebar = () => {
     console.log("click ", e);
   };
   return (
-    <Menu
-      onClick={onClick}
-      style={{ width: 256 }}
-      defaultSelectedKeys={["1"]}
-      defaultOpenKeys={["sub1"]}
-      mode="inline"
-      items={items}
-    />
+    <section className="h-screen overflow-y-auto bg-secondary-100 border-r-1">
+      <div className="flex items-center gap-2 py-2">
+        <button>
+          <PanelLeft size={16} />
+        </button>
+        <img src={Assets.Agrisa.src} className="w-8 h-8" />
+        <h1>Agrisa</h1>
+      </div>
+      <Menu
+        onClick={onClick}
+        defaultSelectedKeys={["1"]}
+        defaultOpenKeys={["sub1"]}
+        mode="inline"
+        items={items}
+        className="w-[256px]"
+      />
+    </section>
   );
 };
 export default CustomSidebar;

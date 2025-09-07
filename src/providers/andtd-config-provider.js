@@ -2,21 +2,15 @@ import React from "react";
 import { ConfigProvider } from "antd";
 import enUS from "antd/locale/en_US";
 
-// Ant Design theme configuration
 const theme = {
   token: {
-    // Primary color
-    colorPrimary: "#d60a33",
-    // Border radius
+    colorPrimary: "#18573f",
+    colorBgContainer: "#fefcf5",
     borderRadius: 6,
-    // Font family
     fontFamily:
       'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    // Font size
     fontSize: 14,
-    // Line height
     lineHeight: 1.5714285714285714,
-    // Spacing
     margin: 16,
     padding: 16,
   },

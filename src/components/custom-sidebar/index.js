@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Mail, AppWindow, Settings, PanelLeft } from "lucide-react";
+import { Mail, AppWindow, Settings, PanelLeft, ArrowRightToLine, ArrowLeftToLine } from "lucide-react";
 import { Menu } from "antd";
 import Assets from "@/assets";
 const items = [
@@ -87,7 +87,9 @@ const CustomSidebar = () => {
         }`}
       >
         <button
-          className={`toggle p-2 ${collapsed ? "" : "ml-5"}`}
+          className={`toggle p-2 hover:bg-secondary- cursor-pointer transition-colors ${
+            collapsed ? "" : "ml-5"
+          }`}
           onClick={() => setCollapsed(!collapsed)}
         >
           <PanelLeft size={16} />

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Mail, AppWindow, Settings, PanelLeft } from "lucide-react";
 import { Menu } from "antd";
 import Assets from "@/assets";
@@ -71,17 +71,38 @@ const items = [
   },
 ];
 const CustomSidebar = () => {
+  const [collapsed, setCollapsed] = useState(false);
   const onClick = (e) => {
     console.log("click ", e);
   };
   return (
-    <section className="h-screen overflow-y-auto bg-secondary-100 border-r-1">
-      <div className="flex items-center gap-2 py-2">
-        <button>
+    <section
+      className={`h-screen overflow-y-auto bg-secondary-100 border-r overflow-x-hidden ${
+        collapsed ? "w-16" : "w-64"
+      }`}
+    >
+      <div
+        className={`flex items-center py-2 ${
+          collapsed ? "justify-center" : ""
+        }`}
+      >
+        <button
+          className={`toggle p-2 ${collapsed ? "" : "ml-5"}`}
+          onClick={() => setCollapsed(!collapsed)}
+        >
           <PanelLeft size={16} />
         </button>
-        <img src={Assets.Agrisa.src} className="w-8 h-8" />
-        <h1>Agrisa</h1>
+        <div className="flex items-center gap-1">
+          <img
+            src={Assets.Agrisa.src}
+            className={`w-8 h-8 ${collapsed ? "hidden" : ""}`}
+          />
+          <h1
+            className={`text-primary-500 text-xl ${collapsed ? "hidden" : ""}`}
+          >
+            Agrisa's IPP
+          </h1>
+        </div>
       </div>
       <Menu
         onClick={onClick}
@@ -89,7 +110,8 @@ const CustomSidebar = () => {
         defaultOpenKeys={["sub1"]}
         mode="inline"
         items={items}
-        className="w-[256px]"
+        inlineCollapsed={collapsed}
+        className={`${collapsed ? "w-16" : "w-64"} !border-none`}
       />
     </section>
   );

@@ -7,8 +7,7 @@ const theme = {
     colorPrimary: "#18573f",
     colorBgContainer: "#fefcf5",
     borderRadius: 6,
-    fontFamily:
-      'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily: "Bricolage Grotesque, sans-serif",
     fontSize: 14,
     lineHeight: 1.5714285714285714,
     margin: 16,

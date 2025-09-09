@@ -1,0 +1,96 @@
+/* T để CSS đây cho dễ nhớ, Nhân Thịnh thấy ko ổn hú t nhé :)) */
+
+/* Custom button hover effect */
+.btn-signin {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-signin:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.btn-signin:hover:after {
+  left: 100%;
+}
+
+/* Input focus styles */
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input:focus,
+.ant-input-focused {
+  box-shadow: 0 0 0 2px rgba(24, 87, 63, 0.2) !important;
+}
+
+/* Animation for form elements */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animated-form-item {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animated-form-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.animated-form-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.animated-form-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Background pattern for the form container */
+.signin-container {
+  background-color: var(--color-secondary-100);
+  background-image: radial-gradient(
+    var(--color-primary-100) 0.5px,
+    transparent 0.5px
+  );
+  background-size: 15px 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  /* No more card styles needed */
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .signin-container {
+    background: var(--color-secondary-100);
+    background-image: linear-gradient(
+        135deg,
+        rgba(24, 87, 63, 0.03) 0%,
+        rgba(247, 232, 171, 0.05) 100%
+      ),
+      radial-gradient(var(--color-primary-100) 0.5px, transparent 0.5px);
+    background-size: 100%, 12px 12px;
+  }
+
+  .mobile-logo {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 80px;
+  }
+}

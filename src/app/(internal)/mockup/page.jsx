@@ -10,7 +10,6 @@ import {
 import {
     Avatar,
     Button,
-    Card,
     Input,
     Popconfirm,
     Select,
@@ -179,107 +178,104 @@ export default function CropDataPage() {
             {contextHolder}
 
             {/* Phần 1: Title và Action */}
-            <Card className="shadow-s">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <Title level={2} className="!mb-1 text-primary">Quản lý dữ liệu cây trồng (thấy header 6 nhưng chưa biết sửa sao cho đẹp)</Title>
-                        <p className="text-gray-600">
-                            Tổng số: <span className="font-semibold">{filteredData.length}</span> cây trồng
-                        </p>
-                    </div>
+            <div className="flex justify-between items-center">
+                <div>
+                    <Title level={2} className="!mb-1 text-primary">Quản lý dữ liệu cây trồng</Title>
+                    <p className="text-gray-600">
+                        Tổng số: <span className="font-semibold">{filteredData.length}</span> cây trồng
+                    </p>
                 </div>
-            </Card>
+            </div>
 
             {/* Phần 2: Tìm kiếm và Bộ lọc */}
-            <Card className="shadow-sm">
-                <div className="mb-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold">Tìm kiếm & Bộ lọc</h3>
-                        <div className="flex space-x-3">
-                            <Button
-                                type="primary"
-                                icon={<FilterOutlined />}
-                                size="large"
-                                className="shadow-md hover:shadow-lg transition-all"
-                                onClick={() => applyFilters(searchText, filters)}
-                            >
-                                Áp dụng bộ lọc
-                            </Button>
-
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                size="large"
-                                className="shadow-md hover:shadow-lg transition-all"
-                                onClick={handleAdd}
-                            >
-                                Thêm cây trồng
-                            </Button>
-                        </div>
-
-                    </div>
-
-                    <div className="mb-4">
-                        <Search
-                            placeholder="Tìm kiếm theo tên cây trồng, tên người dùng, loại cây hoặc tháng trồng/thu hoạch..."
-                            allowClear
-                            enterButton={<SearchOutlined />}
+            <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Tìm kiếm & Bộ lọc</h3>
+                    <div className="flex space-x-3">
+                        <Button
+                            type="primary"
+                            icon={<FilterOutlined />}
                             size="large"
-                            onSearch={handleSearch}
-                            value={searchText}
-                            className="mb-4"
-                        />
+                            className="shadow-md hover:shadow-lg transition-all"
+                            onClick={() => applyFilters(searchText, filters)}
+                        >
+                            Áp dụng bộ lọc
+                        </Button>
+
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            size="large"
+                            className="shadow-md hover:shadow-lg transition-all"
+                            onClick={handleAdd}
+                        >
+                            Thêm cây trồng
+                        </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-3 rounded-md">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Loại cây</label>
-                            <Select
-                                placeholder="Chọn loại cây trồng"
-                                style={{ width: '100%' }}
-                                allowClear
-                                onChange={(value) => handleFilterChange('type', value)}
-                            >
-                                {filterOptions?.cropTypes?.map(option => (
-                                    <Option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </div>
-                        <div className="p-3 rounded-md">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Nhu cầu nước</label>
-                            <Select
-                                placeholder="Chọn nhu cầu nước"
-                                style={{ width: '100%' }}
-                                allowClear
-                                onChange={(value) => handleFilterChange('waterRequirement', value)}
-                            >
-                                {filterOptions?.waterRequirements?.map(option => (
-                                    <Option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </div>
-                        <div className="p-3 rounded-md">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Tháng trồng</label>
-                            <Select
-                                placeholder="Chọn tháng trồng"
-                                style={{ width: '100%' }}
-                                allowClear
-                                onChange={(value) => handleFilterChange('plantingMonth', value)}
-                            >
-                                {filterOptions?.plantingMonths?.map(option => (
-                                    <Option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </div>
+                </div>
+
+                <div className="mb-4">
+                    <Search
+                        placeholder="Tìm kiếm theo tên cây trồng, tên người dùng, loại cây hoặc tháng trồng/thu hoạch..."
+                        allowClear
+                        enterButton={<SearchOutlined />}
+                        size="large"
+                        onSearch={handleSearch}
+                        value={searchText}
+                        className="mb-4"
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-3 rounded-md">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Loại cây</label>
+                        <Select
+                            placeholder="Chọn loại cây trồng"
+                            style={{ width: '100%' }}
+                            allowClear
+                            onChange={(value) => handleFilterChange('type', value)}
+                        >
+                            {filterOptions?.cropTypes?.map(option => (
+                                <Option key={option.value} value={option.value}>
+                                    {option.label}
+                                </Option>
+                            ))}
+                        </Select>
+                    </div>
+                    <div className="p-3 rounded-md">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nhu cầu nước</label>
+                        <Select
+                            placeholder="Chọn nhu cầu nước"
+                            style={{ width: '100%' }}
+                            allowClear
+                            onChange={(value) => handleFilterChange('waterRequirement', value)}
+                        >
+                            {filterOptions?.waterRequirements?.map(option => (
+                                <Option key={option.value} value={option.value}>
+                                    {option.label}
+                                </Option>
+                            ))}
+                        </Select>
+                    </div>
+                    <div className="p-3 rounded-md">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Tháng trồng</label>
+                        <Select
+                            placeholder="Chọn tháng trồng"
+                            style={{ width: '100%' }}
+                            allowClear
+                            onChange={(value) => handleFilterChange('plantingMonth', value)}
+                        >
+                            {filterOptions?.plantingMonths?.map(option => (
+                                <Option key={option.value} value={option.value}>
+                                    {option.label}
+                                </Option>
+                            ))}
+                        </Select>
                     </div>
                 </div>
-            </Card>
+            </div>
+
 
             {/* Phần 3: Bảng dữ liệu */}
 

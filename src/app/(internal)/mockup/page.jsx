@@ -178,26 +178,48 @@ export default function CropDataPage() {
         <div className="p-6 space-y-6">
             {contextHolder}
 
-            {/* Phần 1: Title và Search */}
-            <Card className="shadow-sm">
-                <div className="flex justify-between items-center mb-4">
+            {/* Phần 1: Title và Action */}
+            <Card className="shadow-s">
+                <div className="flex justify-between items-center">
                     <div>
-                        <Title level={2} className="!mb-1">Quản lý dữ liệu cây trồng</Title>
+                        <Title level={2} className="!mb-1 text-primary">Quản lý dữ liệu cây trồng (thấy header 6 nhưng chưa biết sửa sao cho đẹp)</Title>
                         <p className="text-gray-600">
-                            Xem và quản lý thông tin cây trồng với khả năng tìm kiếm và lọc dữ liệu.
+                            Tổng số: <span className="font-semibold">{filteredData.length}</span> cây trồng
                         </p>
                     </div>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        size="large"
-                        onClick={handleAdd}
-                    >
-                        Thêm cây trồng
-                    </Button>
                 </div>
-                <div className="mt-4">
-                    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+            </Card>
+
+            {/* Phần 2: Tìm kiếm và Bộ lọc */}
+            <Card className="shadow-sm">
+                <div className="mb-6">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold">Tìm kiếm & Bộ lọc</h3>
+                        <div className="flex space-x-3">
+                            <Button
+                                type="primary"
+                                icon={<FilterOutlined />}
+                                size="large"
+                                className="shadow-md hover:shadow-lg transition-all"
+                                onClick={() => applyFilters(searchText, filters)}
+                            >
+                                Áp dụng bộ lọc
+                            </Button>
+
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                size="large"
+                                className="shadow-md hover:shadow-lg transition-all"
+                                onClick={handleAdd}
+                            >
+                                Thêm cây trồng
+                            </Button>
+                        </div>
+
+                    </div>
+
+                    <div className="mb-4">
                         <Search
                             placeholder="Tìm kiếm theo tên cây trồng, tên người dùng, loại cây hoặc tháng trồng/thu hoạch..."
                             allowClear
@@ -205,17 +227,12 @@ export default function CropDataPage() {
                             size="large"
                             onSearch={handleSearch}
                             value={searchText}
+                            className="mb-4"
                         />
-                    </Space>
-                </div>
-            </Card>
+                    </div>
 
-            {/* Phần 2: Bộ lọc */}
-            <Card className="shadow-sm">
-                <div className="mb-4">
-                    <h3 className="text-lg font-semibold mb-4">Bộ lọc</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
+                        <div className="p-3 rounded-md">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Loại cây</label>
                             <Select
                                 placeholder="Chọn loại cây trồng"
@@ -230,7 +247,7 @@ export default function CropDataPage() {
                                 ))}
                             </Select>
                         </div>
-                        <div>
+                        <div className="p-3 rounded-md">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Nhu cầu nước</label>
                             <Select
                                 placeholder="Chọn nhu cầu nước"
@@ -245,7 +262,7 @@ export default function CropDataPage() {
                                 ))}
                             </Select>
                         </div>
-                        <div>
+                        <div className="p-3 rounded-md">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Tháng trồng</label>
                             <Select
                                 placeholder="Chọn tháng trồng"
@@ -261,37 +278,37 @@ export default function CropDataPage() {
                             </Select>
                         </div>
                     </div>
-                    <div className="mt-4 flex justify-end">
-                        <Button type="primary" icon={<FilterOutlined />} onClick={() => applyFilters(searchText, filters)}>
-                            Áp dụng bộ lọc
-                        </Button>
-                    </div>
                 </div>
             </Card>
 
             {/* Phần 3: Bảng dữ liệu */}
-            <Card className="shadow-sm">
-                <Table
-                    columns={columns}
-                    dataSource={filteredData}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        showTotal: (total, range) =>
-                            `${range[0]}-${range[1]} của ${total} cây trồng`,
-                        pageSizeOptions: ["5", "10", "20", "50"],
-                    }}
-                    scroll={{ x: 800 }}
-                    size="middle"
-                />
 
-                <div className="mt-4 text-sm text-gray-500">
-                    Tổng số cây trồng: {filteredData.length} | Hiển thị dữ liệu với 8 trường chính: Ảnh đại diện, Tên cây trồng, Tên người dùng, Loại cây, Tháng trồng, Tháng thu hoạch, Năng suất và Nhu cầu nước
-                </div>
-            </Card>
+            <Table
+                columns={columns}
+                dataSource={filteredData}
+                rowKey="id"
+                loading={loading}
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} của ${total} cây trồng`,
+                    pageSizeOptions: ["5", "10", "20", "50"],
+                }}
+                scroll={{ x: 800 }}
+                size="middle"
+                className="border border-gray-200 rounded-md"
+            />
+
+            <div className="mt-4 flex justify-between items-center">
+                <span className="text-sm text-gray-500">
+                    <i className="text-gray-400">Hiển thị: Ảnh đại diện, Tên cây trồng, Tên người dùng, Loại cây, Tháng trồng, Tháng thu hoạch, Năng suất, Nhu cầu nước</i>
+                </span>
+                <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
+                    Tổng cộng: {filteredData.length} cây trồng
+                </span>
+            </div>
 
             {/* Drawer for Add/Edit */}
             <CropFormDrawer

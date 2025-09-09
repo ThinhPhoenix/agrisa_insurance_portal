@@ -1,17 +1,23 @@
 "use client";
 import {
+    AppstoreOutlined,
     DeleteOutlined,
     EditOutlined,
     EyeOutlined,
     FilterOutlined,
     PlusOutlined,
-    SearchOutlined
+    SearchOutlined,
+    UnorderedListOutlined
 } from "@ant-design/icons";
 import {
     Avatar,
     Button,
+    Card,
+    Col,
     Input,
+    Pagination,
     Popconfirm,
+    Row,
     Select,
     Space,
     Table,
@@ -19,6 +25,7 @@ import {
     Tooltip,
     Typography
 } from "antd";
+import React from 'react';
 import CropDetailsModal from "./partials/CropDetailsModal";
 import CropFormDrawer from "./partials/CropFormDrawer";
 import { formatYield, getCropTypeColor, getWaterRequirementColor, useCropDataManagement } from "./usecase/mockupUseCase";
@@ -59,6 +66,9 @@ export default function CropDataPage() {
         // Data
         filterOptions,
     } = useCropDataManagement();
+
+    // Add view state (table or card)
+    const [viewMode, setViewMode] = React.useState('table'); // 'table' or 'card'
 
     const columns = [
         {
@@ -192,6 +202,25 @@ export default function CropDataPage() {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">Tìm kiếm & Bộ lọc</h3>
                     <div className="flex space-x-3">
+                        <Button.Group>
+                            <Tooltip title="Xem dạng bảng">
+                                <Button
+                                    type={viewMode === 'table' ? 'primary' : 'default'}
+                                    icon={<UnorderedListOutlined />}
+                                    onClick={() => setViewMode('table')}
+                                    size="large"
+                                />
+                            </Tooltip>
+                            <Tooltip title="Xem dạng thẻ">
+                                <Button
+                                    type={viewMode === 'card' ? 'primary' : 'default'}
+                                    icon={<AppstoreOutlined />}
+                                    onClick={() => setViewMode('card')}
+                                    size="large"
+                                />
+                            </Tooltip>
+                        </Button.Group>
+
                         <Button
                             type="primary"
                             icon={<FilterOutlined />}
@@ -277,34 +306,129 @@ export default function CropDataPage() {
             </div>
 
 
-            {/* Phần 3: Bảng dữ liệu */}
+            {/* Phần 3: Bảng dữ liệu / Card Grid */}
+            {viewMode === 'table' ? (
+                <Table
+                    columns={columns}
+                    dataSource={filteredData}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total, range) =>
+                            `${range[0]}-${range[1]} của ${total} cây trồng`,
+                        pageSizeOptions: ["5", "10", "20", "50"],
+                    }}
+                    scroll={{ x: 800 }}
+                    size="middle"
+                    className="border border-gray-200 rounded-md"
+                />
+            ) : (
+                <div className="grid-view">
+                    <Row gutter={[16, 16]} className="mb-4">
+                        {loading ? (
+                            Array(8).fill(null).map((_, index) => (
+                                <Col xs={24} sm={12} md={8} lg={6} key={`loading-${index}`}>
+                                    <Card loading={true} className="h-full" />
+                                </Col>
+                            ))
+                        ) : (
+                            filteredData.map(record => (
+                                <Col xs={24} sm={12} md={8} lg={6} key={record.id}>
+                                    <Card
+                                        hoverable
+                                        className="h-full flex flex-col"
+                                        cover={
+                                            <div className="p-4 bg-gray-50 flex justify-center">
+                                                <img
+                                                    src={record.avatar}
+                                                    alt={record.name}
+                                                    className="w-full h-48 object-cover rounded-md"
+                                                />
+                                            </div>
+                                        }
+                                        actions={[
+                                            <Tooltip title="Xem chi tiết" key="view">
+                                                <EyeOutlined onClick={() => handleView(record)} />
+                                            </Tooltip>,
+                                            <Tooltip title="Chỉnh sửa" key="edit">
+                                                <EditOutlined onClick={() => handleEdit(record)} />
+                                            </Tooltip>,
+                                            <Popconfirm
+                                                key="delete"
+                                                title="Xóa cây trồng"
+                                                description="Bạn có chắc muốn xóa cây trồng này?"
+                                                onConfirm={() => handleDelete(record.id)}
+                                                okText="Có"
+                                                cancelText="Không"
+                                            >
+                                                <DeleteOutlined />
+                                            </Popconfirm>
+                                        ]}
+                                    >
+                                        <div className="mb-auto">
+                                            <Card.Meta
+                                                title={<span className="text-lg font-semibold">{record.name}</span>}
+                                                description={record.username}
+                                                className="mb-3"
+                                            />
+                                            <div className="mt-3 space-y-2">
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Loại cây:</span>
+                                                    <Tag color={getCropTypeColor(record.cropDetails.type)}>{record.cropDetails.type}</Tag>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Tháng trồng:</span>
+                                                    <span>{record.cropDetails.plantingMonth}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Tháng thu hoạch:</span>
+                                                    <span>{record.cropDetails.harvestMonth}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Năng suất:</span>
+                                                    <span>{formatYield(record.cropDetails.yieldPerAcre)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Nhu cầu nước:</span>
+                                                    <Tag color={getWaterRequirementColor(record.cropDetails.waterRequirement)}>
+                                                        {record.cropDetails.waterRequirement}
+                                                    </Tag>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                </Col>
+                            ))
+                        )}
+                    </Row>
+                    {filteredData.length > 0 && (
+                        <div className="flex justify-center mt-4">
+                            <Pagination
+                                total={filteredData.length}
+                                showSizeChanger
+                                showQuickJumper
+                                showTotal={(total, range) => `${range[0]}-${range[1]} của ${total} cây trồng`}
+                                pageSizeOptions={["8", "16", "24", "48"]}
+                                defaultPageSize={16}
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
 
-            <Table
-                columns={columns}
-                dataSource={filteredData}
-                rowKey="id"
-                loading={loading}
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showQuickJumper: true,
-                    showTotal: (total, range) =>
-                        `${range[0]}-${range[1]} của ${total} cây trồng`,
-                    pageSizeOptions: ["5", "10", "20", "50"],
-                }}
-                scroll={{ x: 800 }}
-                size="middle"
-                className="border border-gray-200 rounded-md"
-            />
-
-            <div className="mt-4 flex justify-between items-center">
-                <span className="text-sm text-gray-500">
-                    <i className="text-gray-400">Hiển thị: Ảnh đại diện, Tên cây trồng, Tên người dùng, Loại cây, Tháng trồng, Tháng thu hoạch, Năng suất, Nhu cầu nước</i>
-                </span>
-                <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
-                    Tổng cộng: {filteredData.length} cây trồng
-                </span>
-            </div>
+            {viewMode === 'table' && (
+                <div className="mt-4 flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                        <i className="text-gray-400">Hiển thị: Ảnh đại diện, Tên cây trồng, Tên người dùng, Loại cây, Tháng trồng, Tháng thu hoạch, Năng suất, Nhu cầu nước</i>
+                    </span>
+                    <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
+                        Tổng cộng: {filteredData.length} cây trồng
+                    </span>
+                </div>
+            )}
 
             {/* Drawer for Add/Edit */}
             <CropFormDrawer

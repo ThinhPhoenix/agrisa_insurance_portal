@@ -15,6 +15,7 @@
   --color-primary-700: #124230;
   --color-primary-800: #0e3528;
   --color-primary-900: #0b2b20;
+  --color-secondary-50: #fffefa;
   --color-secondary-100: #fefcf5;
   --color-secondary-200: #fdf7e1;
   --color-secondary-300: #fcf2cd;
@@ -26,8 +27,13 @@
   --color-secondary-900: #312e22;
 }
 
-h1,h2,h3,h4,h5,h6 {
-  font-family: 'Fraunces', serif;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Fraunces", serif;
 }
 
 .ant-menu-item-selected,

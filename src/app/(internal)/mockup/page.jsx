@@ -207,7 +207,7 @@ export default function CropDataPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-secondary-50">
             <CustomHeader
                 companyName="Agrisa's IPP"
                 companyLogo={Assets.Agrisa.src}

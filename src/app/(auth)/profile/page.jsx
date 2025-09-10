@@ -31,6 +31,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import mockData from './mockdata.json';
+import CustomerViewModal from './partials/CustomerViewModal';
 import './style/profile.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -46,6 +47,7 @@ const iconMap = {
 export default function ProfilePage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('company');
+    const [isCustomerViewModalVisible, setIsCustomerViewModalVisible] = useState(false);
 
     // Dynamically get company data from mock data
     const { company, contact, statistics, services, recentActivities, businessInfo, certifications } = mockData;
@@ -212,7 +214,11 @@ export default function ProfilePage() {
                                             </div>
                                         </div>
                                         <div className="flex space-x-3">
-                                            <Button type="primary" className="bg-primary-500 hover:bg-primary-600 border-primary-500">
+                                            <Button
+                                                type="primary"
+                                                className="bg-primary-500 hover:bg-primary-600 border-primary-500"
+                                                onClick={() => setIsCustomerViewModalVisible(true)}
+                                            >
                                                 <Handshake size={16} className="mr-2" />
                                                 Góc nhìn từ khách hàng
                                             </Button>
@@ -373,6 +379,12 @@ export default function ProfilePage() {
                     </Row>
                 </div>
             </div>
+
+            <CustomerViewModal
+                visible={isCustomerViewModalVisible}
+                onClose={() => setIsCustomerViewModalVisible(false)}
+                companyData={mockData}
+            />
         </div>
     );
 }

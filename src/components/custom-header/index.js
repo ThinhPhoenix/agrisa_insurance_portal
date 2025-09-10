@@ -25,6 +25,7 @@ const CustomHeader = ({
   showNotifications = true,
   showCompanyInfo = true,
   showPortalButton = true,
+  showLogo = true,
   className = "",
   customBreadcrumb = null,
   customNotifications = null,
@@ -242,15 +243,17 @@ const CustomHeader = ({
           margin: 0;
         }
       `}</style>
-      <div className="flex items-center justify-between px-4">
+      <div className="flex items-center justify-between">
         {/* Left side - Logo, Brand and Breadcrumb */}
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-3">
-            <img src={companyLogo} alt="Company Logo" className="w-10 h-10" />
-            <span className="text-xl font-semibold text-primary-500">
-              {companyName}
-            </span>
-          </div>
+          {showLogo && (
+            <div className="flex items-center space-x-3">
+              <img src={companyLogo} alt="Company Logo" className="w-10 h-10" />
+              <span className="text-xl font-semibold text-primary-500">
+                {companyName}
+              </span>
+            </div>
+          )}
 
           {/* Breadcrumb */}
           {breadcrumb.length > 0 && (

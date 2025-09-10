@@ -1,6 +1,4 @@
 "use client";
-import Assets from '@/assets';
-import CustomHeader from '@/components/custom-header';
 import {
     AppstoreOutlined,
     DeleteOutlined,
@@ -207,52 +205,14 @@ export default function CropDataPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-secondary-50">
-            <CustomHeader
-                companyName="Agrisa's IPP"
-                companyLogo={Assets.Agrisa.src}
-                companyAvatar="https://www.baovietnhantho.com.vn/storage/8f698cfe-2689-4637-bee7-62e592122dee/c/tap-doan-bao-viet-large.jpg"
-                companyShortName="AGR"
-                notificationCount={2}
-                showBackButton={true}
-                showHomeButton={true}
-                showDashboardButton={true}
-                showNotifications={true}
-                showCompanyInfo={true}
-                showPortalButton={true}
-                customNotifications={[
-                    {
-                        key: "crop-notif1",
-                        label: (
-                            <div className="flex flex-col p-3 hover:bg-gray-50 cursor-pointer">
-                                <div className="font-medium text-sm text-gray-800">Dữ liệu cây trồng mới</div>
-                                <div className="text-xs text-gray-500 mt-1">Đã thêm 10 loại cây trồng mới</div>
-                                <div className="text-xs text-gray-400 mt-1">10 phút trước</div>
-                            </div>
-                        ),
-                        onClick: () => router.push("/#"),
-                    },
-                    {
-                        key: "crop-notif2",
-                        label: (
-                            <div className="flex flex-col p-3 hover:bg-gray-50 cursor-pointer">
-                                <div className="font-medium text-sm text-gray-800">Cập nhật năng suất</div>
-                                <div className="text-xs text-gray-500 mt-1">Dữ liệu năng suất đã được cập nhật</div>
-                                <div className="text-xs text-gray-400 mt-1">30 phút trước</div>
-                            </div>
-                        ),
-                        onClick: () => router.push("/#"),
-                    },
-                ]}
-            />
-
-            <div className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 pt-24`}>
+        <div className="min-h-full bg-secondary-50 mt-8">
+            <div className={`${isMobile ? 'p-4' : 'p-6'} space-y-4`}>
                 {contextHolder}
 
                 {/* Phần 1: Title và Action */}
-                <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex justify-between items-center'}`}>
+                <div className={`${isMobile ? 'flex flex-col space-y-3' : 'flex justify-between items-center'}`}>
                     <div>
-                        <Title level={isMobile ? 3 : 2} className="!mb-1 text-primary">
+                        <Title level={isMobile ? 4 : 3} className="!mb-1 text-primary">
                             {isMobile ? 'Quản lý cây trồng' : 'Quản lý dữ liệu cây trồng'}
                         </Title>
                         <p className="text-gray-600 text-sm">
@@ -282,21 +242,20 @@ export default function CropDataPage() {
                 </div>
 
                 {/* Phần 2: Tìm kiếm và Bộ lọc */}
-                <div className="mb-6">
-                    <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center mb-4'}`}>
-                        <h3 className={`${isMobile ? 'text-base font-semibold' : 'text-lg font-semibold'}`}>
+                <div className="mb-4">
+                    <div className={`${isMobile ? 'space-y-3' : 'flex justify-between items-center mb-3'}`}>
+                        <h3 className={`${isMobile ? 'text-sm font-semibold' : 'text-base font-semibold'}`}>
                             Tìm kiếm & Bộ lọc
                         </h3>
 
                         {!isMobile && (
-                            <div className="flex space-x-3">
+                            <div className="flex space-x-2">
                                 <Button.Group>
                                     <Tooltip title="Xem dạng bảng">
                                         <Button
                                             type={viewMode === 'table' ? 'primary' : 'default'}
                                             icon={<UnorderedListOutlined />}
                                             onClick={() => setViewMode('table')}
-                                            size="large"
                                         />
                                     </Tooltip>
                                     <Tooltip title="Xem dạng thẻ">
@@ -304,7 +263,6 @@ export default function CropDataPage() {
                                             type={viewMode === 'card' ? 'primary' : 'default'}
                                             icon={<AppstoreOutlined />}
                                             onClick={() => setViewMode('card')}
-                                            size="large"
                                         />
                                     </Tooltip>
                                 </Button.Group>
@@ -312,8 +270,7 @@ export default function CropDataPage() {
                                 <Button
                                     type="primary"
                                     icon={<FilterOutlined />}
-                                    size="large"
-                                    className="shadow-md hover:shadow-lg transition-all"
+                                    className="shadow-sm hover:shadow-md transition-all"
                                     onClick={() => applyFilters(searchText, filters)}
                                 >
                                     Áp dụng bộ lọc
@@ -322,8 +279,7 @@ export default function CropDataPage() {
                                 <Button
                                     type="primary"
                                     icon={<PlusOutlined />}
-                                    size="large"
-                                    className="shadow-md hover:shadow-lg transition-all"
+                                    className="shadow-sm hover:shadow-md transition-all"
                                     onClick={handleAdd}
                                 >
                                     Thêm cây trồng
@@ -332,22 +288,22 @@ export default function CropDataPage() {
                         )}
                     </div>
 
-                    <div className="mb-4">
+                    <div className="mb-3">
                         <Search
                             placeholder={isMobile ? "Tìm kiếm..." : "Tìm kiếm theo tên cây trồng, tên người dùng, loại cây hoặc tháng trồng/thu hoạch..."}
                             allowClear
                             enterButton={<SearchOutlined />}
-                            size={isMobile ? "default" : "large"}
+                            size="default"
                             onSearch={handleSearch}
                             value={searchText}
-                            className="mb-4"
+                            className="mb-3"
                         />
                     </div>
 
                     {!isMobile && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="p-3 rounded-md">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Loại cây</label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="p-2 rounded-md">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Loại cây</label>
                                 <Select
                                     placeholder="Chọn loại cây trồng"
                                     style={{ width: '100%' }}
@@ -361,8 +317,8 @@ export default function CropDataPage() {
                                     ))}
                                 </Select>
                             </div>
-                            <div className="p-3 rounded-md">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Nhu cầu nước</label>
+                            <div className="p-2 rounded-md">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Nhu cầu nước</label>
                                 <Select
                                     placeholder="Chọn nhu cầu nước"
                                     style={{ width: '100%' }}
@@ -376,8 +332,8 @@ export default function CropDataPage() {
                                     ))}
                                 </Select>
                             </div>
-                            <div className="p-3 rounded-md">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Tháng trồng</label>
+                            <div className="p-2 rounded-md">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Tháng trồng</label>
                                 <Select
                                     placeholder="Chọn tháng trồng"
                                     style={{ width: '100%' }}
@@ -404,12 +360,13 @@ export default function CropDataPage() {
                         rowKey="id"
                         loading={loading}
                         pagination={{
-                            pageSize: isMobile ? 5 : 10,
+                            pageSize: isMobile ? 5 : 8,
                             showSizeChanger: !isMobile,
                             showQuickJumper: !isMobile,
                             showTotal: (total, range) =>
                                 `${range[0]}-${range[1]} của ${total} cây trồng`,
-                            pageSizeOptions: isMobile ? ["5", "10"] : ["5", "10", "20", "50"],
+                            pageSizeOptions: isMobile ? ["5", "10"] : ["8", "15", "30"],
+                            size: "small"
                         }}
                         scroll={{ x: isMobile ? 600 : 800 }}
                         size={isMobile ? "small" : "middle"}

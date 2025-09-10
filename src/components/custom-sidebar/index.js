@@ -1,8 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import { Mail, AppWindow, Settings, PanelLeft, ArrowRightToLine, ArrowLeftToLine } from "lucide-react";
-import { Menu } from "antd";
 import Assets from "@/assets";
+import { Menu } from "antd";
+import { AppWindow, Mail, PanelLeft, Settings } from "lucide-react";
 const items = [
   {
     key: "sub1",
@@ -70,14 +69,13 @@ const items = [
     ],
   },
 ];
-const CustomSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+const CustomSidebar = ({ collapsed, setCollapsed }) => {
   const onClick = (e) => {
     console.log("click ", e);
   };
   return (
     <section
-      className={`h-screen overflow-y-auto bg-secondary-100 border-r overflow-x-hidden ${
+      className={`h-screen overflow-y-auto bg-secondary-100 border-r overflow-x-hidden transition-all duration-300 ${
         collapsed ? "w-16" : "w-64"
       }`}
     >
@@ -113,7 +111,9 @@ const CustomSidebar = () => {
         mode="inline"
         items={items}
         inlineCollapsed={collapsed}
-        className={`${collapsed ? "w-16" : "w-64"} !border-none`}
+        className={`${
+          collapsed ? "w-16" : "w-64"
+        } !border-none transition-all duration-300`}
       />
     </section>
   );

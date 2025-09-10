@@ -1,0 +1,79 @@
+{
+  "company": {
+    "name": "Công Ty Bảo Hiểm Việt Nam",
+    "shortName": "VIC",
+    "slogan": "Đối tác bảo hiểm hàng đầu cho nông nghiệp",
+    "description": "Với hơn 25 năm kinh nghiệm trong lĩnh vực bảo hiểm, Công ty Bảo hiểm Việt Nam tự hào là đối tác tin cậy của hàng nghìn nông dân trên khắp cả nước. Chúng tôi chuyên cung cấp các giải pháp bảo hiểm toàn diện cho ngành nông nghiệp.",
+    "mission": "Bảo vệ sinh kế của nông dân, góp phần phát triển nông nghiệp bền vững thông qua các sản phẩm bảo hiểm chất lượng cao và dịch vụ khách hàng tận tâm.",
+    "commitment": "Thanh toán nhanh chóng, minh bạch, hỗ trợ 24/7 và tư vấn chuyên môn từ đội ngũ chuyên gia có kinh nghiệm lâu năm trong lĩnh vực nông nghiệp."
+  },
+  "contact": {
+    "email": "info@vietnaminsurance.vn",
+    "phone": "+84 123 456 789",
+    "website": "www.vietnaminsurance.vn",
+    "headquarters": "123 Đường ABC, Quận 1, TP.HCM",
+    "branches": "Hà Nội, Đà Nẵng, Cần Thơ",
+    "taxCode": "0123456789"
+  },
+  "statistics": [
+    {
+      "title": "Nông dân",
+      "value": 1250,
+      "icon": "Users"
+    },
+    {
+      "title": "Hợp đồng",
+      "value": 3400,
+      "icon": "FileText"
+    },
+    {
+      "title": "Doanh thu",
+      "value": "2.5M",
+      "icon": "TrendingUp"
+    }
+  ],
+  "services": [
+    "Bảo hiểm cây trồng",
+    "Bảo hiểm vật nuôi",
+    "Bảo hiểm thời tiết",
+    "Bảo hiểm thiệt hại"
+  ],
+  "recentActivities": [
+    {
+      "description": "Đã phê duyệt 15 hợp đồng bảo hiểm mới",
+      "time": "2 giờ trước",
+      "type": "success"
+    },
+    {
+      "description": "Cập nhật chính sách bảo hiểm mùa vụ",
+      "time": "1 ngày trước",
+      "type": "info"
+    },
+    {
+      "description": "Hội thảo với nông dân tại Đồng Nai",
+      "time": "3 ngày trước",
+      "type": "warning"
+    }
+  ],
+  "businessInfo": {
+    "establishedYear": 1998,
+    "insuranceTypes": [
+      "Bảo hiểm nông nghiệp",
+      "Bảo hiểm tài sản",
+      "Bảo hiểm thiên tai"
+    ],
+    "coverageAreas": [
+      "Đồng bằng sông Cửu Long",
+      "Tây Nguyên",
+      "Duyên hải miền Trung",
+      "Đông Nam Bộ"
+    ],
+    "partners": 15,
+    "employeeCount": 120
+  },
+  "certifications": [
+    "ISO 9001:2015",
+    "Doanh nghiệp Bảo hiểm Uy tín 2024",
+    "Top 10 Doanh nghiệp Bảo hiểm Nông nghiệp"
+  ]
+}

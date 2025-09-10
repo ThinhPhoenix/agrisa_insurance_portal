@@ -1,0 +1,147 @@
+.profile-container {
+  min-height: 100vh;
+  background-color: white;
+  padding: 2rem;
+}
+
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.profile-card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.stats-card {
+  background: linear-gradient(
+    135deg,
+    var(--color-secondary-100),
+    var(--color-secondary-200)
+  );
+  border: 1px solid var(--color-secondary-300);
+  border-radius: 0.75rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.info-label {
+  color: var(--color-secondary-700);
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.info-value {
+  color: var(--color-primary-700);
+  font-weight: 500;
+}
+
+.service-tag {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+  border: 1px solid var(--color-primary-300);
+  transition: all 0.3s ease;
+}
+
+.service-tag:hover {
+  background-color: var(--color-primary-200);
+  transform: translateY(-2px);
+}
+
+.edit-btn {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.editable-section:hover .edit-btn {
+  opacity: 1;
+}
+
+.avatar-container {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-300),
+    var(--color-primary-500)
+  );
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.nav-tab.active {
+  color: var(--color-primary-500);
+  font-weight: 600;
+}
+
+.nav-tab:not(.active) {
+  color: var(--color-secondary-600);
+}
+
+.nav-tab:not(.active):hover {
+  color: var(--color-primary-500);
+}
+
+.section-card {
+  border: 1px solid var(--color-secondary-200);
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  transition: box-shadow 0.3s ease;
+}
+
+.section-card:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.activity-dot.success {
+  background-color: var(--color-primary-500);
+}
+
+.activity-dot.info {
+  background-color: #4096ff;
+}
+
+.activity-dot.warning {
+  background-color: #faad14;
+}
+
+.activity-card {
+  transition: transform 0.3s ease;
+}
+
+.activity-card:hover {
+  transform: translateX(5px);
+}
+
+.profile-header {
+  border-bottom: 1px solid var(--color-secondary-200);
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ant-statistic-title {
+  color: var(--color-secondary-700) !important;
+}
+
+.ant-statistic-content {
+  color: var(--color-primary-600) !important;
+}

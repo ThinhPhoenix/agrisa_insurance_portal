@@ -24,6 +24,7 @@ export default function InternalLayout({ children }) {
           }`}
           style={{ right: 0 }}
         >
+          {/* TODO: call API profile */}
           <CustomHeader
             companyName="Agrisa's IPP"
             companyLogo={Assets.Agrisa.src}

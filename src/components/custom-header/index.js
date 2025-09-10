@@ -231,7 +231,10 @@ const CustomHeader = ({
     },
   ];
   return (
-    <Card className={`fixed-header ${className}`}>
+    <Card
+      className={`fixed-header ${className}`}
+      bodyStyle={{ padding: "8px 16px" }}
+    >
       <style jsx>{`
         .notification-dropdown .ant-dropdown-menu-item {
           padding: 0;

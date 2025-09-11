@@ -1,6 +1,7 @@
 "use client";
 import Assets from '@/assets';
 import CustomHeader from '@/components/custom-header';
+import '@/styles/profile.css';
 import {
     Button,
     Card,
@@ -30,9 +31,8 @@ import {
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import CustomerViewModal from '../../../components/layout/profile/CustomerViewModal';
 import mockData from './mockdata.json';
-import CustomerViewModal from './partials/CustomerViewModal';
-import './style/profile.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -114,7 +114,7 @@ export default function ProfilePage() {
                     },
                 ]}
             />
-            <div className="max-w-7xl mx-auto pt-24">
+            <div className="max-w-8xl mx-auto p-4">
                 {/* Main Content */}
                 <Row gutter={24}>
                     {/* Left Column */}

@@ -1,12 +1,23 @@
 "use client";
 import Assets from "@/assets";
-import { GoogleOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Divider, Form, Input, Typography } from "antd";
-import "./signin.css";
+import "@/styles/signin.css";
+import { GoogleOutlined, LockOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
+import { Button, Divider, Form, Input, Radio, Typography } from "antd";
+import { useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
 
 const SigninPage = () => {
+    const [loginType, setLoginType] = useState('email');
+    const [googleIconLoaded, setGoogleIconLoaded] = useState(false);
+
+    // Try to load Google icon on component mount
+    useEffect(() => {
+        const img = new Image();
+        img.onload = () => setGoogleIconLoaded(true);
+        img.src = "https://www.svgrepo.com/show/303108/google-icon-logo.svg";
+    }, []);
+
     const onFinish = (values) => {
         console.log('Received values of form: ', values);
     };
@@ -20,35 +31,13 @@ const SigninPage = () => {
                     alt="Agriculture Background"
                     className="w-full h-full object-cover"
                 />
-                {/* <div className="absolute inset-0 bg-gradient-to-b from-primary-900/70 to-primary-500/70 flex flex-col justify-center items-center p-12">
-                    <div className="bg-white bg-opacity-95 p-8 rounded-lg shadow-lg max-w-md transform transition-all duration-500 hover:scale-105">
-                        <img
-                            src={Assets.Agrisa.src}
-                            alt="Agrisa Logo"
-                            className="h-14 mb-6 mx-auto"
-                        />
-                        <h2 className="text-primary-500 text-2xl font-bold mb-4 text-center">
-                            Nền tảng bảo hiểm nông nghiệp hàng đầu
-                        </h2>
-                        <p className="text-primary-700 mb-6 text-center">
-                            Bảo vệ hoạt động canh tác nông nghiệp của bạn với giải pháp bảo hiểm toàn diện từ Agrisa
-                        </p>
-                    </div>
-                </div> */}
             </div>
 
             {/* Right side - Form */}
             <div className="flex-1 lg:w-3/5 flex flex-col">
                 {/* Header */}
                 <header className="w-full py-4 px-6 border-b border-secondary-200">
-                    <div className="flex justify-between items-center max-w-6xl mx-auto">
-                        <div className="flex items-center">
-                            <img
-                                src={Assets.Agrisa.src}
-                                alt="Agrisa Logo"
-                                className="h-10 w-auto"
-                            />
-                        </div>
+                    <div className="flex justify-end items-center max-w-6xl mx-auto">
                         <nav className="hidden md:flex items-center space-x-8">
                             <a
                                 href="/"
@@ -78,13 +67,13 @@ const SigninPage = () => {
                 <div className="flex-1 flex items-center justify-center p-6">
                     <div className="w-full max-w-md p-6 backdrop-blur-sm rounded-lg">
                         {/* Title */}
-                        <div className="text-center mb-6">
+                        <div className="flex flex-col items-center justify-center mb-6 space-y-4 signin-title-section">
                             <img
                                 src={Assets.Agrisa.src}
                                 alt="Agrisa Logo"
-                                className="h-12 w-auto mx-auto mb-4 mobile-logo hidden md:hidden lg:hidden sm:block xs:block"
+                                className="h-20 w-auto"
                             />
-                            <Title level={3} className="text-primary-900 mb-2">
+                            <Title level={3} className="text-primary-900">
                                 Chào mừng bạn trở lại Agrisa
                             </Title>
                             <Text className="text-primary-600">
@@ -96,9 +85,29 @@ const SigninPage = () => {
                         <div className="mb-6">
                             <Button
                                 type="default"
-                                icon={<GoogleOutlined />}
+                                icon={
+                                    googleIconLoaded ? (
+                                        <img
+                                            src="https://www.svgrepo.com/show/303108/google-icon-logo.svg"
+                                            alt="Google"
+                                            className="google-logo-icon"
+                                            onLoad={() => setGoogleIconLoaded(true)}
+                                            onError={() => setGoogleIconLoaded(false)}
+                                        />
+                                    ) : (
+                                        <GoogleOutlined className="google-icon" />
+                                    )
+                                }
                                 size="large"
-                                className="w-full flex items-center justify-center gap-2 border border-primary-300 rounded-md hover:bg-primary-500 hover:text-secondary-100 transition-colors"
+                                className="w-full flex items-center justify-center gap-2 border border-primary-300 rounded-md transition-colors google-login-btn"
+                                onClick={() => {
+                                    if (!googleIconLoaded) {
+                                        // Try to load the image when button is clicked
+                                        const img = new Image();
+                                        img.onload = () => setGoogleIconLoaded(true);
+                                        img.src = "https://www.svgrepo.com/show/303108/google-icon-logo.svg";
+                                    }
+                                }}
                             >
                                 Đăng nhập với Google
                             </Button>
@@ -116,16 +125,43 @@ const SigninPage = () => {
                             requiredMark={false}
                             id="signin-form"
                         >
+                            {/* Login Type Selection */}
+                            <Form.Item className="text-center">
+                                <Radio.Group
+                                    value={loginType}
+                                    onChange={(e) => setLoginType(e.target.value)}
+                                    className="justify-center"
+                                >
+                                    <Radio value="email" className="mr-4">Email</Radio>
+                                    <Radio value="phone">Số điện thoại</Radio>
+                                </Radio.Group>
+                            </Form.Item>
+
                             <Form.Item
-                                name="username"
-                                rules={[{ required: true, message: "Vui lòng nhập tên tài khoản!" }]}
+                                name="identifier"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: loginType === 'email' ? "Vui lòng nhập email!" : "Vui lòng nhập số điện thoại!"
+                                    },
+                                    loginType === 'email'
+                                        ? { type: 'email', message: 'Email không hợp lệ!' }
+                                        : {
+                                            pattern: /^(\+84|0)[3-9]\d{8}$/,
+                                            message: 'Số điện thoại không hợp lệ! (VD: 0987654321 hoặc +84987654321)'
+                                        }
+                                ]}
                             >
                                 <Input
-                                    prefix={<UserOutlined className="text-primary-400" />}
-                                    placeholder="Tên tài khoản"
+                                    prefix={
+                                        loginType === 'email'
+                                            ? <MailOutlined className="text-primary-400" />
+                                            : <PhoneOutlined className="text-primary-400" />
+                                    }
+                                    placeholder={loginType === 'email' ? "Email" : "Số điện thoại"}
                                     size="large"
                                     className="rounded-md"
-                                    autoComplete="username"
+                                    autoComplete={loginType === 'email' ? "email" : "tel"}
                                 />
                             </Form.Item>
 

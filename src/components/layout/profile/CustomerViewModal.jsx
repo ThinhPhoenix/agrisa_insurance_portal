@@ -23,7 +23,7 @@ import {
     Target,
     Users
 } from 'lucide-react';
-import '../style/profile.css';
+import '../../../styles/profile.css';
 
 const { Title, Text, Paragraph } = Typography;
 

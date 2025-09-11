@@ -4,7 +4,7 @@
       "id": "a7c6e921-de3f-4b82-9f7a-12e5b8c0d31f",
       "createdAt": "2025-08-15T09:32:45Z",
       "name": "Lúa Jasmine",
-      "image": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
+      "avatar": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
       "username": "nguyen_van_an",
       "knownIps": ["192.168.1.1", "2001:0db8:85a3:0000:0000:8a2e:0370:7334"],
       "profile": {
@@ -24,7 +24,7 @@
       "id": "b9d3f567-8e21-47a9-bc45-30d9a87f6b12",
       "createdAt": "2025-07-23T14:19:27Z",
       "name": "Cà phê Robusta",
-      "image": "https://tanthanhco.vn/wp-content/uploads/2020/07/bo-re-khoe-cay-lua-khoe-vung-nang-suat_5f06d34baf0d6-scaled.jpeg",
+      "avatar": "https://tanthanhco.vn/wp-content/uploads/2020/07/bo-re-khoe-cay-lua-khoe-vung-nang-suat_5f06d34baf0d6-scaled.jpeg",
       "username": "tran_thi_binh",
       "knownIps": ["192.168.1.2", "2001:0db8:85a3:0000:0000:8a2e:0370:7335"],
       "profile": {
@@ -44,7 +44,7 @@
       "id": "c2e8b341-9fa7-4c63-a518-7bd2e045c89a",
       "createdAt": "2025-06-05T18:45:33Z",
       "name": "Cao su",
-      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFceCHHp9mrHWQcdGl0tARzTPvvZiYMmtPNw&s",
+      "avatar": "https://encrypted-tbn0.gstatic.com/avatars?q=tbn:ANd9GcTFceCHHp9mrHWQcdGl0tARzTPvvZiYMmtPNw&s",
       "username": "le_van_cuong",
       "knownIps": ["192.168.1.3", "2001:0db8:85a3:0000:0000:8a2e:0370:7336"],
       "profile": {
@@ -64,7 +64,7 @@
       "id": "d5f1a782-4b6c-42d9-9e34-6c781a23b45d",
       "createdAt": "2025-08-12T07:51:18Z",
       "name": "Điều",
-      "image": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1.jpg",
+      "avatar": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1.jpg",
       "username": "pham_van_dat",
       "knownIps": ["192.168.1.4", "2001:0db8:85a3:0000:0000:8a2e:0370:7337"],
       "profile": {
@@ -84,7 +84,7 @@
       "id": "e7b2c943-3d5a-48f1-b67c-9a24e561df78",
       "createdAt": "2025-07-28T11:23:54Z",
       "name": "Tiêu",
-      "image": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1200x690.jpg",
+      "avatar": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1200x690.jpg",
       "username": "hoang_thi_nga",
       "knownIps": ["192.168.1.5", "2001:0db8:85a3:0000:0000:8a2e:0370:7338"],
       "profile": {
@@ -104,7 +104,7 @@
       "id": "f9d4e812-6b5a-47c3-83d2-5e92f416a8b7",
       "createdAt": "2025-08-17T16:08:39Z",
       "name": "Xoài Cát Chu",
-      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSDyarK-YR7Ma3Z6jm6R9-HYne4Y5XdkISfmA&s",
+      "avatar": "https://encrypted-tbn0.gstatic.com/avatars?q=tbn:ANd9GcSDyarK-YR7Ma3Z6jm6R9-HYne4Y5XdkISfmA&s",
       "username": "nguyen_thi_huong",
       "knownIps": ["192.168.1.6", "2001:0db8:85a3:0000:0000:8a2e:0370:7339"],
       "profile": {
@@ -124,7 +124,7 @@
       "id": "g1h3i567-2j4k-6l8m-9n0p-1q2r3s4t5u6v",
       "createdAt": "2025-08-03T08:42:15Z",
       "name": "Cam Sành",
-      "image": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
+      "avatar": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
       "username": "tran_van_khoa",
       "knownIps": ["192.168.1.7", "2001:0db8:85a3:0000:0000:8a2e:0370:7340"],
       "profile": {
@@ -144,7 +144,7 @@
       "id": "h2j4k617-3l5m-7n9p-1q3r-5s7t9u1v3w5x",
       "createdAt": "2025-07-21T13:37:29Z",
       "name": "Bưởi Da Xanh",
-      "image": "https://tanthanhco.vn/wp-content/uploads/2020/07/bo-re-khoe-cay-lua-khoe-vung-nang-suat_5f06d34baf0d6-scaled.jpeg",
+      "avatar": "https://tanthanhco.vn/wp-content/uploads/2020/07/bo-re-khoe-cay-lua-khoe-vung-nang-suat_5f06d34baf0d6-scaled.jpeg",
       "username": "le_thi_linh",
       "knownIps": ["192.168.1.8", "2001:0db8:85a3:0000:0000:8a2e:0370:7341"],
       "profile": {
@@ -164,7 +164,7 @@
       "id": "i3k5m791-4n6p-8q0r-2s4t-6u8w0y2a4c6e",
       "createdAt": "2025-08-09T15:56:47Z",
       "name": "Dừa",
-      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFceCHHp9mrHWQcdGl0tARzTPvvZiYMmtPNw&s",
+      "avatar": "https://encrypted-tbn0.gstatic.com/avatars?q=tbn:ANd9GcTFceCHHp9mrHWQcdGl0tARzTPvvZiYMmtPNw&s",
       "username": "pham_van_minh",
       "knownIps": ["192.168.1.9", "2001:0db8:85a3:0000:0000:8a2e:0370:7342"],
       "profile": {
@@ -184,7 +184,7 @@
       "id": "j4l6n802-5p7r-9t1v-3x5z-7b9d1f3h5j7l",
       "createdAt": "2025-07-14T10:23:51Z",
       "name": "Mía",
-      "image": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1.jpg",
+      "avatar": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1.jpg",
       "username": "hoang_van_nam",
       "knownIps": ["192.168.1.10", "2001:0db8:85a3:0000:0000:8a2e:0370:7343"],
       "profile": {
@@ -204,7 +204,7 @@
       "id": "k5m7p913-6q8s-0u2w-4y6a-8c0e2g4i6k8m",
       "createdAt": "2025-08-29T12:14:38Z",
       "name": "Rau muống",
-      "image": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1200x690.jpg",
+      "avatar": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1200x690.jpg",
       "username": "nguyen_thi_oanh",
       "knownIps": ["192.168.1.11", "2001:0db8:85a3:0000:0000:8a2e:0370:7344"],
       "profile": {
@@ -224,7 +224,7 @@
       "id": "l6n8q024-7r9t-1v3x-5z7b-9d1f3h5j7l9n",
       "createdAt": "2025-08-05T17:39:22Z",
       "name": "Chanh dây",
-      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSDyarK-YR7Ma3Z6jm6R9-HYne4Y5XdkISfmA&s",
+      "avatar": "https://encrypted-tbn0.gstatic.com/avatars?q=tbn:ANd9GcSDyarK-YR7Ma3Z6jm6R9-HYne4Y5XdkISfmA&s",
       "username": "tran_van_phuc",
       "knownIps": ["192.168.1.12", "2001:0db8:85a3:0000:0000:8a2e:0370:7345"],
       "profile": {
@@ -244,7 +244,7 @@
       "id": "m7p9r135-8s0u-2w4y-6a8c-0e2g4i6k8m0o",
       "createdAt": "2025-08-18T09:28:43Z",
       "name": "Sầu riêng Ri6",
-      "image": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
+      "avatar": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
       "username": "le_thi_quyen",
       "knownIps": ["192.168.1.13", "2001:0db8:85a3:0000:0000:8a2e:0370:7346"],
       "profile": {
@@ -264,7 +264,7 @@
       "id": "n8q0s246-9t1v-3x5z-7b9d-1f3h5j7l9n1p",
       "createdAt": "2025-08-07T14:53:17Z",
       "name": "Vú sữa",
-      "image": "https://tanthanhco.vn/wp-content/uploads/2020/07/bo-re-khoe-cay-lua-khoe-vung-nang-suat_5f06d34baf0d6-scaled.jpeg",
+      "avatar": "https://tanthanhco.vn/wp-content/uploads/2020/07/bo-re-khoe-cay-lua-khoe-vung-nang-suat_5f06d34baf0d6-scaled.jpeg",
       "username": "pham_van_son",
       "knownIps": ["192.168.1.14", "2001:0db8:85a3:0000:0000:8a2e:0370:7347"],
       "profile": {
@@ -284,7 +284,7 @@
       "id": "o9r1t357-0u2w-4y6a-8c0e-2g4i6k8m0o2q",
       "createdAt": "2025-08-11T11:07:32Z",
       "name": "Chôm chôm",
-      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFceCHHp9mrHWQcdGl0tARzTPvvZiYMmtPNw&s",
+      "avatar": "https://encrypted-tbn0.gstatic.com/avatars?q=tbn:ANd9GcTFceCHHp9mrHWQcdGl0tARzTPvvZiYMmtPNw&s",
       "username": "hoang_thi_tam",
       "knownIps": ["192.168.1.15", "2001:0db8:85a3:0000:0000:8a2e:0370:7348"],
       "profile": {
@@ -304,7 +304,7 @@
       "id": "p0s2u468-1v3x-5z7b-9d1f-3h5j7l9n1p3r",
       "createdAt": "2025-07-03T16:45:28Z",
       "name": "Mít Thái",
-      "image": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1.jpg",
+      "avatar": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1.jpg",
       "username": "nguyen_van_tuan",
       "knownIps": ["192.168.1.16", "2001:0db8:85a3:0000:0000:8a2e:0370:7349"],
       "profile": {
@@ -324,7 +324,7 @@
       "id": "q1t3v579-2w4y-6a8c-0e2g-4i6k8m0o2q4s",
       "createdAt": "2025-08-21T08:34:19Z",
       "name": "Ớt hiểm",
-      "image": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1200x690.jpg",
+      "avatar": "https://balifood.vn/wp-content/uploads/2024/06/cay-cong-nghiep-nuoc-ta-1200x690.jpg",
       "username": "tran_thi_van",
       "knownIps": ["192.168.1.17", "2001:0db8:85a3:0000:0000:8a2e:0370:7350"],
       "profile": {
@@ -344,7 +344,7 @@
       "id": "r2u4w680-3x5z-7b9d-1f3h-5j7l9n1p3r5t",
       "createdAt": "2025-07-29T13:17:42Z",
       "name": "Thanh long",
-      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSDyarK-YR7Ma3Z6jm6R9-HYne4Y5XdkISfmA&s",
+      "avatar": "https://encrypted-tbn0.gstatic.com/avatars?q=tbn:ANd9GcSDyarK-YR7Ma3Z6jm6R9-HYne4Y5XdkISfmA&s",
       "username": "le_van_xuan",
       "knownIps": ["192.168.1.18", "2001:0db8:85a3:0000:0000:8a2e:0370:7351"],
       "profile": {
@@ -364,7 +364,7 @@
       "id": "s3v5x791-4y6a-8c0e-2g4i-6k8m0o2q4s6u",
       "createdAt": "2025-08-02T10:49:31Z",
       "name": "Hồ tiêu",
-      "image": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
+      "avatar": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
       "username": "pham_thi_yen",
       "knownIps": ["192.168.1.19", "2001:0db8:85a3:0000:0000:8a2e:0370:7352"],
       "profile": {
@@ -384,7 +384,7 @@
       "id": "t4w6y802-5z7b-9d1f-3h5j-7l9n1p3r5t7v",
       "createdAt": "2025-07-27T15:36:54Z",
       "name": "Nấm linh chi",
-      "image": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
+      "avatar": "https://api-static.bacsicayxanh.vn/pictures/0003987_lua-nuoc_500.png.webp",
       "username": "hoang_van_zung",
       "knownIps": ["192.168.1.20", "2001:0db8:85a3:0000:0000:8a2e:0370:7353"],
       "profile": {

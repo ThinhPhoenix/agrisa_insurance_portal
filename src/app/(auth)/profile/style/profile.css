@@ -15,44 +15,6 @@
     padding: 0.25rem;
   }
 }
-
-/* Fixed header styles - handled by layout now */
-.fixed-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  z-index: 1000;
-  background-color: var(--color-secondary-100);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  border-radius: 0;
-  margin-bottom: 0;
-}
-
-/* Mobile responsive for fixed header */
-@media (max-width: 768px) {
-  .fixed-header {
-    padding: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-
-  /* Adjust padding top for main content on mobile */
-  .pt-24 {
-    padding-top: 4rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .fixed-header {
-    padding: 0.25rem;
-  }
-
-  .pt-24 {
-    padding-top: 3.5rem !important;
-  }
-}
-
 .profile-card {
   background-color: var(--color-secondary-50);
   /* box-shadow: 0 4px 4px rgba(0, 0, 0, 0.05); */

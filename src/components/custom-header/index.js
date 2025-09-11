@@ -69,25 +69,38 @@ const CustomHeader = ({
 
   const breadcrumb = generateBreadcrumb();
 
-  // Handle navigation
+  // Handle navigation with force reload for cross-layout navigation
+  const isAuthRoute = pathname.startsWith('/(auth)') || pathname.startsWith('/profile') || pathname.startsWith('/signin');
+  const isInternalRoute = pathname.startsWith('/(internal)') || pathname.startsWith('/mockup');
+  
+  const forceNavigate = (url) => {
+    // Force reload when navigating between different layout groups
+    if ((isAuthRoute && (url.includes('mockup') || url.includes('(internal)'))) ||
+        (isInternalRoute && (url.includes('profile') || url.includes('(auth)')))) {
+      window.location.href = url;
+    } else {
+      router.push(url);
+    }
+  };
+
   const handleBack = () => {
     if (window.history.length > 1) {
       router.back();
     } else {
-      router.push("/");
+      forceNavigate("/");
     }
   };
 
   const handleHome = () => {
-    router.push("/");
+    forceNavigate("/");
   };
 
   const handleDashboard = () => {
-    router.push("/#");
+    forceNavigate("/#");
   };
 
   const handlePortal = () => {
-    router.push("/#");
+    forceNavigate("/#");
   };
 
   const handleNotification = () => {
@@ -121,7 +134,7 @@ const CustomHeader = ({
               <Button
                 type="link"
                 size="small"
-                onClick={() => router.push("/#")}
+                onClick={() => forceNavigate("/#")}
               >
                 Xem tất cả thông báo
               </Button>
@@ -154,7 +167,7 @@ const CustomHeader = ({
             <div className="text-xs text-gray-400 mt-1">2 phút trước</div>
           </div>
         ),
-        onClick: () => router.push("/#"),
+        onClick: () => forceNavigate("/#"),
       },
       {
         key: "notif2",
@@ -169,7 +182,7 @@ const CustomHeader = ({
             <div className="text-xs text-gray-400 mt-1">1 giờ trước</div>
           </div>
         ),
-        onClick: () => router.push("/#"),
+        onClick: () => forceNavigate("/#"),
       },
       {
         key: "notif3",
@@ -184,7 +197,7 @@ const CustomHeader = ({
             <div className="text-xs text-gray-400 mt-1">3 giờ trước</div>
           </div>
         ),
-        onClick: () => router.push("/#"),
+        onClick: () => forceNavigate("/#"),
       },
       {
         type: "divider",
@@ -193,7 +206,7 @@ const CustomHeader = ({
         key: "viewAll",
         label: (
           <div className="text-center py-2">
-            <Button type="link" size="small" onClick={() => router.push("/#")}>
+            <Button type="link" size="small" onClick={() => forceNavigate("/#")}>
               Xem tất cả thông báo
             </Button>
           </div>
@@ -210,13 +223,13 @@ const CustomHeader = ({
       key: "profile",
       icon: <User size={16} />,
       label: "Thông tin cá nhân",
-      onClick: () => router.push("/profile"),
+      onClick: () => forceNavigate("/profile"),
     },
     {
       key: "settings",
       icon: <Settings size={16} />,
       label: "Cài đặt",
-      onClick: () => router.push("/settings"),
+      onClick: () => forceNavigate("/settings"),
     },
     {
       type: "divider",
@@ -298,7 +311,7 @@ const CustomHeader = ({
                       type="text"
                       size="small"
                       className="text-secondary-900 hover:text-primary-900 p-0 h-auto"
-                      onClick={() => router.push(item.path)}
+                      onClick={() => forceNavigate(item.path)}
                     >
                       {item.name}
                     </Button>

@@ -1,7 +1,7 @@
 .profile-container {
   min-height: 100vh;
   background-color: white;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .fixed-header {
@@ -19,8 +19,7 @@
 
 .profile-card {
   background-color: var(--color-secondary-50);
-  border-radius: 0.75rem;
-  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   margin-bottom: 1rem;
 }
@@ -136,20 +135,56 @@
   color: var(--color-primary-600) !important;
 }
 
-/* Mobile View Modal Styles - Updated with main colors */
+/* Mobile View Modal Styles - Responsive with fixed 9/19.5 ratio, correct phone proportions */
 .mobile-view-container {
-  margin-left: 20px;
-  aspect-ratio: 9/16;
+  aspect-ratio: 9/19.5 !important;
   padding: 0;
   overflow-y: auto;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
-  max-height: 80vh;
+  max-height: 85vh;
   background-color: #fefcf5; /* Using secondary-100 */
-  border-radius: 36px;
+  border-radius: clamp(20px, 2vw, 36px);
   border: 4.5px solid;
   border-color: black;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* Responsive dimensions - correct phone proportions */
+  width: clamp(200px, 16vw, 260px) !important;
+  height: auto !important; /* Let aspect-ratio control height */
+
+  margin: 0 auto;
+
+  /* Prevent any transform scaling */
+  transform: none !important;
+  transform-origin: center !important;
+
+  resize: none !important;
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 1400px) {
+  .mobile-view-container {
+    width: clamp(180px, 18vw, 240px) !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .mobile-view-container {
+    width: clamp(160px, 20vw, 220px) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-view-container {
+    width: clamp(140px, 25vw, 180px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-view-container {
+    width: clamp(120px, 30vw, 160px) !important;
+  }
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -157,7 +192,7 @@
   display: none;
 }
 
-/* Company Header Card */
+/* Company Header Card  */
 .company-header-card {
   background: linear-gradient(
     135deg,
@@ -165,8 +200,8 @@
     var(--color-primary-500)
   );
   border-radius: 12px 12px 0 0;
-  padding: 16px;
-  margin-bottom: 10px;
+  padding: 10px;
+  margin-bottom: 6px;
   border: none;
 }
 
@@ -176,29 +211,29 @@
 
 .company-logo-wrapper {
   position: relative;
-  margin-right: 16px;
+  margin-right: 10px;
 }
 
 .company-avatar {
-  border-radius: 10px !important;
-  border: 2px solid white !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 8px !important;
+  border: 1.5px solid white !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .rating-badge {
   position: absolute;
-  bottom: -6px;
-  right: -6px;
+  bottom: -4px;
+  right: -4px;
   background-color: white;
   color: var(--color-primary-600);
-  border-radius: 10px;
-  padding: 2px 6px;
-  font-size: 11px;
+  border-radius: 8px;
+  padding: 1px 4px;
+  font-size: 9px;
   font-weight: bold;
   display: flex;
   align-items: center;
-  gap: 2px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  gap: 1px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .company-info-container {
@@ -208,28 +243,31 @@
 .company-title {
   color: white !important;
   margin-bottom: 0 !important;
-  font-size: 1.1rem !important;
+  font-size: 0.95rem !important;
+  line-height: 1.2 !important;
 }
 
 .company-slogan {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
 .company-metrics {
   display: flex;
-  margin-top: 8px;
+  margin-top: 6px;
+  gap: 4px;
 }
 
 .metric-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   background-color: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .metric-icon {
@@ -238,81 +276,89 @@
 
 .metric-text {
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
 }
 
-/* Mobile Content Wrapper */
+/* Mobile Content Wrapper  */
 .mobile-content-wrapper {
-  padding: 0 12px 16px;
+  padding: 0 8px 12px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
-/* Content Card Styling */
+/* Content Card Styling  */
 .content-card {
-  margin-bottom: 12px;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 8px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   background-color: white;
 }
 
 .content-card .ant-card-body {
-  padding: 12px;
+  padding: 8px;
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.95rem !important;
-  margin-bottom: 12px !important;
+  gap: 6px;
+  font-size: 0.8rem !important;
+  margin-bottom: 8px !important;
   color: var(--color-primary-600) !important;
+  line-height: 1.2 !important;
 }
 
 .section-icon {
   color: var(--color-primary-500);
+  font-size: 0.9rem;
 }
 
-/* Tags Container */
+/* Tags Container  */
 .tags-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .service-tag {
   background-color: var(--color-primary-100);
   color: var(--color-primary-700);
   border-color: var(--color-primary-300);
-  border-radius: 12px;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  line-height: 1.2;
 }
 
 .insurance-type-tag {
   background-color: var(--color-primary-100);
   color: var(--color-primary-700);
   border-color: var(--color-primary-300);
-  border-radius: 12px;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  line-height: 1.2;
 }
 
 .coverage-area-tag {
   background-color: var(--color-secondary-100);
   color: var(--color-secondary-700);
   border-color: var(--color-secondary-300);
-  border-radius: 12px;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  line-height: 1.2;
 }
 
-/* Company Description */
+/* Company Description  */
 .company-desc {
-  font-size: 0.85rem;
-  line-height: 1.5;
+  font-size: 0.75rem;
+  line-height: 1.4;
   color: var(--color-secondary-700);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
-/* Company Values */
+/* Company Values  */
 .company-values .ant-col {
   padding-bottom: 0 !important;
 }
@@ -324,23 +370,25 @@
 }
 
 .value-card .ant-card-body {
-  padding: 10px;
+  padding: 6px;
 }
 
 .value-label {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 600;
   color: var(--color-secondary-600) !important;
+  line-height: 1.2;
 }
 
 .value-content {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--color-secondary-700);
+  line-height: 1.3;
 }
 
-/* Contact List */
+/* Contact List  */
 .contact-list-item {
-  padding: 8px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--color-secondary-200);
 }
 
@@ -351,46 +399,50 @@
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .contact-icon {
   color: var(--color-primary-500);
+  font-size: 0.9rem;
 }
 
 .contact-text {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--color-secondary-700);
+  line-height: 1.3;
 }
 
-/* Info Label */
+/* Info Label  */
 .info-label {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 600;
   color: var(--color-secondary-600) !important;
+  line-height: 1.2;
 }
 
 .mt-2 {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
-/* Certification Item */
+/* Certification Item  */
 .certification-item {
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .award-icon {
   color: var(--color-primary-500);
+  font-size: 0.9rem;
 }
 
-/* Activity Item */
+/* Activity Item  */
 .activity-item {
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .activity-content {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -399,30 +451,33 @@
 }
 
 .activity-description {
-  font-size: 0.85rem;
-  margin-bottom: 4px;
+  font-size: 0.75rem;
+  margin-bottom: 3px;
   color: var(--color-secondary-700);
+  line-height: 1.3;
 }
 
 .activity-time {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
+  line-height: 1.2;
 }
 
 .tab-title {
   margin: 0;
+  font-size: 0.8rem;
 }
 
 .tab-content {
-  padding: 16px;
+  padding: 10px;
 }
 
 .mission-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 8px;
-  padding: 8px;
+  margin-bottom: 6px;
+  padding: 6px;
   background: #f8fafc;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .contact-item {

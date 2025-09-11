@@ -7,6 +7,7 @@ import {
   Home,
   LayoutDashboard,
   LogOut,
+  Menu,
   Settings,
   User,
 } from "lucide-react";
@@ -17,7 +18,7 @@ const CustomHeader = ({
   companyName = "Agrisa's IPP",
   companyLogo = Assets.Agrisa.src,
   companyAvatar = "https://static.vecteezy.com/system/resources/previews/015/887/591/non_2x/anonymous-group-icon-outline-style-vector.jpg",
-  companyShortName = "VIC",
+  companyShortName = "Mock Partner",
   notificationCount = 3,
   showBackButton = true,
   showHomeButton = true,
@@ -29,6 +30,8 @@ const CustomHeader = ({
   className = "",
   customBreadcrumb = null,
   customNotifications = null,
+  onMenuClick = null,
+  isMobile = false,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -247,19 +250,40 @@ const CustomHeader = ({
         }
       `}</style>
       <div className="flex items-center justify-between">
-        {/* Left side - Logo, Brand and Breadcrumb */}
-        <div className="flex items-center space-x-4">
+        {/* Left side - Mobile Menu + Logo/Brand + Breadcrumb */}
+        <div className="flex items-center space-x-2 md:space-x-4 flex-1">
+          {/* Mobile Menu Button */}
+          {isMobile && onMenuClick && (
+            <Button
+              type="text"
+              icon={<Menu size={18} />}
+              className="text-secondary-600 hover:text-primary-600"
+              onClick={onMenuClick}
+              title="Menu"
+            />
+          )}
+
           {showLogo && (
-            <div className="flex items-center space-x-3">
-              <img src={companyLogo} alt="Company Logo" className="w-10 h-10" />
-              <span className="text-xl font-semibold text-primary-500">
+            <div className="flex items-center space-x-2 md:space-x-3">
+              <img
+                src={companyLogo}
+                alt="Company Logo"
+                className={`${isMobile ? "w-8 h-8" : "w-10 h-10"}`}
+              />
+              <span
+                className={`${
+                  isMobile ? "text-lg" : "text-xl"
+                } font-semibold text-primary-500 ${
+                  isMobile && companyName.length > 6 ? "hidden sm:block" : ""
+                }`}
+              >
                 {companyName}
               </span>
             </div>
           )}
 
-          {/* Breadcrumb */}
-          {breadcrumb.length > 0 && (
+          {/* Breadcrumb - Hide on mobile or show simplified version */}
+          {breadcrumb.length > 0 && !isMobile && (
             <div className="flex items-center space-x-2 text-secondary-600">
               <span className="text-secondary-500">/</span>
               {breadcrumb.map((item, index) => (
@@ -286,52 +310,60 @@ const CustomHeader = ({
         </div>
 
         {/* Right side - Navigation */}
-        <div className="flex items-center space-x-3">
+        <div
+          className={`flex items-center ${
+            isMobile ? "space-x-1" : "space-x-3"
+          }`}
+        >
           {showBackButton && (
             <Button
               type="text"
-              icon={<ArrowLeft size={18} />}
+              icon={<ArrowLeft size={16} />}
               className="text-secondary-600 hover:text-primary-600"
               onClick={handleBack}
               title="Quay lại"
+              size={isMobile ? "small" : "middle"}
             >
-              Quay lại
+              {!isMobile && "Quay lại"}
             </Button>
           )}
 
           {showPortalButton && (
             <Button
               type="text"
-              icon={<Home size={18} />}
+              icon={<Home size={16} />}
               className="text-secondary-600 hover:text-primary-600"
               onClick={handlePortal}
               title="Về trang chủ"
+              size={isMobile ? "small" : "middle"}
             >
-              Portal
+              {!isMobile && "Portal"}
             </Button>
           )}
 
           {showHomeButton && (
             <Button
               type="text"
-              icon={<Home size={18} />}
+              icon={<Home size={16} />}
               className="text-secondary-600 hover:text-primary-600"
               onClick={handleHome}
               title="Trang chủ"
+              size={isMobile ? "small" : "middle"}
             >
-              Trang chủ
+              {!isMobile && "Trang chủ"}
             </Button>
           )}
 
           {showDashboardButton && (
             <Button
               type="text"
-              icon={<LayoutDashboard size={18} />}
+              icon={<LayoutDashboard size={16} />}
               className="text-secondary-600 hover:text-primary-600"
               onClick={handleDashboard}
               title="Dashboard"
+              size={isMobile ? "small" : "middle"}
             >
-              Dashboard
+              {!isMobile && "Dashboard"}
             </Button>
           )}
 
@@ -341,15 +373,16 @@ const CustomHeader = ({
               placement="bottomRight"
               trigger={["click"]}
               overlayClassName="notification-dropdown"
-              overlayStyle={{ width: "320px" }}
+              overlayStyle={{ width: isMobile ? "280px" : "320px" }}
             >
               <div className="cursor-pointer">
                 <Badge count={notificationCount} size="small">
                   <Button
                     type="text"
-                    icon={<Bell size={18} />}
+                    icon={<Bell size={16} />}
                     className="text-secondary-600 hover:text-primary-600"
                     title="Thông báo"
+                    size={isMobile ? "small" : "middle"}
                   />
                 </Badge>
               </div>
@@ -362,20 +395,32 @@ const CustomHeader = ({
               placement="bottomRight"
               trigger={["click"]}
             >
-              <div className="flex items-center ml-4 cursor-pointer hover:bg-secondary-50 p-2 rounded-lg transition-colors">
-                <div className="h-8 w-8 mr-2 overflow-hidden rounded-full">
+              <div
+                className={`flex items-center ${
+                  isMobile ? "ml-1" : "ml-4"
+                } cursor-pointer hover:bg-secondary-50 ${
+                  isMobile ? "p-1" : "p-2"
+                } rounded-lg transition-colors`}
+              >
+                <div
+                  className={`${
+                    isMobile ? "h-6 w-6 mr-1" : "h-8 w-8 mr-2"
+                  } overflow-hidden rounded-full`}
+                >
                   <Image
                     src={companyAvatar}
                     alt="Company Avatar"
                     preview={false}
-                    width={32}
-                    height={32}
+                    width={isMobile ? 24 : 32}
+                    height={isMobile ? 24 : 32}
                     className="object-cover"
                   />
                 </div>
-                <span className="text-primary-700 font-medium">
-                  {companyShortName}
-                </span>
+                {!isMobile && (
+                  <span className="text-primary-700 font-medium">
+                    {companyShortName}
+                  </span>
+                )}
               </div>
             </Dropdown>
           )}

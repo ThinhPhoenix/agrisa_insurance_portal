@@ -47,7 +47,7 @@ const CustomerViewModal = ({ visible, onClose, companyData }) => {
             open={visible}
             onCancel={onClose}
             footer={null}
-            width={430}
+            width={425}
             centered
             className="customer-view-modal"
         >

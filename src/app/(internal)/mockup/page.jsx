@@ -10,7 +10,6 @@ import {
     UnorderedListOutlined
 } from "@ant-design/icons";
 import {
-    Avatar,
     Button,
     Card,
     Col,
@@ -93,10 +92,10 @@ export default function CropDataPage() {
     const columns = [
         {
             title: "Ảnh đại diện",
-            dataIndex: "avatar",
-            key: "avatar",
-            width: 80,
-            render: (avatar) => <Avatar src={avatar} size="large" />,
+            dataIndex: "image",
+            key: "image",
+            width: 100,
+            render: (image) => <img src={image} alt="avatar" style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '2px' }} />,
         },
         {
             title: "Tên cây trồng",

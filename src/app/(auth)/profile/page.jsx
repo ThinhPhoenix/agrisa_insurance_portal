@@ -113,7 +113,7 @@ export default function ProfilePage() {
                             <Card className="profile-card mb-6">
                                 {/* Profile Image */}
                                 <div className="mb-6 editable-section relative">
-                                    <div className="w-full h-48 avatar-container rounded-xl mb-4 flex items-center justify-center relative group cursor-pointer overflow-hidden">
+                                    <div className="w-full h-48 avatar-container rounded-md mb-4 flex items-center justify-center relative group cursor-pointer overflow-hidden">
                                         <Image
                                             src="https://www.baovietnhantho.com.vn/storage/8f698cfe-2689-4637-bee7-62e592122dee/c/tap-doan-bao-viet-large.jpg"
                                             alt={company.name}
@@ -136,7 +136,7 @@ export default function ProfilePage() {
 
                                 <div className="text-center mb-4">
                                     <Title level={4} className="text-primary-700 mb-1">{company.name}</Title>
-                                    <Text className="text-secondary-600">{company.slogan}</Text>
+                                    <Text className="text-secondary-900">{company.slogan}</Text>
                                 </div>
 
                                 <Divider className="my-4" />
@@ -145,15 +145,15 @@ export default function ProfilePage() {
                                 <Space direction="vertical" size="small" className="w-full">
                                     <div className="flex items-center">
                                         <Mail size={16} className="text-primary-500 mr-2" />
-                                        <Text className="text-secondary-700">{contact.email}</Text>
+                                        <Text className="text-secondary-900">{contact.email}</Text>
                                     </div>
                                     <div className="flex items-center">
                                         <Phone size={16} className="text-primary-500 mr-2" />
-                                        <Text className="text-secondary-700">{contact.phone}</Text>
+                                        <Text className="text-secondary-900">{contact.phone}</Text>
                                     </div>
                                     <div className="flex items-center">
                                         <MapPin size={16} className="text-primary-500 mr-2" />
-                                        <Text className="text-secondary-700">{contact.headquarters}</Text>
+                                        <Text className="text-secondary-900">{contact.headquarters}</Text>
                                     </div>
                                 </Space>
                             </Card>
@@ -255,13 +255,13 @@ export default function ProfilePage() {
                                                 <Title level={4} className="text-primary-700">GIỚI THIỆU CÔNG TY</Title>
                                                 <Button type="text" shape="circle" icon={<Edit size={14} />} className="edit-btn bg-white shadow-lg hover:bg-gray-50" />
                                             </div>
-                                            <Paragraph className="text-secondary-700 leading-relaxed">
+                                            <Paragraph className="text-secondary-900 leading-relaxed">
                                                 {company.description}
                                             </Paragraph>
-                                            <Paragraph className="text-secondary-700 leading-relaxed">
+                                            <Paragraph className="text-secondary-900 leading-relaxed">
                                                 <Text strong>Sứ mệnh:</Text> {company.mission}
                                             </Paragraph>
-                                            <Paragraph className="text-secondary-700 leading-relaxed">
+                                            <Paragraph className="text-secondary-900 leading-relaxed">
                                                 <Text strong>Cam kết:</Text> {company.commitment}
                                             </Paragraph>
                                         </div>
@@ -314,7 +314,7 @@ export default function ProfilePage() {
                                                             <div className="mb-2"><span className="info-label">Khu vực bảo hiểm:</span></div>
                                                             <div className="flex flex-wrap gap-2">
                                                                 {businessInfo.coverageAreas.map((area, index) => (
-                                                                    <Tag key={index} className="bg-secondary-100 text-secondary-700 border-secondary-300">{area}</Tag>
+                                                                    <Tag key={index} className="bg-secondary-100 text-secondary-900 border-secondary-300">{area}</Tag>
                                                                 ))}
                                                             </div>
                                                         </div>

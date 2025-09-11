@@ -257,7 +257,7 @@ const CustomHeader = ({
             <Button
               type="text"
               icon={<Menu size={18} />}
-              className="text-secondary-600 hover:text-primary-600"
+              className="text-secondary-800 hover:text-primary-800"
               onClick={onMenuClick}
               title="Menu"
             />

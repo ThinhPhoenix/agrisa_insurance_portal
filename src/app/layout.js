@@ -1,6 +1,7 @@
-import AntdConfigProvider from "@/providers/andtd-config-provider";
+import AntdConfigProvider from "@/providers/antd-config-provider";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import AntdStylesProvider from "@/providers/antd-styles-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,10 +14,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AntdConfigProvider>
-          {/* <CustomSidebar /> */}
-          {children}
-        </AntdConfigProvider>
+        <AntdStylesProvider>
+          <AntdConfigProvider>
+            {/* <CustomSidebar /> */}
+            {children}
+          </AntdConfigProvider>
+        </AntdStylesProvider>
       </body>
     </html>
   );

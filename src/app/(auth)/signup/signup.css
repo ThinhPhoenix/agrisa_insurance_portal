@@ -1,47 +1,43 @@
-.signin-main {
+.signup-main {
   @apply flex-1 flex items-center justify-center p-6;
 }
 
-.signin-form-container {
+.signup-form-container {
   @apply w-full max-w-md p-6 backdrop-blur-sm rounded-lg;
 }
 
-.signin-header {
+.signup-header {
   @apply text-center mb-6;
 }
 
-.signin-logo {
+.signup-logo {
   @apply h-12 w-auto mx-auto mb-4 hidden md:hidden lg:hidden sm:block;
 }
 
-.signin-title {
+.signup-title {
   @apply text-primary-900 mb-2;
 }
 
-.signin-subtitle {
+.signup-subtitle {
   @apply text-primary-600;
 }
 
-.signin-google-btn-container {
+.signup-google-btn-container {
   @apply mb-6;
 }
 
-.signin-google-btn {
+.signup-google-btn {
   @apply w-full flex items-center justify-center gap-2 border border-primary-300 rounded-md hover:bg-primary-500 hover:text-secondary-100;
 }
 
-.signin-divider {
+.signup-divider {
   @apply text-primary-400;
 }
 
-.signin-forgot {
-  @apply text-right mb-4 text-sm;
-}
-
-.signin-signup {
+.signup-signin {
   @apply text-center;
 }
 
-.signin-signup-text {
+.signup-signin-text {
   @apply text-primary-600 text-sm;
 }

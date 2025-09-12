@@ -38,6 +38,13 @@ h6 {
 
 .ant-menu-item-selected,
 .ant-menu .ant-menu-item-selected {
-  background-color: var(--color-primary-500) !important;
-  color: var(--color-secondary-300) !important;
+  @apply !bg-primary-500 !text-secondary-300;
+}
+
+a {
+  @apply text-primary-500;
+}
+
+a:hover {
+  @apply text-primary-700 underline;
 }

@@ -21,4 +21,4 @@ ENV BUN_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Start the application using Bun
-CMD ["bun", "run", "start"]
+CMD ["bun", "dev"]

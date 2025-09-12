@@ -1,8 +1,10 @@
 "use client";
 import Assets from "@/assets";
+import { useAuth } from "@/hooks/useAuth";
+import { getErrorMessage } from "@/libs/message/commonMessage";
 import "@/styles/signin.css";
 import { GoogleOutlined, LockOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
-import { Button, Divider, Form, Input, Radio, Typography } from "antd";
+import { Button, Divider, Form, Input, Radio, Typography, message } from "antd";
 import { useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
@@ -11,15 +13,40 @@ const SigninPage = () => {
     const [loginType, setLoginType] = useState('email');
     const [googleIconLoaded, setGoogleIconLoaded] = useState(false);
 
-    // Try to load Google icon on component mount
+    // Use auth hook
+    const { signIn, isLoading } = useAuth();
+
     useEffect(() => {
         const img = new Image();
         img.onload = () => setGoogleIconLoaded(true);
         img.src = "https://www.svgrepo.com/show/303108/google-icon-logo.svg";
     }, []);
 
-    const onFinish = (values) => {
-        console.log('Received values of form: ', values);
+    const onFinish = async (values) => {
+        try {
+            // Call auth hook to handle validation, API and state update
+            const result = await signIn(
+                values.identifier,
+                values.password,
+                loginType
+            );
+
+            if (result.success) {
+                message.success(result.message);
+                // TODO: Redirect to dashboard or home
+                console.log('Login successful:', result.data);
+            } else {
+                // Handle validation errors
+                if (result.errors) {
+                    result.errors.forEach(error => message.error(error.message));
+                } else {
+                    message.error(result.message);
+                }
+            }
+        } catch (error) {
+            message.error(getErrorMessage('GENERIC_ERROR'));
+            console.error('Unexpected error:', error);
+        }
     };
 
     return (
@@ -195,6 +222,7 @@ const SigninPage = () => {
                                     type="primary"
                                     htmlType="submit"
                                     size="large"
+                                    loading={isLoading}
                                     className="w-full rounded-md bg-primary-500 hover:bg-primary-600 transition-all btn-signin"
                                 >
                                     Đăng nhập

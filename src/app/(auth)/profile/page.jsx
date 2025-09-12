@@ -1,7 +1,7 @@
 "use client";
 import Assets from '@/assets';
 import CustomHeader from '@/components/custom-header';
-import '@/styles/profile.css';
+import './profile.css';
 import {
     Button,
     Card,

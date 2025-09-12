@@ -23,7 +23,7 @@ import {
     Target,
     Users
 } from 'lucide-react';
-import '../style/profile.css';
+import '../../../styles/profile.css';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -47,7 +47,7 @@ const CustomerViewModal = ({ visible, onClose, companyData }) => {
             open={visible}
             onCancel={onClose}
             footer={null}
-            width={430}
+            width={425}
             centered
             className="customer-view-modal"
         >

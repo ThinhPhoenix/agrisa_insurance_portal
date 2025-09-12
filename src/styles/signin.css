@@ -1,0 +1,200 @@
+/* T để CSS đây cho dễ nhớ, Nhân Thịnh thấy ko ổn hú t nhé :)) */
+
+/* Custom button hover effect */
+.btn-signin {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-signin:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.btn-signin:hover:after {
+  left: 100%;
+}
+
+/* Input focus styles */
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input:focus,
+.ant-input-focused {
+  box-shadow: 0 0 0 2px rgba(24, 87, 63, 0.2) !important;
+}
+
+/* Animation for form elements */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animated-form-item {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animated-form-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.animated-form-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.animated-form-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Background pattern for the form container */
+.signin-container {
+  background-color: var(--color-secondary-100);
+  background-image: radial-gradient(
+    var(--color-primary-100) 0.5px,
+    transparent 0.5px
+  );
+  background-size: 15px 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  /* No more card styles needed */
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .signin-container {
+    background: var(--color-secondary-100);
+    background-image: linear-gradient(
+        135deg,
+        rgba(24, 87, 63, 0.03) 0%,
+        rgba(247, 232, 171, 0.05) 100%
+      ),
+      radial-gradient(var(--color-primary-100) 0.5px, transparent 0.5px);
+    background-size: 100%, 12px 12px;
+  }
+
+  .mobile-logo {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 80px;
+  }
+}
+
+/* Custom radio inputs like toggle switches */
+.radio-inputs {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  border-radius: 0.5rem;
+  background-color: #eee;
+  box-sizing: border-box;
+  box-shadow: 0 0 0px 1px rgba(0, 0, 0, 0.06);
+  padding: 0.25rem;
+  width: 100%;
+  max-width: 300px;
+  font-size: 14px;
+  margin: 0 auto; /* Center the radio inputs */
+}
+
+.radio-inputs .radio {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.radio-inputs .radio input {
+  display: none;
+}
+
+.radio-inputs .radio .name {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: none;
+  padding: 0.5rem 0;
+  color: rgba(51, 65, 85, 1);
+  transition: all 0.15s ease-in-out;
+  font-weight: 500;
+}
+
+.radio-inputs .radio input:checked + .name {
+  background-color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile responsive styles for title section */
+@media (max-width: 768px) {
+  /* Ensure title section stays centered on mobile */
+  .signin-title-section {
+    text-align: center;
+    width: 100%;
+  }
+
+  /* Reduce title font size on mobile */
+  .signin-title-section .ant-typography h3 {
+    font-size: 20px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Adjust spacing on mobile */
+  .signin-title-section .ant-typography p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Reduce logo size on mobile */
+  .signin-title-section img {
+    height: 60px !important;
+    width: auto;
+  }
+}
+
+/* Google Login Button Styles - Using official Google logo with Ant Design fallback */
+.google-login-btn {
+  position: relative;
+}
+
+.google-login-btn:hover {
+  background-color: var(--color-primary-500) !important;
+  color: var(--color-secondary-200) !important;
+  border-color: var(--color-primary-700) !important;
+}
+
+.google-login-btn .google-logo-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.google-login-btn .google-icon {
+  color: #4285f4 !important;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Ensure Google logo maintains original colors */
+.google-login-btn .google-logo-icon,
+.google-login-btn:hover .google-logo-icon,
+.google-login-btn .google-icon,
+.google-login-btn:hover .google-icon {
+  filter: none !important;
+  opacity: 1 !important;
+}

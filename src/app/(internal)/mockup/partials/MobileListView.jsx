@@ -31,22 +31,26 @@ const MobileListView = ({
                     {filteredData.map(record => (
                         <Card
                             key={record.id}
-                            className="w-full hover:shadow-sm transition-shadow"
-                            bodyStyle={{ padding: '8px' }}
+                            className="w-full hover:shadow-md transition-all duration-200 border-l-4 border-l-primary-500"
+                            bodyStyle={{ padding: '12px' }}
+                            onClick={() => handleView(record)}
                         >
-                            <div className="flex items-center">
-                                <div className="mr-2">
+                            <div className="flex items-start">
+                                <div className="mr-3">
                                     <Avatar
                                         src={record.avatar}
-                                        size={40}
-                                        className="border border-gray-200"
+                                        size={48}
+                                        className="border-2 border-gray-100 shadow-sm"
                                     />
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <h4 className="font-semibold text-sm truncate mr-2">{record.name}</h4>
-                                        <Tag color={getCropTypeColor(record.cropDetails.type)} size="small">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="flex-1 min-w-0 mr-2">
+                                            <h4 className="font-semibold text-base text-gray-900 truncate">{record.name}</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5">@{record.username}</p>
+                                        </div>
+                                        <Tag color={getCropTypeColor(record.cropDetails.type)} className="text-xs">
                                             {record.cropDetails.type}
                                         </Tag>
                                     </div>

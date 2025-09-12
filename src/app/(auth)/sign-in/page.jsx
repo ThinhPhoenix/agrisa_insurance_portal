@@ -1,27 +1,52 @@
 "use client";
 import Assets from "@/assets";
 import { GoogleOutlined } from "@ant-design/icons";
-import { Button, Divider, Typography } from "antd";
+import { Button, Divider, Typography, message } from "antd";
 import CustomForm from "@/components/custom-form";
 import "./signin.css";
 import Link from "next/link";
 import { Lock, LogIn, User } from "lucide-react";
+import { getSignInValidation } from "@/libs/message";
+import { useSignIn } from "@/services/hooks/auth/use-auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const { Title, Text } = Typography;
 
 const SigninPage = () => {
-  const onFinish = (values) => {
-    console.log("Received values of form: ", values);
+  const { signIn, isLoading, error } = useSignIn();
+  const router = useRouter();
+
+  const onFinish = async (values) => {
+    const result = await signIn({
+      identifier: values.identifier,
+      password: values.password,
+    });
+
+    if (result.success) {
+      message.success(result.message);
+      router.push("/");
+    } else {
+      message.error(result.message);
+    }
   };
+
+  useEffect(() => {
+    if (error) {
+      message.error(error);
+    }
+  }, [error]);
 
   const fields = [
     {
-      name: "username",
-      label: "Tên tài khoản",
+      name: "identifier",
+      label: "Email hoặc Số điện thoại",
       type: "input",
-      placeholder: "Tên tài khoản",
+      placeholder: "Email hoặc Số điện thoại",
       startContent: <User size={15} />,
-      rules: [{ required: true, message: "Vui lòng nhập tên tài khoản!" }],
+      rules: [
+        { required: true, message: getSignInValidation("IDENTIFIER_REQUIRED") },
+      ],
     },
     {
       name: "password",
@@ -29,7 +54,9 @@ const SigninPage = () => {
       type: "password",
       startContent: <Lock size={15} />,
       placeholder: "Mật khẩu",
-      rules: [{ required: true, message: "Vui lòng nhập mật khẩu!" }],
+      rules: [
+        { required: true, message: getSignInValidation("PASSWORD_REQUIRED") },
+      ],
     },
     {
       name: "signin",
@@ -38,6 +65,7 @@ const SigninPage = () => {
       isSubmit: true,
       endContent: <LogIn size={15} />,
       buttonText: "Đăng nhập",
+      loading: isLoading,
     },
   ];
 
@@ -63,6 +91,7 @@ const SigninPage = () => {
             type="default"
             icon={<GoogleOutlined />}
             className="signin-google-btn"
+            loading={isLoading}
           >
             Đăng nhập với Google
           </Button>
@@ -88,7 +117,7 @@ const SigninPage = () => {
 
         <div className="signin-signup">
           <div className="signin-signup-text">
-            Chưa có tài khoản? <Link href="/signup">Đăng ký tại đây</Link>
+            Chưa có tài khoản? <Link href="/sign-up">Đăng ký tại đây</Link>
           </div>
         </div>
       </div>

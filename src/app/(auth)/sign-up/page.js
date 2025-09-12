@@ -1,18 +1,38 @@
 "use client";
 import Assets from "@/assets";
 import { GoogleOutlined } from "@ant-design/icons";
-import { Button, Divider, Typography } from "antd";
+import { Button, Divider, Typography, message } from "antd";
 import CustomForm from "@/components/custom-form";
 import "./signup.css";
 import Link from "next/link";
-import { Lock, LogIn, User, Mail, CheckCircle2, Phone } from "lucide-react";
+import { Lock, User, Mail, CheckCircle2, Phone } from "lucide-react";
+import { getRegisterValidation } from "@/libs/message";
+import { useSignUp } from "@/services/hooks/auth/use-auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const { Title, Text } = Typography;
 
 const SignupPage = () => {
-  const onFinish = (values) => {
-    console.log("Received values of form: ", values);
+  const { signUp, isLoading, error } = useSignUp();
+  const router = useRouter();
+
+  const onFinish = async (values) => {
+    const result = await signUp(values);
+
+    if (result.success) {
+      message.success(result.message);
+      router.push("/sign-in");
+    } else {
+      message.error(result.message);
+    }
   };
+
+  useEffect(() => {
+    if (error) {
+      message.error(error);
+    }
+  }, [error]);
 
   const fields = [
     {
@@ -21,7 +41,17 @@ const SignupPage = () => {
       type: "input",
       placeholder: "Tên tài khoản",
       startContent: <User size={15} />,
-      rules: [{ required: true, message: "Vui lòng nhập tên tài khoản!" }],
+      rules: [
+        {
+          required: true,
+          message: getRegisterValidation("FULL_NAME_REQUIRED"),
+        },
+        { min: 3, message: getRegisterValidation("FULL_NAME_INVALID") },
+        {
+          pattern: /^[a-zA-Z\s]+$/,
+          message: getRegisterValidation("FULL_NAME_INVALID"),
+        },
+      ],
     },
     {
       name: "email",
@@ -30,8 +60,8 @@ const SignupPage = () => {
       placeholder: "Email",
       startContent: <Mail size={15} />,
       rules: [
-        { required: true, message: "Vui lòng nhập email!" },
-        { type: "email", message: "Email không hợp lệ!" },
+        { required: true, message: getRegisterValidation("EMAIL_REQUIRED") },
+        { type: "email", message: getRegisterValidation("EMAIL_INVALID") },
       ],
     },
     {
@@ -41,8 +71,11 @@ const SignupPage = () => {
       placeholder: "Số điện thoại",
       startContent: <Phone size={15} />,
       rules: [
-        { required: true, message: "Vui lòng nhập số điện thoại!" },
-        { type: "phone", message: "Số điện thoại không hợp lệ!" },
+        { required: true, message: getRegisterValidation("PHONE_REQUIRED") },
+        {
+          pattern: /^(\+84|0)[3|5|7|8|9][0-9]{8}$/,
+          message: getRegisterValidation("PHONE_INVALID"),
+        },
       ],
     },
     {
@@ -51,7 +84,14 @@ const SignupPage = () => {
       type: "password",
       startContent: <Lock size={15} />,
       placeholder: "Mật khẩu",
-      rules: [{ required: true, message: "Vui lòng nhập mật khẩu!" }],
+      rules: [
+        { required: true, message: getRegisterValidation("PASSWORD_REQUIRED") },
+        { min: 8, message: getRegisterValidation("PASSWORD_TOO_SHORT") },
+        {
+          pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+          message: getRegisterValidation("PASSWORD_TOO_WEAK"),
+        },
+      ],
     },
     {
       name: "confirmPassword",
@@ -60,13 +100,18 @@ const SignupPage = () => {
       startContent: <Lock size={15} />,
       placeholder: "Xác nhận mật khẩu",
       rules: [
-        { required: true, message: "Vui lòng xác nhận mật khẩu!" },
+        {
+          required: true,
+          message: getRegisterValidation("PASSWORD_CONFIRM_REQUIRED"),
+        },
         ({ getFieldValue }) => ({
           validator(_, value) {
             if (!value || getFieldValue("password") === value) {
               return Promise.resolve();
             }
-            return Promise.reject(new Error("Mật khẩu xác nhận không khớp!"));
+            return Promise.reject(
+              new Error(getRegisterValidation("PASSWORD_MISMATCH"))
+            );
           },
         }),
       ],
@@ -77,7 +122,8 @@ const SignupPage = () => {
       variant: "primary",
       isSubmit: true,
       endContent: <CheckCircle2 size={15} />,
-      buttonText: "Đăng ký",
+      buttonText: isLoading ? "Đang đăng ký..." : "Đăng ký",
+      disabled: isLoading,
     },
   ];
 
@@ -103,6 +149,7 @@ const SignupPage = () => {
             type="default"
             icon={<GoogleOutlined />}
             className="signup-google-btn"
+            disabled={isLoading}
           >
             Đăng ký với Google
           </Button>
@@ -124,7 +171,7 @@ const SignupPage = () => {
 
         <div className="signup-signin">
           <div className="signup-signin-text">
-            Đã có tài khoản? <Link href="/signin">Đăng nhập tại đây</Link>
+            Đã có tài khoản? <Link href="/sign-in">Đăng nhập tại đây</Link>
           </div>
         </div>
       </div>

@@ -19,7 +19,7 @@ export {
   getSignInWarning,
   splitAuthMessage,
   splitSignInMessage,
-} from "./authMessages.js";
+} from "./auth-message.js";
 export {
   COMMON_MESSAGES,
   getCommonMessage,
@@ -31,11 +31,11 @@ export {
   getValidationMessage,
   getWarningMessage,
   splitMessage,
-} from "./commonMessage.js";
+} from "./common-message.js";
 
 // Re-export with clearer names for easier usage
-export { SIGNIN_MESSAGES as SignInMessages } from "./authMessages.js";
-export { COMMON_MESSAGES as GeneralMessages } from "./commonMessage.js";
+export { SIGNIN_MESSAGES as SignInMessages } from "./auth-message.js";
+export { COMMON_MESSAGES as GeneralMessages } from "./common-message.js";
 
 // Helper functions để dễ sử dụng hơn
 export const Messages = {

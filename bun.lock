@@ -1,8 +1,8 @@
 {
   "lockfileVersion": 1,
   "workspaces": {
-    "": {
-      "name": "agrisa_admin",
+    "agrisa_insurance_partner": {
+      "name": "agrisa_insurance_partner",
       "dependencies": {
         "antd": "^5.27.1",
         "axios": "^1.11.0",

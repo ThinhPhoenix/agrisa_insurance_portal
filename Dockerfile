@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 3000
 
 # Set environment variables
-ENV NODE_ENV=production
+ENV BUN_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Start the application using Bun

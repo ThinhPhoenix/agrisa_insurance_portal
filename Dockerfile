@@ -1,24 +1,37 @@
-# Use official Bun image
-FROM oven/bun:1
+# ---------------------------
+# Build stage
+# ---------------------------
+FROM oven/bun:1 AS base
 
-# Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package*.json bun.lock ./
+COPY agrisa_insurance_partner/package*.json agrisa_insurance_partner/bun.lock ./
 
-# Install dependencies using Bun
-RUN bun install --frozen-lockfile --production
+# Install all dependencies (include devDependencies for build)
+RUN bun install --frozen-lockfile
 
-# Copy source code
-COPY . .
+# Copy source
+COPY agrisa_insurance_partner .
 
-# Expose port 3000
-EXPOSE 3000
+# Build Next.js app
+RUN bun run build
 
-# Set environment variables
+# ---------------------------
+# Production stage
+# ---------------------------
+FROM oven/bun:1 AS runner
+
+WORKDIR /app
+
+# Copy only built app + node_modules
+COPY --from=base /app ./
+
+# Env vars
 ENV BUN_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
 
-# Start the application using Bun
-CMD ["bun", "dev"]
+EXPOSE 3000
+
+CMD ["bun", "run", "start"]

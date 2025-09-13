@@ -369,7 +369,7 @@ export const CustomForm = forwardRef(function CustomForm(
             <Button
               type={field.variant || "default"}
               size={field.size || "middle"}
-              loading={field.loading || false} // ✅ Loading state for button spinner
+              loading={field.loading || false} // Loading state for button spinner
               disabled={field.disabled || field.loading || false} // Auto-disable when loading
               htmlType={field.isSubmit ? "submit" : "button"}
               onClick={field.isSubmit ? undefined : field.onClick}

@@ -80,8 +80,7 @@ export const COMMON_MESSAGES = {
     EMAIL_INVALID: "Email không hợp lệ!",
     PHONE_INVALID: "Số điện thoại không hợp lệ!",
     USERNAME_TOO_SHORT: "Tên đăng nhập phải có ít nhất {minLength} ký tự!",
-    USERNAME_TOO_LONG:
-      "Tên đăng nhập không được vượt quá {maxLength} ký tự!",
+    USERNAME_TOO_LONG: "Tên đăng nhập không được vượt quá {maxLength} ký tự!",
     CONFIRM_PASSWORD_MISMATCH: "Mật khẩu xác nhận không khớp!",
     IDENTIFIER_MISSING: "Vui lòng nhập email hoặc số điện thoại!",
     PASSWORD_REQUIRED: "Vui lòng nhập mật khẩu!",

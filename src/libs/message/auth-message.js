@@ -37,8 +37,7 @@ export const AUTH_MESSAGES = {
       PHONE_INVALID:
         "Số điện thoại không hợp lệ! (VD: 0987654321 hoặc +84987654321)",
       PASSWORD_TOO_SHORT: "Mật khẩu phải có ít nhất 8 ký tự!",
-      PASSWORD_TOO_WEAK:
-        "Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn!",
+      PASSWORD_TOO_WEAK: "Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn!",
       DATE_OF_BIRTH_INVALID: "Ngày sinh không hợp lệ!",
 
       // Server errors
@@ -102,8 +101,7 @@ export const AUTH_MESSAGES = {
         "Tài khoản chưa được xác thực. Vui lòng xác thực tài khoản trước!",
       ACCOUNT_LOCKED:
         "Tài khoản tạm thời bị khóa do nhiều lần đăng nhập thất bại!",
-      ACCOUNT_SUSPENDED:
-        "Tài khoản đã bị tạm ngừng. Vui lòng liên hệ hỗ trợ!",
+      ACCOUNT_SUSPENDED: "Tài khoản đã bị tạm ngừng. Vui lòng liên hệ hỗ trợ!",
       ACCOUNT_EXPIRED: "Tài khoản đã hết hạn. Vui lòng gia hạn!",
       ACCOUNT_DISABLED: "Tài khoản đã bị vô hiệu hóa!",
 
@@ -139,8 +137,7 @@ export const AUTH_MESSAGES = {
       PHONE_INVALID:
         "Số điện thoại không hợp lệ! (VD: 0987654321 hoặc +84987654321)",
       PASSWORD_TOO_SHORT: "Mật khẩu phải có ít nhất 8 ký tự!",
-      PASSWORD_TOO_WEAK:
-        "Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn!",
+      PASSWORD_TOO_WEAK: "Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn!",
       USERNAME_INVALID: "Tên đăng nhập không hợp lệ!",
       IDENTIFIER_MISSING: "Vui lòng nhập email hoặc số điện thoại!",
     },
@@ -148,8 +145,7 @@ export const AUTH_MESSAGES = {
     INFO: {
       LOGGING_IN: "Đang đăng nhập...",
       LOGOUT_CONFIRM: "Bạn có chắc chắn muốn đăng xuất?",
-      SESSION_REMAINING:
-        "Phiên đăng nhập còn {minutes} phút nữa sẽ hết hạn!",
+      SESSION_REMAINING: "Phiên đăng nhập còn {minutes} phút nữa sẽ hết hạn!",
       PASSWORD_EXPIRING:
         "Mật khẩu sẽ hết hạn trong {days} ngày. Vui lòng đổi mật khẩu!",
       ACCOUNT_LOCK_WARNING:

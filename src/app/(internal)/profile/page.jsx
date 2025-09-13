@@ -1,7 +1,4 @@
 "use client";
-import Assets from '@/assets';
-import CustomHeader from '@/components/custom-header';
-import './profile.css';
 import {
     Button,
     Card,
@@ -33,6 +30,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import CustomerViewModal from '../../../components/layout/profile/CustomerViewModal';
 import mockData from './mockdata.json';
+import './profile.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -77,43 +75,6 @@ export default function ProfilePage() {
 
     return (
         <div className="profile-container">
-            <CustomHeader
-                companyName="Agrisa's IPP"
-                companyLogo={Assets.Agrisa.src}
-                companyAvatar="https://www.baovietnhantho.com.vn/storage/8f698cfe-2689-4637-bee7-62e592122dee/c/tap-doan-bao-viet-large.jpg"
-                companyShortName={company.shortName}
-                notificationCount={3}
-                showBackButton={true}
-                showHomeButton={true}
-                showDashboardButton={true}
-                showNotifications={true}
-                showCompanyInfo={true}
-                showPortalButton={true}
-                customNotifications={[
-                    {
-                        key: "profile-notif1",
-                        label: (
-                            <div className="flex flex-col p-3 hover:bg-gray-50 cursor-pointer">
-                                <div className="font-medium text-sm text-gray-800">Hồ sơ đã được cập nhật</div>
-                                <div className="text-xs text-gray-500 mt-1">Thông tin công ty đã được xác minh</div>
-                                <div className="text-xs text-gray-400 mt-1">5 phút trước</div>
-                            </div>
-                        ),
-                        onClick: () => forceNavigate("/profile"),
-                    },
-                    {
-                        key: "profile-notif2",
-                        label: (
-                            <div className="flex flex-col p-3 hover:bg-gray-50 cursor-pointer">
-                                <div className="font-medium text-sm text-gray-800">Yêu cầu bảo hiểm mới</div>
-                                <div className="text-xs text-gray-500 mt-1">Có 3 yêu cầu bảo hiểm chờ duyệt</div>
-                                <div className="text-xs text-gray-400 mt-1">1 giờ trước</div>
-                            </div>
-                        ),
-                        onClick: () => forceNavigate("/#"),
-                    },
-                ]}
-            />
             <div className="max-w-8xl mx-auto p-4">
                 {/* Main Content */}
                 <Row gutter={24}>

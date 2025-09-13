@@ -9,8 +9,7 @@ WORKDIR /app
 COPY agrisa_insurance_partner/package*.json agrisa_insurance_partner/bun.lock ./
 
 # Install all dependencies (include devDependencies for build)
-RUN bun install --frozen-lockfile
-
+RUN bun install
 # Copy source
 COPY agrisa_insurance_partner .
 

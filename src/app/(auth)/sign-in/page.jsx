@@ -1,20 +1,19 @@
 "use client";
 import Assets from "@/assets";
-import { GoogleOutlined } from "@ant-design/icons";
-import { Button, Divider, Typography, message } from "antd";
 import CustomForm from "@/components/custom-form";
-import "./signin.css";
-import Link from "next/link";
-import { Lock, LogIn, User } from "lucide-react";
 import { getSignInValidation } from "@/libs/message";
 import { useSignIn } from "@/services/hooks/auth/use-auth";
+import { GoogleOutlined } from "@ant-design/icons";
+import { Button, Divider, Typography, message } from "antd";
+import { Lock, LogIn, User } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import "./signin.css";
 
 const { Title, Text } = Typography;
 
 const SigninPage = () => {
-  const { signIn, isLoading, error } = useSignIn();
+  const { signIn, isLoading } = useSignIn();
   const router = useRouter();
 
   const onFinish = async (values) => {
@@ -30,12 +29,6 @@ const SigninPage = () => {
       message.error(result.message);
     }
   };
-
-  useEffect(() => {
-    if (error) {
-      message.error(error);
-    }
-  }, [error]);
 
   const fields = [
     {

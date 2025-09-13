@@ -1,5 +1,6 @@
 "use client";
 
+import '@/app/(internal)/profile/profile.css';
 import {
     Card,
     Col,
@@ -23,7 +24,6 @@ import {
     Target,
     Users
 } from 'lucide-react';
-import '../../../app/(auth)/profile/profile.css';
 
 const { Title, Text, Paragraph } = Typography;
 

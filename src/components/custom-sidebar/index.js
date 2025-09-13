@@ -81,13 +81,11 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
     >
       <div
         className={`flex items-center py-2 ${
-          collapsed ? "justify-center" : ""
+          collapsed ? "justify-center" : "pl-5 pr-4"
         }`}
       >
         <button
-          className={`toggle p-2 hover:bg-secondary- cursor-pointer transition-colors ${
-            collapsed ? "" : "ml-5"
-          }`}
+          className={`toggle p-2 hover:bg-secondary- cursor-pointer transition-colors`}
           onClick={() => setCollapsed(!collapsed)}
         >
           <PanelLeft size={16} />
@@ -112,7 +110,7 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
         items={items}
         inlineCollapsed={collapsed}
         className={`${
-          collapsed ? "w-16" : "w-64"
+          collapsed ? "w-16 custom-menu-collapsed" : "w-64"
         } !border-none transition-all duration-300`}
       />
     </section>

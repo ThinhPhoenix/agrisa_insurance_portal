@@ -48,3 +48,54 @@ a {
 a:hover {
   @apply text-primary-700 underline;
 }
+
+/* Custom sidebar styles */
+.custom-menu-collapsed .ant-menu-item {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 64px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.custom-menu-collapsed .ant-menu-submenu-title {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 64px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.custom-menu-collapsed .ant-menu-item-group-title {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 64px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  background: transparent !important;
+}
+
+.custom-menu-collapsed .ant-menu-item-icon {
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.custom-menu-collapsed .ant-menu-item::after {
+  display: none !important;
+}
+
+.custom-menu-collapsed .ant-menu-title-content {
+  display: none !important;
+}
+
+.custom-menu-collapsed .ant-menu-submenu-arrow {
+  display: none !important;
+}

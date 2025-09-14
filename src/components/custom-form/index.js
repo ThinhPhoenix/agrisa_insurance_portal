@@ -20,7 +20,6 @@ const { RangePicker } = DatePicker;
 
 export const CustomForm = forwardRef(function CustomForm(
   {
-    title,
     fields,
     initialValues,
     onSubmit,
@@ -361,7 +360,7 @@ export const CustomForm = forwardRef(function CustomForm(
             name={field.name}
             rules={rules}
             style={{
-              gridColumn: field.gridColumn || "1 / -1",
+              gridColumn: field.gridColumn, // Remove default "1 / -1" to allow button to fit in grid
               ...(field.itemStyle ?? {}),
             }}
             className={field.itemClassName ?? field.className}
@@ -579,21 +578,6 @@ export const CustomForm = forwardRef(function CustomForm(
           content: none !important;
         }
       `}</style>
-      {title && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#06498B",
-            fontSize: "24px",
-            fontWeight: "bold",
-          }}
-        >
-          {title}
-        </div>
-      )}
-
       <Form
         form={form}
         layout="vertical"

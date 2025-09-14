@@ -1,7 +1,15 @@
 "use client";
 import Assets from "@/assets";
 import { Menu } from "antd";
-import { AppWindow, Mail, PanelLeft, Settings } from "lucide-react";
+import {
+  AppWindow,
+  Mail,
+  PanelLeft,
+  Settings,
+  ArrowRightToLine,
+  ArrowLeftToLine,
+} from "lucide-react";
+import { useState } from "react"; // Add this import for state
 const items = [
   {
     key: "sub1",
@@ -70,9 +78,24 @@ const items = [
   },
 ];
 const CustomSidebar = ({ collapsed, setCollapsed }) => {
+  const [hoverIcon, setHoverIcon] = useState(<PanelLeft size={16} />); // State for the icon
+
   const onClick = (e) => {
     console.log("click ", e);
   };
+
+  const handleMouseEnter = () => {
+    if (collapsed) {
+      setHoverIcon(<ArrowRightToLine size={16} />);
+    } else {
+      setHoverIcon(<ArrowLeftToLine size={16} />);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoverIcon(<PanelLeft size={16} />);
+  };
+
   return (
     <section
       className={`h-screen overflow-y-auto bg-secondary-100 border-r overflow-x-hidden transition-all duration-300 ${
@@ -83,10 +106,12 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
         <button
           className={`toggle ${
             collapsed ? "p-1" : "p-2"
-          } hover:bg-black/10 rounded-lg cursor-pointer transition-colors`}
+          } hover:bg-black/5 rounded-lg cursor-pointer transition-colors`}
           onClick={() => setCollapsed(!collapsed)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
-          <PanelLeft size={16} />
+          {hoverIcon} {/* Render the dynamic icon */}
         </button>
         <div className="flex items-center gap-1">
           <img

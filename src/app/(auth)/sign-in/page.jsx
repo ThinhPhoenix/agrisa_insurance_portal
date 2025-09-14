@@ -3,8 +3,7 @@ import Assets from "@/assets";
 import CustomForm from "@/components/custom-form";
 import { getSignInValidation } from "@/libs/message";
 import { useSignIn } from "@/services/hooks/auth/use-auth";
-import { GoogleOutlined } from "@ant-design/icons";
-import { Button, Divider, Typography, message } from "antd";
+import {  Typography, message } from "antd";
 import { Lock, LogIn, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -79,7 +78,7 @@ const SigninPage = () => {
           </Text>
         </div>
 
-        <div className="signin-google-btn-container">
+        {/* <div className="signin-google-btn-container">
           <Button
             type="default"
             icon={<GoogleOutlined />}
@@ -90,13 +89,12 @@ const SigninPage = () => {
           </Button>
         </div>
 
-        <Divider className="signin-divider">hoặc đăng nhập với</Divider>
+        <Divider className="signin-divider">hoặc đăng nhập với</Divider> */}
 
         <CustomForm
           fields={fields}
           onSubmit={onFinish}
           gridColumns="1fr"
-          labelPlacement="left"
           formStyle={{
             background: "transparent",
             padding: 0,
@@ -108,11 +106,11 @@ const SigninPage = () => {
           <Link href="/forgot-password">Quên mật khẩu?</Link>
         </div>
 
-        <div className="signin-signup">
+        {/* <div className="signin-signup">
           <div className="signin-signup-text">
             Chưa có tài khoản? <Link href="/sign-up">Đăng ký tại đây</Link>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

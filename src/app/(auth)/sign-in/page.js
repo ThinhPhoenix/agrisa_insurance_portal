@@ -3,7 +3,7 @@ import Assets from "@/assets";
 import CustomForm from "@/components/custom-form";
 import { getSignInValidation } from "@/libs/message";
 import { useSignIn } from "@/services/hooks/auth/use-auth";
-import {  Typography, message } from "antd";
+import { Typography, message } from "antd";
 import { Lock, LogIn, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,12 +21,13 @@ const SigninPage = () => {
       password: values.password,
     });
 
-    if (result.success) {
-      message.success(result.message);
-      router.push("/");
-    } else {
-      message.error(result.message);
-    }
+    // if (result.success) {
+    //   message.success(result.message);
+    //   router.push("/");
+    // } else {
+    //   message.error(result.message);
+    // }
+    router.push("/dummy");
   };
 
   const fields = [
@@ -35,7 +36,7 @@ const SigninPage = () => {
       label: "Email hoặc Số điện thoại",
       type: "input",
       placeholder: "Email hoặc Số điện thoại",
-      startContent: <User size={15} />,
+      startContent: <User size={14} />,
       rules: [
         { required: true, message: getSignInValidation("IDENTIFIER_REQUIRED") },
       ],
@@ -44,7 +45,7 @@ const SigninPage = () => {
       name: "password",
       label: "Mật khẩu",
       type: "password",
-      startContent: <Lock size={15} />,
+      startContent: <Lock size={14} />,
       placeholder: "Mật khẩu",
       rules: [
         { required: true, message: getSignInValidation("PASSWORD_REQUIRED") },
@@ -55,7 +56,7 @@ const SigninPage = () => {
       type: "button",
       variant: "primary",
       isSubmit: true,
-      endContent: <LogIn size={15} />,
+      endContent: <LogIn size={14} />,
       buttonText: "Đăng nhập",
       loading: isLoading,
     },
@@ -71,7 +72,7 @@ const SigninPage = () => {
             className="signin-logo"
           />
           <Title level={3} className="signin-title">
-            Chào mừng bạn trở lại Agrisa
+            Cổng thông tin đối tác bảo hiểm
           </Title>
           <Text className="signin-subtitle">
             Đăng nhập để tiếp tục sử dụng dịch vụ

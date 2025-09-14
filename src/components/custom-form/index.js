@@ -366,7 +366,7 @@ export const CustomForm = forwardRef(function CustomForm(
             className={field.itemClassName ?? field.className}
           >
             <Button
-              type={field.variant || "default"}
+              type={field.variant || "primary"}
               size={field.size || "middle"}
               loading={field.loading || false} // Loading state for button spinner
               disabled={field.disabled || field.loading || false} // Auto-disable when loading
@@ -542,6 +542,61 @@ export const CustomForm = forwardRef(function CustomForm(
             </Radio.Group>
           </Form.Item>
         );
+      case "combobox":
+        return (
+          <Form.Item
+            key={field.name}
+            label={field.label}
+            name={field.name}
+            rules={rules}
+            style={{
+              gridColumn: field.gridColumn,
+              ...(field.itemStyle ?? field.style),
+            }}
+            className={field.itemClassName ?? field.className}
+          >
+            <Select
+              mode="combobox"
+              placeholder={field.placeholder}
+              style={field.inputStyle ?? field.style}
+              className={field.className}
+              disabled={field.disabled}
+              showSearch={field.showSearch !== false}
+              allowClear={field.allowClear !== false}
+              loading={field.loading}
+              filterOption={
+                field.filterOption ||
+                ((input, option) =>
+                  option.children.toLowerCase().includes(input.toLowerCase()))
+              }
+              onChange={(value) => {
+                field?.onChange && field.onChange(value, form);
+              }}
+              onSearch={(value) => {
+                field?.onSearch && field.onSearch(value);
+              }}
+              notFoundContent={
+                field?.loading ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      padding: "12px 0",
+                    }}
+                  >
+                    <Spin size="small" />
+                  </div>
+                ) : null
+              }
+            >
+              {field.options?.map((option) => (
+                <Option key={option.value} value={option.value}>
+                  {option.label}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        );
       default:
         return null;
     }
@@ -587,9 +642,6 @@ export const CustomForm = forwardRef(function CustomForm(
           maxWidth: "2400px",
           width: "100%",
           margin: "0 auto",
-          background: "#fff",
-          padding: "24px",
-          borderRadius: "6px",
           position: "relative",
           ...formStyle,
         }}

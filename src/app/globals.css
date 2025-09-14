@@ -99,3 +99,7 @@ a:hover {
 .custom-menu-collapsed .ant-menu-submenu-arrow {
   display: none !important;
 }
+
+.ant-table-tbody > tr.ant-table-row-selected > td {
+  background-color: var(--color-primary-200) !important; /* Light blue selection */
+}

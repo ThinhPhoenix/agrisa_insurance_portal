@@ -16,7 +16,6 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <AntdStylesProvider>
           <AntdConfigProvider>
-            {/* <CustomSidebar /> */}
             {children}
           </AntdConfigProvider>
         </AntdStylesProvider>

@@ -79,13 +79,11 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
         collapsed ? "w-16" : "w-64"
       }`}
     >
-      <div
-        className={`flex items-center py-2 ${
-          collapsed ? "justify-center" : "pl-5 pr-4"
-        }`}
-      >
+      <div className="flex items-center py-2 pl-5 pr-4">
         <button
-          className={`toggle p-2 hover:bg-secondary- cursor-pointer transition-colors`}
+          className={`toggle ${
+            collapsed ? "p-1" : "p-2"
+          } hover:bg-black/10 rounded-lg cursor-pointer transition-colors`}
           onClick={() => setCollapsed(!collapsed)}
         >
           <PanelLeft size={16} />
@@ -93,10 +91,12 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
         <div className="flex items-center gap-1">
           <img
             src={Assets.Agrisa.src}
-            className={`w-8 h-8 ${collapsed ? "hidden" : ""}`}
+            className={`w-8 h-8 ${collapsed ? "hidden" : ""} transition-none`}
           />
           <h1
-            className={`text-primary-500 text-xl ${collapsed ? "hidden" : ""}`}
+            className={`text-primary-500 text-xl whitespace-nowrap ${
+              collapsed ? "hidden" : ""
+            } transition-none`}
           >
             Agrisa's IPP
           </h1>

@@ -1,8 +1,12 @@
+"use client"
+
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 export default function HomePage() {
-  return (
-    <div>
-      <h1>Chào mừng các nhà bảo hiểm tài ba đến với Agrisa</h1>
-      <a href="/mockup"> Chưa làm gì hết xem đỡ trang này kkkkkk</a>
-    </div>
-  );
+  const router = useRouter();
+  
+  useEffect(() => {
+    router.replace("/sign-in");
+  }, [router]);
 }

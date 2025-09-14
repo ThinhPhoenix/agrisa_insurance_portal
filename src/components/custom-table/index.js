@@ -20,7 +20,7 @@ const CustomTable = ({
         dataSource={dataSource}
         columns={columns}
         scroll={scroll ?? { x: "100%" }}
-        tableLayout="fixed"
+        tableLayout="auto"
         pagination={
           pagination
             ? {

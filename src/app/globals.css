@@ -103,3 +103,19 @@ a:hover {
 .ant-table-tbody > tr.ant-table-row-selected > td {
   background-color: var(--color-primary-200) !important; /* Light blue selection */
 }
+
+.ant-table-tbody > tr > td,
+.ant-table-thead > tr > th,
+.ant-table-cell {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.ant-table {
+  table-layout: auto !important;
+}
+
+.ant-table-wrapper {
+  overflow: auto !important;
+}

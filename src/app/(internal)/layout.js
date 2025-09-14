@@ -1,5 +1,4 @@
 "use client";
-import Assets from "@/assets";
 import CustomHeader from "@/components/custom-header";
 import CustomSidebar from "@/components/custom-sidebar";
 import { useState } from "react";
@@ -38,7 +37,7 @@ export default function InternalLayoutFlexbox({ children }) {
         </div>
 
         {/* Content */}
-        <main className="flex-1 p-4 overflow-auto bg-gray-50">{children}</main>
+        <main className="flex-1 p-4 overflow-auto bg-white">{children}</main>
       </div>
     </div>
   );

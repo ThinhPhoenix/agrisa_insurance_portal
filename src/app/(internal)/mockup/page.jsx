@@ -11,9 +11,7 @@ import {
     SearchOutlined,
 } from "@ant-design/icons";
 import { Button, Collapse, Layout, Popconfirm, Space, Tag, Typography } from "antd";
-import CropDetailsModal from "./partials/CropDetailsModal";
-import CropFormDrawer from "./partials/CropFormDrawer";
-import { formatYield, getCropTypeColor, getWaterRequirementColor, useCropDataManagement } from "./usecase/mockupUseCase";
+import { formatYield, getCropTypeColor, getWaterRequirementColor, useCropDataManagement } from "./hooks/mockup";
 
 const { Title } = Typography;
 
@@ -43,6 +41,9 @@ export default function CropDataPage() {
         applyFilters,
         closeDrawer,
         closeDetailsModal,
+        navigateToDetail,
+        navigateToCreate,
+        navigateToEdit,
 
         // Data
         filterOptions,
@@ -148,7 +149,7 @@ export default function CropDataPage() {
                             borderColor: '#91caff',
                             color: '#0958d9'
                         }}
-                        onClick={() => handleView(record)}
+                        onClick={() => navigateToDetail(record.id)}
                     >
                         <EyeOutlined style={{ fontSize: 14 }} />
                     </Button>
@@ -160,7 +161,7 @@ export default function CropDataPage() {
                             borderColor: '#ffd591',
                             color: '#d46b08'
                         }}
-                        onClick={() => handleEdit(record)}
+                        onClick={() => navigateToEdit(record.id)}
                     >
                         <EditOutlined style={{ fontSize: 14 }} />
                     </Button>
@@ -242,6 +243,7 @@ export default function CropDataPage() {
             variant: "primary",
             buttonText: "Thêm cây trồng",
             startContent: <PlusOutlined size={14} />,
+            onClick: navigateToCreate,
         },
     ];
 
@@ -290,24 +292,6 @@ export default function CropDataPage() {
                     />
                 </div>
             </Space>
-
-            {/* Modals and Drawers */}
-            <CropDetailsModal
-                visible={detailsModalVisible}
-                data={detailsRecord}
-                onClose={closeDetailsModal}
-            />
-
-            <CropFormDrawer
-                visible={isDrawerVisible}
-                title={drawerTitle}
-                mode={drawerMode}
-                formRef={formRef}
-                initialValues={currentRecord}
-                onClose={closeDrawer}
-                onSubmit={handleFormSubmit}
-            />
-
             {contextHolder}
         </Layout.Content>
     );

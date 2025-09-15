@@ -1,11 +1,13 @@
-// Project thật cần để global để nhiều trang sử dụng
-//Hook dùng cho 1 trang
+//TRang fake de hook day mot xoa het
 
+import { getErrorMessage, getSuccessMessage } from "@/libs/message";
 import { message } from "antd";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import testData from "../testdata.json";
 
 export const useCropDataManagement = () => {
+  const router = useRouter();
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,12 +88,25 @@ export const useCropDataManagement = () => {
     setDetailsModalVisible(true);
   };
 
+  // Navigation functions for CRUD pages
+  const navigateToDetail = (id) => {
+    router.push(`/mockup/${id}`);
+  };
+
+  const navigateToCreate = () => {
+    router.push("/mockup/create");
+  };
+
+  const navigateToEdit = (id) => {
+    router.push(`/mockup/edit/${id}`);
+  };
+
   const handleDelete = (id) => {
     // In a real app, this would call an API
     const newData = data.filter((item) => item.id !== id);
     setData(newData);
     setFilteredData(filteredData.filter((item) => item.id !== id));
-    messageApi.success("Đã xóa cây trồng thành công!");
+    messageApi.success(getSuccessMessage("DELETE_SUCCESS"));
   };
 
   const handleFormSubmit = (values) => {
@@ -134,7 +149,7 @@ export const useCropDataManagement = () => {
     const updatedData = [...data, newRecord];
     setData(updatedData);
     setFilteredData([...filteredData, newRecord]);
-    messageApi.success("Đã thêm cây trồng thành công!");
+    messageApi.success(getSuccessMessage("CREATE_SUCCESS"));
   };
 
   const updateCropRecord = (values) => {
@@ -189,7 +204,7 @@ export const useCropDataManagement = () => {
     });
 
     setFilteredData(updatedFilteredData);
-    messageApi.success("Đã cập nhật cây trồng thành công!");
+    messageApi.success(getSuccessMessage("UPDATE_SUCCESS"));
   };
 
   const applyFilters = (searchValue, currentFilters) => {
@@ -271,6 +286,11 @@ export const useCropDataManagement = () => {
     closeDrawer,
     closeDetailsModal,
 
+    // Navigation functions
+    navigateToDetail,
+    navigateToCreate,
+    navigateToEdit,
+
     // Data
     filterOptions: testData.filterOptions,
   };
@@ -303,5 +323,149 @@ export const formatYield = (yieldValue) => {
 };
 
 export const formatDate = (dateString) => {
+  if (!dateString) return "Chưa có thông tin";
   return new Date(dateString).toLocaleDateString("vi-VN");
+};
+
+export const useCropDetail = (id) => {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [cropData, setCropData] = useState(null);
+  const [messageApi, contextHolder] = message.useMessage();
+
+  useEffect(() => {
+    if (id) {
+      loadCropData();
+    }
+  }, [id]);
+
+  const loadCropData = async () => {
+    try {
+      setLoading(true);
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const crop = testData.data.find((item) => item.id === id);
+      if (crop) {
+        setCropData(crop);
+      } else {
+        messageApi.error(getErrorMessage("NOT_FOUND"));
+        router.push("/mockup");
+      }
+    } catch (error) {
+      messageApi.error(getErrorMessage("GENERIC_ERROR"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    cropData,
+    contextHolder,
+    loadCropData, // In case manual reload is needed
+  };
+};
+
+export const useCreateCrop = () => {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
+
+  const handleSubmit = async (values) => {
+    try {
+      setLoading(true);
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // In a real application, you would send this data to your backend
+      console.log("Creating new crop with data:", values);
+
+      messageApi.success(getSuccessMessage("CREATE_SUCCESS"));
+
+      // Redirect to the list page after successful creation
+      setTimeout(() => {
+        router.push("/mockup");
+      }, 1500);
+    } catch (error) {
+      messageApi.error(getErrorMessage("GENERIC_ERROR"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    contextHolder,
+    handleSubmit,
+    filterOptions: testData.filterOptions,
+  };
+};
+
+export const useEditCrop = (id) => {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [cropData, setCropData] = useState(null);
+  const [messageApi, contextHolder] = message.useMessage();
+
+  useEffect(() => {
+    if (id) {
+      loadCropData();
+    }
+  }, [id]);
+
+  const loadCropData = async () => {
+    try {
+      setLoading(true);
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const crop = testData.data.find((item) => item.id === id);
+      if (crop) {
+        setCropData(crop);
+      } else {
+        messageApi.error(getErrorMessage("NOT_FOUND"));
+        router.push("/mockup");
+      }
+    } catch (error) {
+      messageApi.error(getErrorMessage("GENERIC_ERROR"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (values) => {
+    try {
+      setSaving(true);
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // In a real application, you would send this data to your backend
+      console.log("Updating crop with data:", values);
+
+      messageApi.success(getSuccessMessage("UPDATE_SUCCESS"));
+
+      // Redirect to the detail page after successful update
+      setTimeout(() => {
+        router.push(`/mockup/${id}`);
+      }, 1500);
+    } catch (error) {
+      messageApi.error(getErrorMessage("GENERIC_ERROR"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return {
+    loading,
+    saving,
+    cropData,
+    contextHolder,
+    handleSubmit,
+    loadCropData, // In case manual reload is needed
+    filterOptions: testData.filterOptions,
+  };
 };

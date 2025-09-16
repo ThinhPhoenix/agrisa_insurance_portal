@@ -116,26 +116,6 @@ export default function EditCropPage({ params }) {
                 { required: true, message: "Vui lòng chọn nhu cầu nước!" },
             ],
         },
-        {
-            name: "submit",
-            label: " ",
-            type: "button",
-            variant: "primary",
-            buttonText: "Cập nhật",
-            startContent: <SaveOutlined />,
-            isSubmit: true,
-            loading: saving,
-            gridColumn: "span 2",
-        },
-        {
-            name: "cancel",
-            label: " ",
-            type: "button",
-            variant: "default",
-            buttonText: "Hủy",
-            onClick: handleBack,
-            gridColumn: "span 2",
-        },
     ];
 
     // Prepare initial values for the form
@@ -199,10 +179,42 @@ export default function EditCropPage({ params }) {
                         fields={formFields}
                         initialValues={initialValues}
                         onSubmit={handleSubmit}
-                        gridColumns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
+                        gridColumns="repeat(3, 1fr)"
                         gap="16px"
                         layout="vertical"
                     />
+
+                    {/* Action Buttons */}
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: "12px",
+                        marginTop: "24px"
+                    }}>
+                        <Button
+                            variant="default"
+                            onClick={handleBack}
+                            style={{ width: "150px" }}
+                        >
+                            Hủy
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<SaveOutlined />}
+                            loading={saving}
+                            onClick={() => {
+                                // Submit form programmatically
+                                const form = document.querySelector('form');
+                                if (form) {
+                                    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                                    form.dispatchEvent(submitEvent);
+                                }
+                            }}
+                            style={{ width: "150px" }}
+                        >
+                            Cập nhật
+                        </Button>
+                    </div>
                 </Card>
             </Space>
             {contextHolder}

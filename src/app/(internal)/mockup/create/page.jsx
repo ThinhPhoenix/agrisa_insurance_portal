@@ -116,26 +116,6 @@ export default function CreateCropPage() {
                 { required: true, message: "Vui lòng chọn nhu cầu nước!" },
             ],
         },
-        {
-            name: "submit",
-            label: " ",
-            type: "button",
-            variant: "primary",
-            buttonText: "Tạo cây trồng",
-            startContent: <SaveOutlined />,
-            isSubmit: true,
-            loading: loading,
-            gridColumn: "span 2",
-        },
-        {
-            name: "cancel",
-            label: " ",
-            type: "button",
-            variant: "default",
-            buttonText: "Hủy",
-            onClick: handleBack,
-            gridColumn: "span 2",
-        },
     ];
 
     return (
@@ -168,10 +148,42 @@ export default function CreateCropPage() {
                     <CustomForm
                         fields={formFields}
                         onSubmit={handleSubmit}
-                        gridColumns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
+                        gridColumns="repeat(3, 1fr)"
                         gap="16px"
                         layout="vertical"
                     />
+
+                    {/* Action Buttons */}
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: "12px",
+                        marginTop: "24px"
+                    }}>
+                        <Button
+                            variant="default"
+                            onClick={handleBack}
+                            style={{ width: "150px" }}
+                        >
+                            Hủy
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<SaveOutlined />}
+                            loading={loading}
+                            onClick={() => {
+                                // Submit form programmatically
+                                const form = document.querySelector('form');
+                                if (form) {
+                                    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                                    form.dispatchEvent(submitEvent);
+                                }
+                            }}
+                            style={{ width: "150px" }}
+                        >
+                            Tạo cây trồng
+                        </Button>
+                    </div>
                 </Card>
             </Space>
             {contextHolder}

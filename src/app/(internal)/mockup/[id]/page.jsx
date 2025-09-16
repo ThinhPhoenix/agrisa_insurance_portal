@@ -2,7 +2,7 @@
 
 
 import { ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Card, Layout, Space, Spin, Tag, Typography } from "antd";
+import { Button, Card, Image, Layout, Space, Spin, Tag, Typography } from "antd";
 import { useRouter } from "next/navigation";
 import { formatDate, getCropTypeColor, getWaterRequirementColor, useCropDetail } from "../hooks/mockup";
 
@@ -104,7 +104,7 @@ export default function CropDetailPage({ params }) {
     }
 
     return (
-        <Layout.Content style={{ padding: '24px' }}>
+        <Layout.Content style={{ padding: '8px' }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 {/* Header */}
                 <Space direction="vertical" style={{ width: '100%' }}>
@@ -139,44 +139,55 @@ export default function CropDetailPage({ params }) {
                 </Space>
 
                 {/* Detail Information */}
-                <Card>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-                        {/* Avatar */}
-                        <div style={{ gridColumn: 'span 1', textAlign: 'center' }}>
-                            <img
+                <Card title="Thông tin chi tiết cây trồng">
+                    <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+                        {/* Avatar Section */}
+                        <div style={{ flex: '0 0 280px', textAlign: 'center' }}>
+                            <Image
                                 src={cropData.avatar}
                                 alt={cropData.name}
+                                width={280}
+                                height={320}
                                 style={{
-                                    width: '200px',
-                                    height: '250px',
                                     objectFit: 'cover',
                                     borderRadius: '8px',
                                     border: '1px solid #f0f0f0',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                                 }}
+                                preview={{
+                                    mask: 'Xem ảnh',
+                                    maskClassName: 'custom-mask'
+                                }}
                             />
                         </div>
 
-                        {/* Information Grid */}
-                        <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                            {detailItems.map((item, index) => (
-                                <div key={index} style={{ gridColumn: `span ${item.span}` }}>
-                                    <div style={{ marginBottom: '8px' }}>
-                                        <Text strong style={{ color: '#666', fontSize: '14px' }}>
-                                            {item.label}
-                                        </Text>
-                                    </div>
-                                    <div>
-                                        {item.render ? (
-                                            item.render(item.value)
-                                        ) : (
-                                            <Text style={{ fontSize: '16px', color: '#333' }}>
-                                                {item.value || 'Chưa có thông tin'}
+                        {/* Information Section */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+                                {detailItems.map((item, index) => (
+                                    <div key={index} style={{
+                                        gridColumn: item.span === 2 ? '1 / -1' : 'auto',
+                                        padding: '8px 14px',
+                                        borderRadius: '3px',
+                                        border: '1px solid #f0f0f0'
+                                    }}>
+                                        <div style={{ marginBottom: '6px' }}>
+                                            <Text strong style={{ color: '#666', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                {item.label}
                                             </Text>
-                                        )}
+                                        </div>
+                                        <div>
+                                            {item.render ? (
+                                                item.render(item.value)
+                                            ) : (
+                                                <Text style={{ fontSize: '15px', color: '#333', fontWeight: '500' }}>
+                                                    {item.value || 'Chưa có thông tin'}
+                                                </Text>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </Card>

@@ -52,25 +52,6 @@ export default function CropDataPage() {
     // Filter columns with table's built-in filters
     const columns = [
         {
-            title: "Ảnh đại diện",
-            dataIndex: "avatar",
-            key: "avatar",
-            width: 100,
-            render: (avatar) => (
-                <img
-                    src={avatar}
-                    alt="crop"
-                    style={{
-                        width: '60px',
-                        height: '80px',
-                        objectFit: 'cover',
-                        borderRadius: '4px',
-                        border: '1px solid #f0f0f0'
-                    }}
-                />
-            ),
-        },
-        {
             title: "Tên cây trồng",
             dataIndex: "name",
             key: "name",
@@ -236,27 +217,32 @@ export default function CropDataPage() {
             buttonText: "Xóa bộ lọc",
             startContent: <FilterOutlined size={14} />,
         },
-        {
-            name: "add",
-            label: " ",
-            type: "button",
-            variant: "primary",
-            buttonText: "Thêm cây trồng",
-            startContent: <PlusOutlined size={14} />,
-            onClick: navigateToCreate,
-        },
     ];
 
     return (
         <Layout.Content style={{ padding: '24px' }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 <Space direction="vertical" style={{ width: '100%' }}>
-                    <Title level={3} style={{ marginBottom: 4 }}>
-                        Quản lý dữ liệu cây trồng
-                    </Title>
-                    <Typography.Text type="secondary">
-                        Tổng số: <Typography.Text strong>{filteredData.length}</Typography.Text> cây trồng
-                    </Typography.Text>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <Title level={3} style={{ marginBottom: 4 }}>
+                                Quản lý dữ liệu cây trồng
+                            </Title>
+                            <Typography.Text type="secondary">
+                                Tổng số: <Typography.Text strong>{filteredData.length}</Typography.Text> cây trồng
+                            </Typography.Text>
+                        </div>
+
+                        {/* create button */}
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={navigateToCreate}
+                            size="middle"
+                        >
+                            Thêm cây trồng
+                        </Button>
+                    </div>
                 </Space>
 
                 <Collapse

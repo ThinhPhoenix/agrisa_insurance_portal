@@ -2,16 +2,23 @@
 import Assets from "@/assets";
 import { Menu } from "antd";
 import {
-  PanelLeft,
-  ArrowRightToLine,
   ArrowLeftToLine,
+  ArrowRightToLine,
   CreditCard,
-  Users,
+  FileText,
+  PanelLeft,
   Shield,
+  Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react"; // Add this import for state
 
 const items = [
+  {
+    key: "applications", //key here should match the route
+    label: "Đơn đăng ký đang chờ",
+    icon: <FileText size={16} />,
+  },
   {
     key: "payment",
     label: "Quản lý thanh toán",
@@ -30,11 +37,12 @@ const items = [
 ];
 
 const CustomSidebar = ({ collapsed, setCollapsed }) => {
+  const router = useRouter();
   // store a key for which icon to show: 'panel' | 'right' | 'left'
   const [hoverIcon, setHoverIcon] = useState("panel");
-
   const onClick = (e) => {
     console.log("click ", e);
+    router.push(`/${e.key}`);
   };
 
   const handleMouseEnter = () => {

@@ -6,6 +6,7 @@ import { useApplications } from "@/services/hooks/applications/use-applications"
 import { EyeOutlined, FilterOutlined, SearchOutlined } from "@ant-design/icons";
 import { Button, Collapse, Layout, Select, Space, Tag, Typography } from "antd";
 import { useRouter } from "next/navigation";
+import "./applications.css";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -170,18 +171,12 @@ export default function PendingApplicationsPage() {
   ];
 
   return (
-    <Layout.Content style={{ padding: "24px" }}>
-      <Space direction="vertical" size="large" style={{ width: "100%" }}>
-        <Space direction="vertical" style={{ width: "100%" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-            }}
-          >
+    <Layout.Content className="applications-content">
+      <Space direction="vertical" size="large" className="applications-space">
+        <Space direction="vertical" className="applications-space">
+          <div className="applications-header">
             <div>
-              <Title level={3} style={{ marginBottom: 4 }}>
+              <Title level={3} className="applications-title">
                 Đơn đăng ký bảo hiểm đang chờ xử lý
               </Title>
               <Typography.Text type="secondary">
@@ -216,7 +211,7 @@ export default function PendingApplicationsPage() {
           ]}
         />
 
-        <div style={{ overflowX: "auto" }}>
+        <div className="applications-overflow">
           <CustomTable
             dataSource={filteredData}
             columns={columns}

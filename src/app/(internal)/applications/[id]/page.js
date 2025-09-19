@@ -144,24 +144,6 @@ export default function PendingApplicationDetailPage() {
     }
   };
 
-  const getStatusText = (status) => {
-    console.log("Status value:", status); // Debug log
-    switch (status) {
-      case "approved":
-        return "Đã phê duyệt";
-      case "rejected":
-        return "Đã từ chối";
-      case "awaiting_assessment":
-        return "Đang chờ đánh giá";
-      case "under_assessment":
-        return "Đang được đánh giá";
-      case "pending":
-        return "Đang chờ xử lý";
-      default:
-        return status;
-    }
-  };
-
   const getRiskText = (riskLevel) => {
     switch (riskLevel) {
       case "Low":
@@ -202,105 +184,113 @@ export default function PendingApplicationDetailPage() {
     <div className="application-main">
       <Title level={2}>Chi tiết đơn đăng ký: {application.id}</Title>
 
+      {/* Thông tin cơ bản - Full width */}
       <Row gutter={16} className="application-row">
-        <Col xs={24} lg={14} className="application-col-left">
-          <Card
-            title="Thông tin cơ bản"
-            className="application-card-basic"
-            bodyStyle={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div className="application-farmer-info">
-              <Avatar
-                size={48}
-                src={application.farmer_photo}
-                alt={`Ảnh của ${application.farmer_name}`}
-                className="application-avatar"
-              />
-              <div>
-                <div className="application-farmer-name">
-                  {application.farmer_name}
+        <Col xs={24} className="application-col-full">
+          <Card title="Thông tin cơ bản" className="application-card-basic">
+            <Row gutter={24}>
+              <Col xs={24} lg={12}>
+                <div className="application-farmer-info">
+                  <Avatar
+                    size={48}
+                    src={application.farmer_photo}
+                    alt={`Ảnh của ${application.farmer_name}`}
+                    className="application-avatar"
+                  />
+                  <div>
+                    <div className="application-farmer-name">
+                      {application.farmer_name}
+                    </div>
+                    <div className="application-farmer-id">
+                      Mã: {application.id}
+                    </div>
+                  </div>
                 </div>
-                <div className="application-farmer-id">
-                  Mã: {application.id}
-                </div>
-              </div>
-            </div>
-            <Descriptions column={2} size="small">
-              <Descriptions.Item label="Loại cây trồng">
-                {application.crop_type}
-              </Descriptions.Item>
-              <Descriptions.Item label="Diện tích">
-                {application.area} ha
-              </Descriptions.Item>
-              <Descriptions.Item label="Vị trí">
-                {application.region}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày gửi">
-                {new Date(application.submission_date).toLocaleDateString(
-                  "vi-VN"
-                )}
-              </Descriptions.Item>
-              <Descriptions.Item label="Số tiền bảo hiểm" span={2}>
-                {application.insured_amount.toLocaleString()} VND
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái" span={2}>
-                <Tag color={getStatusColor(application.status)}>
-                  {application.status === "awaiting_assessment"
-                    ? "Đang chờ đánh giá"
-                    : application.status === "under_assessment"
-                    ? "Đang được đánh giá"
-                    : application.status === "approved"
-                    ? "Đã phê duyệt"
-                    : application.status === "rejected"
-                    ? "Đã từ chối"
-                    : application.status === "pending"
-                    ? "Đang chờ xử lý"
-                    : application.status}
-                </Tag>
-              </Descriptions.Item>
-            </Descriptions>
-
-            {/* Vị trí trang trại */}
-            <Divider orientation="left" className="application-divider">
-              <EnvironmentOutlined /> Vị trí trang trại
-            </Divider>
-
-            <div className="application-farm-location">
-              {application.farm_location_map && (
-                <Button
-                  type="link"
-                  icon={<EnvironmentOutlined />}
-                  onClick={() =>
-                    window.open(application.farm_location_map, "_blank")
-                  }
-                  className="application-map-btn"
+                <Descriptions
+                  column={1}
                   size="small"
+                  className="application-descriptions"
                 >
-                  Xem bản đồ vị trí
-                </Button>
-              )}
+                  <Descriptions.Item label="Loại cây trồng">
+                    {application.crop_type}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Diện tích">
+                    {application.area} ha
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Vị trí">
+                    {application.region}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày gửi">
+                    {new Date(application.submission_date).toLocaleDateString(
+                      "vi-VN"
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Số tiền bảo hiểm">
+                    {application.insured_amount.toLocaleString()} VND
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Trạng thái">
+                    <Tag color={getStatusColor(application.status)}>
+                      {application.status === "awaiting_assessment"
+                        ? "Đang chờ đánh giá"
+                        : application.status === "under_assessment"
+                        ? "Đang được đánh giá"
+                        : application.status === "approved"
+                        ? "Đã phê duyệt"
+                        : application.status === "rejected"
+                        ? "Đã từ chối"
+                        : application.status === "pending"
+                        ? "Đang chờ xử lý"
+                        : application.status}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Tọa độ GPS">
+                    {application.gps_coordinates && (
+                      <div
+                        className="application-gps-container"
+                        style={{ display: "block" }}
+                      >
+                        {application.gps_coordinates.map((coord, index) => (
+                          <span key={index} className="application-gps-coord">
+                            [{coord[0]}, {coord[1]}]
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </Descriptions.Item>
+                </Descriptions>
+              </Col>
+              <Col xs={24} lg={12}>
+                {/* Vị trí trang trại */}
+                <Divider orientation="left" className="application-divider">
+                  <EnvironmentOutlined /> Vị trí trang trại
+                </Divider>
 
-              {application.gps_coordinates && (
-                <div className="application-gps-container">
-                  <Text strong className="application-gps-label">
-                    GPS:{" "}
-                  </Text>
-                  {application.gps_coordinates.map((coord, index) => (
-                    <span key={index} className="application-gps-coord">
-                      [{coord[0]}, {coord[1]}]
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+                <Space
+                  direction="vertical"
+                  size="middle"
+                  className="application-farm-location"
+                >
+                  {/* Google Maps Embed */}
+                  <div className="application-map-container">
+                    <iframe
+                      src={application.farm_location_map}
+                      className="application-map-iframe"
+                      allowFullScreen=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Vị trí trang trại"
+                    />
+                  </div>
+                </Space>
+              </Col>
+            </Row>
           </Card>
         </Col>
-        <Col xs={24} lg={10} className="application-col-right">
+      </Row>
+
+      {/* Đánh giá rủi ro và Dữ liệu vệ tinh - Horizontal layout */}
+      <Row gutter={16} className="application-row">
+        <Col xs={24} lg={12}>
           <Card title="Đánh giá rủi ro" className="application-card-risk">
             <Descriptions column={1}>
               <Descriptions.Item label="Điểm rủi ro">
@@ -316,6 +306,8 @@ export default function PendingApplicationDetailPage() {
               </Descriptions.Item>
             </Descriptions>
           </Card>
+        </Col>
+        <Col xs={24} lg={12}>
           {satelliteData && (
             <Card
               title="Dữ liệu vệ tinh"

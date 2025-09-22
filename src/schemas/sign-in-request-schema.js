@@ -5,7 +5,7 @@ const {
 } = require("../libs/message");
 
 const signInRequestSchema = z.object({
-  identifier: z
+  email: z
     .string()
     .min(1, getSignInValidation("IDENTIFIER_REQUIRED"))
     .refine((val) => {

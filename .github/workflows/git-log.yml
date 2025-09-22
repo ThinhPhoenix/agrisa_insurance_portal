@@ -9,8 +9,8 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
+            Thằng ${{ github.actor }} vừa đẩy code lên
             Repository: ${{ github.repository }}
             Event: ${{ github.event_name }}
             Nhánh: ${{ github.ref }}
             Commit: ${{ github.sha }}
-            Actor: ${{ github.actor }}

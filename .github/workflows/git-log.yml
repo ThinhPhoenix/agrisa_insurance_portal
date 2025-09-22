@@ -8,9 +8,9 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          parse_mode: "HTML"
+          parse_mode: "Markdown"
           message: |
-            Thằng <b>${{ github.actor }}</b> vừa đẩy code lên
+            Thằng *${{ github.actor }}* vừa đẩy code lên
             Repository: ${{ github.repository }}
             Event: ${{ github.event_name }}
             Nhánh: ${{ github.ref }}

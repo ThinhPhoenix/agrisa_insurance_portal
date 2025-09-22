@@ -10,7 +10,7 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           parse_mode: "Markdown"
           message: |
-            Thằng *${{ github.actor }}* vừa đẩy code lên
+            Thằng **${{ github.actor }}** vừa đẩy code lên
             Repository: ${{ github.repository }}
             Event: ${{ github.event_name }}
             Nhánh: ${{ github.ref }}

@@ -9,7 +9,8 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            🔔 Git Alert
             Repository: ${{ github.repository }}
             Event: ${{ github.event_name }}
-            Branch: ${{ github.ref }}
+            Nhánh: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+            Actor: ${{ github.actor }}

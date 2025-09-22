@@ -1,0 +1,15 @@
+name: Telegram Notification
+on: [push, pull_request]
+jobs:
+  telegram:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            🔔 Git Alert
+            Repository: ${{ github.repository }}
+            Event: ${{ github.event_name }}
+            Branch: ${{ github.ref }}

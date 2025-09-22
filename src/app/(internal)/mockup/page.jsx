@@ -11,9 +11,7 @@ import {
     SearchOutlined,
 } from "@ant-design/icons";
 import { Button, Collapse, Layout, Popconfirm, Space, Tag, Typography } from "antd";
-import CropDetailsModal from "./partials/CropDetailsModal";
-import CropFormDrawer from "./partials/CropFormDrawer";
-import { formatYield, getCropTypeColor, getWaterRequirementColor, useCropDataManagement } from "./usecase/mockupUseCase";
+import { formatYield, getCropTypeColor, getWaterRequirementColor, useCropDataManagement } from "./hooks/mockup";
 
 const { Title } = Typography;
 
@@ -43,6 +41,9 @@ export default function CropDataPage() {
         applyFilters,
         closeDrawer,
         closeDetailsModal,
+        navigateToDetail,
+        navigateToCreate,
+        navigateToEdit,
 
         // Data
         filterOptions,
@@ -50,25 +51,6 @@ export default function CropDataPage() {
 
     // Filter columns with table's built-in filters
     const columns = [
-        {
-            title: "Ảnh đại diện",
-            dataIndex: "avatar",
-            key: "avatar",
-            width: 100,
-            render: (avatar) => (
-                <img
-                    src={avatar}
-                    alt="crop"
-                    style={{
-                        width: '60px',
-                        height: '80px',
-                        objectFit: 'cover',
-                        borderRadius: '4px',
-                        border: '1px solid #f0f0f0'
-                    }}
-                />
-            ),
-        },
         {
             title: "Tên cây trồng",
             dataIndex: "name",
@@ -148,7 +130,7 @@ export default function CropDataPage() {
                             borderColor: '#91caff',
                             color: '#0958d9'
                         }}
-                        onClick={() => handleView(record)}
+                        onClick={() => navigateToDetail(record.id)}
                     >
                         <EyeOutlined style={{ fontSize: 14 }} />
                     </Button>
@@ -160,7 +142,7 @@ export default function CropDataPage() {
                             borderColor: '#ffd591',
                             color: '#d46b08'
                         }}
-                        onClick={() => handleEdit(record)}
+                        onClick={() => navigateToEdit(record.id)}
                     >
                         <EditOutlined style={{ fontSize: 14 }} />
                     </Button>
@@ -235,26 +217,32 @@ export default function CropDataPage() {
             buttonText: "Xóa bộ lọc",
             startContent: <FilterOutlined size={14} />,
         },
-        {
-            name: "add",
-            label: " ",
-            type: "button",
-            variant: "primary",
-            buttonText: "Thêm cây trồng",
-            startContent: <PlusOutlined size={14} />,
-        },
     ];
 
     return (
         <Layout.Content style={{ padding: '24px' }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 <Space direction="vertical" style={{ width: '100%' }}>
-                    <Title level={3} style={{ marginBottom: 4 }}>
-                        Quản lý dữ liệu cây trồng
-                    </Title>
-                    <Typography.Text type="secondary">
-                        Tổng số: <Typography.Text strong>{filteredData.length}</Typography.Text> cây trồng
-                    </Typography.Text>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <Title level={3} style={{ marginBottom: 4 }}>
+                                Quản lý dữ liệu cây trồng
+                            </Title>
+                            <Typography.Text type="secondary">
+                                Tổng số: <Typography.Text strong>{filteredData.length}</Typography.Text> cây trồng
+                            </Typography.Text>
+                        </div>
+
+                        {/* create button */}
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={navigateToCreate}
+                            size="middle"
+                        >
+                            Thêm cây trồng
+                        </Button>
+                    </div>
                 </Space>
 
                 <Collapse
@@ -290,24 +278,6 @@ export default function CropDataPage() {
                     />
                 </div>
             </Space>
-
-            {/* Modals and Drawers */}
-            <CropDetailsModal
-                visible={detailsModalVisible}
-                data={detailsRecord}
-                onClose={closeDetailsModal}
-            />
-
-            <CropFormDrawer
-                visible={isDrawerVisible}
-                title={drawerTitle}
-                mode={drawerMode}
-                formRef={formRef}
-                initialValues={currentRecord}
-                onClose={closeDrawer}
-                onSubmit={handleFormSubmit}
-            />
-
             {contextHolder}
         </Layout.Content>
     );

@@ -3,7 +3,7 @@ import Assets from "@/assets";
 import CustomForm from "@/components/custom-form";
 import { getSignInValidation } from "@/libs/message";
 import { useSignIn } from "@/services/hooks/auth/use-auth";
-import { Typography, message } from "antd";
+import { Typography } from "antd";
 import { Lock, LogIn, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ const SigninPage = () => {
 
   const onFinish = async (values) => {
     const result = await signIn({
-      identifier: values.identifier,
+      email: values.email,
       password: values.password,
     });
 
@@ -32,7 +32,7 @@ const SigninPage = () => {
 
   const fields = [
     {
-      name: "identifier",
+      name: "email",
       label: "Email hoặc Số điện thoại",
       type: "input",
       placeholder: "Email hoặc Số điện thoại",

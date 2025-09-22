@@ -1,17 +1,17 @@
-import { useState, useCallback } from "react";
 import axiosInstance from "@/libs/axios-instance";
+import {
+  getErrorMessage,
+  getRegisterSuccess,
+  getRegisterValidation,
+  getSignInError,
+  getSignInSuccess,
+  getSignInValidation,
+} from "@/libs/message";
 import signInRequestSchema from "@/schemas/sign-in-request-schema";
 import signUpRequestSchema from "@/schemas/sign-up-request-schema";
 import { endpoints } from "@/services/endpoints";
 import { useAuthStore } from "@/stores/auth-store";
-import {
-  getErrorMessage,
-  getSignInError,
-  getSignInSuccess,
-  getSignInValidation,
-  getRegisterSuccess,
-  getRegisterValidation,
-} from "@/libs/message";
+import { useCallback, useState } from "react";
 
 const handleError = (error) => {
   return error.response?.data?.message || getErrorMessage("GENERIC_ERROR");
@@ -43,10 +43,18 @@ export const useSignIn = () => {
       setError(null);
 
       try {
-        const response = await axiosInstance.post(
-          endpoints.auth.sign_in,
-          validation.data
-        );
+        console.log("🚀 Calling API:", endpoints.auth.sign_in);
+        console.log("📤 Request data:", {
+          email: validation.data.email,
+          password: validation.data.password,
+        });
+
+        const response = await axiosInstance.post(endpoints.auth.sign_in, {
+          email: validation.data.email,
+          password: validation.data.password,
+        });
+
+        console.log("📥 Response:", response.data);
 
         if (response.data.success) {
           setUser(response.data.data);
@@ -61,6 +69,8 @@ export const useSignIn = () => {
           );
         }
       } catch (error) {
+        console.error("❌ API Error:", error);
+        console.error("❌ Error response:", error.response?.data);
         const errorMessage = handleError(error);
         setError(errorMessage);
         setStoreError(errorMessage);

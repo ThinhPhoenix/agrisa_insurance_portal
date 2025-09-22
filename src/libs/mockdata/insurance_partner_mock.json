@@ -1,0 +1,905 @@
+{
+  "success": true,
+  "data": {
+    "authentication_access_management": {
+      "description": "Quản lý truy cập và tài khoản",
+      "secure_login": [
+        {
+          "id": "AUTH-001",
+          "partner_id": "ONB-001",
+          "username": "admin@vnagrins.com.vn",
+          "description": "Tài khoản quản trị viên chính",
+          "authentication_method": "multi_factor",
+          "last_login": "2024-09-08T08:30:00Z",
+          "login_attempts": 0,
+          "account_status": "active",
+          "session_timeout": 3600,
+          "permissions": [
+            "full_access",
+            "admin_rights",
+            "financial_operations"
+          ],
+          "profile_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        },
+        {
+          "id": "AUTH-002",
+          "partner_id": "ONB-001",
+          "username": "underwriter@vnagrins.com.vn",
+          "description": "Chuyên viên bảo lãnh",
+          "authentication_method": "password_otp",
+          "last_login": "2024-09-08T09:15:00Z",
+          "login_attempts": 0,
+          "account_status": "active",
+          "session_timeout": 7200,
+          "permissions": ["underwriting", "policy_review", "claims_assessment"],
+          "profile_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "partner_portal_access": [
+        {
+          "id": "PORTAL-001",
+          "partner_id": "ONB-001",
+          "portal_url": "https://partner.agrisa.vn/vnagrins",
+          "description": "Cổng thông tin đối tác chính",
+          "access_level": "premium",
+          "features_enabled": [
+            "dashboard",
+            "analytics",
+            "real_time_monitoring",
+            "api_access"
+          ],
+          "customization": {
+            "theme": "corporate_blue",
+            "logo_url": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "banner_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          }
+        }
+      ],
+      "user_role_assignment": [
+        {
+          "id": "ROLE-001",
+          "partner_id": "ONB-001",
+          "user_id": "AUTH-001",
+          "role_name": "Partner Administrator",
+          "description": "Quản trị viên đối tác với quyền truy cập đầy đủ",
+          "permissions": {
+            "partner_management": true,
+            "underwriting": true,
+            "claims_processing": true,
+            "financial_operations": true,
+            "reporting": true,
+            "user_management": true
+          },
+          "role_icon": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        },
+        {
+          "id": "ROLE-002",
+          "partner_id": "ONB-001",
+          "user_id": "AUTH-002",
+          "role_name": "Underwriter",
+          "description": "Chuyên viên bảo lãnh và đánh giá rủi ro",
+          "permissions": {
+            "partner_management": false,
+            "underwriting": true,
+            "claims_processing": true,
+            "financial_operations": false,
+            "reporting": true,
+            "user_management": false
+          },
+          "role_icon": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ]
+    },
+    "partner_management": {
+      "description": "Quản lý đối tác và cấu hình",
+      "platform_onboarding": [
+        {
+          "id": "ONB-001",
+          "partner_name": "Công ty Bảo hiểm Nông nghiệp Việt Nam",
+          "description": "Đối tác bảo hiểm nông nghiệp hàng đầu Việt Nam",
+          "status": "completed",
+          "onboarding_date": "2024-08-15T09:00:00Z",
+          "license_number": "INS-VN-2024-001",
+          "business_type": "agricultural_insurance",
+          "contact_person": "Nguyễn Văn An",
+          "phone": "+84-28-3855-1234",
+          "email": "lienhe@vnagrins.com.vn",
+          "company_logo": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "license_document": "/documents/licenses/INS-VN-2024-001.pdf",
+          "onboarding_progress": {
+            "documentation": 100,
+            "verification": 100,
+            "system_integration": 100,
+            "testing": 100
+          }
+        },
+        {
+          "id": "ONB-002",
+          "partner_name": "Bảo hiểm Đồng bằng Sông Cửu Long",
+          "description": "Công ty bảo hiểm chuyên về vùng ĐBSCL",
+          "status": "in_progress",
+          "onboarding_date": "2024-09-01T10:30:00Z",
+          "license_number": "INS-VN-2024-002",
+          "business_type": "agricultural_insurance",
+          "contact_person": "Trần Thị Bình",
+          "phone": "+84-292-3876-5432",
+          "email": "thongtin@mekonginsure.vn",
+          "company_logo": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "license_document": "/documents/licenses/INS-VN-2024-002.pdf",
+          "onboarding_progress": {
+            "documentation": 100,
+            "verification": 85,
+            "system_integration": 60,
+            "testing": 0
+          }
+        }
+      ],
+      "portal_configuration": [
+        {
+          "id": "CONFIG-001",
+          "partner_id": "ONB-001",
+          "access_level": "full_access",
+          "description": "Cấu hình truy cập đầy đủ cho đối tác VIP",
+          "dashboard_layout": "advanced",
+          "notification_settings": {
+            "email_alerts": true,
+            "sms_alerts": false,
+            "push_notifications": true,
+            "notification_sound": "/sounds/notification_bell.mp3"
+          },
+          "preferred_language": "vi",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "theme_customization": {
+            "primary_color": "#1890ff",
+            "secondary_color": "#52c41a",
+            "background_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          }
+        }
+      ],
+      "underwriting_criteria": [
+        {
+          "id": "UC-001",
+          "partner_id": "ONB-001",
+          "crop_type": "lúa nước",
+          "description": "Tiêu chí bảo lãnh cho cây lúa",
+          "region": "mekong_delta",
+          "min_insured_area": 0.5,
+          "max_insured_area": 100.0,
+          "risk_threshold": 0.75,
+          "approval_threshold": 50000000,
+          "auto_approval_limit": 10000000,
+          "crop_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "region_map": "https://maps.app.goo.gl/H5WeMbs6FfQR52tj6"
+        },
+        {
+          "id": "UC-002",
+          "partner_id": "ONB-001",
+          "crop_type": "cà phê",
+          "description": "Tiêu chí bảo lãnh cho cây cà phê",
+          "region": "central_highlands",
+          "min_insured_area": 0.2,
+          "max_insured_area": 50.0,
+          "risk_threshold": 0.8,
+          "approval_threshold": 100000000,
+          "auto_approval_limit": 20000000,
+          "crop_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "region_map": "https://maps.app.goo.gl/H5WeMbs6FfQR52tj6"
+        }
+      ],
+      "premium_rate_setup": [
+        {
+          "id": "PR-001",
+          "partner_id": "ONB-001",
+          "crop_type": "lúa nước",
+          "description": "Tỷ lệ phí bảo hiểm cho cây lúa",
+          "base_rate": 0.035,
+          "risk_factor": 1.2,
+          "seasonal_adjustment": 0.05,
+          "regional_adjustment": {
+            "mekong_delta": 1.0,
+            "red_river_delta": 1.1,
+            "central_coast": 1.3
+          },
+          "rate_chart_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        },
+        {
+          "id": "PR-002",
+          "partner_id": "ONB-001",
+          "crop_type": "cà phê",
+          "description": "Tỷ lệ phí bảo hiểm cho cây cà phê",
+          "base_rate": 0.045,
+          "risk_factor": 1.4,
+          "seasonal_adjustment": 0.08,
+          "regional_adjustment": {
+            "central_highlands": 1.0,
+            "southeast": 1.2
+          },
+          "rate_chart_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "trigger_parameter_configuration": [
+        {
+          "id": "TP-001",
+          "partner_id": "ONB-001",
+          "crop_type": "lúa nước",
+          "description": "Cấu hình tham số kích hoạt cho cây lúa",
+          "weather_indices": {
+            "min_rainfall": 200,
+            "max_rainfall": 2000,
+            "min_temperature": 18,
+            "max_temperature": 35
+          },
+          "soil_indices": {
+            "min_moisture": 0.3,
+            "min_ph": 5.5,
+            "max_ph": 7.0
+          },
+          "vegetation_indices": {
+            "min_ndvi": 0.4,
+            "max_ndvi": 0.9
+          },
+          "parameter_visualization": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ]
+    },
+    "underwriting_workflows": {
+      "description": "Quy trình bảo lãnh",
+      "pending_applications": [
+        {
+          "id": "APP-001",
+          "farmer_id": "ND-0001",
+          "farmer_name": "Lê Văn Cường",
+          "description": "Đơn đăng ký bảo hiểm lúa vùng An Giang",
+          "crop_type": "lúa nước",
+          "area": 2.5,
+          "region": "An Giang",
+          "insured_amount": 75000000,
+          "submission_date": "2024-09-01T14:30:00Z",
+          "status": "awaiting_assessment",
+          "risk_score": 0.65,
+          "risk_level": "Medium",
+          "risk_summary": "Rủi ro trung bình do vùng có lịch sử lũ lụt thấp",
+          "notes": "Vùng có lịch sử lũ lụt thấp",
+          "farmer_photo": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "farm_location_map": "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d874.4471484719429!2d106.58258464116646!3d10.689725128845188!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3175330067e0c013%3A0xaa2a34250957e5b5!2zVUJORCBYw6MgVMOibiBOaOG7sXQ!5e1!3m2!1svi!2s!4v1758254727380!5m2!1svi!2s",
+          "gps_coordinates": [
+            [10.5, 105.1],
+            [10.6, 105.2],
+            [10.4, 105.0],
+            [10.5, 105.1]
+          ],
+          "application_documents": [
+            "/documents/applications/APP-001_form.pdf",
+            "/documents/applications/APP-001_land_certificate.pdf"
+          ],
+          "land_use_certificate_images": [
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          ],
+          "land_images": [
+            "https://external-preview.redd.it/Z3AoSYd0lMvins0SV_gt99qHbu2nLTkUGh5CMBhy28E.jpg?auto=webp&s=7ff397141e46f77d97fcf80354d99c885b21a0f5",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          ]
+        },
+        {
+          "id": "APP-002",
+          "farmer_id": "ND-0002",
+          "farmer_name": "Nguyễn Thị Mai",
+          "description": "Đơn đăng ký bảo hiểm cà phê Đak Lak",
+          "crop_type": "cà phê",
+          "area": 1.2,
+          "region": "Đak Lak",
+          "insured_amount": 45000000,
+          "submission_date": "2024-09-02T09:15:00Z",
+          "status": "under_assessment",
+          "risk_score": 0.72,
+          "risk_level": "Medium",
+          "risk_summary": "Rủi ro trung bình do vùng có khả năng hạn hán cao",
+          "notes": "Vùng có khả năng hạn hán cao",
+          "farmer_photo": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "farm_location_map": "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d874.4471484719429!2d106.58258464116646!3d10.689725128845188!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3175330067e0c013%3A0xaa2a34250957e5b5!2zVUJORCBYw6MgVMOibiBOaOG7sXQ!5e1!3m2!1svi!2s!4v1758254727380!5m2!1svi!2s",
+          "gps_coordinates": [
+            [12.7, 108.0],
+            [12.8, 108.1],
+            [12.6, 107.9],
+            [12.7, 108.0]
+          ],
+          "application_documents": [
+            "/documents/applications/APP-002_form.pdf",
+            "/documents/applications/APP-002_land_certificate.pdf"
+          ],
+          "land_use_certificate_images": [
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          ],
+          "land_images": [
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          ]
+        }
+      ],
+      "satellite_evidence_assessment": [
+        {
+          "id": "SAT-001",
+          "application_id": "APP-001",
+          "description": "Đánh giá bằng chứng vệ tinh cho đơn APP-001",
+          "capture_date": "2024-08-30T02:00:00Z",
+          "ndvi_index": 0.75,
+          "crop_health_status": "good",
+          "cloud_coverage": 15,
+          "actual_area": 2.48,
+          "location_verified": true,
+          "notes": "Cây trồng phát triển tốt, không có dấu hiệu bệnh hại",
+          "satellite_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "ndvi_map": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "analysis_report": "/reports/satellite/SAT-001_analysis.pdf"
+        },
+        {
+          "id": "SAT-002",
+          "application_id": "APP-002",
+          "description": "Đánh giá bằng chứng vệ tinh cho đơn APP-002",
+          "capture_date": "2024-08-31T02:00:00Z",
+          "ndvi_index": 0.68,
+          "crop_health_status": "average",
+          "cloud_coverage": 25,
+          "actual_area": 1.18,
+          "location_verified": true,
+          "notes": "Một số khu vực có dấu hiệu thiếu nước",
+          "satellite_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "ndvi_map": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+          "analysis_report": "/reports/satellite/SAT-002_analysis.pdf"
+        }
+      ],
+      "detailed_farm_analysis": [
+        {
+          "id": "FA-001",
+          "application_id": "APP-001",
+          "description": "Phân tích nông trại chi tiết cho đơn APP-001",
+          "crop_health": {
+            "average_ndvi": 0.75,
+            "coverage_rate": 95,
+            "disease_signs": false,
+            "growth_stage": "flowering"
+          },
+          "soil_conditions": {
+            "soil_type": "alluvial",
+            "moisture": 0.68,
+            "ph_level": 6.2,
+            "quality": "good"
+          },
+          "weather_model": {
+            "average_temperature": 28.5,
+            "humidity": 82,
+            "rainfall_30days": 145,
+            "weather_forecast": "favorable"
+          },
+          "analysis_images": [
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          ],
+          "time_series_data": {
+            "dates": ["2024-08-01", "2024-08-15", "2024-08-30", "2024-09-08"],
+            "ndvi_values": [0.7, 0.73, 0.75, 0.78],
+            "soil_moisture_values": [0.65, 0.67, 0.68, 0.72],
+            "temperature_values": [27.5, 28.0, 28.5, 29.2],
+            "rainfall_values": [120, 135, 145, 150]
+          }
+        }
+      ],
+      "approval_rejection_decisions": [
+        {
+          "id": "DEC-001",
+          "application_id": "APP-001",
+          "decision": "approved",
+          "description": "Quyết định phê duyệt đơn APP-001",
+          "approver": "Trần Văn Tú",
+          "approval_date": "2024-09-08T14:30:00Z",
+          "status": "approved",
+          "premium_rate_applied": 0.035,
+          "coverage_terms": "Bảo hiểm thiệt hại do thời tiết (hạn hán, lũ lụt), không bao gồm chiến tranh, hạt nhân hoặc hành động cố ý. Mức khấu trừ 5% cho thiệt hại dưới 20%.",
+          "payment_method": "bank_transfer",
+          "bank_info": {
+            "bank_name": "Ngân hàng Nông nghiệp và Phát triển Nông thôn",
+            "account_number": "****5678",
+            "account_holder": "Lê Văn Cường"
+          },
+          "approval_certificate": "/documents/approvals/DEC-001_certificate.pdf",
+          "approver_signature": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        },
+        {
+          "id": "DEC-002",
+          "application_id": "APP-003",
+          "decision": "rejected",
+          "description": "Quyết định từ chối đơn APP-003",
+          "approver": "Lê Thị Hoa",
+          "approval_date": "2024-09-04T11:20:00Z",
+          "reason": "Vùng trồng có rủi ro lũ lụt quá cao, không đáp ứng tiêu chí bảo lãnh",
+          "improvement_suggestions": "Cần có biện pháp thoát nước tốt hơn",
+          "rejection_letter": "/documents/rejections/DEC-002_letter.pdf"
+        }
+      ],
+      "underwriting_decision_log": [
+        {
+          "id": "AUD-001",
+          "claim_id": "CLM-001",
+          "description": "Nhật ký kiểm toán cho yêu cầu CLM-001",
+          "activities": [
+            {
+              "timestamp": "2024-09-07T15:30:00Z",
+              "action": "automatic_damage_detection",
+              "performer": "AI_System",
+              "details": "Phát hiện giảm NDVI 42.3%",
+              "evidence_image": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+            },
+            {
+              "timestamp": "2024-09-08T10:00:00Z",
+              "action": "manual_verification",
+              "performer": "Phạm Văn Khải",
+              "details": "Xác minh qua ảnh vệ tinh và dữ liệu thời tiết",
+              "verification_report": "/reports/verification/manual_ver_001.pdf"
+            },
+            {
+              "timestamp": "2024-09-08T14:30:00Z",
+              "action": "payment_approval",
+              "performer": "Trần Văn Tú",
+              "details": "Phê duyệt thanh toán 46,312,500 VNĐ",
+              "approval_document": "/documents/payments/payment_approval_001.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    "policy_management": {
+      "description": "Quản lý chính sách và theo dõi",
+      "active_policies": [
+        {
+          "id": "POL-001",
+          "farmer_id": "ND-0001",
+          "contract_number": "BH-2024-0001",
+          "description": "Hợp đồng bảo hiểm lúa cho nông dân Lê Văn Cường",
+          "crop_type": "lúa nước",
+          "insured_area": 2.5,
+          "insured_amount": 75000000,
+          "premium": 2625000,
+          "start_date": "2024-09-05T00:00:00Z",
+          "end_date": "2025-02-28T23:59:59Z",
+          "status": "active",
+          "real_time_monitoring": {
+            "current_ndvi": 0.78,
+            "temperature": 29.2,
+            "soil_moisture": 0.72,
+            "last_update": "2024-09-08T08:00:00Z"
+          },
+          "policy_document": "/documents/policies/POL-001_contract.pdf",
+          "monitoring_dashboard": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        },
+        {
+          "id": "POL-002",
+          "farmer_id": "ND-0002",
+          "contract_number": "BH-2024-0002",
+          "description": "Hợp đồng bảo hiểm cà phê cho nông dân Nguyễn Thị Mai",
+          "crop_type": "cà phê",
+          "insured_area": 1.2,
+          "insured_amount": 45000000,
+          "premium": 2025000,
+          "start_date": "2024-09-06T00:00:00Z",
+          "end_date": "2025-06-30T23:59:59Z",
+          "status": "active",
+          "real_time_monitoring": {
+            "current_ndvi": 0.71,
+            "temperature": 26.8,
+            "soil_moisture": 0.58,
+            "last_update": "2024-09-08T08:00:00Z"
+          },
+          "policy_document": "/documents/policies/POL-002_contract.pdf",
+          "monitoring_dashboard": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "portfolio_risk_distribution": [
+        {
+          "id": "RP-001",
+          "partner_id": "ONB-001",
+          "description": "Phân bổ rủi ro danh mục đầu tư",
+          "total_insured_value": 2500000000,
+          "distribution_by_crop": {
+            "lúa nước": 1800000000,
+            "cà phê": 400000000,
+            "rubber": 300000000
+          },
+          "distribution_by_region": {
+            "mekong_delta": 1500000000,
+            "central_highlands": 600000000,
+            "southeast": 400000000
+          },
+          "concentration_limits": {
+            "max_per_region": 60,
+            "max_per_crop": 70
+          },
+          "risk_distribution_chart": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "lifecycle_management": [
+        {
+          "id": "LC-001",
+          "contract_number": "BH-2024-0001",
+          "description": "Quản lý vòng đời hợp đồng BH-2024-0001",
+          "current_status": "active",
+          "change_history": [
+            {
+              "date": "2024-09-05T00:00:00Z",
+              "action": "activation",
+              "performer": "System",
+              "action_icon": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+            },
+            {
+              "date": "2024-09-06T10:30:00Z",
+              "action": "information_update",
+              "performer": "Nguyễn Văn An",
+              "details": "Cập nhật thông tin liên hệ nông dân",
+              "action_icon": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+            }
+          ],
+          "next_renewal_date": "2025-02-01T00:00:00Z"
+        }
+      ],
+      "coverage_levels": [
+        {
+          "id": "COV-001",
+          "contract_number": "BH-2024-0001",
+          "description": "Mức độ bảo hiểm cho hợp đồng BH-2024-0001",
+          "weather_damage_coverage": true,
+          "disease_coverage": false,
+          "plúa nước_coverage": false,
+          "deductible_rate": 0.05,
+          "deductible_description": "Mức khấu trừ 5% cho thiệt hại dưới 20%",
+          "max_compensation_limit": 75000000,
+          "excluded_risks": ["war", "nuclear_disaster", "intentional_acts"],
+          "coverage_summary_chart": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ]
+    },
+    "claims_processing": {
+      "description": "Xử lý yêu cầu bồi thường",
+      "auto_triggered_claims": [
+        {
+          "id": "CLM-001",
+          "contract_number": "BH-2024-0001",
+          "description": "Yêu cầu bồi thường tự động kích hoạt do hạn hán",
+          "trigger_date": "2024-09-07T15:30:00Z",
+          "damage_type": "drought",
+          "satellite_evidence": {
+            "ndvi_before": 0.78,
+            "ndvi_after": 0.45,
+            "reduction_percentage": 42.3,
+            "detection_date": "2024-09-06T02:00:00Z"
+          },
+          "environmental_data": {
+            "rainfall_30days": 8,
+            "average_temperature": 35.8,
+            "days_without_rain": 28
+          },
+          "status": "under_verification",
+          "damage_assessment_images": [
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          ]
+        },
+        {
+          "id": "CLM-002",
+          "contract_number": "BH-2024-0003",
+          "description": "Yêu cầu bồi thường tự động kích hoạt do lũ lụt",
+          "trigger_date": "2024-09-08T09:15:00Z",
+          "damage_type": "flood",
+          "satellite_evidence": {
+            "ndwi_before": 0.2,
+            "ndwi_after": 0.85,
+            "flooded_area_percentage": 85,
+            "detection_date": "2024-09-07T02:00:00Z"
+          },
+          "environmental_data": {
+            "rainfall_24h": 180,
+            "river_water_level": 4.2,
+            "flood_warning": "level_3"
+          },
+          "status": "under_verification",
+          "damage_assessment_images": [
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          ]
+        }
+      ],
+      "verification_assessment": [
+        {
+          "id": "VER-001",
+          "claim_id": "CLM-001",
+          "description": "Xác minh và đánh giá cho yêu cầu CLM-001",
+          "verifier": "Phạm Văn Khải",
+          "verification_date": "2024-09-08T10:00:00Z",
+          "method": "multi_source_data_analysis",
+          "verification_result": {
+            "validity": true,
+            "damage_level": 65,
+            "damage_value": 48750000,
+            "confirmation_factors": [
+              "satellite_data",
+              "weather_station",
+              "field_report"
+            ]
+          },
+          "comments": "Thiệt hại do hạn hán được xác nhận qua nhiều nguồn dữ liệu",
+          "verification_report": "/reports/verification/VER-001_report.pdf",
+          "field_photos": [
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg",
+            "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+          ]
+        }
+      ],
+      "payment_approval": [
+        {
+          "id": "PAY-001",
+          "claim_id": "CLM-001",
+          "description": "Phê duyệt chi trả cho yêu cầu CLM-001",
+          "compensation_amount": 46312500,
+          "calculation_method": {
+            "damage_value": 48750000,
+            "deductible_rate": 0.05,
+            "deductible_amount": 2437500
+          },
+          "approver": "Trần Văn Tú",
+          "approval_date": "2024-09-08T14:30:00Z",
+          "payment_status": "approved",
+          "payment_method": "bank_transfer",
+          "estimated_payment_date": "2024-09-10T00:00:00Z",
+          "payment_authorization": "/documents/payments/PAY-001_authorization.pdf",
+          "calculation_breakdown": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "claims_audit_trail": [
+        {
+          "id": "AUD-001",
+          "claim_id": "CLM-001",
+          "description": "Nhật ký kiểm toán cho yêu cầu CLM-001",
+          "activities": [
+            {
+              "timestamp": "2024-09-07T15:30:00Z",
+              "action": "automatic_damage_detection",
+              "performer": "AI_System",
+              "details": "Phát hiện giảm NDVI 42.3%",
+              "system_screenshot": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+            },
+            {
+              "timestamp": "2024-09-08T10:00:00Z",
+              "action": "manual_verification",
+              "performer": "Phạm Văn Khải",
+              "details": "Xác minh qua ảnh vệ tinh và dữ liệu thời tiết",
+              "verification_photos": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+            },
+            {
+              "timestamp": "2024-09-08T14:30:00Z",
+              "action": "payment_approval",
+              "performer": "Trần Văn Tú",
+              "details": "Phê duyệt thanh toán 46,312,500 VNĐ",
+              "approval_signature": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    "financial_operations": {
+      "description": "Hoạt động tài chính",
+      "payment_calculations": [
+        {
+          "id": "CAL-001",
+          "month": "2024-09",
+          "partner_id": "ONB-001",
+          "description": "Tính toán chi trả tháng 9/2024",
+          "total_premiums_collected": 15750000,
+          "total_claims_paid": 46312500,
+          "operating_costs": 2362500,
+          "monthly_profit": -32925000,
+          "calculation_details": {
+            "new_contracts": 8,
+            "claim_requests": 2,
+            "claims_ratio": 0.25,
+            "management_costs": 1200000,
+            "technology_costs": 1162500
+          },
+          "financial_summary_chart": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "premium_allocation": [
+        {
+          "id": "PR-001",
+          "month": "2024-09",
+          "partner_id": "ONB-001",
+          "description": "Phân bổ phí bảo hiểm tháng 9/2024",
+          "total_premiums": 15750000,
+          "allocation": {
+            "insurance_partner": 11025000,
+            "agrisa_platform": 3150000,
+            "reserve_fund": 1575000
+          },
+          "premiums_by_crop": {
+            "lúa nước": 8820000,
+            "cà phê": 4050000,
+            "rubber": 2880000
+          },
+          "allocation_chart": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "financial_reports": [
+        {
+          "id": "FR-001",
+          "partner_id": "ONB-001",
+          "month": "2024-09",
+          "description": "Báo cáo tài chính tháng 9/2024",
+          "revenue": {
+            "insurance_premiums": 15750000,
+            "service_fees": 1200000,
+            "investment_income": 450000
+          },
+          "expenses": {
+            "claims_compensation": 46312500,
+            "operating_costs": 2362500,
+            "marketing": 800000,
+            "personnel": 5200000
+          },
+          "net_profit": -37275000,
+          "financial_ratios": {
+            "claims_ratio": 294.1,
+            "expense_ratio": 34.7,
+            "profit_margin": -211.4
+          },
+          "financial_dashboard": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "risk_portfolio_monitoring": [
+        {
+          "id": "RM-001",
+          "partner_id": "ONB-001",
+          "description": "Giám sát danh mục rủi ro",
+          "update_date": "2024-09-08T18:00:00Z",
+          "total_insured_value": 2500000000,
+          "risk_concentration": {
+            "by_region": {
+              "mekong_delta": 60.0,
+              "central_highlands": 24.0,
+              "southeast": 16.0
+            },
+            "by_crop": {
+              "lúa nước": 72.0,
+              "cà phê": 16.0,
+              "rubber": 12.0
+            }
+          },
+          "risk_warnings": [
+            {
+              "type": "geographic_concentration",
+              "level": "high",
+              "description": "Quá tập trung vào vùng ĐBSCL (60%)"
+            }
+          ],
+          "risk_heatmap": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "revenue_sharing_calculation": [
+        {
+          "id": "RS-001",
+          "partner_id": "ONB-001",
+          "period": "Q3-2024",
+          "description": "Tính toán chia sẻ doanh thu quý 3/2024",
+          "total_revenue": 47250000,
+          "revenue_sharing": {
+            "insurance_partner": 33075000,
+            "agrisa_platform": 9450000,
+            "distributors": 4725000
+          },
+          "performance_bonus": {
+            "customer_retention_rate": 0.15,
+            "growth_rate": 0.08,
+            "satisfaction_score": 4.2
+          },
+          "revenue_breakdown_chart": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ]
+    },
+    "reporting_compliance": {
+      "description": "Báo cáo và tuân thủ",
+      "basic_compliance_reports": [
+        {
+          "id": "CR-001",
+          "partner_id": "ONB-001",
+          "report_type": "monthly_activity_report",
+          "description": "Báo cáo hoạt động hàng tháng",
+          "month": "2024-09",
+          "submission_date": "2024-09-08T17:00:00Z",
+          "content": {
+            "new_contracts": 8,
+            "total_insured_value": 520000000,
+            "claim_requests": 2,
+            "total_claims_paid": 46312500,
+            "claims_ratio": 8.9
+          },
+          "status": "submitted",
+          "responsible_person": "Nguyễn Văn An",
+          "report_document": "/reports/compliance/CR-001_monthly.pdf",
+          "submission_receipt": "/documents/receipts/CR-001_receipt.pdf"
+        },
+        {
+          "id": "CR-002",
+          "partner_id": "ONB-001",
+          "report_type": "risk_management_report",
+          "description": "Báo cáo quản lý rủi ro",
+          "quarter": "Q3-2024",
+          "submission_date": "2024-09-08T17:30:00Z",
+          "content": {
+            "risk_analysis": "Rủi ro tập trung cao ở ĐBSCL",
+            "mitigation_measures": "Mở rộng sang các vùng khác",
+            "risk_forecast": "Mùa khô có thể gia tăng thiệt hại"
+          },
+          "status": "submitted",
+          "responsible_person": "Trần Văn Tú",
+          "report_document": "/reports/compliance/CR-002_risk.pdf",
+          "risk_assessment_charts": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ],
+      "regulatory_compliance": [
+        {
+          "id": "REG-001",
+          "partner_id": "ONB-001",
+          "description": "Tuân thủ quy định về bảo hiểm nông nghiệp",
+          "compliance_areas": [
+            "capital_adequacy",
+            "solvency_requirements",
+            "reporting_standards",
+            "consumer_protection"
+          ],
+          "compliance_status": "compliant",
+          "last_audit_date": "2024-08-15T00:00:00Z",
+          "next_audit_date": "2025-02-15T00:00:00Z",
+          "compliance_certificate": "/documents/compliance/REG-001_certificate.pdf",
+          "audit_report": "/reports/audits/REG-001_audit.pdf"
+        }
+      ],
+      "performance_metrics": [
+        {
+          "id": "PERF-001",
+          "partner_id": "ONB-001",
+          "period": "2024-09",
+          "description": "Chỉ số hiệu suất tháng 9/2024",
+          "metrics": {
+            "application_processing_time": 2.5,
+            "claims_processing_time": 3.2,
+            "customer_satisfaction": 4.2,
+            "policy_renewal_rate": 0.85,
+            "claims_accuracy": 0.96
+          },
+          "benchmarks": {
+            "industry_average_processing": 4.0,
+            "target_satisfaction": 4.0,
+            "target_renewal_rate": 0.8
+          },
+          "performance_dashboard": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "timestamp": "2024-09-08T10:30:00Z",
+    "total_records": {
+      "partners": 2,
+      "contracts": 2,
+      "claim_requests": 2,
+      "reports": 2
+    },
+    "data_source": "Agrisa Insurance Partner Web System",
+    "api_version": "v2.1.0",
+    "system_logo": "https://cdnphoto.dantri.com.vn/2H21VTbj6GshXnaPeVkaEhr_NPs=/zoom/1200_630/2017/nong-nghiep-vn-1490679194149.jpg"
+  }
+}

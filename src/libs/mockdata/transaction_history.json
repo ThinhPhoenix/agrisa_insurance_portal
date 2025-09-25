@@ -1,0 +1,230 @@
+{
+  "transaction_history": {
+    "total_records": 25,
+    "current_page": 1,
+    "total_pages": 3,
+    "currency": "VND",
+    "transactions": [
+      {
+        "invoice_id": "VN-45821",
+        "recipient_name": "Nguyễn Thị Mai",
+        "date": "15 Th9, 2024",
+        "location": "Hồ Chí Minh",
+        "amount": 125000000,
+        "amount_formatted": "125.000.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-23657",
+        "recipient_name": "Trần Văn Hùng",
+        "date": "08 Th9, 2024",
+        "location": "Hà Nội",
+        "amount": 89500000,
+        "amount_formatted": "89.500.000 ₫",
+        "status": "Cancelled",
+        "status_vi": "Đã hủy"
+      },
+      {
+        "invoice_id": "VN-78943",
+        "recipient_name": "Lê Thị Phương",
+        "date": "03 Th9, 2024",
+        "location": "Đà Nẵng",
+        "amount": 67800000,
+        "amount_formatted": "67.800.000 ₫",
+        "status": "Pending",
+        "status_vi": "Đang xử lý"
+      },
+      {
+        "invoice_id": "VN-34512",
+        "recipient_name": "Phạm Minh Tuấn",
+        "date": "29 Th8, 2024",
+        "location": "Cần Thơ",
+        "amount": 156700000,
+        "amount_formatted": "156.700.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-91268",
+        "recipient_name": "Vũ Thị Lan",
+        "date": "25 Th8, 2024",
+        "location": "Hải Phòng",
+        "amount": 234500000,
+        "amount_formatted": "234.500.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-56789",
+        "recipient_name": "Hoàng Văn Đức",
+        "date": "18 Th8, 2024",
+        "location": "Nha Trang",
+        "amount": 98200000,
+        "amount_formatted": "98.200.000 ₫",
+        "status": "Cancelled",
+        "status_vi": "Đã hủy"
+      },
+      {
+        "invoice_id": "VN-13579",
+        "recipient_name": "Đặng Thị Hoa",
+        "date": "12 Th8, 2024",
+        "location": "Huế",
+        "amount": 187300000,
+        "amount_formatted": "187.300.000 ₫",
+        "status": "Pending",
+        "status_vi": "Đang xử lý"
+      },
+      {
+        "invoice_id": "VN-24681",
+        "recipient_name": "Bùi Minh Khôi",
+        "date": "05 Th8, 2024",
+        "location": "Vũng Tàu",
+        "amount": 76900000,
+        "amount_formatted": "76.900.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-97531",
+        "recipient_name": "Ngô Thị Thu",
+        "date": "30 Th7, 2024",
+        "location": "Quy Nhơn",
+        "amount": 143600000,
+        "amount_formatted": "143.600.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-86420",
+        "recipient_name": "Lý Văn Sơn",
+        "date": "22 Th7, 2024",
+        "location": "Đà Lạt",
+        "amount": 52800000,
+        "amount_formatted": "52.800.000 ₫",
+        "status": "Pending",
+        "status_vi": "Đang xử lý"
+      },
+      {
+        "invoice_id": "VN-75319",
+        "recipient_name": "Dương Thị Kim",
+        "date": "16 Th7, 2024",
+        "location": "Hồ Chí Minh",
+        "amount": 289400000,
+        "amount_formatted": "289.400.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-64208",
+        "recipient_name": "Võ Minh Tài",
+        "date": "09 Th7, 2024",
+        "location": "Hà Nội",
+        "amount": 112700000,
+        "amount_formatted": "112.700.000 ₫",
+        "status": "Cancelled",
+        "status_vi": "Đã hủy"
+      },
+      {
+        "invoice_id": "VN-53197",
+        "recipient_name": "Phan Thị Nhung",
+        "date": "01 Th7, 2024",
+        "location": "Biên Hòa",
+        "amount": 198500000,
+        "amount_formatted": "198.500.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-42086",
+        "recipient_name": "Tô Văn Long",
+        "date": "25 Th6, 2024",
+        "location": "Thủ Dầu Một",
+        "amount": 84300000,
+        "amount_formatted": "84.300.000 ₫",
+        "status": "Pending",
+        "status_vi": "Đang xử lý"
+      },
+      {
+        "invoice_id": "VN-31975",
+        "recipient_name": "Mai Thị Bích",
+        "date": "18 Th6, 2024",
+        "location": "Long An",
+        "amount": 167200000,
+        "amount_formatted": "167.200.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-20864",
+        "recipient_name": "Chu Minh Đạt",
+        "date": "12 Th6, 2024",
+        "location": "An Giang",
+        "amount": 95600000,
+        "amount_formatted": "95.600.000 ₫",
+        "status": "Cancelled",
+        "status_vi": "Đã hủy"
+      },
+      {
+        "invoice_id": "VN-19753",
+        "recipient_name": "Trịnh Thị Nga",
+        "date": "05 Th6, 2024",
+        "location": "Tây Ninh",
+        "amount": 273800000,
+        "amount_formatted": "273.800.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-08642",
+        "recipient_name": "Đinh Văn Hải",
+        "date": "28 Th5, 2024",
+        "location": "Kiên Giang",
+        "amount": 58900000,
+        "amount_formatted": "58.900.000 ₫",
+        "status": "Pending",
+        "status_vi": "Đang xử lý"
+      },
+      {
+        "invoice_id": "VN-97531",
+        "recipient_name": "Lưu Thị Trang",
+        "date": "21 Th5, 2024",
+        "location": "Bạc Liêu",
+        "amount": 129400000,
+        "amount_formatted": "129.400.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      },
+      {
+        "invoice_id": "VN-86420",
+        "recipient_name": "Hồ Minh Quang",
+        "date": "14 Th5, 2024",
+        "location": "Sóc Trăng",
+        "amount": 186700000,
+        "amount_formatted": "186.700.000 ₫",
+        "status": "Completed",
+        "status_vi": "Hoàn thành"
+      }
+    ],
+    "summary": {
+      "total_amount": 3156700000,
+      "total_amount_formatted": "3.156.700.000 ₫",
+      "completed_transactions": 12,
+      "pending_transactions": 4,
+      "cancelled_transactions": 4,
+      "average_transaction": 158335000,
+      "average_transaction_formatted": "158.335.000 ₫"
+    },
+    "filters": {
+      "date_range": "Th5 2024 - Th9 2024",
+      "amount_range": {
+        "min": 50000000,
+        "max": 300000000,
+        "min_formatted": "50.000.000 ₫",
+        "max_formatted": "300.000.000 ₫"
+      },
+      "status_options": ["Completed", "Pending", "Cancelled"],
+      "status_options_vi": ["Hoàn thành", "Đang xử lý", "Đã hủy"]
+    }
+  }
+}

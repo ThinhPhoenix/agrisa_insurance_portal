@@ -15,6 +15,7 @@ import {
   StarOutlined,
 } from "@ant-design/icons";
 import { Button, Collapse, Image, Layout, Space, Tag, Typography } from "antd";
+import Link from "next/link";
 import "./insurance.css";
 
 const { Title, Text } = Typography;
@@ -193,13 +194,15 @@ export default function InsurancePage() {
       width: 150,
       render: (_, record) => (
         <div className="insurance-actions-cell">
-          <Button
-            type="dashed"
-            size="small"
-            className="insurance-action-btn !bg-blue-100 !border-blue-200 !text-blue-800 hover:!bg-blue-200"
-          >
-            <EyeOutlined size={14} />
-          </Button>
+          <Link href={`/insurance/${record.package_id}`}>
+            <Button
+              type="dashed"
+              size="small"
+              className="insurance-action-btn !bg-blue-100 !border-blue-200 !text-blue-800 hover:!bg-blue-200"
+            >
+              <EyeOutlined size={14} />
+            </Button>
+          </Link>
           <Button
             type="dashed"
             size="small"

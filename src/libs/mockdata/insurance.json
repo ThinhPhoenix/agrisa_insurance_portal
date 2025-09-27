@@ -1,0 +1,518 @@
+{
+  "insurance_packages_management": {
+    "company_info": {
+      "name": "Công ty Bảo hiểm Nông nghiệp Việt Nam (BAOVIET Agri)",
+      "license_number": "28/KDBH-BTC",
+      "established": "2015",
+      "headquarters": "Hà Nội, Việt Nam",
+      "hotline": "1900-2024",
+      "website": "www.baohiem-nongdan.vn"
+    },
+    "total_packages": 8,
+    "last_updated": "2024-09-27",
+    "packages": [
+      {
+        "package_id": "GOI-LUA-01",
+        "package_name": "Bảo hiểm Cây lúa Toàn diện",
+        "category": "Cây lương thực",
+        "status": "Đang phát hành",
+        "effective_date": "01/01/2024",
+        "expiry_date": "31/12/2025",
+        "description": "Bảo hiểm toàn diện cho cây lúa, bao phủ các rủi ro từ thiên tai đến sâu bệnh",
+        "coverage_details": {
+          "min_coverage": 50000000,
+          "max_coverage": 300000000,
+          "min_coverage_formatted": "50.000.000 ₫",
+          "max_coverage_formatted": "300.000.000 ₫",
+          "premium_rate": "2-4%",
+          "coverage_period": "6-12 tháng"
+        },
+        "risks_covered": [
+          {
+            "risk_type": "Thiên tai",
+            "details": ["Lũ lụt", "Bão", "Mưa đá", "Sét đánh"],
+            "trigger_conditions": "Thiệt hại >= 30% diện tích cây trồng"
+          },
+          {
+            "risk_type": "Sâu bệnh",
+            "details": ["Bệnh đạo ôn", "Sâu cuốn lá", "Bệnh cháy bìa"],
+            "trigger_conditions": "Mức độ nhiễm bệnh >= 40% theo giám định"
+          },
+          {
+            "risk_type": "Hạn hán",
+            "details": ["Thiếu nước tưới kéo dài > 30 ngày"],
+            "trigger_conditions": "Lượng mưa < 50% mức bình thường trong 2 tháng liên tiếp"
+          },
+          {
+            "risk_type": "Cháy nổ",
+            "details": ["Cháy rừng lan sang ruộng lúa", "Cháy do sự cố điện"],
+            "trigger_conditions": "Thiệt hại được xác nhận bởi cơ quan PCCC"
+          }
+        ],
+        "eligible_land_types": [
+          {
+            "land_type": "Đất lúa chuyên canh",
+            "land_code": "LUA",
+            "min_area": "0.5 hecta",
+            "soil_requirements": "Đất phù sa, pH 5.5-7.0"
+          },
+          {
+            "land_type": "Đất lúa 2 vụ",
+            "land_code": "LUA2",
+            "min_area": "1.0 hecta",
+            "soil_requirements": "Đất bồi, có hệ thống tưới tiêu"
+          }
+        ],
+        "registration_process": {
+          "required_documents": [
+            "Giấy chứng nhận quyền sử dụng đất",
+            "CCCD/CMND của chủ hộ",
+            "Giấy xác nhận diện tích canh tác từ UBND xã",
+            "Ảnh chụp hiện trạng ruộng lúa",
+            "Đơn đăng ký bảo hiểm"
+          ],
+          "steps": [
+            {
+              "step": 1,
+              "description": "Nộp hồ sơ đăng ký tại đại lý/chi nhánh",
+              "time_required": "1 ngày"
+            },
+            {
+              "step": 2,
+              "description": "Thẩm định ruộng lúa và hồ sơ",
+              "time_required": "3-5 ngày"
+            },
+            {
+              "step": 3,
+              "description": "Ký kết hợp đồng và thanh toán phí",
+              "time_required": "1 ngày"
+            },
+            {
+              "step": 4,
+              "description": "Cấp giấy chứng nhận bảo hiểm",
+              "time_required": "1 ngày"
+            }
+          ],
+          "processing_time": "5-7 ngày làm việc"
+        },
+        "images": [
+          "https://media.vneconomy.vn/images/upload/2023/12/31/nongnghiepoioauk-1012-1653918695376806031531.jpg",
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_cNOgsUjlv1Sgj2v70fFVLkGoe_SdFgseUQ&s"
+        ],
+        "statistics": {
+          "total_policies": 1250,
+          "active_policies": 980,
+          "claims_ratio": "15%",
+          "satisfaction_rate": "92%"
+        }
+      },
+      {
+        "package_id": "GOI-RAU-02",
+        "package_name": "Bảo hiểm Rau màu Cơ bản",
+        "category": "Cây rau màu",
+        "status": "Đang phát hành",
+        "effective_date": "15/02/2024",
+        "expiry_date": "31/12/2024",
+        "description": "Bảo hiểm cơ bản cho các loại rau màu, tập trung vào rủi ro thiên tai",
+        "coverage_details": {
+          "min_coverage": 30000000,
+          "max_coverage": 150000000,
+          "min_coverage_formatted": "30.000.000 ₫",
+          "max_coverage_formatted": "150.000.000 ₫",
+          "premium_rate": "3-5%",
+          "coverage_period": "3-6 tháng"
+        },
+        "risks_covered": [
+          {
+            "risk_type": "Mưa bão",
+            "details": ["Mưa lớn kéo dài", "Gió bão mạnh", "Ngập úng"],
+            "trigger_conditions": "Lượng mưa > 200mm/24h hoặc gió >= cấp 8"
+          },
+          {
+            "risk_type": "Sâu bệnh rau màu",
+            "details": ["Bệnh héo xanh", "Sâu khoang", "Bệnh thối nhũn"],
+            "trigger_conditions": "Tỷ lệ nhiễm bệnh >= 35% diện tích"
+          },
+          {
+            "risk_type": "Ô nhiễm môi trường",
+            "details": ["Ô nhiễm nguồn nước", "Ô nhiễm đất do hóa chất"],
+            "trigger_conditions": "Có văn bản xác nhận ô nhiễm từ cơ quan môi trường"
+          }
+        ],
+        "eligible_land_types": [
+          {
+            "land_type": "Đất trồng rau sạch",
+            "land_code": "RAU",
+            "min_area": "0.2 hecta",
+            "soil_requirements": "Đất tơi xốp, thoát nước tốt"
+          },
+          {
+            "land_type": "Đất rau màu VietGAP",
+            "land_code": "RAU-GAP",
+            "min_area": "0.5 hecta",
+            "soil_requirements": "Đất đạt chuẩn VietGAP, có chứng nhận"
+          }
+        ],
+        "registration_process": {
+          "required_documents": [
+            "Giấy chứng nhận quyền sử dụng đất",
+            "CCCD/CMND",
+            "Giấy chứng nhận VietGAP (nếu có)",
+            "Ảnh vườn rau hiện tại",
+            "Kế hoạch sản xuất"
+          ],
+          "steps": [
+            {
+              "step": 1,
+              "description": "Đăng ký online hoặc tại văn phòng",
+              "time_required": "30 phút"
+            },
+            {
+              "step": 2,
+              "description": "Khảo sát vườn rau",
+              "time_required": "1-2 ngày"
+            },
+            {
+              "step": 3,
+              "description": "Phê duyệt và ký hợp đồng",
+              "time_required": "2 ngày"
+            }
+          ],
+          "processing_time": "3-4 ngày làm việc"
+        },
+        "images": [
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_cNOgsUjlv1Sgj2v70fFVLkGoe_SdFgseUQ&s",
+          "https://media.vneconomy.vn/images/upload/2023/12/31/nongnghiepoioauk-1012-1653918695376806031531.jpg"
+        ],
+        "statistics": {
+          "total_policies": 890,
+          "active_policies": 756,
+          "claims_ratio": "22%",
+          "satisfaction_rate": "88%"
+        }
+      },
+      {
+        "package_id": "GOI-TRAI-03",
+        "package_name": "Bảo hiểm Cây ăn trái Cao cấp",
+        "category": "Cây ăn trái",
+        "status": "Đang phát hành",
+        "effective_date": "01/03/2024",
+        "expiry_date": "28/02/2026",
+        "description": "Bảo hiểm toàn diện cho cây ăn trái, bao gồm cả bảo hiểm thu nhập",
+        "coverage_details": {
+          "min_coverage": 80000000,
+          "max_coverage": 500000000,
+          "min_coverage_formatted": "80.000.000 ₫",
+          "max_coverage_formatted": "500.000.000 ₫",
+          "premium_rate": "2.5-6%",
+          "coverage_period": "12-24 tháng"
+        },
+        "risks_covered": [
+          {
+            "risk_type": "Thiên tai",
+            "details": ["Bão lớn", "Lũ quét", "Hạn hán kéo dài", "Mưa đá"],
+            "trigger_conditions": "Thiệt hại cây >= 25% hoặc giảm năng suất >= 40%"
+          },
+          {
+            "risk_type": "Sâu bệnh cây ăn trái",
+            "details": ["Ruồi vàng", "Bệnh thán thư", "Sâu đo"],
+            "trigger_conditions": "Mức độ thiệt hại >= 30% sản lượng dự kiến"
+          },
+          {
+            "risk_type": "Rụng trái bất thường",
+            "details": ["Rụng trái do thời tiết", "Stress sinh lý"],
+            "trigger_conditions": "Tỷ lệ rụng trái > 50% so với bình thường"
+          },
+          {
+            "risk_type": "Cháy rừng",
+            "details": ["Cháy lan từ khu vực lân cận"],
+            "trigger_conditions": "Có xác nhận từ kiểm lâm địa phương"
+          },
+          {
+            "risk_type": "Trộm cắp",
+            "details": ["Trộm trái cây trước thu hoạch"],
+            "trigger_conditions": "Có biên bản trình báo công an và giám định thiệt hại"
+          }
+        ],
+        "eligible_land_types": [
+          {
+            "land_type": "Đất trồng cây lâu năm",
+            "land_code": "CLN",
+            "min_area": "0.5 hecta",
+            "soil_requirements": "Đất có độ dốc < 15°, thoát nước tốt"
+          },
+          {
+            "land_type": "Đất trồng cây ăn trái xuất khẩu",
+            "land_code": "CLN-XK",
+            "min_area": "2.0 hecta",
+            "soil_requirements": "Đạt tiêu chuẩn GlobalGAP hoặc tương đương"
+          }
+        ],
+        "registration_process": {
+          "required_documents": [
+            "Giấy chứng nhận quyền sử dụng đất",
+            "CCCD/CMND và sổ hộ khẩu",
+            "Giấy chứng nhận GlobalGAP (nếu có)",
+            "Sổ theo dõi chăm sóc vườn cây",
+            "Ảnh toàn cảnh vườn cây",
+            "Báo cáo năng suất 2 năm gần nhất"
+          ],
+          "steps": [
+            {
+              "step": 1,
+              "description": "Tư vấn và đăng ký sơ bộ",
+              "time_required": "1 ngày"
+            },
+            {
+              "step": 2,
+              "description": "Khảo sát kỹ thuật chuyên sâu",
+              "time_required": "3-5 ngày"
+            },
+            {
+              "step": 3,
+              "description": "Định giá tài sản và tính phí",
+              "time_required": "2-3 ngày"
+            },
+            {
+              "step": 4,
+              "description": "Ký kết hợp đồng",
+              "time_required": "1 ngày"
+            }
+          ],
+          "processing_time": "7-10 ngày làm việc"
+        },
+        "images": [
+          "https://media.vneconomy.vn/images/upload/2023/12/31/nongnghiepoioauk-1012-1653918695376806031531.jpg",
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_cNOgsUjlv1Sgj2v70fFVLkGoe_SdFgseUQ&s"
+        ],
+        "statistics": {
+          "total_policies": 456,
+          "active_policies": 423,
+          "claims_ratio": "18%",
+          "satisfaction_rate": "95%"
+        }
+      },
+      {
+        "package_id": "GOI-HOA-04",
+        "package_name": "Bảo hiểm Hoa màu Tiêu chuẩn",
+        "category": "Cây hoa màu",
+        "status": "Đang phát hành",
+        "effective_date": "01/04/2024",
+        "expiry_date": "31/12/2024",
+        "description": "Bảo hiểm cho các loại hoa màu như ngô, đậu, khoai lang",
+        "coverage_details": {
+          "min_coverage": 40000000,
+          "max_coverage": 200000000,
+          "min_coverage_formatted": "40.000.000 ₫",
+          "max_coverage_formatted": "200.000.000 ₫",
+          "premium_rate": "3-4%",
+          "coverage_period": "3-9 tháng"
+        },
+        "risks_covered": [
+          {
+            "risk_type": "Lũ lụt",
+            "details": ["Ngập lụt kéo dài", "Lũ ống, lũ quét"],
+            "trigger_conditions": "Mực nước ngập >= 30cm trong 24h"
+          },
+          {
+            "risk_type": "Hạn hán",
+            "details": ["Thiếu nước tưới", "Đất khô cằn"],
+            "trigger_conditions": "Không có mưa > 21 ngày liên tiếp"
+          },
+          {
+            "risk_type": "Sâu bệnh hoa màu",
+            "details": ["Sâu cuốn lá ngô", "Bệnh đốm lá đậu"],
+            "trigger_conditions": "Tỷ lệ nhiễm >= 40%"
+          },
+          {
+            "risk_type": "Biến động giá",
+            "details": ["Giá thị trường giảm > 30% so với dự kiến"],
+            "trigger_conditions": "Giá thu mua < 70% giá niêm yết đầu vụ"
+          }
+        ],
+        "eligible_land_types": [
+          {
+            "land_type": "Đất trồng hoa màu",
+            "land_code": "HOA",
+            "min_area": "0.3 hecta",
+            "soil_requirements": "Đất bằng phẳng, độ pH 6.0-7.5"
+          }
+        ],
+        "registration_process": {
+          "required_documents": [
+            "Giấy chứng nhận quyền sử dụng đất",
+            "CCCD/CMND",
+            "Kế hoạch gieo trồng",
+            "Hóa đơn mua giống (nếu có)"
+          ],
+          "steps": [
+            {
+              "step": 1,
+              "description": "Đăng ký tại điểm giao dịch",
+              "time_required": "30 phút"
+            },
+            {
+              "step": 2,
+              "description": "Khảo sát đất đai",
+              "time_required": "1 ngày"
+            },
+            {
+              "step": 3,
+              "description": "Xử lý hồ sơ và ký hợp đồng",
+              "time_required": "2 ngày"
+            }
+          ],
+          "processing_time": "3 ngày làm việc"
+        },
+        "images": [
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_cNOgsUjlv1Sgj2v70fFVLkGoe_SdFgseUQ&s",
+          "https://media.vneconomy.vn/images/upload/2023/12/31/nongnghiepoioauk-1012-1653918695376806031531.jpg"
+        ],
+        "statistics": {
+          "total_policies": 678,
+          "active_policies": 589,
+          "claims_ratio": "25%",
+          "satisfaction_rate": "85%"
+        }
+      },
+      {
+        "package_id": "GOI-THUY-05",
+        "package_name": "Bảo hiểm Thủy sản Toàn diện",
+        "category": "Nuôi trồng thủy sản",
+        "status": "Đang phát hành",
+        "effective_date": "01/01/2024",
+        "expiry_date": "31/12/2025",
+        "description": "Bảo hiểm cho hoạt động nuôi cá, tôm, và các loài thủy sản khác",
+        "coverage_details": {
+          "min_coverage": 60000000,
+          "max_coverage": 800000000,
+          "min_coverage_formatted": "60.000.000 ₫",
+          "max_coverage_formatted": "800.000.000 ₫",
+          "premium_rate": "4-8%",
+          "coverage_period": "6-18 tháng"
+        },
+        "risks_covered": [
+          {
+            "risk_type": "Dịch bệnh thủy sản",
+            "details": [
+              "Bệnh đốm trắng tôm",
+              "Bệnh xuất huyết cá",
+              "Vi khuẩn Vibrio"
+            ],
+            "trigger_conditions": "Tỷ lệ chết >= 30% trong 7 ngày"
+          },
+          {
+            "risk_type": "Ô nhiễm nguồn nước",
+            "details": ["Ô nhiễm hóa chất", "Nước thải công nghiệp", "Tảo độc"],
+            "trigger_conditions": "Có xác nhận ô nhiễm từ cơ quan môi trường"
+          },
+          {
+            "risk_type": "Thiên tai",
+            "details": ["Bão lũ", "Nắng nóng kéo dài", "Rét đậm"],
+            "trigger_conditions": "Thiệt hại được xác nhận bởi UBND địa phương"
+          },
+          {
+            "risk_type": "Sự cố kỹ thuật",
+            "details": ["Hỏng máy sục khí", "Mất điện kéo dài", "Vỡ đê bao"],
+            "trigger_conditions": "Gây thiệt hại >= 20% sản lượng"
+          },
+          {
+            "risk_type": "Trộm cắp",
+            "details": ["Trộm cá tôm trước thu hoạch"],
+            "trigger_conditions": "Có biên bản công an và ước tính thiệt hại"
+          }
+        ],
+        "eligible_land_types": [
+          {
+            "land_type": "Đất nuôi trồng thủy sản",
+            "land_code": "NTS",
+            "min_area": "0.5 hecta",
+            "soil_requirements": "Đất sét pha, giữ nước tốt"
+          },
+          {
+            "land_type": "Đất nuôi tôm công nghệ cao",
+            "land_code": "NTS-CN",
+            "min_area": "1.0 hecta",
+            "soil_requirements": "Có hệ thống tuần hoàn nước, ao lót bạt"
+          }
+        ],
+        "registration_process": {
+          "required_documents": [
+            "Giấy phép nuôi trồng thủy sản",
+            "Giấy chứng nhận quyền sử dụng đất",
+            "CCCD/CMND",
+            "Sổ theo dõi quá trình nuôi",
+            "Giấy kiểm định chất lượng nước",
+            "Ảnh ao nuôi và thiết bị"
+          ],
+          "steps": [
+            {
+              "step": 1,
+              "description": "Tư vấn và đánh giá sơ bộ",
+              "time_required": "1 ngày"
+            },
+            {
+              "step": 2,
+              "description": "Khảo sát kỹ thuật ao nuôi",
+              "time_required": "2-3 ngày"
+            },
+            {
+              "step": 3,
+              "description": "Kiểm tra chất lượng nước",
+              "time_required": "1-2 ngày"
+            },
+            {
+              "step": 4,
+              "description": "Thẩm định và ký hợp đồng",
+              "time_required": "2 ngày"
+            }
+          ],
+          "processing_time": "6-8 ngày làm việc"
+        },
+        "images": [
+          "https://media.vneconomy.vn/images/upload/2023/12/31/nongnghiepoioauk-1012-1653918695376806031531.jpg",
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_cNOgsUjlv1Sgj2v70fFVLkGoe_SdFgseUQ&s"
+        ],
+        "statistics": {
+          "total_policies": 234,
+          "active_policies": 198,
+          "claims_ratio": "32%",
+          "satisfaction_rate": "90%"
+        }
+      }
+    ],
+    "general_terms": {
+      "claim_process": {
+        "notification_time": "48 giờ kể từ khi phát hiện thiệt hại",
+        "required_documents": [
+          "Thông báo thiệt hại",
+          "Ảnh chụp hiện trạng thiệt hại",
+          "Biên bản của chính quyền địa phương (nếu có)",
+          "Báo cáo của cơ quan chuyên môn (nếu có)"
+        ],
+        "assessment_time": "5-10 ngày làm việc",
+        "payment_time": "15-30 ngày sau khi hoàn thành hồ sơ"
+      },
+      "exclusions": [
+        "Thiệt hại do chiến tranh, khủng bố",
+        "Thiệt hại do hạt nhân, phóng xạ",
+        "Thiệt hại do người được bảo hiểm cố ý gây ra",
+        "Thiệt hại đã tồn tại trước khi có bảo hiểm",
+        "Vi phạm quy trình kỹ thuật được khuyến cáo"
+      ],
+      "payment_methods": [
+        "Chuyển khoản ngân hàng",
+        "Thanh toán tiền mặt tại văn phòng",
+        "Thanh toán qua ví điện tử",
+        "Trả góp (với lãi suất 0% cho một số gói)"
+      ]
+    },
+    "support_services": {
+      "technical_advisory": "Tư vấn kỹ thuật canh tác miễn phí",
+      "weather_alerts": "Cảnh báo thời tiết qua SMS",
+      "market_info": "Thông tin giá cả thị trường",
+      "training_programs": "Chương trình đào tạo nông dân",
+      "hotline": "1900-2024 (24/7)"
+    }
+  }
+}

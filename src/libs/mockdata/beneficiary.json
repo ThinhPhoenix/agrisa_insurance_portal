@@ -1,0 +1,252 @@
+{
+  "insurance_beneficiaries": {
+    "title": "Danh sách Người thụ hưởng Bảo hiểm Nông nghiệp",
+    "total_records": 5,
+    "registration_date": "2024-09-27",
+    "beneficiaries": [
+      {
+        "beneficiary_id": "BH-NN-001",
+        "full_name": "Nguyễn Văn Thành",
+        "citizen_id": "079089001234",
+        "phone": "0987654321",
+        "email": "nguyenvanthanh@gmail.com",
+        "address": {
+          "street": "123 Đường Lê Lợi",
+          "ward": "Xã Tân Phú",
+          "district": "Huyện Châu Thành",
+          "province": "Tỉnh An Giang"
+        },
+        "avatar": "https://img.freepik.com/premium-vector/avatar-profile-icon-flat-style-female-user-profile-vector-illustration-isolated-background-women-profile-sign-business-concept_157943-38866.jpg",
+        "farm_info": {
+          "farm_area": "5.2 hecta",
+          "crop_type": "Lúa",
+          "farming_experience": "15 năm",
+          "farm_location": "Đồng ruộng Tân Phú",
+          "farm_images": [
+            "https://media.vneconomy.vn/images/upload/2023/12/31/nongnghiepoioauk-1012-1653918695376806031531.jpg",
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_cNOgsUjlv1Sgj2v70fFVLkGoe_SdFgseUQ&s"
+          ],
+          "satellite_map": {
+            "embed_url": "https://www.openmap.vn/embed.html/?id=e4MJHji-YExlGZQXNst7Gky6CR8jgUVPdWoBKayEWY0wSvWyBIz2BWg&apikey=anonymous-apikey&isSmallContent=false",
+            "width": 600,
+            "height": 450
+          }
+        },
+        "insurance_package": {
+          "package_id": "GOI-LUA-01",
+          "package_name": "Bảo hiểm Cây lúa Toàn diện",
+          "coverage_amount": 120000000,
+          "coverage_amount_formatted": "120.000.000 ₫",
+          "premium": 2400000,
+          "premium_formatted": "2.400.000 ₫",
+          "coverage_period": "12 tháng",
+          "start_date": "01/10/2024",
+          "end_date": "30/09/2025"
+        },
+        "coverage_details": [
+          "Thiệt hại do thiên tai (lũ lụt, bão)",
+          "Sâu bệnh hại cây trồng",
+          "Hạn hán kéo dài",
+          "Cháy nổ"
+        ],
+        "registration_date": "15/09/2024",
+        "status": "Đã kích hoạt",
+        "payment_status": "Đã thanh toán"
+      },
+      {
+        "beneficiary_id": "BH-NN-002",
+        "full_name": "Trần Thị Mai Lan",
+        "citizen_id": "079089005678",
+        "phone": "0912345678",
+        "email": "tranmailan@yahoo.com",
+        "address": {
+          "street": "456 Ấp Bình Hòa",
+          "ward": "Xã Long Thành",
+          "district": "Huyện Tân Hiệp",
+          "province": "Tỉnh Kiên Giang"
+        },
+        "avatar": "https://img.freepik.com/premium-vector/male-avatar-icon-unknown-anonymous-person-default-avatar-profile-icon-social-media-user-business-man-man-profile-silhouette-isolated-white-background-vector-illustration_735821-197.jpg",
+        "farm_info": {
+          "farm_area": "3.8 hecta",
+          "crop_type": "Cà chua",
+          "farming_experience": "8 năm",
+          "farm_location": "Vườn rau Bình Hòa",
+          "farm_images": [
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_cNOgsUjlv1Sgj2v70fFVLkGoe_SdFgseUQ&s",
+            "https://media.vneconomy.vn/images/upload/2023/12/31/nongnghiepoioauk-1012-1653918695376806031531.jpg"
+          ],
+          "satellite_map": {
+            "embed_url": "https://www.openmap.vn/embed.html/?id=b5LKMno-XFymHZRYOtu8Hlz7DS9kgUVQeXpCLbzGXZ1xTwXzCJA3CXh&apikey=anonymous-apikey&isSmallContent=false",
+            "width": 600,
+            "height": 450
+          }
+        },
+        "insurance_package": {
+          "package_id": "GOI-RAU-02",
+          "package_name": "Bảo hiểm Rau màu Cơ bản",
+          "coverage_amount": 85000000,
+          "coverage_amount_formatted": "85.000.000 ₫",
+          "premium": 1700000,
+          "premium_formatted": "1.700.000 ₫",
+          "coverage_period": "6 tháng",
+          "start_date": "15/09/2024",
+          "end_date": "14/03/2025"
+        },
+        "coverage_details": [
+          "Thiệt hại do mưa bão",
+          "Sâu bệnh rau màu",
+          "Thiệt hại do động vật hoang dã",
+          "Ô nhiễm môi trường"
+        ],
+        "registration_date": "12/09/2024",
+        "status": "Đã kích hoạt",
+        "payment_status": "Đã thanh toán"
+      },
+      {
+        "beneficiary_id": "BH-NN-003",
+        "full_name": "Lê Minh Đức",
+        "citizen_id": "079089009012",
+        "phone": "0923456789",
+        "email": "leminhduc@gmail.com",
+        "address": {
+          "street": "789 Ấp Thới An",
+          "ward": "Xã Vĩnh Thạnh",
+          "district": "Huyện Vĩnh Thạnh",
+          "province": "Tỉnh Cần Thơ"
+        },
+        "farm_info": {
+          "farm_area": "7.5 hecta",
+          "crop_type": "Cây ăn trái (Xoài, Chôm chôm)",
+          "farming_experience": "20 năm",
+          "farm_location": "Vườn trái cây Thới An"
+        },
+        "insurance_package": {
+          "package_id": "GOI-TRAI-03",
+          "package_name": "Bảo hiểm Cây ăn trái Cao cấp",
+          "coverage_amount": 180000000,
+          "coverage_amount_formatted": "180.000.000 ₫",
+          "premium": 4500000,
+          "premium_formatted": "4.500.000 ₫",
+          "coverage_period": "24 tháng",
+          "start_date": "01/10/2024",
+          "end_date": "30/09/2026"
+        },
+        "coverage_details": [
+          "Thiệt hại do thiên tai",
+          "Sâu bệnh cây ăn trái",
+          "Rụng trái do thời tiết",
+          "Cháy rừng",
+          "Trộm cắp nông sản"
+        ],
+        "registration_date": "18/09/2024",
+        "status": "Đã kích hoạt",
+        "payment_status": "Trả góp (2/6 kỳ)"
+      },
+      {
+        "beneficiary_id": "BH-NN-004",
+        "full_name": "Phạm Thị Thu Hà",
+        "citizen_id": "079089003456",
+        "phone": "0934567890",
+        "email": "phamthuha@hotmail.com",
+        "address": {
+          "street": "321 Đường Nguyễn Trãi",
+          "ward": "Xã Hòa Bình",
+          "district": "Huyện Cao Lãnh",
+          "province": "Tỉnh Đồng Tháp"
+        },
+        "farm_info": {
+          "farm_area": "4.2 hecta",
+          "crop_type": "Hoa màu (Ngô, Đậu)",
+          "farming_experience": "12 năm",
+          "farm_location": "Cánh đồng Hòa Bình"
+        },
+        "insurance_package": {
+          "package_id": "GOI-HOA-04",
+          "package_name": "Bảo hiểm Hoa màu Tiêu chuẩn",
+          "coverage_amount": 95000000,
+          "coverage_amount_formatted": "95.000.000 ₫",
+          "premium": 1900000,
+          "premium_formatted": "1.900.000 ₫",
+          "coverage_period": "9 tháng",
+          "start_date": "20/09/2024",
+          "end_date": "19/06/2025"
+        },
+        "coverage_details": [
+          "Lũ lụt",
+          "Hạn hán",
+          "Sâu bệnh hoa màu",
+          "Giá cả thị trường giảm sốc"
+        ],
+        "registration_date": "20/09/2024",
+        "status": "Đã kích hoạt",
+        "payment_status": "Đã thanh toán"
+      },
+      {
+        "beneficiary_id": "BH-NN-005",
+        "full_name": "Võ Văn Sơn",
+        "citizen_id": "079089007890",
+        "phone": "0945678901",
+        "email": "vovanson@gmail.com",
+        "address": {
+          "street": "654 Ấp Tân Thành",
+          "ward": "Xã Mỹ Thạnh",
+          "district": "Huyện Tam Bình",
+          "province": "Tỉnh Vĩnh Long"
+        },
+        "farm_info": {
+          "farm_area": "6.3 hecta",
+          "crop_type": "Nuôi trồng thủy sản (Cá tra, Tôm)",
+          "farming_experience": "10 năm",
+          "farm_location": "Ao nuôi Tân Thành"
+        },
+        "insurance_package": {
+          "package_id": "GOI-THUY-05",
+          "package_name": "Bảo hiểm Thủy sản Toàn diện",
+          "coverage_amount": 150000000,
+          "coverage_amount_formatted": "150.000.000 ₫",
+          "premium": 3750000,
+          "premium_formatted": "3.750.000 ₫",
+          "coverage_period": "18 tháng",
+          "start_date": "25/09/2024",
+          "end_date": "24/03/2026"
+        },
+        "coverage_details": [
+          "Cá, tôm chết hàng loạt do bệnh",
+          "Ô nhiễm nguồn nước",
+          "Thiên tai (bão, lũ)",
+          "Trộm cắp thủy sản",
+          "Sự cố điện làm hỏng máy sục khí"
+        ],
+        "registration_date": "22/09/2024",
+        "status": "Đã kích hoạt",
+        "payment_status": "Đã thanh toán"
+      }
+    ],
+    "summary": {
+      "total_coverage_amount": 630000000,
+      "total_coverage_formatted": "630.000.000 ₫",
+      "total_premium": 14250000,
+      "total_premium_formatted": "14.250.000 ₫",
+      "average_coverage": 126000000,
+      "average_coverage_formatted": "126.000.000 ₫",
+      "coverage_types": {
+        "Cây trồng": 3,
+        "Thủy sản": 1,
+        "Hoa màu": 1
+      },
+      "provinces_covered": [
+        "An Giang",
+        "Kiên Giang",
+        "Cần Thơ",
+        "Đồng Tháp",
+        "Vĩnh Long"
+      ]
+    },
+    "insurance_company": {
+      "name": "Công ty Bảo hiểm Nông nghiệp Việt Nam",
+      "hotline": "1900-2024",
+      "email": "support@baohiem-nongdan.vn",
+      "website": "www.baohiem-nongdan.vn"
+    }
+  }
+}

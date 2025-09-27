@@ -1,0 +1,474 @@
+.beneficiary-main {
+  @apply p-6;
+}
+
+.beneficiary-content {
+  padding: 24px !important;
+}
+
+.beneficiary-space {
+  width: 100%;
+}
+
+.beneficiary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.beneficiary-title {
+  margin-bottom: 4px !important;
+}
+
+.beneficiary-overflow {
+  overflow-x: auto;
+}
+
+.beneficiary-summary-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.beneficiary-summary-card-compact {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.beneficiary-summary-card-compact:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: #d9d9d9;
+}
+
+.beneficiary-summary-content {
+  flex: 1;
+  margin-left: 8px;
+}
+
+.beneficiary-summary-value-compact {
+  font-size: 18px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  line-height: 1.2;
+}
+
+.beneficiary-summary-label-compact {
+  color: #666 !important;
+  font-size: 12px !important;
+  margin-top: 2px !important;
+  line-height: 1.2;
+}
+
+.beneficiary-summary-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.beneficiary-summary-icon.total {
+  background: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+}
+
+.beneficiary-summary-icon.active {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.beneficiary-summary-icon.coverage {
+  background: rgba(250, 173, 20, 0.1);
+  color: #faad14;
+}
+
+.beneficiary-summary-icon.premium {
+  background: rgba(114, 46, 209, 0.1);
+  color: #722ed1;
+}
+
+.beneficiary-filters {
+  margin-bottom: 16px !important;
+}
+
+.beneficiary-table-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.beneficiary-status-tag {
+  font-weight: 500 !important;
+}
+
+.beneficiary-amount {
+  font-weight: bold !important;
+  font-size: 14px !important;
+}
+
+.beneficiary-id {
+  font-family: monospace !important;
+  font-weight: 500 !important;
+}
+
+.beneficiary-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.beneficiary-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.beneficiary-name {
+  font-weight: 500 !important;
+}
+
+.beneficiary-contact {
+  color: #666 !important;
+  font-size: 12px !important;
+}
+
+.beneficiary-address {
+  color: #666 !important;
+  font-size: 13px !important;
+}
+
+.beneficiary-farm-info {
+  color: #666 !important;
+  font-size: 13px !important;
+}
+
+.beneficiary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.beneficiary-action-btn {
+  padding: 4px 8px !important;
+  height: auto !important;
+  font-size: 12px !important;
+  border-radius: 4px !important;
+}
+
+.beneficiary-loading {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.beneficiary-filter-form {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+@media (max-width: 1024px) {
+  .beneficiary-summary-row {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .beneficiary-summary-row {
+    gap: 8px;
+  }
+
+  .beneficiary-summary-card-compact {
+    padding: 10px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .beneficiary-summary-content {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .beneficiary-summary-value-compact {
+    font-size: 16px !important;
+  }
+
+  .beneficiary-summary-label-compact {
+    font-size: 11px !important;
+  }
+
+  .beneficiary-content {
+    padding: 16px !important;
+  }
+
+  .beneficiary-main {
+    padding: 16px !important;
+  }
+
+  .beneficiary-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .beneficiary-summary-row {
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .beneficiary-summary-card-compact {
+    padding: 8px;
+  }
+
+  .beneficiary-summary-card-compact .beneficiary-summary-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+
+  .beneficiary-summary-value-compact {
+    font-size: 14px !important;
+  }
+
+  .beneficiary-summary-label-compact {
+    font-size: 10px !important;
+  }
+
+  .beneficiary-content {
+    padding: 12px !important;
+  }
+
+  .beneficiary-main {
+    padding: 12px !important;
+  }
+}
+
+/* Beneficiary Detail Page Styles */
+.beneficiary-detail-header {
+  @apply mb-6;
+}
+
+.beneficiary-detail-title-section {
+  @apply flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6;
+}
+
+.beneficiary-detail-avatar {
+  @apply flex-shrink-0;
+}
+
+.beneficiary-detail-actions {
+  @apply flex justify-end;
+}
+
+.beneficiary-detail-card {
+  @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.beneficiary-detail-card .ant-card-head {
+  @apply bg-gray-50/50;
+}
+
+.beneficiary-detail-card .ant-card-head-title {
+  @apply text-base font-semibold;
+}
+
+.beneficiary-insurance-header {
+  @apply border-b border-gray-100 pb-3 mb-4;
+}
+
+.beneficiary-insurance-metric {
+  @apply text-center p-3 bg-gray-50/50 rounded-lg;
+}
+
+.beneficiary-insurance-metric h3 {
+  @apply text-lg font-bold;
+}
+
+.beneficiary-coverage-list {
+  @apply space-y-1;
+}
+
+.beneficiary-coverage-item .ant-badge {
+  @apply block;
+}
+
+.beneficiary-status-item {
+  @apply text-center p-3 bg-gray-50/50 rounded-lg;
+}
+
+.beneficiary-farm-images {
+  @apply flex flex-wrap gap-3;
+}
+
+.beneficiary-farm-image {
+  @apply cursor-pointer hover:opacity-80 transition-opacity;
+}
+
+.beneficiary-satellite-map {
+  @apply bg-gray-50 p-2 rounded-lg;
+}
+
+.beneficiary-loading {
+  @apply flex justify-center items-center min-h-96 text-gray-500;
+}
+
+/* New Detail Page Layout Styles */
+.beneficiary-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.beneficiary-detail-row-1,
+.beneficiary-detail-row-2,
+.beneficiary-detail-row-3 {
+  width: 100%;
+}
+
+/* Equal height cards for first and third rows */
+.beneficiary-equal-height {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.beneficiary-equal-height .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Date items styling */
+.beneficiary-date-item {
+  text-align: center;
+  padding: 12px 8px;
+  background: rgba(24, 144, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(24, 144, 255, 0.1);
+}
+
+/* Map title styling */
+.beneficiary-map-title {
+  margin-bottom: 16px;
+}
+
+.beneficiary-map-title h5 {
+  color: #1890ff;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+/* Enhanced farm images layout */
+.beneficiary-farm-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+/* Enhanced satellite map container */
+.beneficiary-satellite-map {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Insurance metrics enhancement */
+.beneficiary-insurance-metric {
+  text-align: center;
+  padding: 16px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(64, 169, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(64, 169, 255, 0.15);
+}
+
+/* Status items enhancement */
+.beneficiary-status-item {
+  text-align: center;
+  padding: 16px 12px;
+  background: rgba(82, 196, 26, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(82, 196, 26, 0.15);
+}
+
+/* Coverage list enhancement */
+.beneficiary-coverage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.beneficiary-coverage-item {
+  padding: 8px 12px;
+  background: rgba(82, 196, 26, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid #52c41a;
+}
+
+.beneficiary-coverage-item .ant-badge {
+  display: block;
+  margin-bottom: 0;
+}
+
+/* Responsive adjustments for detail page */
+@media (max-width: 768px) {
+  .beneficiary-detail-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .beneficiary-detail-actions {
+    justify-content: flex-start;
+  }
+
+  .beneficiary-detail-layout {
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .beneficiary-insurance-metric h3 {
+    font-size: 16px;
+  }
+
+  .beneficiary-farm-images {
+    justify-content: center;
+  }
+
+  .beneficiary-farm-image {
+    width: 100px;
+    height: 67px;
+  }
+
+  .beneficiary-date-item {
+    padding: 8px 4px;
+  }
+
+  .beneficiary-satellite-map iframe {
+    height: 250px !important;
+  }
+}

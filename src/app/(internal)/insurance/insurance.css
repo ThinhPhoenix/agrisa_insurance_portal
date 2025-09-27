@@ -1,0 +1,431 @@
+/* Insurance Management Page Styles */
+.insurance-main {
+  @apply p-6 bg-gray-50 min-h-screen;
+}
+
+.insurance-header {
+  @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6;
+}
+
+.insurance-title {
+  @apply text-2xl font-bold text-gray-800 mb-0;
+}
+
+.insurance-subtitle {
+  @apply text-sm text-gray-600 mt-1;
+}
+
+.insurance-actions {
+  @apply flex gap-2;
+}
+
+.insurance-content {
+  @apply p-6 bg-white;
+}
+
+.insurance-space {
+  @apply space-y-6;
+}
+
+/* Summary Cards */
+.insurance-summary-row {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-4 mb-6;
+}
+
+.insurance-summary-card-compact {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-3 hover:shadow-md transition-shadow duration-200;
+}
+
+.insurance-summary-content {
+  @apply flex-1;
+}
+
+.insurance-summary-value-compact {
+  @apply text-xl font-bold text-gray-800 mb-1 leading-tight;
+}
+
+.insurance-summary-label-compact {
+  @apply text-sm text-gray-600 leading-tight;
+}
+
+.insurance-summary-icon {
+  @apply w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg font-bold;
+}
+
+.insurance-summary-icon.total {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.insurance-summary-icon.active {
+  @apply bg-green-100 text-green-600;
+}
+
+.insurance-summary-icon.policies {
+  @apply bg-purple-100 text-purple-600;
+}
+
+.insurance-summary-icon.satisfaction {
+  @apply bg-yellow-100 text-yellow-600;
+}
+
+/* Filter Section */
+.insurance-filters {
+  @apply mb-4;
+}
+
+.insurance-filter-form {
+  @apply rounded-lg;
+}
+
+.insurance-filter-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4;
+}
+
+.insurance-filter-actions {
+  @apply flex gap-2 justify-end mt-4;
+}
+
+/* Table Styles */
+.insurance-table-wrapper {
+  @apply bg-white rounded-md overflow-hidden;
+}
+
+.insurance-package-info {
+  @apply flex items-start gap-3;
+}
+
+.insurance-package-image {
+  @apply w-12 h-12 rounded-lg object-cover flex-shrink-0;
+}
+
+.insurance-package-details {
+  @apply flex-1 min-w-0;
+}
+
+.insurance-package-name {
+  @apply font-semibold text-gray-900 text-sm leading-tight;
+}
+
+.insurance-package-id {
+  @apply text-xs text-gray-500 font-mono mt-1;
+}
+
+.insurance-package-description {
+  @apply text-xs text-gray-600 mt-1 line-clamp-2;
+}
+
+.insurance-category-tag {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.insurance-status-tag {
+  @apply font-medium;
+}
+
+.insurance-coverage-info {
+  @apply text-sm;
+}
+
+.insurance-coverage-range {
+  @apply font-semibold text-gray-900;
+}
+
+.insurance-coverage-rate {
+  @apply text-xs text-gray-600 mt-1;
+}
+
+.insurance-date-info {
+  @apply text-sm;
+}
+
+.insurance-date-range {
+  @apply text-gray-900;
+}
+
+.insurance-statistics {
+  @apply text-sm;
+}
+
+.insurance-stat-item {
+  @apply flex justify-between items-center mb-1;
+}
+
+.insurance-stat-label {
+  @apply text-gray-600 text-xs;
+}
+
+.insurance-stat-value {
+  @apply font-medium text-gray-900 text-xs;
+}
+
+.insurance-actions-cell {
+  @apply flex gap-2;
+}
+
+.insurance-action-btn {
+  @apply p-2 rounded-md transition-colors duration-200;
+}
+
+/* Loading State */
+.insurance-loading {
+  @apply flex justify-center items-center min-h-96 text-gray-500;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .insurance-summary-row {
+    @apply grid-cols-2 gap-3;
+  }
+
+  .insurance-filter-grid {
+    @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-3;
+  }
+}
+
+@media (max-width: 768px) {
+  .insurance-main {
+    @apply p-4;
+  }
+
+  .insurance-content {
+    @apply p-4;
+  }
+
+  .insurance-summary-row {
+    @apply grid-cols-1 gap-3;
+  }
+
+  .insurance-summary-card-compact {
+    @apply p-3 flex-col text-center;
+  }
+
+  .insurance-summary-content {
+    @apply mt-2;
+  }
+
+  .insurance-summary-value-compact {
+    @apply text-lg;
+  }
+
+  .insurance-filter-grid {
+    @apply grid-cols-1;
+  }
+
+  .insurance-package-info {
+    @apply flex-col;
+  }
+
+  .insurance-package-image {
+    @apply w-full h-24 rounded-md;
+  }
+
+  .insurance-actions-cell {
+    @apply flex-col gap-1;
+  }
+}
+
+@media (max-width: 480px) {
+  .insurance-summary-row {
+    @apply gap-2 mb-4;
+  }
+
+  .insurance-summary-card-compact {
+    @apply p-2;
+  }
+
+  .insurance-summary-icon {
+    @apply w-8 h-8 text-base;
+  }
+
+  .insurance-summary-value-compact {
+    @apply text-base;
+  }
+
+  .insurance-summary-label-compact {
+    @apply text-xs;
+  }
+
+  .insurance-content {
+    @apply p-3;
+  }
+}
+
+/* Insurance Detail Page Styles */
+.insurance-detail-content {
+  @apply min-h-screen;
+}
+
+.insurance-detail-container {
+  @apply max-w-7xl mx-auto;
+}
+
+.insurance-detail-header {
+  @apply mb-6;
+}
+
+.insurance-detail-breadcrumb {
+  @apply mb-4;
+}
+
+.insurance-detail-title-section {
+  @apply flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 bg-white p-6 rounded-lg;
+}
+
+.insurance-detail-title-content {
+  @apply flex-1;
+}
+
+.insurance-detail-title {
+  @apply text-2xl font-bold text-gray-800 mb-2;
+}
+
+.insurance-detail-subtitle {
+  @apply text-sm text-gray-600 mb-3;
+}
+
+.insurance-detail-tags {
+  @apply flex flex-wrap gap-2;
+}
+
+.insurance-detail-actions {
+  @apply flex-shrink-0;
+}
+
+.insurance-detail-main {
+  @apply space-y-6;
+}
+
+.insurance-detail-row {
+  @apply mb-6;
+}
+
+.insurance-detail-card {
+  @apply h-full shadow-sm;
+}
+
+.insurance-detail-card .ant-card-head {
+  @apply bg-gray-50 border-b;
+}
+
+.insurance-detail-card .ant-card-head-title {
+  @apply font-semibold text-gray-800;
+}
+
+/* Risk Coverage Styles */
+.insurance-risks-container {
+  @apply space-y-4;
+}
+
+.insurance-risk-item {
+  @apply p-4 bg-gray-50 rounded-lg border border-gray-200;
+}
+
+.insurance-risk-header {
+  @apply mb-3;
+}
+
+.insurance-risk-details {
+  @apply mb-3;
+}
+
+.insurance-risk-conditions {
+  @apply mt-2;
+}
+
+/* Land Types Styles */
+.insurance-land-types {
+  @apply space-y-4;
+}
+
+.insurance-land-item {
+  @apply p-4 bg-gray-50 rounded-lg border border-gray-200;
+}
+
+.insurance-land-header {
+  @apply flex items-center justify-between mb-3;
+}
+
+/* Documents List */
+.insurance-documents-list {
+  @apply list-none pl-0 space-y-2;
+}
+
+.insurance-documents-list li {
+  @apply flex items-start text-sm text-gray-700;
+}
+
+/* Image Gallery Styles */
+.insurance-detail-images {
+  margin-top: 16px !important;
+}
+
+.insurance-images-gallery {
+  margin-top: 12px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+
+.insurance-images-gallery .ant-image {
+  margin: 0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.insurance-images-gallery .ant-image:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+.insurance-gallery-image {
+  object-fit: cover !important;
+  border-radius: 8px !important;
+}
+
+.insurance-images-gallery .ant-image img {
+  border-radius: 8px !important;
+  transition: transform 0.2s ease !important;
+}
+
+.insurance-images-gallery .ant-image:hover img {
+  transform: scale(1.02) !important;
+}
+
+/* Footer Actions */
+.insurance-detail-footer {
+  @apply mt-8 p-6 bg-white rounded-lg shadow-sm border-t text-center;
+}
+
+/* Error State */
+.insurance-error {
+  @apply text-center py-12;
+}
+
+.insurance-loading {
+  @apply text-center py-12 text-gray-600;
+}
+
+/* Responsive adjustments for detail page */
+@media (max-width: 768px) {
+  .insurance-detail-content {
+    @apply p-4;
+  }
+
+  .insurance-detail-title-section {
+    @apply p-4;
+  }
+
+  .insurance-detail-title {
+    @apply text-xl;
+  }
+
+  .insurance-detail-actions {
+    @apply w-full;
+  }
+
+  .insurance-detail-footer {
+    @apply p-4;
+  }
+}

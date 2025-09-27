@@ -6,6 +6,7 @@ import {
   ArrowRightToLine,
   CreditCard,
   FileText,
+  History,
   PanelLeft,
   Shield,
   Users,
@@ -18,6 +19,11 @@ const items = [
     key: "applications", //key here should match the route
     label: "Đơn đăng ký đang chờ",
     icon: <FileText size={16} />,
+  },
+  {
+    key: "transaction-history", //key here should match the route
+    label: "Lịch sử giao dịch",
+    icon: <History size={16} />,
   },
   {
     key: "payment",

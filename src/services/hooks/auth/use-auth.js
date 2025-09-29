@@ -57,11 +57,23 @@ export const useSignIn = () => {
         console.log("📥 Response:", response.data);
 
         if (response.data.success) {
-          setUser(response.data.data);
+          // Map the API response to the expected user data structure
+          const userData = {
+            user_id: response.data.data.user.id,
+            roles: [], // API doesn't return roles, keeping empty for now
+            token: response.data.data.access_token,
+            refresh_token: null, // API doesn't return refresh_token
+            expires_at: response.data.data.session.expires_at,
+            session_id: response.data.data.session.session_id,
+            user: response.data.data.user,
+            session: response.data.data.session,
+          };
+
+          setUser(userData);
           return {
             success: true,
             message: getSignInSuccess("LOGIN_SUCCESS"),
-            data: response.data.data,
+            data: userData,
           };
         } else {
           throw new Error(

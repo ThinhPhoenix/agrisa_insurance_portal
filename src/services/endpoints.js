@@ -1,4 +1,4 @@
-// const prefix = "/api";
+const prefix = "/api";
 
 export const endpoints = {
   auth: {

@@ -49,10 +49,16 @@ export const useSignIn = () => {
           password: validation.data.password,
         });
 
-        const response = await axiosInstance.post(endpoints.auth.sign_in, {
-          email: validation.data.email,
-          password: validation.data.password,
-        });
+        const response = await axiosInstance.post(
+          endpoints.auth.sign_in,
+          {
+            email: validation.data.email,
+            password: validation.data.password,
+          },
+          {
+            withCredentials: false,
+          }
+        );
 
         console.log("📥 Response:", response.data);
 

@@ -12,6 +12,7 @@ COPY agrisa_insurance_partner/package*.json agrisa_insurance_partner/bun.lock ./
 RUN bun install
 # Copy source
 COPY agrisa_insurance_partner .
+COPY .env .env
 
 # Build Next.js app
 RUN bun run build

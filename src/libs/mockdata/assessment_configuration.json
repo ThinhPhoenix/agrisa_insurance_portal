@@ -1,0 +1,432 @@
+{
+  "insurance_assessment_configuration": {
+    "system_info": {
+      "version": "2.1.0",
+      "last_updated": "2024-09-27",
+      "system_name": "Nền tảng Đánh giá Rủi ro Nông nghiệp được hỗ trợ bởi AI",
+      "compliance_standards": ["USDA-RMA", "VietGAP", "GlobalGAP"],
+      "data_sources": [
+        "Vệ tinh Quan sát Trái đất",
+        "API Thời tiết",
+        "Cơ sở dữ liệu Đất",
+        "Lịch sử Khiếu nại"
+      ]
+    },
+    "satellite_data_config": {
+      "primary_sources": {
+        "optical_imagery": {
+          "satellites": ["Landsat 8/9", "Sentinel-2", "GF-1"],
+          "resolution": "10-30m",
+          "revisit_frequency": "5-16 ngày",
+          "cloud_cover_threshold": "<=60%",
+          "indices_calculated": ["NDVI", "VCI", "VHI", "EVI"]
+        },
+        "sar_data": {
+          "satellites": ["Sentinel-1", "ALOS PALSAR"],
+          "polarization": ["VV", "VH"],
+          "resolution": "10-20m",
+          "weather_independence": true,
+          "primary_applications": [
+            "Phát hiện lũ lụt",
+            "Độ ẩm đất",
+            "Cấu trúc cây trồng"
+          ]
+        }
+      },
+      "processing_pipeline": {
+        "data_fusion": "Phương pháp lưới rời rạc đa nguồn",
+        "quality_control": "Lọc mây tự động >60%",
+        "delivery_format": ["GeoTIFF", "JSON", "WKT"],
+        "api_integration": "API RESTful thời gian thực",
+        "processing_time": "2-4 giờ từ khi thu thập"
+      }
+    },
+    "assessment_criteria": {
+      "crop_specific_thresholds": {
+        "rice": {
+          "crop_code": "LUA",
+          "growing_season": "120-150 ngày",
+          "critical_stages": ["Đẻ nhánh", "Bắt đầu trỗ bông", "Trữ hạt"],
+          "risk_indicators": {
+            "ndvi_threshold": {
+              "healthy_min": 0.6,
+              "stressed_max": 0.4,
+              "critical_max": 0.2,
+              "assessment_frequency": "Hàng tuần trong giai đoạn quan trọng"
+            },
+            "vci_drought_trigger": {
+              "severe_drought": "Hạn hán nghiêm trọng: VCI < 0.2",
+              "moderate_drought": "Hạn hán vừa phải: 0.2 <= VCI < 0.35",
+              "normal_conditions": "Điều kiện bình thường: VCI >= 0.35",
+              "historical_baseline": "Dữ liệu 2000-2023"
+            },
+            "flood_detection_sar": {
+              "backscatter_change": "Giảm >3dB trong phân cực VV",
+              "flood_duration_threshold": ">=48 giờ",
+              "damage_assessment": "Kích hoạt tự động khi >30% diện tích bị ảnh hưởng"
+            },
+            "pest_disease_indicators": {
+              "sudden_ndvi_drop": "Giảm >15% trong 7 ngày",
+              "spatial_pattern": "Phát hiện mẫu thiệt hại theo cụm",
+              "correlation_weather": "Độ ẩm cao + nhiệt độ 25-30°C"
+            }
+          },
+          "coverage_limits": {
+            "min_area": "0.5 héc-ta",
+            "max_coverage_per_hectare": "120,000,000 VND",
+            "deductible": "10% số tiền khiếu nại",
+            "policy_duration": "Toàn bộ chu kỳ cây trồng (120-150 ngày)"
+          }
+        },
+        "vegetables": {
+          "crop_code": "RAU",
+          "growing_season": "60-90 ngày",
+          "critical_stages": ["Nảy mầm", "Tăng trưởng thực vật", "Thu hoạch"],
+          "risk_indicators": {
+            "ndvi_threshold": {
+              "healthy_min": 0.5,
+              "stressed_max": 0.3,
+              "critical_max": 0.15,
+              "assessment_frequency": "Hai tuần một lần"
+            },
+            "weather_stress": {
+              "excessive_rain": ">200mm trong 24 giờ",
+              "drought_period": ">14 ngày không mưa",
+              "temperature_stress": "Nhiệt độ tối đa hàng ngày >35°C trong 5+ ngày liên tiếp"
+            },
+            "market_volatility_trigger": {
+              "price_drop": ">30% dưới mức trung bình theo mùa",
+              "reference_markets": [
+                "Thành phố Hồ Chí Minh",
+                "Hà Nội",
+                "Cần Thơ"
+              ],
+              "assessment_period": "Hàng tuần trong mùa thu hoạch"
+            }
+          },
+          "coverage_limits": {
+            "min_area": "0.2 héc-ta",
+            "max_coverage_per_hectare": "85,000,000 VND",
+            "deductible": "15% số tiền khiếu nại",
+            "policy_duration": "60-90 ngày mỗi chu kỳ cây trồng"
+          }
+        },
+        "fruit_trees": {
+          "crop_code": "TRAI",
+          "growing_season": "365 ngày (lâu năm)",
+          "critical_stages": ["Ra hoa", "Đậu quả", "Chín", "Thu hoạch"],
+          "risk_indicators": {
+            "ndvi_seasonal_variation": {
+              "flowering_season": "Mùa ra hoa: NDVI > 0.7",
+              "fruit_development": "Ổn định NDVI ±0.05",
+              "harvest_readiness": "Phân tích mẫu giảm NDVI"
+            },
+            "fruit_drop_detection": {
+              "premature_drop_trigger": ">50% số lượng quả dự kiến",
+              "weather_correlation": "Mưa lớn >150mm/ngày hoặc gió >60km/h",
+              "stress_indicators": "VCI < 0.3 trong quá trình phát triển quả"
+            },
+            "theft_risk_assessment": {
+              "high_value_crops": ["Xoài", "Thanh long", "Sầu riêng"],
+              "harvest_season_monitoring": "Giám sát vệ tinh hàng ngày 30 ngày trước thu hoạch",
+              "suspicious_activity_detection": "Thay đổi NDVI bất thường + không có tương quan thời tiết"
+            }
+          },
+          "coverage_limits": {
+            "min_area": "0.5 héc-ta",
+            "max_coverage_per_hectare": "300,000,000 VND",
+            "deductible": "8% số tiền khiếu nại",
+            "policy_duration": "12-24 tháng"
+          }
+        },
+        "aquaculture": {
+          "crop_code": "THUY",
+          "production_cycle": "120-180 ngày",
+          "critical_stages": [
+            "Thả giống",
+            "Giai đoạn tăng trưởng",
+            "Trước thu hoạch"
+          ],
+          "risk_indicators": {
+            "water_quality_monitoring": {
+              "turbidity_change": "Biến động tán xạ ngược SAR >2dB",
+              "pollution_detection": "Phân tích quang phổ cho tảo nở hoa",
+              "temperature_stress": "Nhiệt độ nước >32°C hoặc <20°C"
+            },
+            "disease_outbreak_prediction": {
+              "mortality_rate_trigger": ">=30% tỷ lệ chết trong 7 ngày",
+              "environmental_factors": "Tải hữu cơ cao + oxy hòa tan thấp",
+              "early_warning_system": "Mô hình ML dựa trên thời tiết + chất lượng nước"
+            },
+            "natural_disaster_impact": {
+              "flood_detection": "Giám sát mực nước dựa trên SAR",
+              "storm_damage": "Đánh giá thiệt hại cơ sở hạ tầng qua hình ảnh quang học",
+              "drought_impact": "Mực nước giảm >50% so với bình thường"
+            }
+          },
+          "coverage_limits": {
+            "min_area": "0.5 héc-ta",
+            "max_coverage_per_hectare": "400,000,000 VND",
+            "deductible": "12% số tiền khiếu nại",
+            "policy_duration": "Chu kỳ sản xuất (120-180 ngày)"
+          }
+        }
+      }
+    },
+    "approval_thresholds": {
+      "automatic_approval": {
+        "conditions": [
+          {
+            "criteria": "Hồ sơ rủi ro thấp",
+            "parameters": {
+              "claim_history": "Không có khiếu nại trong 3 năm qua",
+              "farm_size": "0.5-5 héc-ta",
+              "gps_verified_location": true,
+              "vietgap_certified": true,
+              "satellite_data_quality": ">=95% độ phủ trong 2 năm qua"
+            },
+            "coverage_limit": "Lên đến 150,000,000 VND",
+            "processing_time": "< 2 giờ",
+            "required_documents": [
+              "Giấy chứng nhận quyền sử dụng đất",
+              "Thẻ căn cước",
+              "Hình ảnh vệ tinh gần đây"
+            ]
+          }
+        ]
+      },
+      "conditional_approval": {
+        "conditions": [
+          {
+            "criteria": "Hồ sơ rủi ro trung bình",
+            "parameters": {
+              "claim_history": "1-2 khiếu nại trong 5 năm qua",
+              "farm_size": "5-20 héc-ta",
+              "location_risk": "Vùng rủi ro lũ lụt/hạn hán vừa phải",
+              "farming_experience": ">=5 năm"
+            },
+            "coverage_limit": "Lên đến 500,000,000 VND",
+            "processing_time": "2-5 ngày làm việc",
+            "additional_requirements": [
+              "Xác minh hiện trường qua máy bay không người lái/vệ tinh",
+              "Tương quan dữ liệu trạm thời tiết",
+              "Đánh giá chất lượng đất",
+              "Xác minh nguồn nước"
+            ]
+          }
+        ]
+      },
+      "manual_review_required": {
+        "conditions": [
+          {
+            "criteria": "Hồ sơ rủi ro cao",
+            "parameters": {
+              "claim_history": ">2 khiếu nại trong 3 năm qua",
+              "farm_size": ">20 héc-ta",
+              "location_risk": "Vùng thiên tai rủi ro cao",
+              "new_farmer": "<3 năm kinh nghiệm",
+              "suspicious_patterns": "Mẫu dữ liệu vệ tinh bất thường"
+            },
+            "coverage_limit": "Trên 500,000,000 VND",
+            "processing_time": "5-10 ngày làm việc",
+            "review_committee": [
+              "Chuyên viên Bảo hiểm Cấp cao",
+              "Chuyên gia Đánh giá Rủi ro",
+              "Chuyên gia Nông nghiệp",
+              "Chuyên viên Phân tích Dữ liệu Vệ tinh"
+            ],
+            "additional_verification": [
+              "Kiểm tra tại chỗ",
+              "Xác minh cơ quan địa phương",
+              "Xác minh năng suất lịch sử",
+              "Đánh giá thiết bị và cơ sở hạ tầng"
+            ]
+          }
+        ]
+      }
+    },
+    "fraud_detection_system": {
+      "satellite_based_monitoring": {
+        "landsat_fraud_detection": {
+          "capabilities": "Chu kỳ quan sát 8 ngày, kho lưu trữ lịch sử rộng lớn",
+          "fraud_types_detected": [
+            "Khiếu nại thiệt hại giả mạo",
+            "Trình bày sai diện tích",
+            "Gian lận loại cây trồng"
+          ],
+          "proven_savings": "1.75 tỷ USD trong 20 năm (kinh nghiệm USDA-RMA)"
+        },
+        "real_time_monitoring": {
+          "suspicious_patterns": [
+            "Thay đổi NDVI không tương quan với dữ liệu thời tiết",
+            "Hoạt động thu hoạch không khớp với thiệt hại báo cáo",
+            "Mẫu tăng trưởng cây trồng không nhất quán so với các ruông lân cận",
+            "Chuyển động thiết bị không khớp với báo cáo của nông dân"
+          ],
+          "ai_ml_algorithms": [
+            "Phát hiện bất thường",
+            "Nhận dạng mẫu",
+            "Xác thực tham chiếu chéo",
+            "Phân tích thời gian"
+          ]
+        }
+      },
+      "automated_flagging": {
+        "high_priority_flags": [
+          "Khiếu nại thiệt hại trong thời gian thời tiết trong lành",
+          "Nhiều khiếu nại cùng địa điểm khác tên",
+          "Tỷ lệ thiệt hại cao bất thường",
+          "Khiếu nại không được hỗ trợ bởi bằng chứng vệ tinh"
+        ],
+        "investigation_triggers": [
+          "Điểm cờ >75/100",
+          "Nhiều cờ đỏ trên cùng một khiếu nại",
+          "Mẫu lịch sử của các khiếu nại đáng ngờ",
+          "Tài liệu không nhất quán"
+        ]
+      }
+    },
+    "claims_processing_automation": {
+      "damage_assessment_workflow": {
+        "immediate_response": {
+          "trigger_conditions": [
+            "NDVI giảm >20% trong 48 giờ",
+            "Sự kiện thời tiết >ngưỡng nghiêm trọng",
+            "SAR phát hiện lũ lụt/thiệt hại",
+            "Thông báo nông dân qua ứng dụng di động"
+          ],
+          "automated_actions": [
+            "Ưu tiên thu thập hình ảnh vệ tinh",
+            "Tương quan dữ liệu thời tiết",
+            "Ước tính thiệt hại sơ bộ",
+            "Thông báo cán bộ khiếu nại"
+          ],
+          "response_time": "<4 giờ từ sự kiện kích hoạt"
+        },
+        "assessment_process": {
+          "step_1": {
+            "action": "Phân tích hình ảnh vệ tinh",
+            "duration": "1-2 ngày",
+            "output": "Báo cáo thiệt hại sơ bộ với bản đồ khu vực bị ảnh hưởng"
+          },
+          "step_2": {
+            "action": "Tương quan và xác thực thời tiết",
+            "duration": "1 ngày",
+            "output": "Báo cáo tương quan thời tiết-thiệt hại đã xác minh"
+          },
+          "step_3": {
+            "action": "Xác minh hiện trường (nếu cần)",
+            "duration": "2-3 ngày",
+            "output": "Báo cáo xác thực thực tế"
+          },
+          "step_4": {
+            "action": "Đánh giá cuối cùng và tính toán chi trả",
+            "duration": "1 ngày",
+            "output": "Khuyến nghị giải quyết"
+          }
+        },
+        "total_processing_time": {
+          "traditional_method": "30-60 ngày",
+          "satellite_enhanced": "5-7 ngày",
+          "fully_automated": "2-4 ngày"
+        }
+      }
+    },
+    "partner_integration": {
+      "technology_partners": [
+        {
+          "partner_name": "Farmonaut",
+          "services": [
+            "Phân tích dữ liệu vệ tinh",
+            "Tích hợp API",
+            "Thuật toán tùy chỉnh"
+          ],
+          "data_delivery": "API thời gian thực, GeoTIFF, JSON",
+          "coverage": "Phủ sóng vệ tinh toàn cầu",
+          "specialization": "Đánh giá rủi ro nông nghiệp"
+        },
+        {
+          "partner_name": "EOS Data Analytics",
+          "services": [
+            "Giải pháp vệ tinh tùy chỉnh",
+            "Mô hình AI/ML",
+            "Kho lưu trữ dữ liệu lịch sử"
+          ],
+          "data_delivery": "Nền tảng đám mây, tích hợp API",
+          "coverage": "Chòm sao vệ tinh đa dạng",
+          "specialization": "Giám sát cây trồng và dự đoán năng suất"
+        },
+        {
+          "partner_name": "Planet Labs",
+          "services": [
+            "Hình ảnh hàng ngày độ phân giải cao",
+            "Phát hiện thay đổi",
+            "Dịch vụ giám sát"
+          ],
+          "data_delivery": "API Nền tảng Planet",
+          "coverage": "Phủ sóng toàn cầu hàng ngày",
+          "specialization": "Giám sát tần suất cao"
+        }
+      ],
+      "government_partnerships": [
+        {
+          "organization": "Vietnam National University (VNU)",
+          "collaboration": "Nghiên cứu và phát triển thuật toán địa phương hóa",
+          "data_sharing": "Dữ liệu thời tiết và năng suất cây trồng lịch sử",
+          "joint_projects": "Sản phẩm bảo hiểm nông nghiệp thông minh khí hậu"
+        },
+        {
+          "organization": "Ministry of Agriculture and Rural Development (MARD)",
+          "collaboration": "Điều chỉnh chính sách và tuân thủ quy định",
+          "data_access": "Thống kê nông nghiệp và dữ liệu sử dụng đất",
+          "certification": "Tích hợp tiêu chuẩn VietGAP"
+        }
+      ]
+    },
+    "quality_assurance": {
+      "data_validation": {
+        "accuracy_standards": {
+          "satellite_data": ">=95% độ phủ không mây được yêu cầu",
+          "weather_correlation": ">=90% phù hợp giữa dữ liệu vệ tinh và mặt đất",
+          "damage_assessment": "<=10% sai số trong tính toán diện tích"
+        },
+        "validation_methods": [
+          "Xác thực chéo với nhiều nguồn vệ tinh",
+          "Lấy mẫu xác minh thực tế (10% trường hợp)",
+          "Phân tích so sánh lịch sử",
+          "Dịch vụ xác thực bên thứ ba"
+        ]
+      },
+      "continuous_improvement": {
+        "performance_metrics": [
+          "Giảm thời gian xử lý khiếu nại",
+          "Độ chính xác phát hiện gian lận",
+          "Điểm hài lòng khách hàng",
+          "Tiết kiệm chi phí đạt được"
+        ],
+        "feedback_loops": [
+          "Đánh giá hiệu suất đối tác hàng tháng",
+          "Tối ưu hóa thuật toán hàng quý",
+          "Hiệu chuẩn hệ thống hàng năm",
+          "Tích hợp phản hồi khách hàng"
+        ]
+      }
+    },
+    "regulatory_compliance": {
+      "vietnam_regulations": {
+        "insurance_law": "Tuân thủ Luật Bảo hiểm Việt Nam 2022",
+        "data_protection": "Nghị định Bảo vệ Dữ liệu Cá nhân 13/2023/NĐ-CP",
+        "agricultural_policy": "Phù hợp với Chiến lược Phát triển Nông nghiệp Quốc gia",
+        "environmental_standards": "Tuân thủ Luật Bảo vệ Môi trường Việt Nam"
+      },
+      "international_standards": {
+        "iso_certifications": [
+          "ISO 27001 (Bảo mật Thông tin)",
+          "ISO 14001 (Môi trường)"
+        ],
+        "global_standards": ["Quản lý Rủi ro COSO", "Basel III (nếu áp dụng)"],
+        "satellite_data": "Tiêu chuẩn CEOS (Ủy ban Vệ tinh Quan sát Trái đất)"
+      }
+    }
+  }
+}

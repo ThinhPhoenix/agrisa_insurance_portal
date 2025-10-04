@@ -1,0 +1,475 @@
+/* Insurance Configuration Styles */
+.insurance-configuration-container {
+  @apply min-h-screen bg-gray-50 p-6;
+}
+
+.insurance-configuration-header {
+  @apply mb-6;
+}
+
+.insurance-configuration-title {
+  @apply text-2xl font-bold text-gray-800 mb-2;
+}
+
+.insurance-configuration-breadcrumb {
+  @apply mb-4;
+}
+
+/* Tab Styles */
+.configuration-tabs {
+  @apply bg-white rounded-lg shadow-sm;
+}
+
+.configuration-tabs .ant-tabs-tab {
+  @apply px-6 py-3 font-medium !important;
+}
+
+.configuration-tabs .ant-tabs-tab-active {
+  @apply text-blue-600 !important;
+}
+
+/* Card Grid Layouts */
+.config-card-grid {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.config-card-grid-large {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+/* System Overview Cards */
+.system-info-card {
+  @apply bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200;
+}
+
+.system-info-card-header {
+  @apply flex items-center gap-3 mb-4 pb-3 border-b border-gray-100;
+}
+
+.system-info-card-icon {
+  @apply text-2xl text-blue-500;
+}
+
+.system-info-card-title {
+  @apply text-lg font-semibold text-gray-800;
+}
+
+.system-info-field {
+  @apply flex justify-between items-center py-2 border-b border-gray-50 last:border-b-0;
+}
+
+.system-info-label {
+  @apply text-sm font-medium text-gray-600;
+}
+
+.system-info-value {
+  @apply text-sm text-gray-800;
+}
+
+/* Crop Assessment Cards */
+.crop-card {
+  @apply bg-white rounded-lg border-2 hover:shadow-lg transition-all duration-200 cursor-pointer;
+}
+
+.crop-card-rice {
+  @apply border-green-200 hover:border-green-400;
+}
+
+.crop-card-vegetables {
+  @apply border-cyan-200 hover:border-cyan-400;
+}
+
+.crop-card-fruit-trees {
+  @apply border-orange-200 hover:border-orange-400;
+}
+
+.crop-card-aquaculture {
+  @apply border-blue-200 hover:border-blue-400;
+}
+
+.crop-card-header {
+  @apply p-6 pb-4 border-b border-gray-100;
+}
+
+.crop-card-icon {
+  @apply w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-3;
+}
+
+.crop-card-icon-rice {
+  @apply bg-green-100 text-green-600;
+}
+
+.crop-card-icon-vegetables {
+  @apply bg-cyan-100 text-cyan-600;
+}
+
+.crop-card-icon-fruit-trees {
+  @apply bg-orange-100 text-orange-600;
+}
+
+.crop-card-icon-aquaculture {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.crop-card-title {
+  @apply text-xl font-bold text-gray-800 mb-2;
+}
+
+.crop-card-subtitle {
+  @apply text-sm text-gray-600;
+}
+
+.crop-card-content {
+  @apply p-6;
+}
+
+.crop-section {
+  @apply mb-6 last:mb-0;
+}
+
+.crop-section-title {
+  @apply text-lg font-semibold text-gray-800 mb-4;
+}
+
+/* Risk Indicators Table */
+.risk-indicators-table {
+  @apply w-full bg-white rounded-lg border border-gray-200;
+}
+
+.risk-indicators-table .ant-table-thead > tr > th {
+  @apply bg-gray-50 font-semibold text-gray-700 border-b border-gray-200 !important;
+}
+
+.risk-indicators-table .ant-table-tbody > tr > td {
+  @apply border-b border-gray-100 !important;
+}
+
+/* Coverage Statistics */
+.coverage-stats {
+  @apply grid grid-cols-2 gap-4;
+}
+
+.coverage-stat-card {
+  @apply bg-gray-50 rounded-lg p-4 text-center;
+}
+
+.coverage-stat-value {
+  @apply text-2xl font-bold text-blue-600 mb-1;
+}
+
+.coverage-stat-label {
+  @apply text-sm text-gray-600;
+}
+
+/* Timeline Styles */
+.critical-stages-timeline {
+  @apply bg-gray-50 rounded-lg p-4;
+}
+
+.critical-stages-timeline .ant-timeline-item-content {
+  @apply text-sm font-medium text-gray-700 !important;
+}
+
+/* Approval Process Flow */
+.approval-process-flow {
+  @apply bg-white rounded-lg p-6;
+}
+
+.approval-step {
+  @apply bg-white border-2 rounded-lg p-6 mb-6 transition-all duration-200;
+}
+
+.approval-step-auto {
+  @apply border-green-200 bg-green-50;
+}
+
+.approval-step-conditional {
+  @apply border-orange-200 bg-orange-50;
+}
+
+.approval-step-manual {
+  @apply border-red-200 bg-red-50;
+}
+
+.approval-step-header {
+  @apply flex items-center gap-4 mb-4;
+}
+
+.approval-step-number {
+  @apply w-8 h-8 rounded-full flex items-center justify-center text-white font-bold;
+}
+
+.approval-step-number-auto {
+  @apply bg-green-500;
+}
+
+.approval-step-number-conditional {
+  @apply bg-orange-500;
+}
+
+.approval-step-number-manual {
+  @apply bg-red-500;
+}
+
+.approval-step-title {
+  @apply text-lg font-semibold;
+}
+
+.approval-step-icon {
+  @apply text-2xl;
+}
+
+.approval-conditions {
+  @apply grid gap-4 mb-4;
+}
+
+.approval-condition-item {
+  @apply flex items-center gap-2 text-sm;
+}
+
+.approval-condition-check {
+  @apply text-green-500;
+}
+
+.approval-stats {
+  @apply grid grid-cols-2 gap-4;
+}
+
+/* Fraud Detection Dashboard */
+.fraud-detection-banner {
+  @apply mb-6;
+}
+
+.fraud-dashboard-grid {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+.fraud-monitoring-card {
+  @apply bg-white rounded-lg border border-gray-200 p-6;
+}
+
+.fraud-monitoring-header {
+  @apply flex items-center gap-3 mb-4;
+}
+
+.fraud-monitoring-icon {
+  @apply text-2xl text-red-500;
+}
+
+.fraud-monitoring-title {
+  @apply text-lg font-semibold text-gray-800;
+}
+
+.suspicious-pattern-item {
+  @apply flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-400 mb-3 last:mb-0;
+}
+
+.suspicious-pattern-icon {
+  @apply text-yellow-600 mt-0.5;
+}
+
+.priority-flag-item {
+  @apply flex items-start gap-3 p-3 bg-red-50 rounded-lg border-l-4 border-red-400 mb-3 last:mb-0;
+}
+
+.priority-flag-icon {
+  @apply text-red-600 mt-0.5;
+}
+
+/* Partner Integration */
+.partner-grid {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+.partner-section {
+  @apply bg-white rounded-lg border border-gray-200 p-6;
+}
+
+.partner-section-title {
+  @apply text-xl font-bold text-gray-800 mb-6;
+}
+
+.partner-card {
+  @apply bg-gray-50 rounded-lg p-4 mb-4 last:mb-0 hover:shadow-md transition-shadow duration-200;
+}
+
+.partner-card-header {
+  @apply flex items-center gap-3 mb-3;
+}
+
+.partner-avatar {
+  @apply w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center;
+}
+
+.partner-info {
+  @apply flex-1;
+}
+
+.partner-name {
+  @apply font-semibold text-gray-800 mb-1;
+}
+
+.partner-specialization {
+  @apply text-sm text-gray-600;
+}
+
+.partner-services {
+  @apply flex flex-wrap gap-1 mb-2;
+}
+
+.partner-service-tag {
+  @apply text-xs;
+}
+
+.partner-extra-info {
+  @apply text-sm text-gray-700;
+}
+
+.government-card {
+  @apply bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4 last:mb-0 border border-blue-200;
+}
+
+.government-card-title {
+  @apply font-bold text-gray-800 mb-2;
+}
+
+.government-card-item {
+  @apply text-sm text-gray-700 mb-1;
+}
+
+.government-card-label {
+  @apply font-medium text-gray-800;
+}
+
+/* Quality & Compliance Dashboard */
+.quality-dashboard {
+  @apply space-y-6;
+}
+
+.quality-section {
+  @apply bg-white rounded-lg border border-gray-200 p-6;
+}
+
+.quality-section-title {
+  @apply text-xl font-bold text-gray-800 mb-6;
+}
+
+.progress-cards {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.progress-card {
+  @apply bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4;
+}
+
+.progress-card-title {
+  @apply text-sm font-medium text-gray-700 mb-2;
+}
+
+.progress-card-value {
+  @apply text-lg font-bold text-blue-600 mb-2;
+}
+
+.validation-methods-list {
+  @apply space-y-3;
+}
+
+.validation-method-item {
+  @apply flex items-center gap-3 p-3 bg-gray-50 rounded-lg;
+}
+
+.validation-method-icon {
+  @apply text-green-500;
+}
+
+.compliance-sections {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.compliance-section {
+  @apply bg-gray-50 rounded-lg p-6;
+}
+
+.compliance-section-title {
+  @apply text-lg font-semibold text-gray-800 mb-4;
+}
+
+.regulation-list {
+  @apply space-y-3;
+}
+
+.regulation-item {
+  @apply p-3 bg-white rounded-lg border border-gray-200;
+}
+
+.regulation-label {
+  @apply font-medium text-gray-800 mb-1;
+}
+
+.regulation-value {
+  @apply text-sm text-gray-600;
+}
+
+.certification-badges {
+  @apply flex flex-wrap gap-2;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .config-card-grid,
+  .config-card-grid-large {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-grid,
+  .fraud-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .compliance-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .coverage-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .approval-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ant Design Overrides */
+.configuration-tabs .ant-tabs-content-holder {
+  @apply p-6 !important;
+}
+
+.configuration-tabs .ant-tabs-nav {
+  @apply px-6 !important;
+}
+
+.ant-tag.crop-tag-rice {
+  @apply bg-green-100 text-green-800 border-green-300 !important;
+}
+
+.ant-tag.crop-tag-vegetables {
+  @apply bg-cyan-100 text-cyan-800 border-cyan-300 !important;
+}
+
+.ant-tag.crop-tag-fruit-trees {
+  @apply bg-orange-100 text-orange-800 border-orange-300 !important;
+}
+
+.ant-tag.crop-tag-aquaculture {
+  @apply bg-blue-100 text-blue-800 border-blue-300 !important;
+}

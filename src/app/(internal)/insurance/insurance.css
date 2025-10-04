@@ -303,10 +303,6 @@
   @apply h-full shadow-sm;
 }
 
-.insurance-detail-card .ant-card-head {
-  @apply bg-gray-50 border-b;
-}
-
 .insurance-detail-card .ant-card-head-title {
   @apply font-semibold text-gray-800;
 }
@@ -314,10 +310,6 @@
 /* Risk Coverage Styles */
 .insurance-risks-container {
   @apply space-y-4;
-}
-
-.insurance-risk-item {
-  @apply p-4 bg-gray-50 rounded-lg border border-gray-200;
 }
 
 .insurance-risk-header {
@@ -335,10 +327,6 @@
 /* Land Types Styles */
 .insurance-land-types {
   @apply space-y-4;
-}
-
-.insurance-land-item {
-  @apply p-4 bg-gray-50 rounded-lg border border-gray-200;
 }
 
 .insurance-land-header {

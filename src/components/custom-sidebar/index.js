@@ -8,6 +8,7 @@ import {
   FileText,
   History,
   PanelLeft,
+  Settings,
   Shield,
   Users,
 } from "lucide-react";
@@ -39,6 +40,33 @@ const items = [
     key: "beneficiary",
     label: "Quản lý người thụ hưởng",
     icon: <Users size={16} />,
+  },
+  //configuration section
+  {
+    key: "configuration",
+    label: "Cấu hình",
+    icon: <Settings size={16} />,
+    children: [
+      { key: "configuration/overal", label: "Tổng quan" },
+      {
+        key: "configuration/approval",
+        label: "Phê duyệt",
+        children: [
+          {
+            key: "configuration/approval/claims-automation",
+            label: "Tự động hóa khiếu nại",
+          },
+          {
+            key: "configuration/approval/crop-assessment",
+            label: "Đánh giá cây trồng",
+          },
+        ],
+      },
+      { key: "configuration/fraud-detection", label: "Phát hiện gian lận" },
+      { key: "configuration/partners", label: "Đối tác" },
+      { key: "configuration/quality-compliance", label: "Tuân thủ chất lượng" },
+      { key: "configuration/satellite", label: "Vệ tinh" },
+    ],
   },
 ];
 

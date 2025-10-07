@@ -3,20 +3,9 @@ import { useState } from "react";
 import contractOptions from "../../../libs/mockdata/contract-options.json";
 
 export const useContract = () => {
-  const [selectedFields, setSelectedFields] = useState({
-    general: [],
-    personal: [],
-    contact: [],
-    occupation: [],
-    identification: [],
-    land: [],
-    crop: [],
-    insurance: [],
-    beneficiary: [],
-    documents: [],
-    confirmation: [],
-    monitoring: [],
-  });
+  const [selectedFields, setSelectedFields] = useState({});
+
+  const [selectedSections, setSelectedSections] = useState([]);
 
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
@@ -28,6 +17,10 @@ export const useContract = () => {
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedField, setSelectedField] = useState(null);
   const [selectedFieldType, setSelectedFieldType] = useState("text");
+
+  // Modal states
+  const [sectionModalVisible, setSectionModalVisible] = useState(false);
+  const [tempSelectedSections, setTempSelectedSections] = useState([]);
 
   const addFieldToSection = (sectionId, field) => {
     setSelectedFields((prev) => ({
@@ -117,26 +110,58 @@ export const useContract = () => {
   };
 
   const cancelContract = () => {
-    setSelectedFields({
-      general: [],
-      personal: [],
-      contact: [],
-      occupation: [],
-      identification: [],
-      land: [],
-      crop: [],
-      insurance: [],
-      beneficiary: [],
-      documents: [],
-      confirmation: [],
-      monitoring: [],
-    });
+    setSelectedFields({});
+    setSelectedSections([]);
     setFormData({});
     message.info("Đã hủy tạo hợp đồng!");
   };
 
+  // Section management functions
+  const openSectionModal = () => {
+    setTempSelectedSections([...selectedSections]);
+    setSectionModalVisible(true);
+  };
+
+  const closeSectionModal = () => {
+    setSectionModalVisible(false);
+    setTempSelectedSections([]);
+  };
+
+  const toggleTempSection = (sectionId) => {
+    setTempSelectedSections((prev) =>
+      prev.includes(sectionId)
+        ? prev.filter((id) => id !== sectionId)
+        : [...prev, sectionId]
+    );
+  };
+
+  const confirmSections = () => {
+    setSelectedSections(tempSelectedSections);
+    // Initialize selectedFields for new sections
+    const newSelectedFields = { ...selectedFields };
+    tempSelectedSections.forEach((sectionId) => {
+      if (!newSelectedFields[sectionId]) {
+        newSelectedFields[sectionId] = [];
+      }
+    });
+    setSelectedFields(newSelectedFields);
+    setSectionModalVisible(false);
+    message.success("Đã thêm các mục bảo hiểm!");
+  };
+
+  const removeSection = (sectionId) => {
+    setSelectedSections((prev) => prev.filter((id) => id !== sectionId));
+    setSelectedFields((prev) => {
+      const newFields = { ...prev };
+      delete newFields[sectionId];
+      return newFields;
+    });
+    message.success("Đã xóa mục bảo hiểm!");
+  };
+
   return {
     selectedFields,
+    selectedSections,
     formData,
     addFieldToSection,
     removeFieldFromSection,
@@ -161,5 +186,13 @@ export const useContract = () => {
     addCustomField,
     saveContract,
     cancelContract,
+    // Section modal states and functions
+    sectionModalVisible,
+    tempSelectedSections,
+    openSectionModal,
+    closeSectionModal,
+    toggleTempSection,
+    confirmSections,
+    removeSection,
   };
 };

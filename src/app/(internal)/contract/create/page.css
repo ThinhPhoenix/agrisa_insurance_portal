@@ -9,6 +9,18 @@
   margin: 0;
 }
 
+.add-section-button {
+  margin-bottom: 24px;
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.add-section-button:hover {
+  border-color: #1890ff;
+  background-color: #f0f8ff;
+}
+
 .section-card {
   margin-bottom: 16px;
 }
@@ -69,6 +81,31 @@
   top: 24px;
   max-height: calc(100vh - 48px);
   overflow-y: auto;
+}
+
+.drawer-footer-selected {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f0f8ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+}
+
+.drawer-footer-selected .selected-field-name {
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 8px;
+}
+
+.drawer-footer-selected .field-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-footer-selected .field-type-selector span {
+  font-weight: 500;
+  color: #374151;
 }
 
 .library-section {

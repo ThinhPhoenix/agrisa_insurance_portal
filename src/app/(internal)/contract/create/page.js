@@ -21,7 +21,7 @@ import {
   Input,
   List,
   message,
-  Radio,
+  Modal,
   Row,
   Select,
   Space,
@@ -38,6 +38,7 @@ const { Title } = Typography;
 export default function CreateContractPage() {
   const {
     selectedFields,
+    selectedSections,
     formData,
     addFieldToSection,
     removeFieldFromSection,
@@ -62,6 +63,14 @@ export default function CreateContractPage() {
     addCustomField,
     saveContract,
     cancelContract,
+    // Section modal states and functions
+    sectionModalVisible,
+    tempSelectedSections,
+    openSectionModal,
+    closeSectionModal,
+    toggleTempSection,
+    confirmSections,
+    removeSection,
   } = useContract();
 
   const [form] = Form.useForm();
@@ -214,57 +223,84 @@ export default function CreateContractPage() {
         {/* Main Form Area */}
         <Col span={24}>
           <Card title="Tạo hợp đồng bảo hiểm" className="contract-card">
+            {/* Add Section Button */}
+            <div style={{ marginBottom: 24, textAlign: "center" }}>
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={openSectionModal}
+                size="large"
+                className="add-section-button"
+                style={{ width: "100%", height: 48 }}
+              >
+                Thêm Mục bảo hiểm
+              </Button>
+            </div>
+
             <Form form={form} layout="vertical" onFinish={onFinish}>
-              {sections.map((section) => (
-                <Card
-                  key={section.id}
-                  title={section.name}
-                  size="small"
-                  className="section-card"
-                  extra={
-                    <Button
-                      type="link"
-                      size="small"
-                      onClick={() => openSidebar(section.id)}
-                    >
-                      <PlusOutlined /> Thêm trường
-                    </Button>
-                  }
-                >
-                  {selectedFields[section.id].length === 0 ? (
-                    <p
-                      style={{
-                        color: "#999",
-                        textAlign: "center",
-                        padding: "20px",
-                      }}
-                    >
-                      Chưa có trường nào. Nhấn "Thêm trường" để bắt đầu.
-                    </p>
-                  ) : (
-                    selectedFields[section.id].map((field) => (
-                      <div key={field.instanceId} className="field-item">
-                        <Row align="middle" gutter={8}>
-                          <Col flex="auto">{renderField(field)}</Col>
-                          <Col flex="none">
-                            <Button
-                              type="text"
-                              icon={<MinusOutlined />}
-                              onClick={() =>
-                                removeFieldFromSection(
-                                  section.id,
-                                  field.instanceId
-                                )
-                              }
-                              danger
-                            />
-                          </Col>
-                        </Row>
-                      </div>
-                    ))
-                  )}
-                </Card>
-              ))}
+              {selectedSections.map((sectionId) => {
+                const section = sections.find((s) => s.id === sectionId);
+                return (
+                  <Card
+                    key={sectionId}
+                    title={section?.name || sectionId}
+                    size="small"
+                    className="section-card"
+                    extra={
+                      <Space>
+                        <Button
+                          type="link"
+                          size="small"
+                          onClick={() => openSidebar(sectionId)}
+                        >
+                          <PlusOutlined /> Thêm trường
+                        </Button>
+                        <Button
+                          type="link"
+                          size="small"
+                          danger
+                          onClick={() => removeSection(sectionId)}
+                        >
+                          <CloseOutlined /> Xóa mục
+                        </Button>
+                      </Space>
+                    }
+                  >
+                    {selectedFields[sectionId]?.length === 0 ? (
+                      <p
+                        style={{
+                          color: "#999",
+                          textAlign: "center",
+                          padding: "20px",
+                        }}
+                      >
+                        Chưa có trường nào. Nhấn "Thêm trường" để bắt đầu.
+                      </p>
+                    ) : (
+                      selectedFields[sectionId]?.map((field) => (
+                        <div key={field.instanceId} className="field-item">
+                          <Row align="middle" gutter={8}>
+                            <Col flex="auto">{renderField(field)}</Col>
+                            <Col flex="none">
+                              <Button
+                                type="text"
+                                icon={<MinusOutlined />}
+                                onClick={() =>
+                                  removeFieldFromSection(
+                                    sectionId,
+                                    field.instanceId
+                                  )
+                                }
+                                danger
+                              />
+                            </Col>
+                          </Row>
+                        </div>
+                      ))
+                    )}
+                  </Card>
+                );
+              })}
 
               <Divider />
 
@@ -306,101 +342,173 @@ export default function CreateContractPage() {
 
       {/* Field Selection Drawer */}
       <Drawer
-        title="Thêm trường thông tin"
+        title={`Thêm trường cho ${
+          sections.find((s) => s.id === currentSection)?.name || "Mục thông tin"
+        }`}
         placement="right"
         width={400}
         onClose={closeSidebar}
         open={sidebarVisible}
         footer={
-          <Space>
-            <Button onClick={closeSidebar}>Đóng</Button>
-            <Button
-              type="primary"
-              onClick={addCustomField}
-              disabled={!selectedField}
-            >
-              Thêm trường
-            </Button>
-          </Space>
+          <div>
+            {selectedField && (
+              <div className="drawer-footer-selected">
+                <div className="selected-field-name">
+                  Đã chọn: {selectedField.label}
+                </div>
+                <div className="field-type-selector">
+                  <span>Kiểu dữ liệu:</span>
+                  <Select
+                    value={selectedFieldType}
+                    onChange={(value) => setSelectedFieldType(value)}
+                    style={{ width: 140 }}
+                    size="small"
+                  >
+                    <Option value="text">Văn bản</Option>
+                    <Option value="textarea">Văn bản dài</Option>
+                    <Option value="number">Số</Option>
+                    <Option value="date">Ngày tháng</Option>
+                    <Option value="select">Lựa chọn</Option>
+                    <Option value="checkbox-group">Nhiều lựa chọn</Option>
+                    <Option value="file">Tập tin</Option>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <Space>
+              <Button onClick={closeSidebar}>Đóng</Button>
+              <Button
+                type="primary"
+                onClick={addCustomField}
+                disabled={!selectedField}
+              >
+                Thêm trường
+              </Button>
+            </Space>
+          </div>
         }
       >
         <div className="field-drawer-content">
-          {/* Step 1: Select Section */}
+          {/* Select Field */}
           <div className="drawer-section">
-            <Title level={5}>1. Chọn mục thông tin</Title>
-            <Radio.Group
-              value={selectedSection}
-              onChange={(e) => selectSection(e.target.value)}
-              style={{ width: "100%" }}
-            >
-              <Space direction="vertical" style={{ width: "100%" }}>
-                {sections.map((section) => (
-                  <Radio key={section.id} value={section.id}>
-                    {section.name}
-                  </Radio>
-                ))}
-              </Space>
-            </Radio.Group>
+            <Title level={5}>Chọn trường thông tin</Title>
+            <List
+              size="small"
+              dataSource={fieldLibrary[currentSection] || []}
+              renderItem={(field) => (
+                <List.Item
+                  style={{
+                    cursor: "pointer",
+                    backgroundColor:
+                      selectedField?.id === field.id
+                        ? "#f0f8ff"
+                        : "transparent",
+                    borderRadius: "4px",
+                    padding: "8px",
+                  }}
+                  onClick={() => selectField(field)}
+                >
+                  <List.Item.Meta
+                    title={field.label}
+                    description={`Kiểu: ${field.type}${
+                      field.required ? " (Bắt buộc)" : " (Tùy chọn)"
+                    }`}
+                  />
+                </List.Item>
+              )}
+            />
           </div>
-
-          <Divider />
-
-          {/* Step 2: Select Field */}
-          {selectedSection && (
-            <div className="drawer-section">
-              <Title level={5}>2. Chọn trường thông tin</Title>
-              <List
-                size="small"
-                dataSource={fieldLibrary[selectedSection] || []}
-                renderItem={(field) => (
-                  <List.Item
-                    style={{
-                      cursor: "pointer",
-                      backgroundColor:
-                        selectedField?.id === field.id
-                          ? "#f0f8ff"
-                          : "transparent",
-                      borderRadius: "4px",
-                      padding: "8px",
-                    }}
-                    onClick={() => selectField(field)}
-                  >
-                    <List.Item.Meta
-                      title={field.label}
-                      description={`Kiểu: ${field.type}${
-                        field.required ? " (Bắt buộc)" : " (Tùy chọn)"
-                      }`}
-                    />
-                  </List.Item>
-                )}
-              />
-            </div>
-          )}
-
-          <Divider />
-
-          {/* Step 3: Select Field Type */}
-          {selectedField && (
-            <div className="drawer-section">
-              <Title level={5}>3. Chọn kiểu dữ liệu</Title>
-              <Radio.Group
-                value={selectedFieldType}
-                onChange={(e) => setSelectedFieldType(e.target.value)}
-              >
-                <Space direction="vertical">
-                  <Radio value="text">Văn bản</Radio>
-                  <Radio value="textarea">Văn bản dài</Radio>
-                  <Radio value="number">Số</Radio>
-                  <Radio value="date">Ngày tháng</Radio>
-                  <Radio value="select">Lựa chọn</Radio>
-                  <Radio value="checkbox-group">Nhiều lựa chọn</Radio>
-                  <Radio value="file">Tập tin</Radio>
-                </Space>
-              </Radio.Group>
-            </div>
-          )}
         </div>
       </Drawer>
+
+      {/* Section Selection Modal */}
+      <Modal
+        title="Chọn mục bảo hiểm"
+        open={sectionModalVisible}
+        onCancel={closeSectionModal}
+        onOk={confirmSections}
+        width={600}
+        okText="Xác nhận"
+        cancelText="Hủy"
+      >
+        <div style={{ padding: "8px 0" }}>
+          <p style={{ marginBottom: 16, color: "#666" }}>
+            Chọn các mục thông tin cần thiết cho hợp đồng bảo hiểm:
+          </p>
+          <List
+            dataSource={sections}
+            renderItem={(section) => (
+              <List.Item
+                style={{
+                  cursor: "pointer",
+                  backgroundColor: tempSelectedSections.includes(section.id)
+                    ? "#f0f8ff"
+                    : "transparent",
+                  borderRadius: "4px",
+                  padding: "12px",
+                  marginBottom: "8px",
+                  border: tempSelectedSections.includes(section.id)
+                    ? "1px solid #bae6fd"
+                    : "1px solid #f0f0f0",
+                }}
+                onClick={() => toggleTempSection(section.id)}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <Checkbox
+                      checked={tempSelectedSections.includes(section.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleTempSection(section.id);
+                      }}
+                    />
+                  }
+                  title={
+                    <span
+                      style={{
+                        fontWeight: tempSelectedSections.includes(section.id)
+                          ? "bold"
+                          : "normal",
+                        color: tempSelectedSections.includes(section.id)
+                          ? "#1e40af"
+                          : "inherit",
+                      }}
+                    >
+                      {section.name}
+                    </span>
+                  }
+                  description={
+                    <div>
+                      {section.id === "general" &&
+                        "Thông tin cơ bản của hợp đồng như tên sản phẩm, thời hạn, phạm vi địa lý"}
+                      {section.id === "personal" &&
+                        "Thông tin cá nhân của người được bảo hiểm"}
+                      {section.id === "contact" &&
+                        "Thông tin liên lạc và địa chỉ"}
+                      {section.id === "occupation" &&
+                        "Thông tin về nghề nghiệp và thu nhập"}
+                      {section.id === "identification" &&
+                        "Giấy tờ tùy thân như CMND/CCCD, hộ chiếu"}
+                      {section.id === "land" &&
+                        "Thông tin về đất đai, diện tích, vị trí"}
+                      {section.id === "crop" &&
+                        "Thông tin về cây trồng và mùa vụ"}
+                      {section.id === "insurance" &&
+                        "Thông tin về bảo hiểm, phí, quyền lợi"}
+                      {section.id === "beneficiary" &&
+                        "Thông tin người thụ hưởng"}
+                      {section.id === "documents" && "Tài liệu đính kèm, hồ sơ"}
+                      {section.id === "confirmation" && "Xác nhận và cam kết"}
+                      {section.id === "monitoring" &&
+                        "Giám sát dữ liệu và điều kiện kích hoạt"}
+                    </div>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        </div>
+      </Modal>
     </div>
   );
 }

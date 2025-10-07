@@ -1,5 +1,6 @@
 "use client";
 
+import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { useTransaction } from "@/services/hooks/transaction-history/use-transaction";
@@ -13,6 +14,7 @@ import {
   SearchOutlined,
 } from "@ant-design/icons";
 import { Button, Collapse, Layout, Space, Tag, Typography } from "antd";
+import { useState } from "react";
 import "./transaction-history.css";
 
 const { Title, Text } = Typography;
@@ -44,6 +46,17 @@ export default function TransactionHistoryPage() {
     handleFormSubmit,
     handleClearFilters,
   } = useTransaction();
+
+  // Visible columns state - action column is always visible
+  const [visibleColumns, setVisibleColumns] = useState([
+    "invoice_id",
+    "recipient_name",
+    "date",
+    "location",
+    "amount",
+    "status",
+    "action", // Always visible
+  ]);
 
   // Search fields for custom form
   const searchFields = [
@@ -232,6 +245,7 @@ export default function TransactionHistoryPage() {
     {
       title: "Thao tác",
       key: "action",
+      fixed: "right",
       width: 150,
       render: (_, record) => (
         <Space className="transaction-actions">
@@ -366,10 +380,18 @@ export default function TransactionHistoryPage() {
 
         {/* Table */}
         <div className="transaction-overflow">
+          <div className="flex justify-end items-center gap-2 mb-2">
+            <SelectedColumn
+              columns={columns}
+              visibleColumns={visibleColumns}
+              setVisibleColumns={setVisibleColumns}
+            />
+          </div>
           <div className="transaction-table-wrapper">
             <CustomTable
               dataSource={filteredData}
               columns={columns}
+              visibleColumns={visibleColumns}
               rowKey="invoice_id"
               scroll={{ x: true }}
               size="middle"

@@ -5,7 +5,7 @@ const SelectedColumn = ({ columns, visibleColumns, setVisibleColumns }) => {
   // Column selector logic
   const options = columns
     .filter((col) => col.key !== "action")
-    .map((col) => ({ label: col.title, value: col.dataIndex }));
+    .map((col) => ({ label: col.title, value: col.key }));
 
   const allColumnValues = options.map((opt) => opt.value);
   const isAllSelected = allColumnValues.every((val) =>

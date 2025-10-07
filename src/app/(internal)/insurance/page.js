@@ -1,5 +1,6 @@
 "use client";
 
+import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { usePremium } from "@/services/hooks/premium/use-premium";
@@ -16,6 +17,7 @@ import {
 } from "@ant-design/icons";
 import { Button, Collapse, Image, Layout, Space, Tag, Typography } from "antd";
 import Link from "next/link";
+import { useState } from "react";
 import "./insurance.css";
 
 const { Title, Text } = Typography;
@@ -30,6 +32,16 @@ export default function InsurancePage() {
     clearFilters,
     loading,
   } = usePremium();
+
+  // Visible columns state
+  const [visibleColumns, setVisibleColumns] = useState([
+    "package_info",
+    "category",
+    "status",
+    "coverage",
+    "validity",
+    "statistics",
+  ]);
 
   // Loading state check
   if (loading) {
@@ -80,6 +92,7 @@ export default function InsurancePage() {
   const columns = [
     {
       title: "Thông tin gói bảo hiểm",
+      dataIndex: "package_info",
       key: "package_info",
       width: 300,
       render: (_, record) => (
@@ -105,6 +118,7 @@ export default function InsurancePage() {
     },
     {
       title: "Danh mục",
+      dataIndex: "category",
       key: "category",
       width: 150,
       render: (_, record) => (
@@ -118,6 +132,7 @@ export default function InsurancePage() {
     },
     {
       title: "Trạng thái",
+      dataIndex: "status",
       key: "status",
       width: 130,
       render: (_, record) => (
@@ -131,6 +146,7 @@ export default function InsurancePage() {
     },
     {
       title: "Mức bảo hiểm",
+      dataIndex: "coverage",
       key: "coverage",
       width: 180,
       render: (_, record) => (
@@ -147,6 +163,7 @@ export default function InsurancePage() {
     },
     {
       title: "Thời gian hiệu lực",
+      dataIndex: "validity",
       key: "validity",
       width: 160,
       render: (_, record) => (
@@ -162,6 +179,7 @@ export default function InsurancePage() {
     },
     {
       title: "Thống kê",
+      dataIndex: "statistics",
       key: "statistics",
       width: 120,
       render: (_, record) => (
@@ -301,12 +319,6 @@ export default function InsurancePage() {
               Quản lý các gói bảo hiểm nông nghiệp và thống kê hiệu quả
             </Text>
           </div>
-          <div className="insurance-actions">
-            <Button type="primary" icon={<SafetyOutlined />}>
-              Tạo gói mới
-            </Button>
-            <Button icon={<DownloadOutlined />}>Xuất báo cáo</Button>
-          </div>
         </div>
 
         {/* Summary Cards */}
@@ -403,9 +415,23 @@ export default function InsurancePage() {
 
         {/* Table */}
         <div className="insurance-table-wrapper">
+          <div className="flex justify-start items-center gap-2 mb-2">
+            <Button type="primary" icon={<SafetyOutlined />}>
+              Tạo mới
+            </Button>
+            <Button icon={<DownloadOutlined />}>Nhập excel</Button>
+            <Button icon={<DownloadOutlined />}>Xuất excel</Button>
+            <SelectedColumn
+              columns={columns}
+              visibleColumns={visibleColumns}
+              setVisibleColumns={setVisibleColumns}
+            />
+          </div>
+
           <CustomTable
             columns={columns}
             dataSource={filteredData}
+            visibleColumns={visibleColumns}
             rowKey="package_id"
             scroll={{ x: 1200 }}
             pagination={{

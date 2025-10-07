@@ -1,5 +1,6 @@
 "use client";
 
+import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { useBeneficiary } from "@/services/hooks/beneficiary/use-beneficiary";
@@ -15,6 +16,7 @@ import {
 } from "@ant-design/icons";
 import { Avatar, Button, Collapse, Layout, Space, Tag, Typography } from "antd";
 import Link from "next/link";
+import { useState } from "react";
 import "./beneficiary.css";
 
 const { Title, Text } = Typography;
@@ -29,6 +31,19 @@ export default function BeneficiaryPage() {
     handleFormSubmit,
     handleClearFilters,
   } = useBeneficiary();
+
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState([
+    "beneficiary_id",
+    "personal_info",
+    "address",
+    "farm_info",
+    "coverage_amount",
+    "premium",
+    "status",
+    "payment_status",
+    "action",
+  ]);
 
   // Search fields for custom form - organized in 2 rows
   const searchFields = [
@@ -164,6 +179,7 @@ export default function BeneficiaryPage() {
     },
     {
       title: "Thông tin cá nhân",
+      dataIndex: "personal_info",
       key: "personal_info",
       width: 250,
       render: (_, record) => (
@@ -185,6 +201,7 @@ export default function BeneficiaryPage() {
     },
     {
       title: "Địa chỉ",
+      dataIndex: "address",
       key: "address",
       width: 200,
       ellipsis: true,
@@ -202,6 +219,7 @@ export default function BeneficiaryPage() {
     },
     {
       title: "Thông tin trang trại",
+      dataIndex: "farm_info",
       key: "farm_info",
       width: 200,
       ellipsis: true,
@@ -428,9 +446,17 @@ export default function BeneficiaryPage() {
 
         {/* Table */}
         <div className="overflow-x-auto">
+          <div className="flex justify-end items-center gap-2 mb-2">
+            <SelectedColumn
+              columns={columns}
+              visibleColumns={visibleColumns}
+              setVisibleColumns={setVisibleColumns}
+            />
+          </div>
           <CustomTable
             dataSource={filteredData}
             columns={columns}
+            visibleColumns={visibleColumns}
             rowKey="beneficiary_id"
             scroll={{ x: true }}
           />

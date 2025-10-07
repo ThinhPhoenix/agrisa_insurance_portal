@@ -2,10 +2,139 @@
 
 import CustomForm from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
+import SelectedColumn from "@/components/selected-column";
 import { Button, Collapse, Tag } from "antd";
 import { BrushCleaning, Delete, Edit, Eye, Search } from "lucide-react";
+import { useState } from "react";
 
 const DummyPage = () => {
+  // Columns for the table (đã thêm các cột mới: Email, Số điện thoại, Địa chỉ, Ngày sinh, Ghi chú)
+  const columns = [
+    {
+      title: "Mã",
+      dataIndex: "id",
+      key: "id",
+      width: 120,
+      ellipsis: true,
+      render: (text) => (
+        <span title={text} className="inline-block max-w-full">
+          {text}
+        </span>
+      ),
+    },
+    {
+      title: "Tên",
+      dataIndex: "name",
+      key: "name",
+      width: 150,
+    },
+    {
+      title: "Thời gian đặt",
+      dataIndex: "bookingTime",
+      key: "bookingTime",
+      width: 200,
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      width: 120,
+      render: (status) => {
+        const statusMap = {
+          new: <Tag color="blue">Mới</Tag>,
+          processing: <Tag color="orange">Đang xử lý</Tag>,
+          completed: <Tag color="green">Hoàn thành</Tag>,
+          canceled: <Tag color="red">Hủy</Tag>,
+        };
+        return statusMap[status] || status;
+      },
+    },
+    {
+      title: "Kích hoạt",
+      dataIndex: "active",
+      key: "active",
+      width: 100,
+      render: (active) => (active ? "Có" : "Không"),
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      width: 200,
+    },
+    {
+      title: "Số điện thoại",
+      dataIndex: "phone",
+      key: "phone",
+      width: 150,
+    },
+    {
+      title: "Địa chỉ",
+      dataIndex: "address",
+      key: "address",
+      width: 250,
+      ellipsis: true,
+      render: (text) => (
+        <span title={text} className="inline-block max-w-full">
+          {text}
+        </span>
+      ),
+    },
+    {
+      title: "Ngày sinh",
+      dataIndex: "dob",
+      key: "dob",
+      width: 120,
+    },
+    {
+      title: "Ghi chú",
+      dataIndex: "notes",
+      key: "notes",
+      width: 300,
+      ellipsis: true,
+      render: (text) => (
+        <span title={text} className="inline-block max-w-full">
+          {text}
+        </span>
+      ),
+    },
+    {
+      title: "Hành động",
+      fixed: "right",
+      key: "action",
+      width: 150,
+      render: () => (
+        <div className="flex gap-2">
+          <Button
+            type="dashed"
+            size="small"
+            className="!bg-blue-100 !border-blue-200 !text-blue-800 hover:!bg-blue-200"
+          >
+            <Eye size={14} />
+          </Button>
+          <Button
+            type="dashed"
+            size="small"
+            className="!bg-orange-100 !border-orange-200 !text-orange-800 hover:!bg-orange-200"
+          >
+            <Edit size={14} />
+          </Button>
+          <Button
+            type="dashed"
+            size="small"
+            className="!bg-red-100 !border-red-200 !text-red-800 hover:!bg-red-200"
+          >
+            <Delete size={14} />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((col) => col.dataIndex)
+  );
+
   const fields = [
     {
       name: "id",
@@ -234,129 +363,6 @@ const DummyPage = () => {
     },
   ];
 
-  // Columns for the table (đã thêm các cột mới: Email, Số điện thoại, Địa chỉ, Ngày sinh, Ghi chú)
-  const columns = [
-    {
-      title: "Mã",
-      dataIndex: "id",
-      key: "id",
-      width: 120,
-      ellipsis: true,
-      render: (text) => (
-        <span title={text} className="inline-block max-w-full">
-          {text}
-        </span>
-      ),
-    },
-    {
-      title: "Tên",
-      dataIndex: "name",
-      key: "name",
-      width: 150,
-    },
-    {
-      title: "Thời gian đặt",
-      dataIndex: "bookingTime",
-      key: "bookingTime",
-      width: 200,
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      width: 120,
-      render: (status) => {
-        const statusMap = {
-          new: <Tag color="blue">Mới</Tag>,
-          processing: <Tag color="orange">Đang xử lý</Tag>,
-          completed: <Tag color="green">Hoàn thành</Tag>,
-          canceled: <Tag color="red">Hủy</Tag>,
-        };
-        return statusMap[status] || status;
-      },
-    },
-    {
-      title: "Kích hoạt",
-      dataIndex: "active",
-      key: "active",
-      width: 100,
-      render: (active) => (active ? "Có" : "Không"),
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-      width: 200,
-    },
-    {
-      title: "Số điện thoại",
-      dataIndex: "phone",
-      key: "phone",
-      width: 150,
-    },
-    {
-      title: "Địa chỉ",
-      dataIndex: "address",
-      key: "address",
-      width: 250,
-      ellipsis: true,
-      render: (text) => (
-        <span title={text} className="inline-block max-w-full">
-          {text}
-        </span>
-      ),
-    },
-    {
-      title: "Ngày sinh",
-      dataIndex: "dob",
-      key: "dob",
-      width: 120,
-    },
-    {
-      title: "Ghi chú",
-      dataIndex: "notes",
-      key: "notes",
-      width: 300,
-      ellipsis: true,
-      render: (text) => (
-        <span title={text} className="inline-block max-w-full">
-          {text}
-        </span>
-      ),
-    },
-    {
-      title: "Hành động",
-      fixed: "right",
-      key: "action",
-      width: 150,
-      render: () => (
-        <div className="flex gap-2">
-          <Button
-            type="dashed"
-            size="small"
-            className="!bg-blue-100 !border-blue-200 !text-blue-800 hover:!bg-blue-200"
-          >
-            <Eye size={14} />
-          </Button>
-          <Button
-            type="dashed"
-            size="small"
-            className="!bg-orange-100 !border-orange-200 !text-orange-800 hover:!bg-orange-200"
-          >
-            <Edit size={14} />
-          </Button>
-          <Button
-            type="dashed"
-            size="small"
-            className="!bg-red-100 !border-red-200 !text-red-800 hover:!bg-red-200"
-          >
-            <Delete size={14} />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <div className="space-y-2">
       <Collapse
@@ -380,10 +386,20 @@ const DummyPage = () => {
           },
         ]}
       />
+
       <div className="overflow-x-auto">
+        <div className="flex justify-end items-center gap-2 mb-2">
+          <SelectedColumn
+            columns={columns}
+            visibleColumns={visibleColumns}
+            setVisibleColumns={setVisibleColumns}
+          />
+        </div>
+
         <CustomTable
           dataSource={dataSource}
           columns={columns}
+          visibleColumns={visibleColumns}
           scroll={{ x: true }}
         />
       </div>

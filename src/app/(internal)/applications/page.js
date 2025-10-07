@@ -1,11 +1,13 @@
 "use client";
 
+import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { useApplications } from "@/services/hooks/applications/use-applications";
 import { EyeOutlined, FilterOutlined, SearchOutlined } from "@ant-design/icons";
 import { Button, Collapse, Layout, Select, Space, Tag, Typography } from "antd";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import "./applications.css";
 
 const { Title } = Typography;
@@ -21,6 +23,17 @@ export default function PendingApplicationsPage() {
     handleFormSubmit,
     handleClearFilters,
   } = useApplications();
+
+  // Visible columns state - action column is always visible
+  const [visibleColumns, setVisibleColumns] = useState([
+    "id",
+    "farmer_name",
+    "crop_type",
+    "region",
+    "submission_date",
+    "risk_summary",
+    "action", // Always visible
+  ]);
 
   // Search fields for custom form
   const searchFields = [
@@ -156,6 +169,7 @@ export default function PendingApplicationsPage() {
     {
       title: "Thao tác",
       key: "action",
+      fixed: "right",
       width: 100,
       render: (_, record) => (
         <Button
@@ -212,9 +226,17 @@ export default function PendingApplicationsPage() {
         />
 
         <div className="applications-overflow">
+          <div className="flex justify-end items-center gap-2 mb-2">
+            <SelectedColumn
+              columns={columns}
+              visibleColumns={visibleColumns}
+              setVisibleColumns={setVisibleColumns}
+            />
+          </div>
           <CustomTable
             dataSource={filteredData}
             columns={columns}
+            visibleColumns={visibleColumns}
             rowKey="id"
             scroll={{ x: true }}
             size="middle"

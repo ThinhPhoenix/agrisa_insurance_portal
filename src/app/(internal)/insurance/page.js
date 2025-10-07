@@ -1,8 +1,8 @@
 "use client";
 
+import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
-import SelectedColumn from "@/components/selected-column";
 import { usePremium } from "@/services/hooks/premium/use-premium";
 import {
   CheckCircleOutlined,

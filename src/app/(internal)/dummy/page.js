@@ -1,8 +1,8 @@
 "use client";
 
+import SelectedColumn from "@/components/column-selector";
 import CustomForm from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
-import SelectedColumn from "@/components/selected-column";
 import { Button, Collapse, Tag } from "antd";
 import { BrushCleaning, Delete, Edit, Eye, Search } from "lucide-react";
 import { useState } from "react";

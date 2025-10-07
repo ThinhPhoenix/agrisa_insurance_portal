@@ -1,15 +1,7 @@
 import { Button, Checkbox, Divider, Popover } from "antd";
 import { Settings } from "lucide-react";
 
-const TableToolbar = ({
-  columns,
-  visibleColumns,
-  setVisibleColumns,
-  leftActions,
-  rightActions,
-  position = "justify-between", // justify-start, justify-center, justify-end, justify-between
-  showColumnSelector = true,
-}) => {
+const SelectedColumn = ({ columns, visibleColumns, setVisibleColumns }) => {
   // Column selector logic
   const options = columns
     .filter((col) => col.key !== "action")
@@ -45,60 +37,47 @@ const TableToolbar = ({
   };
 
   return (
-    <div className={`flex ${position} items-center gap-2 mb-2`}>
-      {leftActions && <div className="flex gap-2">{leftActions}</div>}
-
-      <div className="flex gap-2 items-center">
-        {rightActions && rightActions}
-
-        {showColumnSelector && (
-          <Popover
-            content={
-              <div style={{ minWidth: 200 }}>
-                <Checkbox
-                  indeterminate={isIndeterminate}
-                  checked={isAllSelected}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                >
-                  Hiện tất cả
-                </Checkbox>
-                <Divider style={{ margin: "8px 0" }} />
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                  }}
-                >
-                  {options.map((option) => (
-                    <Checkbox
-                      key={option.value}
-                      checked={visibleColumns.includes(option.value)}
-                      onChange={(e) =>
-                        handleColumnChange(option.value, e.target.checked)
-                      }
-                    >
-                      {option.label}
-                    </Checkbox>
-                  ))}
-                </div>
-              </div>
-            }
-            title="Chọn cột hiển thị"
-            trigger="click"
-            placement="bottomRight"
+    <Popover
+      content={
+        <div style={{ minWidth: 200 }}>
+          <Checkbox
+            indeterminate={isIndeterminate}
+            checked={isAllSelected}
+            onChange={(e) => handleSelectAll(e.target.checked)}
           >
-            <Button
-              className="flex items-center justify-center"
-              shape="default"
-            >
-              <Settings size={16} style={{ marginTop: "2px" }} />
-            </Button>
-          </Popover>
-        )}
-      </div>
-    </div>
+            Hiện tất cả
+          </Checkbox>
+          <Divider style={{ margin: "8px 0" }} />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
+            {options.map((option) => (
+              <Checkbox
+                key={option.value}
+                checked={visibleColumns.includes(option.value)}
+                onChange={(e) =>
+                  handleColumnChange(option.value, e.target.checked)
+                }
+              >
+                {option.label}
+              </Checkbox>
+            ))}
+          </div>
+        </div>
+      }
+      title="Chọn cột hiển thị"
+      trigger="click"
+      placement="bottomRight"
+    >
+      <Button className="flex items-center justify-center" shape="default">
+        <Settings size={16} style={{ marginTop: "2px" }} />
+      </Button>
+    </Popover>
   );
 };
 
-export default TableToolbar;
+export default SelectedColumn;

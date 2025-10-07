@@ -1,0 +1,116 @@
+.contract-create-page {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.contract-card {
+  max-width: none;
+  margin: 0;
+}
+
+.section-card {
+  margin-bottom: 16px;
+}
+
+.section-card .ant-card-head {
+  background-color: #eff6ff !important;
+}
+
+.section-card .ant-card-head-title {
+  color: #1e40af !important;
+  font-weight: 600 !important;
+}
+
+.field-item {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #fafafa;
+}
+
+.contract-success {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.contract-success .ant-card {
+  max-width: 448px;
+  text-align: center;
+}
+
+.field-drawer-content {
+  padding: 8px 0;
+}
+
+.drawer-section {
+  margin-bottom: 24px;
+}
+
+.drawer-section .ant-typography {
+  margin-bottom: 12px;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.drawer-section .ant-list-item {
+  transition: all 0.2s ease;
+}
+
+.drawer-section .ant-list-item:hover {
+  background-color: #f0f8ff !important;
+}
+
+.field-library {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.library-section {
+  margin-bottom: 16px;
+}
+
+.library-section .ant-list-item {
+  padding: 8px 0;
+}
+
+.library-section .ant-list-item-meta-title {
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
+.library-section .ant-list-item-meta-description {
+  font-size: 12px;
+  color: #666;
+}
+
+.field-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.field-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.field-section-header h4 {
+  margin: 0;
+  color: #374151;
+  font-weight: 600;
+}
+
+.selected-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

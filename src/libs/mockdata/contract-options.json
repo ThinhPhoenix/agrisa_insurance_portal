@@ -1,0 +1,851 @@
+{
+  "fieldLibrary": {
+    "general": [
+      {
+        "id": "full_name",
+        "label": "Họ và tên",
+        "type": "text",
+        "required": true,
+        "validation": "uppercase"
+      },
+      {
+        "id": "dob",
+        "label": "Ngày sinh",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "age",
+        "label": "Tuổi",
+        "type": "number",
+        "autoCalculate": "from_dob",
+        "readOnly": true
+      },
+      {
+        "id": "gender",
+        "label": "Giới tính",
+        "type": "select",
+        "options": ["Nam", "Nữ"],
+        "required": true
+      },
+      {
+        "id": "phone",
+        "label": "Điện thoại",
+        "type": "text",
+        "validation": "phone"
+      },
+      {
+        "id": "email",
+        "label": "Email",
+        "type": "text",
+        "validation": "email"
+      },
+      {
+        "id": "address_permanent",
+        "label": "Địa chỉ thường trú",
+        "type": "textarea",
+        "required": true
+      },
+      {
+        "id": "address_contact",
+        "label": "Địa chỉ liên lạc",
+        "type": "textarea"
+      },
+      {
+        "id": "address_current",
+        "label": "Địa chỉ hiện tại",
+        "type": "textarea"
+      },
+      {
+        "id": "buyerCode",
+        "label": "Mã số Bên mua bảo hiểm",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "insuredCode",
+        "label": "Mã số Người được bảo hiểm",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "advisorName",
+        "label": "Họ tên Tư vấn Tài chính",
+        "type": "select",
+        "options": ["Nguyễn Văn A", "Trần Thị B"],
+        "required": true
+      },
+      {
+        "id": "advisorCode",
+        "label": "Mã số Tư vấn Tài chính",
+        "type": "text",
+        "required": true
+      }
+    ],
+    "personal": [
+      {
+        "id": "fullName",
+        "label": "Họ và tên",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "dob",
+        "label": "Ngày sinh",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "age",
+        "label": "Tuổi",
+        "type": "number",
+        "required": false
+      },
+      {
+        "id": "birthPlace",
+        "label": "Nơi sinh",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "nationality",
+        "label": "Quốc tịch",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "gender",
+        "label": "Giới tính",
+        "type": "select",
+        "options": ["Nam", "Nữ"],
+        "required": true
+      },
+      {
+        "id": "maritalStatus",
+        "label": "Tình trạng hôn nhân",
+        "type": "select",
+        "options": ["Độc thân", "Đã kết hôn", "Ly hôn"],
+        "required": true
+      },
+      {
+        "id": "idNumber",
+        "label": "Số CCCD/CMND",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "idIssueDate",
+        "label": "Ngày cấp",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "idIssuePlace",
+        "label": "Nơi cấp",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "idExpiryDate",
+        "label": "Ngày hết hạn",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "taxCode",
+        "label": "Mã số thuế cá nhân",
+        "type": "text",
+        "required": false
+      }
+    ],
+    "contact": [
+      {
+        "id": "homePhone",
+        "label": "Điện thoại nhà riêng",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "mobilePhone",
+        "label": "Điện thoại di động",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "email",
+        "label": "Email",
+        "type": "email",
+        "required": true
+      },
+      {
+        "id": "permanentAddress",
+        "label": "Địa chỉ thường trú",
+        "type": "textarea",
+        "required": true
+      },
+      {
+        "id": "contactAddress",
+        "label": "Địa chỉ liên lạc khác",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "id": "currentAddress",
+        "label": "Địa chỉ nơi ở hiện tại",
+        "type": "textarea",
+        "required": false
+      }
+    ],
+    "occupation": [
+      {
+        "id": "jobTitle",
+        "label": "Nghề nghiệp/Chức danh",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "jobDetails",
+        "label": "Chi tiết công việc",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "id": "companyName",
+        "label": "Tên cơ quan/Doanh nghiệp",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "income",
+        "label": "Thu nhập ước tính",
+        "type": "select",
+        "options": ["Dưới 5M", "5-10M", "10-20M", "Trên 20M"],
+        "required": false
+      }
+    ],
+    "identification": [
+      {
+        "id": "id_number",
+        "label": "Số CCCD/CMND",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "id_issue_date",
+        "label": "Ngày cấp",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "id_issue_place",
+        "label": "Nơi cấp",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "id_expiry_date",
+        "label": "Ngày hết hạn",
+        "type": "date"
+      },
+      {
+        "id": "tax_code",
+        "label": "Mã số thuế",
+        "type": "text"
+      }
+    ],
+    "land": [
+      {
+        "id": "land_type",
+        "label": "Loại giấy tờ sở hữu",
+        "type": "select",
+        "options": ["Sổ đỏ", "Thuê dài hạn", "Khác"],
+        "required": true
+      },
+      {
+        "id": "land_number",
+        "label": "Số giấy",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "land_area",
+        "label": "Diện tích đất (ha)",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "land_address",
+        "label": "Địa chỉ thửa đất",
+        "type": "textarea",
+        "required": true
+      },
+      {
+        "id": "gps_center",
+        "label": "Tọa độ GPS trung tâm",
+        "type": "text",
+        "validation": "coordinates"
+      },
+      {
+        "id": "gps_polygon",
+        "label": "Tọa độ ranh giới",
+        "type": "file",
+        "accept": ".kml,.geojson"
+      },
+      {
+        "id": "landDocType",
+        "label": "Loại giấy tờ sở hữu",
+        "type": "select",
+        "options": ["Sổ đỏ", "Thuê dài hạn", "Khác"],
+        "required": true
+      },
+      {
+        "id": "landDocNumber",
+        "label": "Số giấy",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "landDocIssueDate",
+        "label": "Ngày cấp",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "landDocIssuer",
+        "label": "Cơ quan cấp",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "landOwner",
+        "label": "Chủ sở hữu ghi nhận",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "isOwnerSame",
+        "label": "Trùng với BMBH",
+        "type": "select",
+        "options": ["Có", "Không"],
+        "required": true
+      },
+      {
+        "id": "landDocFront",
+        "label": "Upload mặt trước",
+        "type": "file",
+        "required": true
+      },
+      {
+        "id": "landDocBack",
+        "label": "Upload mặt sau",
+        "type": "file",
+        "required": true
+      },
+      {
+        "id": "plotAddress",
+        "label": "Địa chỉ thửa đất",
+        "type": "textarea",
+        "required": true
+      },
+      {
+        "id": "gpsCenter",
+        "label": "Tọa độ GPS trung tâm",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "gpsPolygon",
+        "label": "Tọa độ ranh giới",
+        "type": "file",
+        "required": true
+      },
+      {
+        "id": "totalArea",
+        "label": "Tổng diện tích đất (ha)",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "matchesDoc",
+        "label": "Khớp sổ đỏ?",
+        "type": "select",
+        "options": ["Có", "Không"],
+        "required": true
+      },
+      {
+        "id": "cultivationArea",
+        "label": "Diện tích canh tác thực tế (ha)",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "plotCount",
+        "label": "Số lô/khu vực canh tác",
+        "type": "number",
+        "required": false
+      }
+    ],
+    "crop": [
+      {
+        "id": "crop_type",
+        "label": "Loại cây trồng",
+        "type": "select",
+        "options": ["Cà phê", "Lúa"],
+        "required": true
+      },
+      {
+        "id": "coffee_variety",
+        "label": "Giống cà phê",
+        "type": "select",
+        "options": ["Arabica", "Robusta", "Culi", "Moka", "Catimor", "Khác"],
+        "conditional": "crop_type=coffee"
+      },
+      {
+        "id": "rice_variety",
+        "label": "Giống lúa",
+        "type": "select",
+        "options": ["Ngắn ngày", "Trung ngày", "Dài ngày"],
+        "conditional": "crop_type=rice"
+      },
+      {
+        "id": "tree_age",
+        "label": "Tuổi cây bình quân (năm)",
+        "type": "number",
+        "conditional": "crop_type=coffee"
+      },
+      {
+        "id": "planting_density",
+        "label": "Mật độ trồng (cây/ha)",
+        "type": "number",
+        "conditional": "crop_type=coffee"
+      },
+      {
+        "id": "total_trees",
+        "label": "Tổng số cây",
+        "type": "number",
+        "autoCalculate": "area * density",
+        "readOnly": true,
+        "conditional": "crop_type=coffee"
+      },
+      {
+        "id": "yield",
+        "label": "Năng suất bình quân",
+        "type": "number",
+        "unit": "kg/ha or tấn/ha"
+      },
+      {
+        "id": "estimated_production",
+        "label": "Sản lượng ước tính",
+        "type": "number",
+        "autoCalculate": "area * yield"
+      },
+      {
+        "id": "coffeeType",
+        "label": "Loại cà phê",
+        "type": "select",
+        "options": ["Arabica", "Robusta", "Culi", "Moka", "Catimor", "Khác"],
+        "required": true
+      },
+      {
+        "id": "coffeeVariety",
+        "label": "Giống cụ thể",
+        "type": "select",
+        "options": [
+          "TR4",
+          "Trung Nguyên 8",
+          "K7",
+          "Catimor Tây Nguyên",
+          "Địa phương"
+        ],
+        "required": true
+      },
+      {
+        "id": "treeAge",
+        "label": "Tuổi cây bình quân (năm)",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "plantingDensity",
+        "label": "Mật độ trồng (cây/ha)",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "totalTrees",
+        "label": "Tổng số cây",
+        "type": "number",
+        "required": false
+      },
+      {
+        "id": "plantingMethod",
+        "label": "Phương pháp trồng",
+        "type": "select",
+        "options": ["Che bóng", "Phơi nắng", "Hỗn hợp"],
+        "required": false
+      },
+      {
+        "id": "certification",
+        "label": "Chứng nhận",
+        "type": "multiselect",
+        "options": ["Hữu cơ", "VietGAP", "UTZ", "Fair Trade", "Thông thường"],
+        "required": false
+      },
+      {
+        "id": "irrigationSystem",
+        "label": "Hệ thống tưới",
+        "type": "select",
+        "options": ["Nhỏ giọt", "Phun mưa", "Tự nhiên", "Kết hợp"],
+        "required": false
+      },
+      {
+        "id": "season",
+        "label": "Mùa vụ chính/phụ",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "yield",
+        "label": "Năng suất bình quân (kg/ha)",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "estimatedProduction",
+        "label": "Sản lượng ước tính vụ tới",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "sellingPrice",
+        "label": "Giá bán trung bình",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "seasonValue",
+        "label": "Giá trị mùa vụ",
+        "type": "number",
+        "required": false
+      },
+      {
+        "id": "plantingYear",
+        "label": "Năm trồng",
+        "type": "number",
+        "required": false
+      },
+      {
+        "id": "disasterHistory",
+        "label": "Lịch sử thiên tai 3 năm",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "id": "diseaseHistory",
+        "label": "Lịch sử dịch bệnh 3 năm",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "id": "maxDamage",
+        "label": "Thiệt hại lớn nhất",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "id": "previousInsurance",
+        "label": "Đã mua bảo hiểm trước?",
+        "type": "select",
+        "options": ["Có", "Không"],
+        "required": false
+      }
+    ],
+    "insurance": [
+      {
+        "id": "insurance_amount",
+        "label": "Số tiền bảo hiểm",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "premium",
+        "label": "Phí bảo hiểm",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "insurance_start_date",
+        "label": "Thời hạn bắt đầu",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "insurance_end_date",
+        "label": "Thời hạn kết thúc",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "productName",
+        "label": "Tên sản phẩm",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "coverageAmount",
+        "label": "Số tiền bảo hiểm",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "premiumAmount",
+        "label": "Phí bảo hiểm",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "startDate",
+        "label": "Thời hạn bắt đầu",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "endDate",
+        "label": "Thời hạn kết thúc",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "paymentCycle",
+        "label": "Chu kỳ đóng phí",
+        "type": "select",
+        "options": ["Một lần", "Quý", "Tháng"],
+        "required": true
+      },
+      {
+        "id": "exclusions",
+        "label": "Điều kiện loại trừ",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "beneficiary": [
+      {
+        "id": "isSelfBeneficiary",
+        "label": "Thụ hưởng chính BMBH?",
+        "type": "select",
+        "options": ["Có", "Không"],
+        "required": true
+      },
+      {
+        "id": "beneficiaryName",
+        "label": "Tên người thụ hưởng",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "beneficiaryRelation",
+        "label": "Mối quan hệ",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "beneficiaryShare",
+        "label": "Tỷ lệ hưởng (%)",
+        "type": "number",
+        "required": false
+      }
+    ],
+    "documents": [
+      {
+        "id": "land_certificate_front",
+        "label": "Sổ đỏ mặt trước",
+        "type": "file",
+        "accept": "image/*,.pdf",
+        "required": true
+      },
+      {
+        "id": "land_certificate_back",
+        "label": "Sổ đỏ mặt sau",
+        "type": "file",
+        "accept": "image/*,.pdf",
+        "required": true
+      },
+      {
+        "id": "id_card_front",
+        "label": "CCCD mặt trước",
+        "type": "file",
+        "accept": "image/*",
+        "required": true
+      },
+      {
+        "id": "id_card_back",
+        "label": "CCCD mặt sau",
+        "type": "file",
+        "accept": "image/*",
+        "required": true
+      },
+      {
+        "id": "field_photos",
+        "label": "Ảnh thực tế ruộng/vườn",
+        "type": "file",
+        "accept": "image/*",
+        "multiple": true
+      },
+      {
+        "id": "certificates",
+        "label": "Chứng nhận",
+        "type": "file",
+        "accept": "image/*,.pdf",
+        "multiple": true
+      },
+      {
+        "id": "landCertFront",
+        "label": "Sổ đỏ mặt trước",
+        "type": "file",
+        "required": true
+      },
+      {
+        "id": "landCertBack",
+        "label": "Sổ đỏ mặt sau",
+        "type": "file",
+        "required": true
+      },
+      {
+        "id": "idCardFront",
+        "label": "CCCD mặt trước",
+        "type": "file",
+        "required": true
+      },
+      {
+        "id": "idCardBack",
+        "label": "CCCD mặt sau",
+        "type": "file",
+        "required": true
+      },
+      {
+        "id": "portraitPhoto",
+        "label": "Ảnh chân dung kèm CCCD",
+        "type": "file",
+        "required": true
+      },
+      {
+        "id": "fieldPhotos",
+        "label": "Ảnh thực tế ruộng/vườn",
+        "type": "file",
+        "multiple": true,
+        "required": false
+      },
+      {
+        "id": "video",
+        "label": "Video toàn cảnh",
+        "type": "file",
+        "required": false
+      },
+      {
+        "id": "certificates",
+        "label": "Chứng nhận VietGAP/Hữu cơ",
+        "type": "file",
+        "multiple": true,
+        "required": false
+      },
+      {
+        "id": "purchaseContract",
+        "label": "Hợp đồng bao tiêu",
+        "type": "file",
+        "required": false
+      },
+      {
+        "id": "communeCert",
+        "label": "Xác nhận UBND xã",
+        "type": "file",
+        "required": false
+      },
+      {
+        "id": "plotMap",
+        "label": "Sơ đồ thửa đất",
+        "type": "file",
+        "required": false
+      },
+      {
+        "id": "invoices",
+        "label": "Hóa đơn giống/phân bón",
+        "type": "file",
+        "multiple": true,
+        "required": false
+      }
+    ],
+    "confirmation": [
+      {
+        "id": "agreeInfo",
+        "label": "Cam đoan thông tin đúng",
+        "type": "checkbox",
+        "required": true
+      },
+      {
+        "id": "agreeTerms",
+        "label": "Đọc và hiểu điều khoản",
+        "type": "checkbox",
+        "required": true
+      },
+      {
+        "id": "agreeMonitoring",
+        "label": "Đồng ý giám sát vệ tinh/cảm biến",
+        "type": "checkbox",
+        "required": true
+      },
+      {
+        "id": "agreeReport",
+        "label": "Thông báo sự cố trong 48h",
+        "type": "checkbox",
+        "required": true
+      },
+      {
+        "id": "agreeDataShare",
+        "label": "Đồng ý chia sẻ dữ liệu",
+        "type": "checkbox",
+        "required": true
+      },
+      {
+        "id": "agreePrivacy",
+        "label": "Chấp nhận điều khoản & bảo mật",
+        "type": "checkbox",
+        "required": true
+      },
+      {
+        "id": "signature",
+        "label": "Họ tên / Chữ ký số",
+        "type": "text",
+        "required": true
+      }
+    ],
+    "monitoring": [
+      {
+        "id": "weather_data",
+        "label": "Data trạm thời tiết",
+        "type": "checkbox-group",
+        "options": ["Nhiệt độ", "Lượng mưa", "Độ ẩm", "Tốc độ gió", "Áp suất"]
+      },
+      {
+        "id": "satellite_data",
+        "label": "Data vệ tinh",
+        "type": "checkbox-group",
+        "options": ["NDVI", "NDWI", "LST", "Diện tích", "Sức khỏe"]
+      }
+    ]
+  },
+  "sections": [
+    { "id": "general", "name": "Thông tin chung" },
+    { "id": "personal", "name": "Thông tin cá nhân" },
+    { "id": "contact", "name": "Thông tin liên lạc" },
+    { "id": "occupation", "name": "Thông tin nghề nghiệp" },
+    { "id": "identification", "name": "Giấy tờ tùy thân" },
+    { "id": "land", "name": "Thông tin đất đai" },
+    { "id": "crop", "name": "Thông tin cây trồng" },
+    { "id": "insurance", "name": "Thông tin bảo hiểm" },
+    { "id": "beneficiary", "name": "Đối tượng thụ hưởng" },
+    { "id": "documents", "name": "Tài liệu đính kèm" },
+    { "id": "confirmation", "name": "Xác nhận và cam kết" },
+    { "id": "monitoring", "name": "Giám sát dữ liệu" }
+  ]
+}

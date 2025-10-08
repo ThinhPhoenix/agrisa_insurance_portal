@@ -7,6 +7,8 @@ export const useContract = () => {
 
   const [selectedSections, setSelectedSections] = useState([]);
 
+  const [farmerFillFields, setFarmerFillFields] = useState({}); // field.instanceId -> boolean
+
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -112,6 +114,7 @@ export const useContract = () => {
   const cancelContract = () => {
     setSelectedFields({});
     setSelectedSections([]);
+    setFarmerFillSections({});
     setFormData({});
     message.info("Đã hủy tạo hợp đồng!");
   };
@@ -136,15 +139,20 @@ export const useContract = () => {
   };
 
   const confirmSections = () => {
-    setSelectedSections(tempSelectedSections);
-    // Initialize selectedFields for new sections
     const newSelectedFields = { ...selectedFields };
+    const newFarmerFillFields = { ...farmerFillFields };
+
+    // Add new sections to selectedFields if they don't exist
     tempSelectedSections.forEach((sectionId) => {
       if (!newSelectedFields[sectionId]) {
         newSelectedFields[sectionId] = [];
       }
     });
+
+    setSelectedSections(tempSelectedSections);
     setSelectedFields(newSelectedFields);
+    setFarmerFillFields(newFarmerFillFields);
+    setTempSelectedSections([]);
     setSectionModalVisible(false);
     message.success("Đã thêm các mục bảo hiểm!");
   };
@@ -153,15 +161,35 @@ export const useContract = () => {
     setSelectedSections((prev) => prev.filter((id) => id !== sectionId));
     setSelectedFields((prev) => {
       const newFields = { ...prev };
+      const fieldsToRemove = newFields[sectionId] || [];
       delete newFields[sectionId];
+
+      // Remove farmer fill settings for fields in this section
+      setFarmerFillFields((farmerPrev) => {
+        const newFarmerFill = { ...farmerPrev };
+        fieldsToRemove.forEach((field) => {
+          delete newFarmerFill[field.instanceId];
+        });
+        return newFarmerFill;
+      });
+
       return newFields;
     });
+
     message.success("Đã xóa mục bảo hiểm!");
+  };
+
+  const toggleFarmerFill = (instanceId) => {
+    setFarmerFillFields((prev) => ({
+      ...prev,
+      [instanceId]: !prev[instanceId],
+    }));
   };
 
   return {
     selectedFields,
     selectedSections,
+    farmerFillFields,
     formData,
     addFieldToSection,
     removeFieldFromSection,
@@ -194,5 +222,6 @@ export const useContract = () => {
     toggleTempSection,
     confirmSections,
     removeSection,
+    toggleFarmerFill,
   };
 };

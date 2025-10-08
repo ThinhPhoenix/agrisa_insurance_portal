@@ -25,6 +25,7 @@ import {
   Row,
   Select,
   Space,
+  Switch,
   Typography,
   Upload,
 } from "antd";
@@ -39,6 +40,7 @@ export default function CreateContractPage() {
   const {
     selectedFields,
     selectedSections,
+    farmerFillFields,
     formData,
     addFieldToSection,
     removeFieldFromSection,
@@ -71,6 +73,7 @@ export default function CreateContractPage() {
     toggleTempSection,
     confirmSections,
     removeSection,
+    toggleFarmerFill,
   } = useContract();
 
   const [form] = Form.useForm();
@@ -80,10 +83,54 @@ export default function CreateContractPage() {
     message.success("Hợp đồng đã được tạo và gửi cho admin thẩm định!");
   };
 
-  const renderField = (field) => {
+  const renderField = (field, isFarmerFill = false) => {
     const key = `${field.id}_${field.instanceId}`;
     const value = formData[key] || "";
 
+    // If field is fixed, display the fixed content
+    if (field.mode === "fixed") {
+      return (
+        <Form.Item key={key} label={field.label}>
+          <div
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "#f9f9f9",
+              border: "1px solid #d9d9d9",
+              borderRadius: "4px",
+              minHeight: "32px",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {field.fixedContent || "Nội dung cố định chưa được nhập"}
+          </div>
+        </Form.Item>
+      );
+    }
+
+    // If section is farmer-fill, show blank spaces for dynamic fields
+    if (isFarmerFill) {
+      return (
+        <Form.Item key={key} label={field.label}>
+          <div
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "#fff",
+              border: "1px dashed #d9d9d9",
+              borderRadius: "4px",
+              minHeight: "32px",
+              color: "#999",
+              fontStyle: "italic",
+            }}
+          >
+            {field.type === "textarea"
+              ? "Khoản trống để nông dân điền..."
+              : "Trống để nông dân điền..."}
+          </div>
+        </Form.Item>
+      );
+    }
+
+    // Dynamic fields - render as normal inputs
     switch (field.type) {
       case "text":
         return (
@@ -233,7 +280,7 @@ export default function CreateContractPage() {
                 className="add-section-button"
                 style={{ width: "100%", height: 48 }}
               >
-                Thêm Mục bảo hiểm
+                Thêm Mục hợp đồng
               </Button>
             </div>
 
@@ -253,7 +300,7 @@ export default function CreateContractPage() {
                           size="small"
                           onClick={() => openSidebar(sectionId)}
                         >
-                          <PlusOutlined /> Thêm trường
+                          <PlusOutlined /> Thêm trường thông tin
                         </Button>
                         <Button
                           type="link"
@@ -280,19 +327,49 @@ export default function CreateContractPage() {
                       selectedFields[sectionId]?.map((field) => (
                         <div key={field.instanceId} className="field-item">
                           <Row align="middle" gutter={8}>
-                            <Col flex="auto">{renderField(field)}</Col>
+                            <Col flex="auto">
+                              {renderField(
+                                field,
+                                farmerFillFields[field.instanceId]
+                              )}
+                            </Col>
                             <Col flex="none">
-                              <Button
-                                type="text"
-                                icon={<MinusOutlined />}
-                                onClick={() =>
-                                  removeFieldFromSection(
-                                    sectionId,
-                                    field.instanceId
-                                  )
-                                }
-                                danger
-                              />
+                              <Space>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                  }}
+                                >
+                                  <span
+                                    style={{ fontSize: "11px", color: "#666" }}
+                                  >
+                                    Nông dân điền
+                                  </span>
+                                  <Switch
+                                    size="small"
+                                    checked={
+                                      farmerFillFields[field.instanceId] ||
+                                      false
+                                    }
+                                    onChange={() =>
+                                      toggleFarmerFill(field.instanceId)
+                                    }
+                                  />
+                                </div>
+                                <Button
+                                  type="text"
+                                  icon={<MinusOutlined />}
+                                  onClick={() =>
+                                    removeFieldFromSection(
+                                      sectionId,
+                                      field.instanceId
+                                    )
+                                  }
+                                  danger
+                                />
+                              </Space>
                             </Col>
                           </Row>
                         </div>

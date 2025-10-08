@@ -1,44 +1,28 @@
 "use client";
 
-import {
-  CloseOutlined,
-  FilePdfOutlined,
-  MinusOutlined,
-  PlusOutlined,
-  SaveOutlined,
-  SendOutlined,
-  UploadOutlined,
-} from "@ant-design/icons";
-import {
-  Button,
-  Card,
-  Checkbox,
-  Col,
-  DatePicker,
-  Divider,
-  Drawer,
-  Form,
-  Input,
-  List,
-  message,
-  Modal,
-  Row,
-  Select,
-  Space,
-  Typography,
-  Upload,
-} from "antd";
+import { CustomForm } from "@/components/custom-form";
+import FieldSelectionDrawer from "@/components/layout/contract/field-selection-drawer";
+import SectionSelectionModal from "@/components/layout/contract/section-selection-modal";
+import SuccessView from "@/components/layout/contract/success-view";
+import { Form, Input, message, Select, Typography } from "antd";
+import { useEffect, useRef, useState } from "react";
+import ContractForm from "../../../../components/layout/contract/contract-form";
+import CustomTriggerModal from "../../../../components/layout/contract/customer-trigger-modal";
+import TriggerConditionsModal from "../../../../components/layout/contract/trigger-conditions-modal";
 import { useContract } from "../use-contract";
 import "./page.css";
 
 const { Option } = Select;
 const { TextArea } = Input;
-const { Title } = Typography;
+const { Text } = Typography;
 
 export default function CreateContractPage() {
   const {
     selectedFields,
     selectedSections,
+    farmerFillFields,
+    dataMonitoringTiers,
+    selectedTriggers,
     formData,
     addFieldToSection,
     removeFieldFromSection,
@@ -49,6 +33,8 @@ export default function CreateContractPage() {
     submitted,
     fieldLibrary,
     sections,
+    monitoringTiersData,
+    triggerConditions,
     // Sidebar states and functions
     sidebarVisible,
     currentSection,
@@ -66,449 +52,434 @@ export default function CreateContractPage() {
     // Section modal states and functions
     sectionModalVisible,
     tempSelectedSections,
+    setTempSelectedSections,
     openSectionModal,
     closeSectionModal,
     toggleTempSection,
     confirmSections,
     removeSection,
+    toggleFarmerFill,
+    updateDataMonitoringTier,
+    addTrigger,
+    removeTrigger,
+    updateTrigger,
+    // Custom trigger functions
+    getMetricDisplayName,
+    getOperatorSymbol,
+    getTimeWindowText,
+    generateConditionText,
+    handleCustomTriggerSubmit,
   } = useContract();
 
   const [form] = Form.useForm();
+  const [triggerModalVisible, setTriggerModalVisible] = useState(false);
+  const [customTriggerModalVisible, setCustomTriggerModalVisible] =
+    useState(false);
+  const [customTriggerForm] = Form.useForm();
+  const customTriggerFormRef = useRef();
+  const [activeTab, setActiveTab] = useState("weather");
+
+  // Reset form when switching tabs
+  useEffect(() => {
+    if (customTriggerForm) {
+      customTriggerForm.resetFields();
+    }
+  }, [activeTab]);
+
+  // Custom trigger form fields configuration
+  const customTriggerFields = [
+    {
+      name: "triggerName",
+      label: "Tên điều kiện",
+      type: "input",
+      required: true,
+      placeholder: "Ví dụ: Hạn hán nghiêm trọng",
+    },
+    {
+      name: "severity",
+      label: "Mức độ nghiêm trọng",
+      type: "select",
+      required: true,
+      placeholder: "Chọn mức độ",
+      options: [
+        { value: "low", label: "Thấp" },
+        { value: "moderate", label: "Trung bình" },
+        { value: "high", label: "Cao" },
+        { value: "severe", label: "Nghiêm trọng" },
+      ],
+    },
+    {
+      name: "description",
+      label: "Mô tả",
+      type: "textarea",
+      required: true,
+      placeholder: "Mô tả chi tiết về điều kiện kích hoạt",
+    },
+    {
+      name: "logic",
+      label: "Logic kết hợp các điều kiện",
+      type: "select",
+      required: true,
+      placeholder: "Chọn logic kết hợp",
+      options: [
+        { value: "AND", label: "TẤT CẢ điều kiện phải đúng (VÀ)" },
+        { value: "OR", label: "Ít nhất 1 điều kiện đúng (HOẶC)" },
+      ],
+    },
+    {
+      name: "payoutPercent",
+      label: "Phần trăm bồi thường (%)",
+      type: "number",
+      required: true,
+      placeholder: "Ví dụ: 50",
+      min: 0,
+      max: 100,
+      addonAfter: "%",
+    },
+  ];
+
+  // Custom trigger configuration functions
+  const openCustomTriggerModal = () => {
+    setCustomTriggerModalVisible(true);
+    customTriggerFormRef.current?.setFieldsValue({
+      triggerName: "",
+      description: "",
+      severity: "moderate",
+      logic: "AND",
+      payoutPercent: 50,
+    });
+    customTriggerForm.setFieldsValue({
+      conditions: [
+        {
+          metric: "rainfall",
+          operator: ">",
+          threshold: 2000,
+          timeWindow: "7d",
+        },
+      ],
+    });
+  };
+
+  const closeCustomTriggerModal = () => {
+    setCustomTriggerModalVisible(false);
+    customTriggerForm.resetFields();
+  };
 
   const onFinish = async (values) => {
     await handleSubmit();
     message.success("Hợp đồng đã được tạo và gửi cho admin thẩm định!");
   };
 
-  const renderField = (field) => {
+  const renderField = (field, isFarmerFill = false) => {
     const key = `${field.id}_${field.instanceId}`;
     const value = formData[key] || "";
 
-    switch (field.type) {
-      case "text":
+    // If field is fixed, display the fixed content or special components
+    if (field.mode === "fixed") {
+      // Handle special fixed fields
+      if (field.id === "weather_tier") {
         return (
-          <Form.Item
-            key={key}
-            label={field.label}
-            name={key}
-            rules={field.required ? [{ required: true }] : []}
-          >
-            <Input
-              value={value}
-              onChange={(e) => updateFormData(key, e.target.value)}
-              readOnly={field.readOnly}
-            />
-          </Form.Item>
-        );
-      case "textarea":
-        return (
-          <Form.Item
-            key={key}
-            label={field.label}
-            name={key}
-            rules={field.required ? [{ required: true }] : []}
-          >
-            <TextArea
-              value={value}
-              onChange={(e) => updateFormData(key, e.target.value)}
-              rows={3}
-            />
-          </Form.Item>
-        );
-      case "number":
-        return (
-          <Form.Item
-            key={key}
-            label={field.label}
-            name={key}
-            rules={field.required ? [{ required: true }] : []}
-          >
-            <Input
-              type="number"
-              value={value}
-              onChange={(e) => updateFormData(key, e.target.value)}
-              readOnly={field.readOnly}
-            />
-          </Form.Item>
-        );
-      case "date":
-        return (
-          <Form.Item
-            key={key}
-            label={field.label}
-            name={key}
-            rules={field.required ? [{ required: true }] : []}
-          >
-            <DatePicker
-              value={value}
-              onChange={(date) => updateFormData(key, date)}
-            />
-          </Form.Item>
-        );
-      case "select":
-        return (
-          <Form.Item
-            key={key}
-            label={field.label}
-            name={key}
-            rules={field.required ? [{ required: true }] : []}
-          >
-            <Select value={value} onChange={(val) => updateFormData(key, val)}>
-              {field.options?.map((option) => (
-                <Option key={option} value={option}>
-                  {option}
-                </Option>
-              ))}
+          <Form.Item key={key} label={field.label}>
+            <Select
+              placeholder="Chọn tier trạm thời tiết"
+              style={{ width: "100%" }}
+              value={dataMonitoringTiers.weatherStations}
+              onChange={(value) =>
+                updateDataMonitoringTier("weatherStations", value)
+              }
+            >
+              {Object.entries(monitoringTiersData.weatherStations).map(
+                ([tierKey, tier]) => (
+                  <Option key={tierKey} value={tierKey}>
+                    <div>
+                      <div style={{ fontWeight: "bold" }}>{tier.name}</div>
+                      <div style={{ fontSize: "12px", color: "#666" }}>
+                        {tier.description} - {tier.price.toLocaleString()}
+                        đ/tháng
+                      </div>
+                    </div>
+                  </Option>
+                )
+              )}
             </Select>
-          </Form.Item>
-        );
-      case "checkbox-group":
-        return (
-          <Form.Item key={key} label={field.label} name={key}>
-            <Checkbox.Group
-              options={field.options}
-              value={value}
-              onChange={(vals) => updateFormData(key, vals)}
-            />
-          </Form.Item>
-        );
-      case "file":
-        return (
-          <Form.Item
-            key={key}
-            label={field.label}
-            name={key}
-            rules={field.required ? [{ required: true }] : []}
-          >
-            <Upload
-              accept={field.accept}
-              multiple={field.multiple}
-              beforeUpload={() => false}
-              onChange={(info) => updateFormData(key, info.fileList)}
-            >
-              <Button icon={<UploadOutlined />}>Upload</Button>
-            </Upload>
-          </Form.Item>
-        );
-      default:
-        return null;
-    }
-  };
-
-  if (submitted) {
-    return (
-      <div className="contract-success">
-        <Card title="Hợp đồng đã được tạo thành công">
-          <p>Hợp đồng của bạn đã được gửi cho admin để thẩm định.</p>
-          <Space>
-            <Button
-              type="primary"
-              icon={<FilePdfOutlined />}
-              onClick={generatePDF}
-            >
-              Xem PDF Preview
-            </Button>
-            <Button onClick={() => window.location.reload()}>
-              Tạo hợp đồng mới
-            </Button>
-          </Space>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="contract-create-page">
-      <Row>
-        {/* Main Form Area */}
-        <Col span={24}>
-          <Card title="Tạo hợp đồng bảo hiểm" className="contract-card">
-            {/* Add Section Button */}
-            <div style={{ marginBottom: 24, textAlign: "center" }}>
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={openSectionModal}
-                size="large"
-                className="add-section-button"
-                style={{ width: "100%", height: 48 }}
+            {dataMonitoringTiers.weatherStations && (
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: "12px",
+                  color: "#666",
+                }}
               >
-                Thêm Mục bảo hiểm
-              </Button>
-            </div>
-
-            <Form form={form} layout="vertical" onFinish={onFinish}>
-              {selectedSections.map((sectionId) => {
-                const section = sections.find((s) => s.id === sectionId);
-                return (
-                  <Card
-                    key={sectionId}
-                    title={section?.name || sectionId}
-                    size="small"
-                    className="section-card"
-                    extra={
-                      <Space>
-                        <Button
-                          type="link"
-                          size="small"
-                          onClick={() => openSidebar(sectionId)}
-                        >
-                          <PlusOutlined /> Thêm trường
-                        </Button>
-                        <Button
-                          type="link"
-                          size="small"
-                          danger
-                          onClick={() => removeSection(sectionId)}
-                        >
-                          <CloseOutlined /> Xóa mục
-                        </Button>
-                      </Space>
-                    }
-                  >
-                    {selectedFields[sectionId]?.length === 0 ? (
-                      <p
-                        style={{
-                          color: "#999",
-                          textAlign: "center",
-                          padding: "20px",
-                        }}
-                      >
-                        Chưa có trường nào. Nhấn "Thêm trường" để bắt đầu.
-                      </p>
-                    ) : (
-                      selectedFields[sectionId]?.map((field) => (
-                        <div key={field.instanceId} className="field-item">
-                          <Row align="middle" gutter={8}>
-                            <Col flex="auto">{renderField(field)}</Col>
-                            <Col flex="none">
-                              <Button
-                                type="text"
-                                icon={<MinusOutlined />}
-                                onClick={() =>
-                                  removeFieldFromSection(
-                                    sectionId,
-                                    field.instanceId
-                                  )
-                                }
-                                danger
-                              />
-                            </Col>
-                          </Row>
-                        </div>
-                      ))
-                    )}
-                  </Card>
-                );
-              })}
-
-              <Divider />
-
-              {/* Action Buttons */}
-              <Form.Item>
-                <Space>
-                  <Button
-                    type="default"
-                    icon={<SaveOutlined />}
-                    onClick={saveContract}
-                  >
-                    Lưu hợp đồng
-                  </Button>
-                  <Button
-                    type="primary"
-                    icon={<SendOutlined />}
-                    htmlType="submit"
-                    loading={loading}
-                  >
-                    Gửi kiểm duyệt
-                  </Button>
-                  <Button
-                    type="default"
-                    icon={<CloseOutlined />}
-                    onClick={cancelContract}
-                    danger
-                  >
-                    Hủy
-                  </Button>
-                  <Button icon={<FilePdfOutlined />} onClick={generatePDF}>
-                    Xem PDF Preview
-                  </Button>
-                </Space>
-              </Form.Item>
-            </Form>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Field Selection Drawer */}
-      <Drawer
-        title={`Thêm trường cho ${
-          sections.find((s) => s.id === currentSection)?.name || "Mục thông tin"
-        }`}
-        placement="right"
-        width={400}
-        onClose={closeSidebar}
-        open={sidebarVisible}
-        footer={
-          <div>
-            {selectedField && (
-              <div className="drawer-footer-selected">
-                <div className="selected-field-name">
-                  Đã chọn: {selectedField.label}
+                <div>
+                  <strong>Chỉ số:</strong>{" "}
+                  {monitoringTiersData.weatherStations[
+                    dataMonitoringTiers.weatherStations
+                  ]?.metrics?.join(", ")}
                 </div>
-                <div className="field-type-selector">
-                  <span>Kiểu dữ liệu:</span>
-                  <Select
-                    value={selectedFieldType}
-                    onChange={(value) => setSelectedFieldType(value)}
-                    style={{ width: 140 }}
-                    size="small"
-                  >
-                    <Option value="text">Văn bản</Option>
-                    <Option value="textarea">Văn bản dài</Option>
-                    <Option value="number">Số</Option>
-                    <Option value="date">Ngày tháng</Option>
-                    <Option value="select">Lựa chọn</Option>
-                    <Option value="checkbox-group">Nhiều lựa chọn</Option>
-                    <Option value="file">Tập tin</Option>
-                  </Select>
+                <div>
+                  <strong>Tần suất:</strong>{" "}
+                  {
+                    monitoringTiersData.weatherStations[
+                      dataMonitoringTiers.weatherStations
+                    ]?.frequency
+                  }
                 </div>
               </div>
             )}
-            <Space>
-              <Button onClick={closeSidebar}>Đóng</Button>
-              <Button
-                type="primary"
-                onClick={addCustomField}
-                disabled={!selectedField}
-              >
-                Thêm trường
-              </Button>
-            </Space>
-          </div>
-        }
-      >
-        <div className="field-drawer-content">
-          {/* Select Field */}
-          <div className="drawer-section">
-            <Title level={5}>Chọn trường thông tin</Title>
-            <List
-              size="small"
-              dataSource={fieldLibrary[currentSection] || []}
-              renderItem={(field) => (
-                <List.Item
-                  style={{
-                    cursor: "pointer",
-                    backgroundColor:
-                      selectedField?.id === field.id
-                        ? "#f0f8ff"
-                        : "transparent",
-                    borderRadius: "4px",
-                    padding: "8px",
-                  }}
-                  onClick={() => selectField(field)}
-                >
-                  <List.Item.Meta
-                    title={field.label}
-                    description={`Kiểu: ${field.type}${
-                      field.required ? " (Bắt buộc)" : " (Tùy chọn)"
-                    }`}
-                  />
-                </List.Item>
-              )}
-            />
-          </div>
-        </div>
-      </Drawer>
+          </Form.Item>
+        );
+      }
 
-      {/* Section Selection Modal */}
-      <Modal
-        title="Chọn mục bảo hiểm"
-        open={sectionModalVisible}
-        onCancel={closeSectionModal}
-        onOk={confirmSections}
-        width={600}
-        okText="Xác nhận"
-        cancelText="Hủy"
-      >
-        <div style={{ padding: "8px 0" }}>
-          <p style={{ marginBottom: 16, color: "#666" }}>
-            Chọn các mục thông tin cần thiết cho hợp đồng bảo hiểm:
-          </p>
-          <List
-            dataSource={sections}
-            renderItem={(section) => (
-              <List.Item
-                style={{
-                  cursor: "pointer",
-                  backgroundColor: tempSelectedSections.includes(section.id)
-                    ? "#f0f8ff"
-                    : "transparent",
-                  borderRadius: "4px",
-                  padding: "12px",
-                  marginBottom: "8px",
-                  border: tempSelectedSections.includes(section.id)
-                    ? "1px solid #bae6fd"
-                    : "1px solid #f0f0f0",
-                }}
-                onClick={() => toggleTempSection(section.id)}
-              >
-                <List.Item.Meta
-                  avatar={
-                    <Checkbox
-                      checked={tempSelectedSections.includes(section.id)}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        toggleTempSection(section.id);
-                      }}
-                    />
-                  }
-                  title={
-                    <span
-                      style={{
-                        fontWeight: tempSelectedSections.includes(section.id)
-                          ? "bold"
-                          : "normal",
-                        color: tempSelectedSections.includes(section.id)
-                          ? "#1e40af"
-                          : "inherit",
-                      }}
-                    >
-                      {section.name}
-                    </span>
-                  }
-                  description={
+      if (field.id === "satellite_tier") {
+        return (
+          <Form.Item key={key} label={field.label}>
+            <Select
+              placeholder="Chọn tier vệ tinh"
+              style={{ width: "100%" }}
+              value={dataMonitoringTiers.satellite}
+              onChange={(value) => updateDataMonitoringTier("satellite", value)}
+            >
+              {Object.entries(monitoringTiersData.satellite).map(
+                ([tierKey, tier]) => (
+                  <Option key={tierKey} value={tierKey}>
                     <div>
-                      {section.id === "general" &&
-                        "Thông tin cơ bản của hợp đồng như tên sản phẩm, thời hạn, phạm vi địa lý"}
-                      {section.id === "personal" &&
-                        "Thông tin cá nhân của người được bảo hiểm"}
-                      {section.id === "contact" &&
-                        "Thông tin liên lạc và địa chỉ"}
-                      {section.id === "occupation" &&
-                        "Thông tin về nghề nghiệp và thu nhập"}
-                      {section.id === "identification" &&
-                        "Giấy tờ tùy thân như CMND/CCCD, hộ chiếu"}
-                      {section.id === "land" &&
-                        "Thông tin về đất đai, diện tích, vị trí"}
-                      {section.id === "crop" &&
-                        "Thông tin về cây trồng và mùa vụ"}
-                      {section.id === "insurance" &&
-                        "Thông tin về bảo hiểm, phí, quyền lợi"}
-                      {section.id === "beneficiary" &&
-                        "Thông tin người thụ hưởng"}
-                      {section.id === "documents" && "Tài liệu đính kèm, hồ sơ"}
-                      {section.id === "confirmation" && "Xác nhận và cam kết"}
-                      {section.id === "monitoring" &&
-                        "Giám sát dữ liệu và điều kiện kích hoạt"}
+                      <div style={{ fontWeight: "bold" }}>{tier.name}</div>
+                      <div style={{ fontSize: "12px", color: "#666" }}>
+                        {tier.description} - {tier.price.toLocaleString()}
+                        đ/tháng
+                      </div>
                     </div>
+                  </Option>
+                )
+              )}
+            </Select>
+            {dataMonitoringTiers.satellite && (
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: "12px",
+                  color: "#666",
+                }}
+              >
+                <div>
+                  <strong>Chỉ số:</strong>{" "}
+                  {monitoringTiersData.satellite[
+                    dataMonitoringTiers.satellite
+                  ]?.metrics?.join(", ")}
+                </div>
+                <div>
+                  <strong>Độ phân giải:</strong>{" "}
+                  {
+                    monitoringTiersData.satellite[dataMonitoringTiers.satellite]
+                      ?.resolution
                   }
-                />
-              </List.Item>
+                </div>
+              </div>
             )}
-          />
-        </div>
-      </Modal>
+          </Form.Item>
+        );
+      }
+
+      // Default fixed content display
+      return (
+        <Form.Item key={key} label={field.label}>
+          <div
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "#f9f9f9",
+              border: "1px solid #d9d9d9",
+              borderRadius: "4px",
+              minHeight: "32px",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {field.fixedContent || "Nội dung cố định chưa được nhập"}
+          </div>
+        </Form.Item>
+      );
+    }
+
+    // If section is farmer-fill, show blank spaces for dynamic fields
+    if (isFarmerFill) {
+      return (
+        <Form.Item key={key} label={field.label}>
+          <div
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "#fff",
+              border: "1px dashed #d9d9d9",
+              borderRadius: "4px",
+              minHeight: "32px",
+              color: "#999",
+              fontStyle: "italic",
+            }}
+          >
+            {field.type === "textarea"
+              ? "Khoản trống để nông dân điền..."
+              : "Trống để nông dân điền..."}
+          </div>
+        </Form.Item>
+      );
+    }
+
+    // Dynamic fields - render as normal inputs
+    const getCustomFormFieldConfig = (field, key, value) => {
+      const baseConfig = {
+        name: key,
+        label: field.label,
+        required: field.required,
+      };
+
+      switch (field.type) {
+        case "text":
+          return {
+            ...baseConfig,
+            type: "input",
+            placeholder: field.placeholder,
+            readOnly: field.readOnly,
+          };
+        case "textarea":
+          return {
+            ...baseConfig,
+            type: "textarea",
+            placeholder: field.placeholder,
+            rows: 3,
+          };
+        case "number":
+          return {
+            ...baseConfig,
+            type: "number",
+            placeholder: field.placeholder,
+            readOnly: field.readOnly,
+          };
+        case "date":
+          return {
+            ...baseConfig,
+            type: "datepicker",
+            placeholder: field.placeholder,
+          };
+        case "select":
+          return {
+            ...baseConfig,
+            type: "select",
+            placeholder: field.placeholder,
+            options: field.options?.map((option) => ({
+              value: option,
+              label: option,
+            })),
+          };
+        case "checkbox-group":
+          return {
+            ...baseConfig,
+            type: "checkbox",
+            options: field.options?.map((option) => ({
+              value: option,
+              label: option,
+            })),
+          };
+        case "file":
+          return {
+            ...baseConfig,
+            type: "file",
+            accept: field.accept,
+            multiple: field.multiple,
+          };
+        default:
+          return null;
+      }
+    };
+
+    const fieldConfig = getCustomFormFieldConfig(field, key, value);
+    if (!fieldConfig) return null;
+
+    return (
+      <CustomForm
+        key={key}
+        fields={[fieldConfig]}
+        initialValues={{ [key]: value }}
+        onValuesChange={(values) => updateFormData(key, values[key])}
+      />
+    );
+  };
+
+  if (submitted) {
+    return <SuccessView generatePDF={generatePDF} />;
+  }
+
+  return (
+    <div>
+      <ContractForm
+        form={form}
+        selectedSections={selectedSections}
+        sections={sections}
+        selectedFields={selectedFields}
+        farmerFillFields={farmerFillFields}
+        dataMonitoringTiers={dataMonitoringTiers}
+        selectedTriggers={selectedTriggers}
+        monitoringTiersData={monitoringTiersData}
+        fieldLibrary={fieldLibrary}
+        onFinish={onFinish}
+        saveContract={saveContract}
+        cancelContract={cancelContract}
+        generatePDF={generatePDF}
+        loading={loading}
+        openSectionModal={openSectionModal}
+        removeSection={removeSection}
+        openSidebar={openSidebar}
+        removeTrigger={removeTrigger}
+        updateDataMonitoringTier={updateDataMonitoringTier}
+        toggleFarmerFill={toggleFarmerFill}
+        removeFieldFromSection={removeFieldFromSection}
+        renderField={renderField}
+        selectedField={selectedField}
+        selectField={selectField}
+        selectedFieldType={selectedFieldType}
+        setSelectedFieldType={setSelectedFieldType}
+        addCustomField={addCustomField}
+        setTriggerModalVisible={setTriggerModalVisible}
+        setActiveTab={setActiveTab}
+      />
+
+      <FieldSelectionDrawer
+        sidebarVisible={sidebarVisible}
+        closeSidebar={closeSidebar}
+        currentSection={currentSection}
+        sections={sections}
+        fieldLibrary={fieldLibrary}
+        selectedField={selectedField}
+        selectField={selectField}
+        selectedFieldType={selectedFieldType}
+        setSelectedFieldType={setSelectedFieldType}
+        addCustomField={addCustomField}
+      />
+
+      <SectionSelectionModal
+        sectionModalVisible={sectionModalVisible}
+        closeSectionModal={closeSectionModal}
+        confirmSections={confirmSections}
+        sections={sections}
+        tempSelectedSections={tempSelectedSections}
+        setTempSelectedSections={setTempSelectedSections}
+      />
+
+      {/* Trigger Conditions Modal */}
+      <TriggerConditionsModal
+        triggerModalVisible={triggerModalVisible}
+        setTriggerModalVisible={setTriggerModalVisible}
+        customTriggerForm={customTriggerForm}
+        handleCustomTriggerSubmit={handleCustomTriggerSubmit}
+        type={activeTab}
+      />
+
+      {/* Custom Trigger Modal */}
+      <CustomTriggerModal
+        customTriggerModalVisible={customTriggerModalVisible}
+        closeCustomTriggerModal={closeCustomTriggerModal}
+        customTriggerFormRef={customTriggerFormRef}
+        customTriggerForm={customTriggerForm}
+        customTriggerFields={customTriggerFields}
+        handleCustomTriggerSubmit={handleCustomTriggerSubmit}
+      />
     </div>
   );
 }

@@ -832,6 +832,47 @@
         "type": "checkbox-group",
         "options": ["NDVI", "NDWI", "LST", "Diện tích", "Sức khỏe"]
       }
+    ],
+    "data-monitoring": [
+      {
+        "id": "weather_tier",
+        "label": "Tier trạm thời tiết",
+        "type": "select",
+        "options": ["tier1", "tier2", "tier3"],
+        "required": true,
+        "mode": "fixed"
+      },
+      {
+        "id": "satellite_tier",
+        "label": "Tier vệ tinh",
+        "type": "select",
+        "options": ["tier1", "tier2", "tier3"],
+        "required": true,
+        "mode": "fixed"
+      }
+    ],
+    "trigger-conditions": [
+      {
+        "id": "weather_triggers",
+        "label": "Điều kiện thời tiết",
+        "type": "custom",
+        "component": "trigger-builder",
+        "required": false
+      },
+      {
+        "id": "satellite_triggers",
+        "label": "Điều kiện vệ tinh",
+        "type": "custom",
+        "component": "trigger-builder",
+        "required": false
+      },
+      {
+        "id": "combined_triggers",
+        "label": "Điều kiện kết hợp",
+        "type": "custom",
+        "component": "trigger-builder",
+        "required": false
+      }
     ]
   },
   "sections": [
@@ -846,6 +887,206 @@
     { "id": "beneficiary", "name": "Đối tượng thụ hưởng" },
     { "id": "documents", "name": "Tài liệu đính kèm" },
     { "id": "confirmation", "name": "Xác nhận và cam kết" },
-    { "id": "monitoring", "name": "Giám sát dữ liệu" }
-  ]
+    { "id": "monitoring", "name": "Giám sát dữ liệu" },
+    { "id": "data-monitoring", "name": "Cấu hình giám sát dữ liệu" },
+    { "id": "trigger-conditions", "name": "Điều kiện kích hoạt bảo hiểm" }
+  ],
+  "dataMonitoringTiers": {
+    "weatherStations": {
+      "tier1": {
+        "name": "Tier 1 - Cơ bản",
+        "price": 500000,
+        "description": "Dữ liệu thời tiết cơ bản",
+        "metrics": ["temperature", "humidity", "rainfall"],
+        "frequency": "daily",
+        "accuracy": "standard"
+      },
+      "tier2": {
+        "name": "Tier 2 - Nâng cao",
+        "price": 1200000,
+        "description": "Dữ liệu thời tiết chi tiết + dự báo",
+        "metrics": [
+          "temperature",
+          "humidity",
+          "rainfall",
+          "wind_speed",
+          "pressure",
+          "forecast"
+        ],
+        "frequency": "hourly",
+        "accuracy": "high"
+      },
+      "tier3": {
+        "name": "Tier 3 - Cao cấp",
+        "price": 2500000,
+        "description": "Dữ liệu thời tiết chuyên sâu + AI phân tích",
+        "metrics": [
+          "temperature",
+          "humidity",
+          "rainfall",
+          "wind_speed",
+          "pressure",
+          "forecast",
+          "evaporation",
+          "solar_radiation"
+        ],
+        "frequency": "real-time",
+        "accuracy": "premium"
+      }
+    },
+    "satellite": {
+      "tier1": {
+        "name": "Tier 1 - Cơ bản",
+        "price": 800000,
+        "description": "Dữ liệu vệ tinh cơ bản",
+        "metrics": ["ndvi", "ndwi"],
+        "resolution": "10m",
+        "frequency": "weekly"
+      },
+      "tier2": {
+        "name": "Tier 2 - Nâng cao",
+        "price": 1800000,
+        "description": "Dữ liệu vệ tinh đa phổ + phân tích",
+        "metrics": ["ndvi", "ndwi", "lst", "lai", "soil_moisture"],
+        "resolution": "5m",
+        "frequency": "3 days"
+      },
+      "tier3": {
+        "name": "Tier 3 - Cao cấp",
+        "price": 3500000,
+        "description": "Dữ liệu vệ tinh siêu cao + AI insights",
+        "metrics": [
+          "ndvi",
+          "ndwi",
+          "lst",
+          "lai",
+          "soil_moisture",
+          "flood_index",
+          "crop_health_ai"
+        ],
+        "resolution": "1m",
+        "frequency": "daily"
+      }
+    }
+  },
+  "triggerConditions": {
+    "weather": [
+      {
+        "id": "rainfall_excess",
+        "name": "Lượng mưa vượt ngưỡng",
+        "description": "Kích hoạt khi lượng mưa trong khoảng thời gian vượt quá ngưỡng",
+        "parameters": {
+          "metric": "rainfall",
+          "operator": ">",
+          "timeWindow": ["1h", "24h", "7d", "30d"],
+          "unit": "mm"
+        },
+        "examples": [
+          "Lượng mưa > 2000mm trong 7 ngày",
+          "Lượng mưa > 150mm trong 24 giờ"
+        ]
+      },
+      {
+        "id": "temperature_low",
+        "name": "Nhiệt độ thấp",
+        "description": "Kích hoạt khi nhiệt độ xuống dưới ngưỡng",
+        "parameters": {
+          "metric": "temperature_min",
+          "operator": "<",
+          "timeWindow": ["1h", "24h", "3d", "7d"],
+          "unit": "°C"
+        },
+        "examples": [
+          "Nhiệt độ < 5°C trong 3 ngày",
+          "Nhiệt độ < 12°C liên tục 72 giờ"
+        ]
+      },
+      {
+        "id": "wind_speed_high",
+        "name": "Tốc độ gió mạnh",
+        "description": "Kích hoạt khi tốc độ gió vượt ngưỡng (bão)",
+        "parameters": {
+          "metric": "wind_speed",
+          "operator": ">",
+          "timeWindow": ["1h", "6h", "24h"],
+          "unit": "km/h"
+        },
+        "examples": [
+          "Tốc độ gió > 90 km/h",
+          "Tốc độ gió > 118 km/h (bão cấp 12)"
+        ]
+      },
+      {
+        "id": "drought",
+        "name": "Hạn hán",
+        "description": "Kích hoạt khi thiếu mưa kéo dài",
+        "parameters": {
+          "metric": "rainfall_accumulated",
+          "operator": "<",
+          "timeWindow": ["30d", "60d", "90d"],
+          "unit": "mm"
+        },
+        "examples": ["Lượng mưa 30 ngày < 50mm", "Lượng mưa 60 ngày < 30mm"]
+      }
+    ],
+    "satellite": [
+      {
+        "id": "ndvi_decline",
+        "name": "NDVI suy giảm",
+        "description": "Kích hoạt khi chỉ số thực vật giảm sút",
+        "parameters": {
+          "metric": "ndvi_change",
+          "operator": "<",
+          "timeWindow": ["7d", "14d", "30d"],
+          "unit": "%"
+        },
+        "examples": ["NDVI giảm > 20%", "NDVI giảm > 35% so với baseline"]
+      },
+      {
+        "id": "flood_index_high",
+        "name": "Chỉ số ngập lụt cao",
+        "description": "Kích hoạt khi phát hiện vùng ngập",
+        "parameters": {
+          "metric": "flood_index",
+          "operator": ">",
+          "threshold": [0.5, 0.7, 0.9],
+          "unit": "index"
+        },
+        "examples": [
+          "Flood Index > 0.7",
+          "Flood Index > 0.9 (ngập nghiêm trọng)"
+        ]
+      },
+      {
+        "id": "soil_moisture_low",
+        "name": "Độ ẩm đất thấp",
+        "description": "Kích hoạt khi đất khô hạn",
+        "parameters": {
+          "metric": "soil_moisture",
+          "operator": "<",
+          "threshold": [0.2, 0.1, 0.05],
+          "unit": "%"
+        },
+        "examples": ["Độ ẩm đất < 10%", "Độ ẩm đất < 5%"]
+      }
+    ],
+    "combined": [
+      {
+        "id": "drought_with_ndvi",
+        "name": "Hạn hán + NDVI suy giảm",
+        "description": "Kết hợp điều kiện thời tiết và vệ tinh",
+        "logic": "AND",
+        "conditions": ["rainfall_30d < 50mm", "ndvi_change < -20%"],
+        "examples": ["Mưa 30 ngày < 50mm AND NDVI giảm > 20%"]
+      },
+      {
+        "id": "flood_with_rain",
+        "name": "Lũ lụt + mưa lớn",
+        "description": "Kết hợp mưa lớn và chỉ số ngập",
+        "logic": "AND",
+        "conditions": ["rainfall_7d > 400mm", "flood_index > 0.7"],
+        "examples": ["Mưa 7 ngày > 400mm AND Flood Index > 0.7"]
+      }
+    ]
+  }
 }

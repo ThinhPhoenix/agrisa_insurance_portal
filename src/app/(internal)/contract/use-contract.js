@@ -9,6 +9,13 @@ export const useContract = () => {
 
   const [farmerFillFields, setFarmerFillFields] = useState({}); // field.instanceId -> boolean
 
+  const [dataMonitoringTiers, setDataMonitoringTiers] = useState({
+    weatherStations: null, // 'tier1', 'tier2', 'tier3'
+    satellite: null, // 'tier1', 'tier2', 'tier3'
+  });
+
+  const [selectedTriggers, setSelectedTriggers] = useState([]); // array of trigger objects
+
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -114,7 +121,7 @@ export const useContract = () => {
   const cancelContract = () => {
     setSelectedFields({});
     setSelectedSections([]);
-    setFarmerFillSections({});
+    setFarmerFillFields({});
     setFormData({});
     message.info("Đã hủy tạo hợp đồng!");
   };
@@ -186,10 +193,184 @@ export const useContract = () => {
     }));
   };
 
+  const updateDataMonitoringTier = (dataType, tier) => {
+    setDataMonitoringTiers((prev) => ({
+      ...prev,
+      [dataType]: tier,
+    }));
+  };
+
+  const addTrigger = (trigger) => {
+    setSelectedTriggers((prev) => [...prev, { ...trigger, id: Date.now() }]);
+  };
+
+  const removeTrigger = (triggerId) => {
+    setSelectedTriggers((prev) => prev.filter((t) => t.id !== triggerId));
+  };
+
+  const updateTrigger = (triggerId, updates) => {
+    setSelectedTriggers((prev) =>
+      prev.map((t) => (t.id === triggerId ? { ...t, ...updates } : t))
+    );
+  };
+
+  // Custom trigger utility functions
+  const getMetricDisplayName = (metric) => {
+    const metricNames = {
+      rainfall: "Lượng mưa",
+      rainfall_accumulated: "Lượng mưa tích lũy",
+      temperature_min: "Nhiệt độ tối thiểu",
+      temperature_max: "Nhiệt độ tối đa",
+      temperature_avg: "Nhiệt độ trung bình",
+      humidity: "Độ ẩm",
+      wind_speed: "Tốc độ gió",
+      ndvi_change: "NDVI thay đổi",
+      flood_index: "Chỉ số ngập lụt",
+      soil_moisture: "Độ ẩm đất",
+      evi: "EVI",
+      lai: "LAI",
+    };
+    return metricNames[metric] || metric;
+  };
+
+  const getOperatorSymbol = (operator) => {
+    const operators = {
+      ">": ">",
+      "<": "<",
+      ">=": "≥",
+      "<=": "≤",
+      "=": "=",
+      "!=": "≠",
+    };
+    return operators[operator] || operator;
+  };
+
+  const getTimeWindowText = (timeWindow) => {
+    const timeWindows = {
+      "1h": "1 giờ",
+      "6h": "6 giờ",
+      "24h": "24 giờ",
+      "3d": "3 ngày",
+      "7d": "7 ngày",
+      "14d": "14 ngày",
+      "30d": "30 ngày",
+      "60d": "60 ngày",
+      "90d": "90 ngày",
+    };
+    return timeWindows[timeWindow] || timeWindow;
+  };
+
+  const generateConditionText = (values) => {
+    const conditions = values.conditions.map((condition, index) => {
+      const metricName = getMetricDisplayName(condition.metric);
+      const operatorSymbol = getOperatorSymbol(condition.operator);
+      const timeWindowText = getTimeWindowText(condition.timeWindow);
+      const logic = index > 0 ? ` ${values.logic} ` : "";
+
+      return `${logic}${metricName} ${operatorSymbol} ${condition.threshold} trong ${timeWindowText}`;
+    });
+
+    return conditions.join("");
+  };
+
+  const handleCustomTriggerSubmit = (values, onSuccess) => {
+    let conditions = [];
+    let conditionText = "";
+
+    if (values.type === "combined") {
+      // Xử lý điều kiện kết hợp
+      const weatherConditions = (values.weatherConditions || []).map(
+        (condition, index) => ({
+          id: `weather_condition_${index}`,
+          type: "weather",
+          metric: condition.metric,
+          operator: condition.operator,
+          threshold: condition.threshold,
+          timeWindow: condition.timeWindow,
+        })
+      );
+
+      const satelliteConditions = (values.satelliteConditions || []).map(
+        (condition, index) => ({
+          id: `satellite_condition_${index}`,
+          type: "satellite",
+          metric: condition.metric,
+          operator: condition.operator,
+          threshold: condition.threshold,
+          timeWindow: condition.timeWindow,
+        })
+      );
+
+      conditions = [...weatherConditions, ...satelliteConditions];
+
+      // Tạo conditionText cho combined
+      const weatherText =
+        weatherConditions.length > 0
+          ? `Thời tiết: ${generateConditionText({
+              conditions: weatherConditions,
+            })}`
+          : "";
+      const satelliteText =
+        satelliteConditions.length > 0
+          ? `Vệ tinh: ${generateConditionText({
+              conditions: satelliteConditions,
+            })}`
+          : "";
+      const logicText =
+        values.combinationLogic === "AND"
+          ? "VÀ"
+          : values.combinationLogic === "OR"
+          ? "HOẶC"
+          : "Tùy chỉnh";
+
+      conditionText = [weatherText, satelliteText]
+        .filter(Boolean)
+        .join(` ${logicText} `);
+    } else {
+      // Xử lý weather hoặc satellite
+      conditions = (values.conditions || []).map((condition, index) => ({
+        id: `${values.type}_condition_${index}`,
+        type: values.type,
+        metric: condition.metric,
+        operator: condition.operator,
+        threshold: condition.threshold,
+        timeWindow: condition.timeWindow,
+      }));
+
+      conditionText = generateConditionText({ conditions });
+    }
+
+    const customTrigger = {
+      id: `custom_${values.type}_${Date.now()}`,
+      name: values.triggerName,
+      description: values.description,
+      type: values.type,
+      logic: values.combinationLogic || "AND", // Default to AND for single type
+      conditions: conditions,
+      payoutPercent: values.payoutPercent,
+      severity: "medium", // Default severity
+      conditionText: conditionText,
+    };
+
+    addTrigger(customTrigger);
+    onSuccess && onSuccess();
+    message.success(
+      `Điều kiện kích hoạt ${
+        values.type === "weather"
+          ? "thời tiết"
+          : values.type === "satellite"
+          ? "vệ tinh"
+          : "kết hợp"
+      } đã được thêm!`
+    );
+  };
+
   return {
     selectedFields,
     selectedSections,
     farmerFillFields,
+    dataMonitoringTiers,
+    selectedTriggers,
     formData,
     addFieldToSection,
     removeFieldFromSection,
@@ -200,6 +381,8 @@ export const useContract = () => {
     submitted,
     fieldLibrary: contractOptions.fieldLibrary,
     sections: contractOptions.sections,
+    monitoringTiersData: contractOptions.dataMonitoringTiers,
+    triggerConditions: contractOptions.triggerConditions,
     // Sidebar states and functions
     sidebarVisible,
     currentSection,
@@ -217,11 +400,22 @@ export const useContract = () => {
     // Section modal states and functions
     sectionModalVisible,
     tempSelectedSections,
+    setTempSelectedSections,
     openSectionModal,
     closeSectionModal,
     toggleTempSection,
     confirmSections,
     removeSection,
     toggleFarmerFill,
+    updateDataMonitoringTier,
+    addTrigger,
+    removeTrigger,
+    updateTrigger,
+    // Custom trigger functions
+    getMetricDisplayName,
+    getOperatorSymbol,
+    getTimeWindowText,
+    generateConditionText,
+    handleCustomTriggerSubmit,
   };
 };

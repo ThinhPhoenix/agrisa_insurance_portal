@@ -1,18 +1,18 @@
-import React, { forwardRef, useEffect, useImperativeHandle } from "react";
+import { UploadOutlined } from "@ant-design/icons";
 import {
   Button,
+  Checkbox,
+  DatePicker,
   Form,
   Input,
-  Select,
   InputNumber,
-  DatePicker,
-  Switch,
-  Checkbox,
   Radio,
-  Upload,
+  Select,
   Spin,
+  Switch,
+  Upload,
 } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { forwardRef, useEffect, useImperativeHandle } from "react";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -542,6 +542,64 @@ export const CustomForm = forwardRef(function CustomForm(
             </Radio.Group>
           </Form.Item>
         );
+      case "checkbox-group":
+        return (
+          <Form.Item
+            key={field.name}
+            label={field.label}
+            name={field.name}
+            rules={rules}
+            style={{
+              gridColumn: field.gridColumn,
+              ...(field.itemStyle ?? field.style),
+            }}
+            className={field.itemClassName ?? field.className}
+          >
+            <Checkbox.Group
+              style={field.inputStyle ?? field.style}
+              disabled={field.disabled}
+              onChange={(checkedValues) => {
+                field?.onChange && field.onChange(checkedValues, form);
+              }}
+            >
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+              >
+                {field.options?.map((option) => (
+                  <div
+                    key={option.value}
+                    style={{
+                      padding: "12px",
+                      border: "1px solid #f0f0f0",
+                      borderRadius: "4px",
+                      backgroundColor: "transparent",
+                      cursor: field.disabled ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <Checkbox
+                      value={option.value}
+                      style={{ marginBottom: "4px" }}
+                    >
+                      <span style={{ fontWeight: "bold" }}>{option.label}</span>
+                    </Checkbox>
+                    {option.description && (
+                      <div
+                        style={{
+                          marginLeft: "24px",
+                          color: "#666",
+                          fontSize: "14px",
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        {option.description}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Checkbox.Group>
+          </Form.Item>
+        );
       case "combobox":
         return (
           <Form.Item
@@ -606,14 +664,16 @@ export const CustomForm = forwardRef(function CustomForm(
     (field) =>
       field.type !== "textarea" &&
       field.type !== "file" &&
-      field.type !== "image"
+      field.type !== "image" &&
+      field.type !== "checkbox-group"
   );
 
   const fullWidthFields = fields.filter(
     (field) =>
       field.type === "textarea" ||
       field.type === "file" ||
-      field.type === "image"
+      field.type === "image" ||
+      field.type === "checkbox-group"
   );
 
   return (

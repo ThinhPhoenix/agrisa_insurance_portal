@@ -437,6 +437,7 @@ export default function CreateContractPage() {
         setSelectedFieldType={setSelectedFieldType}
         addCustomField={addCustomField}
         setTriggerModalVisible={setTriggerModalVisible}
+        setActiveTab={setActiveTab}
       />
 
       <FieldSelectionDrawer
@@ -467,8 +468,7 @@ export default function CreateContractPage() {
         setTriggerModalVisible={setTriggerModalVisible}
         customTriggerForm={customTriggerForm}
         handleCustomTriggerSubmit={handleCustomTriggerSubmit}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        type={activeTab}
       />
 
       {/* Custom Trigger Modal */}

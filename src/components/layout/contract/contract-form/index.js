@@ -48,6 +48,7 @@ const ContractForm = ({
   setSelectedFieldType,
   addCustomField,
   setTriggerModalVisible,
+  setActiveTab,
 }) => {
   return (
     <div className="contract-create-page">
@@ -135,8 +136,8 @@ const ContractForm = ({
                                     type="primary"
                                     icon={<PlusOutlined />}
                                     onClick={() => {
+                                      setActiveTab("weather");
                                       setTriggerModalVisible(true);
-                                      // Set modal to weather tab
                                     }}
                                   >
                                     Tạo điều kiện thời tiết
@@ -163,8 +164,8 @@ const ContractForm = ({
                                     type="primary"
                                     icon={<PlusOutlined />}
                                     onClick={() => {
+                                      setActiveTab("satellite");
                                       setTriggerModalVisible(true);
-                                      // Set modal to satellite tab
                                     }}
                                   >
                                     Tạo điều kiện vệ tinh
@@ -191,8 +192,8 @@ const ContractForm = ({
                                     type="primary"
                                     icon={<PlusOutlined />}
                                     onClick={() => {
+                                      setActiveTab("combined");
                                       setTriggerModalVisible(true);
-                                      // Set modal to combined tab
                                     }}
                                   >
                                     Tạo điều kiện kết hợp

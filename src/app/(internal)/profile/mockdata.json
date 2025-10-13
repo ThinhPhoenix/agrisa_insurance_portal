@@ -1,80 +1,73 @@
 {
-  "company": {
-    "name": "Công Ty Bảo Hiểm Việt Nam",
-    "shortName": "VIC",
-    "slogan": "Đối tác bảo hiểm hàng đầu cho nông nghiệp",
-    "logo": "https://static.vecteezy.com/system/resources/previews/015/887/591/non_2x/anonymous-group-icon-outline-style-vector.jpg",
-    "description": "Với hơn 25 năm kinh nghiệm trong lĩnh vực bảo hiểm, Công ty Bảo hiểm Việt Nam tự hào là đối tác tin cậy của hàng nghìn nông dân trên khắp cả nước. Chúng tôi chuyên cung cấp các giải pháp bảo hiểm toàn diện cho ngành nông nghiệp.",
-    "mission": "Bảo vệ sinh kế của nông dân, góp phần phát triển nông nghiệp bền vững thông qua các sản phẩm bảo hiểm chất lượng cao và dịch vụ khách hàng tận tâm.",
-    "commitment": "Thanh toán nhanh chóng, minh bạch, hỗ trợ 24/7 và tư vấn chuyên môn từ đội ngũ chuyên gia có kinh nghiệm lâu năm trong lĩnh vực nông nghiệp."
-  },
-  "contact": {
-    "email": "info@vietnaminsurance.vn",
-    "phone": "+84 123 456 789",
-    "website": "www.vietnaminsurance.vn",
-    "headquarters": "123 Đường ABC, Quận 1, TP.HCM",
-    "branches": "Hà Nội, Đà Nẵng, Cần Thơ",
-    "taxCode": "0123456789"
-  },
-  "statistics": [
+  "partner_logo_url": "https://static.vecteezy.com/system/resources/previews/015/887/591/non_2x/anonymous-group-icon-outline-style-vector.jpg",
+  "cover_photo_url": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+  "partner_name": "Công Ty Bảo Hiểm Việt Nam",
+  "partner_tagline": "Đồng hành cùng nhà nông, vững tâm sản xuất",
+  "partner_description": "Nhà cung cấp bảo hiểm nông nghiệp hàng đầu tại Việt Nam, chuyên về bảo hiểm tham số cho cây trồng được hỗ trợ bởi công nghệ vệ tinh.",
+  "partner_phone": "+84 123 456 789",
+  "partner_email": "info@vietinsurance.com",
+  "partner_address": "123 Nguyen Hue Street, District 1, Ho Chi Minh City, Vietnam",
+  "partner_website": "https://www.antaminsurance.com",
+  "partner_rating_score": 4.8,
+  "partner_rating_count": 1256,
+  "trust_metric_experience": 15,
+  "trust_metric_clients": 20000,
+  "trust_metric_claim_rate": 98,
+  "total_payouts": "Khoảng 3 tỷ VND",
+  "products": [
     {
-      "title": "Nông dân",
-      "value": 1250,
-      "icon": "Users"
+      "product_icon": "fa-solid fa-wheat-awn",
+      "product_name": "Bảo hiểm Cây Lúa",
+      "product_description": "Bảo vệ toàn diện trước rủi ro thiên tai, sâu bệnh.",
+      "product_supported_crop": "lúa nước"
     },
     {
-      "title": "Hợp đồng",
-      "value": 3400,
-      "icon": "FileText"
-    },
-    {
-      "title": "Doanh thu",
-      "value": "2.5M",
-      "icon": "TrendingUp"
+      "product_icon": "fa-solid fa-coffee-beans",
+      "product_name": "Bảo hiểm Cây Cà Phê",
+      "product_description": "Bảo hiểm cho cây cà phê trước biến động giá cả và thiên tai.",
+      "product_supported_crop": "cà phê"
     }
   ],
-  "services": [
-    "Bảo hiểm cây trồng",
-    "Bảo hiểm vật nuôi",
-    "Bảo hiểm thời tiết",
-    "Bảo hiểm thiệt hại"
-  ],
-  "recentActivities": [
+  "average_payout_time": "3 ngày làm việc sau khi xác nhận thanh toán",
+  "confirmation_timeline": "Trong vòng 24 giờ (chậm nhất là 48 giờ)",
+  "hotline": "+84 1800 123 456 (24/7)",
+  "support_hours": "Thứ 2 đến thứ 6, 8 AM - 6 PM, cuối tuần chỉ nhận hỗ trợ qua email",
+  "coverage_areas": "An Giang, Cà Mau, Đồng Tháp",
+  "reviews": [
     {
-      "description": "Đã phê duyệt 15 hợp đồng bảo hiểm mới",
-      "time": "2 giờ trước",
-      "type": "success"
+      "reviewer_id": "UCtWFgbIha1",
+      "reviewer_avatar_url": "https://randomuser.me/api/portraits/men/1.jpg",
+      "reviewer_name": "Anh Bảy",
+      "rating_stars": 5,
+      "review_content": "Nhờ có khoản bồi thường kịp thời từ Bảo hiểm An Tâm mà gia đình tôi đã có vốn để tái sản xuất sau đợt ngập lụt vừa rồi. Thủ tục rất nhanh gọn, nhân viên nhiệt tình."
     },
     {
-      "description": "Cập nhật chính sách bảo hiểm mùa vụ",
-      "time": "1 ngày trước",
-      "type": "info"
+      "reviewer_id": "UCtWFgbIha2",
+      "reviewer_avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
+      "reviewer_name": "Chị Lan",
+      "rating_stars": 5,
+      "review_content": "Dịch vụ bảo hiểm rất chuyên nghiệp, hỗ trợ nhanh chóng khi có sự cố. Tôi rất hài lòng với cách thức làm việc của công ty."
     },
     {
-      "description": "Hội thảo với nông dân tại Đồng Nai",
-      "time": "3 ngày trước",
-      "type": "warning"
+      "reviewer_id": "UCtWFgbIha3",
+      "reviewer_avatar_url": "https://randomuser.me/api/portraits/men/3.jpg",
+      "reviewer_name": "Anh Minh",
+      "rating_stars": 4,
+      "review_content": "Bảo hiểm cây lúa giúp tôi yên tâm sản xuất. Chỉ có điều thủ tục hơi phức tạp nhưng nhân viên đã hướng dẫn tận tình."
+    },
+    {
+      "reviewer_id": "UCtWFgbIha4",
+      "reviewer_avatar_url": "https://randomuser.me/api/portraits/women/4.jpg",
+      "reviewer_name": "Chị Hoa",
+      "rating_stars": 5,
+      "review_content": "Công ty bảo hiểm uy tín, thanh toán đúng hạn. Tôi đã giới thiệu cho nhiều người quen tham gia."
+    },
+    {
+      "reviewer_id": "UCtWFgbIha5",
+      "reviewer_avatar_url": "https://randomuser.me/api/portraits/men/5.jpg",
+      "reviewer_name": "Anh Tùng",
+      "rating_stars": 4,
+      "review_content": "Sản phẩm bảo hiểm phù hợp với nhu cầu của nông dân. Hy vọng công ty sẽ mở rộng thêm nhiều loại bảo hiểm khác."
     }
-  ],
-  "businessInfo": {
-    "establishedYear": 1998,
-    "insuranceTypes": [
-      "Bảo hiểm nông nghiệp",
-      "Bảo hiểm tài sản",
-      "Bảo hiểm thiên tai"
-    ],
-    "coverageAreas": [
-      "Đồng bằng sông Cửu Long",
-      "Tây Nguyên",
-      "Duyên hải miền Trung",
-      "Đông Nam Bộ"
-    ],
-    "partners": 15,
-    "employeeCount": 120
-  },
-  "certifications": [
-    "ISO 9001:2015",
-    "Doanh nghiệp Bảo hiểm Uy tín 2024",
-    "Top 10 Doanh nghiệp Bảo hiểm Nông nghiệp"
   ]
 }

@@ -13,7 +13,6 @@ import {
     Typography
 } from 'antd';
 import {
-    Award,
     Building,
     Calendar,
     Globe,
@@ -28,7 +27,19 @@ import {
 const { Title, Text, Paragraph } = Typography;
 
 const CustomerViewModal = ({ visible, onClose, companyData }) => {
-    const { company, contact, statistics, services, recentActivities, businessInfo, certifications } = companyData;
+    // Use new data structure
+    const data = companyData;
+
+    // Create mock businessInfo for compatibility
+    const businessInfo = {
+        establishedYear: data.trust_metric_experience,
+        employeeCount: data.trust_metric_clients,
+        insuranceTypes: ["Bảo hiểm nông nghiệp"],
+        coverageAreas: data.coverage_areas.split(", ")
+    };
+
+    // Create mock services
+    const services = data.products.map(p => p.product_name);
 
     // Render activity dot based on type (reusing from parent component)
     const renderActivityDot = (type) => {
@@ -57,8 +68,8 @@ const CustomerViewModal = ({ visible, onClose, companyData }) => {
                     <div className="flex items-start">
                         <div className="company-logo-wrapper">
                             <Image
-                                src="https://www.baovietnhantho.com.vn/storage/8f698cfe-2689-4637-bee7-62e592122dee/c/tap-doan-bao-viet-large.jpg"
-                                alt={company.name}
+                                src={data.partner_logo_url}
+                                alt={data.partner_name}
                                 preview={false}
                                 width={70}
                                 height={70}
@@ -66,20 +77,20 @@ const CustomerViewModal = ({ visible, onClose, companyData }) => {
                             />
                             <div className="rating-badge">
                                 <Star size={12} className="text-yellow-500 fill-current" />
-                                <span>4.2</span>
+                                <span>{data.partner_rating_score}</span>
                             </div>
                         </div>
                         <div className="company-info-container">
-                            <Title level={4} className="company-title">{company.name}</Title>
-                            <Text className="company-slogan">{company.slogan}</Text>
+                            <Title level={4} className="company-title">{data.partner_name}</Title>
+                            <Text className="company-slogan">{data.partner_tagline}</Text>
                             <Space className="company-metrics" size="middle">
                                 <div className="metric-item">
                                     <Calendar size={14} className="metric-icon" />
-                                    <Text className="metric-text">{businessInfo.establishedYear}</Text>
+                                    <Text className="metric-text">{businessInfo.establishedYear} năm</Text>
                                 </div>
                                 <div className="metric-item">
                                     <Users size={14} className="metric-icon" />
-                                    <Text className="metric-text">{businessInfo.employeeCount}</Text>
+                                    <Text className="metric-text">{businessInfo.employeeCount.toLocaleString()} khách hàng</Text>
                                 </div>
                             </Space>
                         </div>
@@ -108,22 +119,22 @@ const CustomerViewModal = ({ visible, onClose, companyData }) => {
                             Giới thiệu công ty
                         </Title>
                         <Paragraph className="company-desc">
-                            {company.description}
+                            {data.partner_description}
                         </Paragraph>
                         <Row gutter={[0, 16]} className="company-values">
                             <Col span={24}>
                                 <Card className="value-card">
                                     <Space direction="vertical" size={2}>
-                                        <Text type="secondary" className="value-label">SỨ MỆNH</Text>
-                                        <Text className="value-content">{company.mission}</Text>
+                                        <Text type="secondary" className="value-label">TỶ LỆ CHI TRẢ</Text>
+                                        <Text className="value-content">{data.trust_metric_claim_rate}%</Text>
                                     </Space>
                                 </Card>
                             </Col>
                             <Col span={24}>
                                 <Card className="value-card">
                                     <Space direction="vertical" size={2}>
-                                        <Text type="secondary" className="value-label">CAM KẾT</Text>
-                                        <Text className="value-content">{company.commitment}</Text>
+                                        <Text type="secondary" className="value-label">TỔNG CHI TRẢ</Text>
+                                        <Text className="value-content">{data.total_payouts}</Text>
                                     </Space>
                                 </Card>
                             </Col>
@@ -139,10 +150,10 @@ const CustomerViewModal = ({ visible, onClose, companyData }) => {
                         <List
                             itemLayout="horizontal"
                             dataSource={[
-                                { icon: <Phone size={16} />, text: contact.phone },
-                                { icon: <Mail size={16} />, text: contact.email },
-                                { icon: <Globe size={16} />, text: contact.website },
-                                { icon: <MapPin size={16} />, text: contact.headquarters }
+                                { icon: <Phone size={16} />, text: data.partner_phone },
+                                { icon: <Mail size={16} />, text: data.partner_email },
+                                { icon: <Globe size={16} />, text: data.partner_website },
+                                { icon: <MapPin size={16} />, text: data.partner_address }
                             ]}
                             renderItem={(item) => (
                                 <List.Item className="contact-list-item">
@@ -181,21 +192,28 @@ const CustomerViewModal = ({ visible, onClose, companyData }) => {
                         </Space>
                     </Card>
 
-                    {/* Certifications Section */}
+                    {/* Reviews Section */}
                     <Card className="content-card" bordered={false}>
                         <Title level={5} className="section-title">
-                            <Award size={16} className="section-icon" />
-                            Chứng nhận & Giải thưởng
+                            <Star size={16} className="section-icon" />
+                            Đánh giá từ khách hàng
                         </Title>
                         <List
                             itemLayout="horizontal"
-                            dataSource={certifications}
-                            renderItem={(item) => (
-                                <List.Item className="certification-item">
-                                    <Space>
-                                        <Award size={16} className="award-icon" />
-                                        <Text>{item}</Text>
-                                    </Space>
+                            dataSource={data.reviews.slice(0, 3)} // Show only first 3 reviews
+                            renderItem={(review) => (
+                                <List.Item className="review-item">
+                                    <div className="review-content">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <Text strong className="reviewer-name">{review.reviewer_name}</Text>
+                                            <div className="flex items-center">
+                                                {[...Array(review.rating_stars)].map((_, i) => (
+                                                    <Star key={i} size={12} className="text-yellow-500 fill-current" />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <Text className="review-text">{review.review_content}</Text>
+                                    </div>
                                 </List.Item>
                             )}
                         />

@@ -1,0 +1,81 @@
+/* Create Policy Page - Simple Clean Style */
+
+/* Tab content styling */
+.ant-tabs-content-holder {
+  padding: 24px !important;
+}
+
+/* Form styling */
+.ant-form-item-label > label {
+  font-weight: 600 !important;
+}
+
+/* Basic Tab Styles */
+.data-source-table .ant-table-thead > tr > th {
+  background: #fafafa !important;
+  font-weight: 600 !important;
+}
+
+/* Configuration Tab Styles */
+.conditions-table .ant-table-thead > tr > th {
+  background: #fafafa !important;
+}
+
+/* Tags Tab Styles */
+.tags-table .ant-input,
+.tags-table .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.tags-table .ant-input:hover,
+.tags-table .ant-select-selector:hover {
+  border-color: #1890ff !important;
+  background: white !important;
+}
+
+/* Review Tab Styles */
+.ant-descriptions-bordered .ant-descriptions-item-label {
+  background: #fafafa !important;
+  font-weight: 600 !important;
+}
+
+/* Estimated Costs Sidebar - Simple styling */
+.cost-section {
+  margin-bottom: 16px !important;
+}
+
+.data-sources-breakdown {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.data-source-item {
+  padding: 8px 0 !important;
+}
+
+/* Simple scrollbar */
+.data-sources-breakdown::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.data-sources-breakdown::-webkit-scrollbar-track {
+  background: #f1f1f1 !important;
+}
+
+.data-sources-breakdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1 !important;
+  border-radius: 2px !important;
+}
+
+/* Fix dropdown text overflow - ensure selected value shows only main label */
+.ant-select-selector {
+  overflow: hidden !important;
+}
+
+.ant-select-selection-item {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}

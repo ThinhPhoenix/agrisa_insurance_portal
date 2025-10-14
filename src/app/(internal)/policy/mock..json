@@ -1,0 +1,342 @@
+{
+  "cropTypes": [
+    {
+      "value": "rice",
+      "label": "Cây Lúa (Rice)",
+      "description": "Cây lúa với chu kỳ phát triển 120-150 ngày"
+    },
+    {
+      "value": "coffee",
+      "label": "Cây Cà phê (Coffee)",
+      "description": "Cây cà phê với chu kỳ phát triển 365 ngày"
+    }
+  ],
+  "dataTierCategories": [
+    {
+      "value": "weather",
+      "label": "Dữ liệu Thời tiết",
+      "description": "Dữ liệu về khí tượng và thời tiết",
+      "categoryMultiplier": 1.0
+    },
+    {
+      "value": "satellite",
+      "label": "Dữ liệu Vệ tinh",
+      "description": "Dữ liệu hình ảnh và phân tích từ vệ tinh",
+      "categoryMultiplier": 1.5
+    },
+    {
+      "value": "derived",
+      "label": "Dữ liệu Phân tích",
+      "description": "Dữ liệu đã được xử lý và phân tích",
+      "categoryMultiplier": 2.0
+    }
+  ],
+  "dataTiers": [
+    {
+      "value": "basic",
+      "label": "Cơ bản (Basic)",
+      "description": "Gói dữ liệu cơ bản với độ chính xác tiêu chuẩn",
+      "tierMultiplier": 1.0,
+      "categories": ["weather", "satellite", "derived"]
+    },
+    {
+      "value": "premium",
+      "label": "Cao cấp (Premium)",
+      "description": "Gói dữ liệu cao cấp với độ chính xác cao",
+      "tierMultiplier": 1.8,
+      "categories": ["weather", "satellite", "derived"]
+    },
+    {
+      "value": "enterprise",
+      "label": "Doanh nghiệp (Enterprise)",
+      "description": "Gói dữ liệu doanh nghiệp với độ chính xác cao nhất",
+      "tierMultiplier": 3.0,
+      "categories": ["satellite", "derived"]
+    }
+  ],
+  "dataSources": {
+    "weather": {
+      "basic": [
+        {
+          "id": "rainfall_basic",
+          "parameterName": "rainfall",
+          "label": "Lượng mưa",
+          "unit": "mm",
+          "baseCost": 10.0,
+          "description": "Dữ liệu lượng mưa hàng ngày từ trạm khí tượng"
+        },
+        {
+          "id": "temperature_basic",
+          "parameterName": "temperature",
+          "label": "Nhiệt độ",
+          "unit": "°C",
+          "baseCost": 8.0,
+          "description": "Dữ liệu nhiệt độ trung bình hàng ngày"
+        },
+        {
+          "id": "humidity_basic",
+          "parameterName": "humidity",
+          "label": "Độ ẩm",
+          "unit": "%",
+          "baseCost": 6.0,
+          "description": "Dữ liệu độ ẩm không khí"
+        }
+      ],
+      "premium": [
+        {
+          "id": "rainfall_premium",
+          "parameterName": "rainfall",
+          "label": "Lượng mưa (Cao cấp)",
+          "unit": "mm",
+          "baseCost": 15.0,
+          "description": "Dữ liệu lượng mưa theo giờ với độ chính xác cao"
+        },
+        {
+          "id": "temperature_premium",
+          "parameterName": "temperature",
+          "label": "Nhiệt độ (Cao cấp)",
+          "unit": "°C",
+          "baseCost": 12.0,
+          "description": "Dữ liệu nhiệt độ theo giờ với dự báo 7 ngày"
+        },
+        {
+          "id": "wind_premium",
+          "parameterName": "wind_speed",
+          "label": "Tốc độ gió",
+          "unit": "m/s",
+          "baseCost": 10.0,
+          "description": "Dữ liệu tốc độ và hướng gió"
+        }
+      ]
+    },
+    "satellite": {
+      "basic": [
+        {
+          "id": "ndvi_basic",
+          "parameterName": "NDVI",
+          "label": "Chỉ số thực vật NDVI",
+          "unit": "index",
+          "baseCost": 25.0,
+          "description": "Chỉ số thực vật chuẩn hóa từ ảnh vệ tinh"
+        },
+        {
+          "id": "evi_basic",
+          "parameterName": "EVI",
+          "label": "Chỉ số thực vật EVI",
+          "unit": "index",
+          "baseCost": 20.0,
+          "description": "Chỉ số thực vật tăng cường từ ảnh vệ tinh"
+        }
+      ],
+      "premium": [
+        {
+          "id": "ndvi_premium",
+          "parameterName": "NDVI",
+          "label": "Chỉ số thực vật NDVI (Cao cấp)",
+          "unit": "index",
+          "baseCost": 40.0,
+          "description": "NDVI với độ phân giải cao và cập nhật hàng ngày"
+        },
+        {
+          "id": "soil_moisture",
+          "parameterName": "soil_moisture",
+          "label": "Độ ẩm đất",
+          "unit": "%",
+          "baseCost": 35.0,
+          "description": "Dữ liệu độ ẩm đất từ radar vệ tinh"
+        },
+        {
+          "id": "crop_health",
+          "parameterName": "crop_health",
+          "label": "Sức khỏe cây trồng",
+          "unit": "index",
+          "baseCost": 45.0,
+          "description": "Chỉ số sức khỏe cây trồng tổng hợp"
+        }
+      ],
+      "enterprise": [
+        {
+          "id": "ndvi_enterprise",
+          "parameterName": "NDVI",
+          "label": "Chỉ số thực vật NDVI (Doanh nghiệp)",
+          "unit": "index",
+          "baseCost": 60.0,
+          "description": "NDVI với độ phân giải siêu cao và AI phân tích"
+        },
+        {
+          "id": "multi_spectral",
+          "parameterName": "multi_spectral",
+          "label": "Phân tích đa phổ",
+          "unit": "index",
+          "baseCost": 80.0,
+          "description": "Phân tích đa phổ với 12+ dải sóng"
+        }
+      ]
+    },
+    "derived": {
+      "basic": [
+        {
+          "id": "drought_index",
+          "parameterName": "drought_index",
+          "label": "Chỉ số hạn hán",
+          "unit": "index",
+          "baseCost": 30.0,
+          "description": "Chỉ số hạn hán tổng hợp từ nhiều nguồn"
+        },
+        {
+          "id": "flood_risk",
+          "parameterName": "flood_risk",
+          "label": "Rủi ro lũ lụt",
+          "unit": "index",
+          "baseCost": 25.0,
+          "description": "Đánh giá rủi ro lũ lụt theo khu vực"
+        }
+      ],
+      "premium": [
+        {
+          "id": "yield_prediction",
+          "parameterName": "yield_prediction",
+          "label": "Dự báo năng suất",
+          "unit": "tons/ha",
+          "baseCost": 50.0,
+          "description": "Dự báo năng suất cây trồng sử dụng AI"
+        },
+        {
+          "id": "disease_risk",
+          "parameterName": "disease_risk",
+          "label": "Rủi ro bệnh hại",
+          "unit": "index",
+          "baseCost": 45.0,
+          "description": "Đánh giá rủi ro bệnh hại và sâu bệnh"
+        }
+      ],
+      "enterprise": [
+        {
+          "id": "comprehensive_risk",
+          "parameterName": "comprehensive_risk",
+          "label": "Đánh giá rủi ro tổng hợp",
+          "unit": "index",
+          "baseCost": 100.0,
+          "description": "Đánh giá rủi ro tổng hợp sử dụng AI và ML"
+        }
+      ]
+    }
+  },
+  "aggregationFunctions": [
+    {
+      "value": "avg",
+      "label": "Trung bình (Average)",
+      "description": "Tính giá trị trung bình trong khoảng thời gian"
+    },
+    {
+      "value": "sum",
+      "label": "Tổng (Sum)",
+      "description": "Tính tổng giá trị trong khoảng thời gian"
+    },
+    {
+      "value": "min",
+      "label": "Tối thiểu (Minimum)",
+      "description": "Giá trị nhỏ nhất trong khoảng thời gian"
+    },
+    {
+      "value": "max",
+      "label": "Tối đa (Maximum)",
+      "description": "Giá trị lớn nhất trong khoảng thời gian"
+    },
+    {
+      "value": "change",
+      "label": "Thay đổi (Change)",
+      "description": "Tính toán thay đổi so với baseline"
+    }
+  ],
+  "thresholdOperators": [
+    {
+      "value": "<",
+      "label": "Nhỏ hơn (<)",
+      "description": "Giá trị nhỏ hơn ngưỡng"
+    },
+    {
+      "value": ">",
+      "label": "Lớn hơn (>)",
+      "description": "Giá trị lớn hơn ngưỡng"
+    },
+    {
+      "value": "<=",
+      "label": "Nhỏ hơn hoặc bằng (≤)",
+      "description": "Giá trị nhỏ hơn hoặc bằng ngưỡng"
+    },
+    {
+      "value": ">=",
+      "label": "Lớn hơn hoặc bằng (≥)",
+      "description": "Giá trị lớn hơn hoặc bằng ngưỡng"
+    },
+    {
+      "value": "change_gt",
+      "label": "Thay đổi lớn hơn",
+      "description": "Thay đổi lớn hơn ngưỡng so với baseline"
+    },
+    {
+      "value": "change_lt",
+      "label": "Thay đổi nhỏ hơn",
+      "description": "Thay đổi nhỏ hơn ngưỡng so với baseline"
+    }
+  ],
+  "logicalOperators": [
+    {
+      "value": "AND",
+      "label": "VÀ (AND)",
+      "description": "Tất cả điều kiện phải được thỏa mãn"
+    },
+    {
+      "value": "OR",
+      "label": "HOẶC (OR)",
+      "description": "Chỉ cần một điều kiện được thỏa mãn"
+    }
+  ],
+  "tagDataTypes": [
+    {
+      "value": "string",
+      "label": "Chuỗi ký tự (String)",
+      "description": "Dữ liệu dạng văn bản"
+    },
+    {
+      "value": "integer",
+      "label": "Số nguyên (Integer)",
+      "description": "Dữ liệu số nguyên"
+    },
+    {
+      "value": "decimal",
+      "label": "Số thập phân (Decimal)",
+      "description": "Dữ liệu số thập phân"
+    },
+    {
+      "value": "boolean",
+      "label": "Đúng/Sai (Boolean)",
+      "description": "Dữ liệu logic đúng/sai"
+    }
+  ],
+  "sampleData": {
+    "productName": "Bảo hiểm Lúa Mùa Đông 2025",
+    "productCode": "RICE_WINTER_2025",
+    "insuranceProviderId": "PARTNER_001",
+    "premiumBaseRate": 0.05,
+    "coverageDurationDays": 120,
+    "defaultTags": [
+      {
+        "key": "region",
+        "value": "Đồng bằng sông Cửu Long",
+        "dataType": "string"
+      },
+      {
+        "key": "season",
+        "value": "Mùa đông",
+        "dataType": "string"
+      },
+      {
+        "key": "area_hectares",
+        "value": "1000",
+        "dataType": "integer"
+      }
+    ]
+  }
+}

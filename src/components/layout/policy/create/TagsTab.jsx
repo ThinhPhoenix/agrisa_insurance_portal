@@ -209,7 +209,7 @@ const TagsTab = ({
                             </Form.Item>
                         </Col>
 
-                        <Col span={6}>
+                        <Col span={5}>
                             <Form.Item
                                 name="dataType"
                                 label="Loại dữ liệu"
@@ -235,8 +235,8 @@ const TagsTab = ({
                             </Form.Item>
                         </Col>
 
-                        <Col span={2}>
-                            <Form.Item label=" ">
+                        <Col span={3}>
+                            <Form.Item label="" noStyle>
                                 <Button
                                     type="primary"
                                     icon={<PlusOutlined />}

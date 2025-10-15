@@ -1,6 +1,6 @@
+import mockData from "@/app/(internal)/policy/mock..json";
 import { message } from "antd";
 import { useCallback, useMemo, useState } from "react";
-import mockData from "../../../app/(internal)/policy/mock..json";
 
 const TABS = {
   BASIC: "basic",

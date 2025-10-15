@@ -50,7 +50,10 @@ const BasicTab = ({
     // Handle tier change
     const handleTierChange = (tier) => {
         setSelectedTier(tier);
-        const sources = mockData.dataSources[selectedCategory]?.[tier] || [];
+        // Find the tier ID from the selected tier value
+        const selectedTierData = mockData.dataTiers.find(t => t.value === tier);
+        // Filter data sources by the tier's ID
+        const sources = mockData.dataSources.filter(source => source.data_tier_id === selectedTierData?.id) || [];
         setAvailableDataSources(sources);
         dataSourceForm.setFieldsValue({ dataSource: undefined });
     };
@@ -139,7 +142,8 @@ const BasicTab = ({
     // Get filtered tiers based on category
     const getFilteredTiers = (category) => {
         if (!category) return mockData.dataTiers;
-        return mockData.dataTiers.filter(tier => tier.categories.includes(category));
+        const categoryId = mockData.dataTierCategories.find(cat => cat.value === category)?.id;
+        return mockData.dataTiers.filter(tier => tier.data_tier_category_id === categoryId);
     };
 
     return (

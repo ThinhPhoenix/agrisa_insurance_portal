@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "antd": "^5.27.1",
     "axios": "^1.11.0",
     "lucide-react": "^0.542.0",

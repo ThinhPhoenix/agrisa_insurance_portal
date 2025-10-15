@@ -3,6 +3,7 @@ import {
     Alert,
     Button,
     Card,
+    Checkbox,
     Col,
     Form,
     Input,
@@ -13,6 +14,7 @@ import {
     Table,
     Typography
 } from 'antd';
+import React from 'react';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -26,6 +28,204 @@ const TagsTab = ({
     onUpdateTag
 }) => {
     const [tagForm] = Form.useForm();
+    const [selectedDataType, setSelectedDataType] = React.useState('string');
+    const [selectOptions, setSelectOptions] = React.useState(['']);
+    const [isMultipleSelect, setIsMultipleSelect] = React.useState(false);
+
+    // Handle data type change
+    const handleDataTypeChange = (value) => {
+        setSelectedDataType(value);
+        // Reset value when data type changes
+        tagForm.setFieldsValue({ value: '' });
+
+        if (value === 'select') {
+            setSelectOptions(['']);
+            setIsMultipleSelect(false);
+        }
+    };
+
+    // Handle select options change
+    const handleOptionChange = (index, value) => {
+        const newOptions = [...selectOptions];
+        newOptions[index] = value;
+        setSelectOptions(newOptions);
+    };
+
+    // Add new option
+    const addOption = () => {
+        setSelectOptions([...selectOptions, '']);
+    };
+
+    // Remove option
+    const removeOption = (index) => {
+        if (selectOptions.length > 1) {
+            const newOptions = selectOptions.filter((_, i) => i !== index);
+            setSelectOptions(newOptions);
+        }
+    };
+
+    // Handle multiple select toggle
+    const handleMultipleSelectChange = (checked) => {
+        setIsMultipleSelect(checked);
+        tagForm.setFieldsValue({ value: '' });
+    };
+
+    // Render value input based on data type
+    const renderValueInput = () => {
+        switch (selectedDataType) {
+            case 'integer':
+                return (
+                    <Input
+                        type="number"
+                        step="1"
+                        placeholder="Nhập số nguyên"
+                        size="large"
+                    />
+                );
+            case 'decimal':
+                return (
+                    <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Nhập số thập phân"
+                        size="large"
+                    />
+                );
+            case 'boolean':
+                return (
+                    <Select
+                        placeholder="Chọn giá trị"
+                        size="large"
+                    >
+                        <Option value="true">True (Đúng)</Option>
+                        <Option value="false">False (Sai)</Option>
+                    </Select>
+                );
+            case 'select':
+                return (
+                    <div>
+                        <div style={{ marginBottom: 8 }}>
+                            <Checkbox
+                                checked={isMultipleSelect}
+                                onChange={(e) => handleMultipleSelectChange(e.target.checked)}
+                            >
+                                Cho phép chọn nhiều giá trị
+                            </Checkbox>
+                        </div>
+
+                        <div style={{ marginBottom: 8 }}>
+                            <Text strong style={{ fontSize: '12px' }}>Các tùy chọn:</Text>
+                        </div>
+
+                        {selectOptions.map((option, index) => (
+                            <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                                <Input
+                                    value={option}
+                                    onChange={(e) => handleOptionChange(index, e.target.value)}
+                                    placeholder={`Tùy chọn ${index + 1}`}
+                                    size="small"
+                                    style={{ flex: 1, marginRight: 8 }}
+                                />
+                                {selectOptions.length > 1 && (
+                                    <Button
+                                        type="text"
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        onClick={() => removeOption(index)}
+                                        size="small"
+                                    />
+                                )}
+                            </div>
+                        ))}
+
+                        <Button
+                            type="dashed"
+                            onClick={addOption}
+                            icon={<PlusOutlined />}
+                            size="small"
+                            style={{ marginTop: 4 }}
+                        >
+                            Thêm tùy chọn
+                        </Button>
+
+                        <div style={{ marginTop: 8 }}>
+                            <Text strong style={{ fontSize: '12px' }}>Giá trị mặc định:</Text>
+                        </div>
+
+                        <Select
+                            placeholder="Chọn giá trị mặc định"
+                            size="large"
+                            mode={isMultipleSelect ? 'multiple' : undefined}
+                            style={{ marginTop: 4 }}
+                        >
+                            {selectOptions.filter(opt => opt.trim() !== '').map((option, index) => (
+                                <Option key={index} value={option}>
+                                    {option}
+                                </Option>
+                            ))}
+                        </Select>
+                    </div>
+                );
+            case 'string':
+            default:
+                return (
+                    <Input
+                        placeholder="Nhập giá trị ban đầu"
+                        size="large"
+                    />
+                );
+        }
+    };
+
+    // Get validation rules based on data type
+    const getValueValidationRules = () => {
+        const baseRules = [{ required: true, message: 'Vui lòng nhập giá trị' }];
+
+        switch (selectedDataType) {
+            case 'integer':
+                return [
+                    ...baseRules,
+                    {
+                        pattern: /^-?\d+$/,
+                        message: 'Giá trị phải là số nguyên'
+                    }
+                ];
+            case 'decimal':
+                return [
+                    ...baseRules,
+                    {
+                        pattern: /^-?\d+(\.\d+)?$/,
+                        message: 'Giá trị phải là số thập phân'
+                    }
+                ];
+            case 'boolean':
+                return [
+                    ...baseRules,
+                    {
+                        pattern: /^(true|false)$/,
+                        message: 'Giá trị phải là true hoặc false'
+                    }
+                ];
+            case 'select':
+                return [
+                    {
+                        validator: (_, value) => {
+                            const validOptions = selectOptions.filter(opt => opt.trim() !== '');
+                            if (validOptions.length < 2) {
+                                return Promise.reject(new Error('Phải có ít nhất 2 tùy chọn'));
+                            }
+                            if (!value || value.length === 0) {
+                                return Promise.reject(new Error('Vui lòng chọn giá trị mặc định'));
+                            }
+                            return Promise.resolve();
+                        }
+                    }
+                ];
+            case 'string':
+            default:
+                return baseRules;
+        }
+    };
 
     // Handle add tag
     const handleAddTag = () => {
@@ -40,27 +240,108 @@ const TagsTab = ({
                 return;
             }
 
+            // Additional validation based on data type
+            let processedValue = values.value;
+            switch (values.dataType) {
+                case 'integer':
+                    processedValue = parseInt(values.value, 10);
+                    if (isNaN(processedValue)) {
+                        tagForm.setFields([{
+                            name: 'value',
+                            errors: ['Giá trị phải là số nguyên hợp lệ']
+                        }]);
+                        return;
+                    }
+                    break;
+                case 'decimal':
+                    processedValue = parseFloat(values.value);
+                    if (isNaN(processedValue)) {
+                        tagForm.setFields([{
+                            name: 'value',
+                            errors: ['Giá trị phải là số thập phân hợp lệ']
+                        }]);
+                        return;
+                    }
+                    break;
+                case 'boolean':
+                    processedValue = values.value === 'true';
+                    break;
+                case 'select':
+                    // For select, value should be the selected options
+                    processedValue = values.value;
+                    // Validate that we have valid options
+                    const validOptions = selectOptions.filter(opt => opt.trim() !== '');
+                    if (validOptions.length < 2) {
+                        tagForm.setFields([{
+                            name: 'value',
+                            errors: ['Phải có ít nhất 2 tùy chọn hợp lệ']
+                        }]);
+                        return;
+                    }
+                    break;
+                case 'string':
+                default:
+                    processedValue = String(values.value);
+                    break;
+            }
+
             const dataType = mockData.tagDataTypes.find(type => type.value === values.dataType);
             const tag = {
                 ...values,
+                value: processedValue,
+                options: values.dataType === 'select' ? selectOptions.filter(opt => opt.trim() !== '') : undefined,
+                isMultipleSelect: values.dataType === 'select' ? isMultipleSelect : undefined,
+                index: tagsData.tags.length + 1, // Auto increment index
                 dataTypeLabel: dataType?.label || ''
             };
 
             onAddTag(tag);
             tagForm.resetFields();
+            setSelectedDataType('string'); // Reset to default
+            setSelectOptions(['']); // Reset options
+            setIsMultipleSelect(false); // Reset multiple select
         });
     };
 
     // Handle inline edit
     const handleCellEdit = (record, field, value) => {
+        let processedValue = value;
+
+        if (field === 'value') {
+            // Validate and process value based on data type
+            switch (record.dataType) {
+                case 'integer':
+                    processedValue = parseInt(value, 10);
+                    if (isNaN(processedValue) && value !== '') {
+                        // Reset to original value if invalid
+                        return;
+                    }
+                    break;
+                case 'decimal':
+                    processedValue = parseFloat(value);
+                    if (isNaN(processedValue) && value !== '') {
+                        // Reset to original value if invalid
+                        return;
+                    }
+                    break;
+                case 'boolean':
+                    processedValue = value === 'true';
+                    break;
+                case 'string':
+                default:
+                    processedValue = String(value);
+                    break;
+            }
+        }
+
         if (field === 'dataType') {
             const dataType = mockData.tagDataTypes.find(type => type.value === value);
             onUpdateTag(record.id, {
                 [field]: value,
                 dataTypeLabel: dataType?.label || ''
             });
-        } else {
-            onUpdateTag(record.id, { [field]: value });
+        } else if (field !== 'index') { // Don't allow editing index
+            onUpdateTag(record.id, { [field]: processedValue });
         }
     };
 
@@ -70,7 +351,7 @@ const TagsTab = ({
             title: 'Tên trường (Key)',
             dataIndex: 'key',
             key: 'key',
-            width: '30%',
+            width: '25%',
             render: (text, record) => (
                 <Input
                     value={text}
@@ -91,15 +372,71 @@ const TagsTab = ({
             title: 'Giá trị (Value)',
             dataIndex: 'value',
             key: 'value',
-            width: '35%',
-            render: (text, record) => (
-                <Input
-                    value={text}
-                    onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
-                    placeholder="Nhập giá trị"
-                    size="small"
-                />
-            ),
+            width: '30%',
+            render: (text, record) => {
+                switch (record.dataType) {
+                    case 'integer':
+                        return (
+                            <Input
+                                type="number"
+                                step="1"
+                                value={text}
+                                onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
+                                placeholder="Nhập số nguyên"
+                                size="small"
+                            />
+                        );
+                    case 'decimal':
+                        return (
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={text}
+                                onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
+                                placeholder="Nhập số thập phân"
+                                size="small"
+                            />
+                        );
+                    case 'boolean':
+                        return (
+                            <Select
+                                value={text}
+                                onChange={(value) => handleCellEdit(record, 'value', value)}
+                                size="small"
+                                style={{ width: '100%' }}
+                            >
+                                <Option value="true">True</Option>
+                                <Option value="false">False</Option>
+                            </Select>
+                        );
+                    case 'select':
+                        return (
+                            <Select
+                                value={text}
+                                onChange={(value) => handleCellEdit(record, 'value', value)}
+                                mode={record.isMultipleSelect ? 'multiple' : undefined}
+                                size="small"
+                                style={{ width: '100%' }}
+                            >
+                                {record.options?.map((option, index) => (
+                                    <Option key={index} value={option}>
+                                        {option}
+                                    </Option>
+                                ))}
+                            </Select>
+                        );
+                    case 'string':
+                    default:
+                        return (
+                            <Input
+                                value={text}
+                                onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
+                                placeholder="Nhập giá trị"
+                                size="small"
+                            />
+                        );
+                }
+            },
         },
         {
             title: 'Loại dữ liệu',
@@ -119,6 +456,17 @@ const TagsTab = ({
                         </Option>
                     ))}
                 </Select>
+            ),
+        },
+        {
+            title: 'Thứ tự',
+            dataIndex: 'index',
+            key: 'index',
+            width: '10%',
+            render: (text) => (
+                <Text strong style={{ textAlign: 'center', display: 'block' }}>
+                    {text}
+                </Text>
             ),
         },
         {
@@ -177,7 +525,7 @@ const TagsTab = ({
                     className="tag-form"
                 >
                     <Row gutter={16} align="middle">
-                        <Col span={8}>
+                        <Col span={6}>
                             <Form.Item
                                 name="key"
                                 label="Tên trường (Key)"
@@ -196,20 +544,17 @@ const TagsTab = ({
                             </Form.Item>
                         </Col>
 
-                        <Col span={8}>
+                        <Col span={6}>
                             <Form.Item
                                 name="value"
                                 label="Giá trị (Value)"
-                                rules={[{ required: true, message: 'Vui lòng nhập giá trị' }]}
+                                rules={getValueValidationRules()}
                             >
-                                <Input
-                                    placeholder="Nhập giá trị ban đầu"
-                                    size="large"
-                                />
+                                {renderValueInput()}
                             </Form.Item>
                         </Col>
 
-                        <Col span={5}>
+                        <Col span={6}>
                             <Form.Item
                                 name="dataType"
                                 label="Loại dữ liệu"
@@ -219,13 +564,28 @@ const TagsTab = ({
                                     placeholder="Chọn loại"
                                     size="large"
                                     optionLabelProp="label"
+                                    dropdownStyle={{ maxWidth: '350px' }}
+                                    onChange={handleDataTypeChange}
                                 >
                                     {mockData.tagDataTypes.map(type => (
                                         <Option key={type.value} value={type.value} label={type.label}>
-                                            <div>
-                                                <Text>{type.label}</Text>
-                                                <br />
-                                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                            <div style={{ maxWidth: '330px' }}>
+                                                <Text style={{
+                                                    fontSize: '13px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    {type.label}
+                                                </Text>
+                                                <Text type="secondary" style={{
+                                                    fontSize: '11px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
                                                     {type.description}
                                                 </Text>
                                             </div>
@@ -235,7 +595,7 @@ const TagsTab = ({
                             </Form.Item>
                         </Col>
 
-                        <Col span={3}>
+                        <Col span={6}>
                             <Form.Item label="" noStyle>
                                 <Button
                                     type="primary"
@@ -243,6 +603,7 @@ const TagsTab = ({
                                     onClick={handleAddTag}
                                     size="large"
                                     block
+                                    style={{ height: '40px', fontSize: '14px' }}
                                 >
                                     Thêm
                                 </Button>

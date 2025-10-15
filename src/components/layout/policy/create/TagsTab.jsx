@@ -1,4 +1,5 @@
-import { DeleteOutlined, InfoCircleOutlined, PlusOutlined, TagOutlined } from '@ant-design/icons';
+import { DeleteOutlined, DragOutlined, EditOutlined, InfoCircleOutlined, PlusOutlined, TagOutlined } from '@ant-design/icons';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import {
     Alert,
     Button,
@@ -31,6 +32,7 @@ const TagsTab = ({
     const [selectedDataType, setSelectedDataType] = React.useState('string');
     const [selectOptions, setSelectOptions] = React.useState(['']);
     const [isMultipleSelect, setIsMultipleSelect] = React.useState(false);
+    const [editingRows, setEditingRows] = React.useState(new Set()); // Track which rows are in edit mode
 
     // Handle data type change
     const handleDataTypeChange = (value) => {
@@ -68,6 +70,45 @@ const TagsTab = ({
     const handleMultipleSelectChange = (checked) => {
         setIsMultipleSelect(checked);
         tagForm.setFieldsValue({ value: '' });
+    };
+
+    // Toggle edit mode for a row
+    const toggleEditMode = (recordId) => {
+        setEditingRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(recordId)) {
+                newSet.delete(recordId);
+            } else {
+                newSet.add(recordId);
+            }
+            return newSet;
+        });
+    };
+
+    // Handle drag and drop
+    const handleDragEnd = (result) => {
+        if (!result.destination) {
+            return;
+        }
+
+        const items = Array.from(tagsData.tags);
+        const [reorderedItem] = items.splice(result.source.index, 1);
+        items.splice(result.destination.index, 0, reorderedItem);
+
+        // Update index for all items
+        const updatedItems = items.map((item, index) => ({
+            ...item,
+            index: index + 1
+        }));
+
+        // Update the tags data
+        onDataChange({
+            ...tagsData,
+            tags: updatedItems
+        });
+
+        // Reset edit mode after drag and drop
+        setEditingRows(new Set());
     };
 
     // Render value input based on data type
@@ -305,6 +346,11 @@ const TagsTab = ({
 
     // Handle inline edit
     const handleCellEdit = (record, field, value) => {
+        // Only allow editing if row is in edit mode
+        if (!editingRows.has(record.id)) {
+            return;
+        }
+
         let processedValue = value;
 
         if (field === 'value') {
@@ -352,21 +398,27 @@ const TagsTab = ({
             dataIndex: 'key',
             key: 'key',
             width: '25%',
-            render: (text, record) => (
-                <Input
-                    value={text}
-                    onChange={(e) => handleCellEdit(record, 'key', e.target.value)}
-                    onBlur={(e) => {
-                        // Validate key format
-                        const value = e.target.value.trim();
-                        if (value && !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(value)) {
-                            onUpdateTag(record.id, { key: record.key }); // Reset to original
-                        }
-                    }}
-                    placeholder="Nhập tên trường"
-                    size="small"
-                />
-            ),
+            render: (text, record) => {
+                const isEditing = editingRows.has(record.id);
+                if (isEditing) {
+                    return (
+                        <Input
+                            value={text}
+                            onChange={(e) => handleCellEdit(record, 'key', e.target.value)}
+                            onBlur={(e) => {
+                                // Validate key format
+                                const value = e.target.value.trim();
+                                if (value && !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(value)) {
+                                    onUpdateTag(record.id, { key: record.key }); // Reset to original
+                                }
+                            }}
+                            placeholder="Nhập tên trường"
+                            size="small"
+                        />
+                    );
+                }
+                return <Text strong>{text}</Text>;
+            },
         },
         {
             title: 'Giá trị (Value)',
@@ -374,95 +426,105 @@ const TagsTab = ({
             key: 'value',
             width: '30%',
             render: (text, record) => {
-                switch (record.dataType) {
-                    case 'integer':
-                        return (
-                            <Input
-                                type="number"
-                                step="1"
-                                value={text}
-                                onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
-                                placeholder="Nhập số nguyên"
-                                size="small"
-                            />
-                        );
-                    case 'decimal':
-                        return (
-                            <Input
-                                type="number"
-                                step="0.01"
-                                value={text}
-                                onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
-                                placeholder="Nhập số thập phân"
-                                size="small"
-                            />
-                        );
-                    case 'boolean':
-                        return (
-                            <Select
-                                value={text}
-                                onChange={(value) => handleCellEdit(record, 'value', value)}
-                                size="small"
-                                style={{ width: '100%' }}
-                            >
-                                <Option value="true">True</Option>
-                                <Option value="false">False</Option>
-                            </Select>
-                        );
-                    case 'select':
-                        return (
-                            <Select
-                                value={text}
-                                onChange={(value) => handleCellEdit(record, 'value', value)}
-                                mode={record.isMultipleSelect ? 'multiple' : undefined}
-                                size="small"
-                                style={{ width: '100%' }}
-                            >
-                                {record.options?.map((option, index) => (
-                                    <Option key={index} value={option}>
-                                        {option}
-                                    </Option>
-                                ))}
-                            </Select>
-                        );
-                    case 'string':
-                    default:
-                        return (
-                            <Input
-                                value={text}
-                                onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
-                                placeholder="Nhập giá trị"
-                                size="small"
-                            />
-                        );
+                const isEditing = editingRows.has(record.id);
+                if (isEditing) {
+                    switch (record.dataType) {
+                        case 'integer':
+                            return (
+                                <Input
+                                    type="number"
+                                    step="1"
+                                    value={text}
+                                    onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
+                                    placeholder="Nhập số nguyên"
+                                    size="small"
+                                />
+                            );
+                        case 'decimal':
+                            return (
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={text}
+                                    onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
+                                    placeholder="Nhập số thập phân"
+                                    size="small"
+                                />
+                            );
+                        case 'boolean':
+                            return (
+                                <Select
+                                    value={text}
+                                    onChange={(value) => handleCellEdit(record, 'value', value)}
+                                    size="small"
+                                    style={{ width: '100%' }}
+                                >
+                                    <Option value="true">True</Option>
+                                    <Option value="false">False</Option>
+                                </Select>
+                            );
+                        case 'select':
+                            return (
+                                <Select
+                                    value={text}
+                                    onChange={(value) => handleCellEdit(record, 'value', value)}
+                                    mode={record.isMultipleSelect ? 'multiple' : undefined}
+                                    size="small"
+                                    style={{ width: '100%' }}
+                                >
+                                    {record.options?.map((option, index) => (
+                                        <Option key={index} value={option}>
+                                            {option}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            );
+                        case 'string':
+                        default:
+                            return (
+                                <Input
+                                    value={text}
+                                    onChange={(e) => handleCellEdit(record, 'value', e.target.value)}
+                                    placeholder="Nhập giá trị"
+                                    size="small"
+                                />
+                            );
+                    }
                 }
+                return <Text>{text}</Text>;
             },
         },
         {
             title: 'Loại dữ liệu',
             dataIndex: 'dataType',
             key: 'dataType',
-            width: '25%',
-            render: (value, record) => (
-                <Select
-                    value={value}
-                    onChange={(newValue) => handleCellEdit(record, 'dataType', newValue)}
-                    size="small"
-                    style={{ width: '100%' }}
-                >
-                    {mockData.tagDataTypes.map(type => (
-                        <Option key={type.value} value={type.value}>
-                            {type.label}
-                        </Option>
-                    ))}
-                </Select>
-            ),
+            width: '22%',
+            render: (value, record) => {
+                const isEditing = editingRows.has(record.id);
+                if (isEditing) {
+                    return (
+                        <Select
+                            value={value}
+                            onChange={(newValue) => handleCellEdit(record, 'dataType', newValue)}
+                            size="small"
+                            style={{ width: '100%' }}
+                        >
+                            {mockData.tagDataTypes.map(type => (
+                                <Option key={type.value} value={type.value}>
+                                    {type.label}
+                                </Option>
+                            ))}
+                        </Select>
+                    );
+                }
+                return <Text type="secondary">{record.dataTypeLabel}</Text>;
+            },
         },
         {
             title: 'Thứ tự',
             dataIndex: 'index',
             key: 'index',
-            width: '10%',
+            width: '8%',
             render: (text) => (
                 <Text strong style={{ textAlign: 'center', display: 'block' }}>
                     {text}
@@ -472,18 +534,37 @@ const TagsTab = ({
         {
             title: 'Hành động',
             key: 'action',
-            width: '10%',
-            render: (_, record) => (
-                <Popconfirm
-                    title="Xóa tag"
-                    description="Bạn có chắc chắn muốn xóa tag này?"
-                    onConfirm={() => onRemoveTag(record.id)}
-                    okText="Xóa"
-                    cancelText="Hủy"
-                >
-                    <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-                </Popconfirm>
-            ),
+            width: '15%',
+            render: (_, record, index, { dragHandleProps }) => {
+                const isEditing = editingRows.has(record.id);
+                return (
+                    <Space size="small">
+                        <div {...dragHandleProps} className="drag-handle">
+                            <DragOutlined
+                                style={{ color: '#999', cursor: 'grab', fontSize: '14px' }}
+                                title="Kéo thả để thay đổi thứ tự"
+                            />
+                        </div>
+                        <Button
+                            type="text"
+                            icon={<EditOutlined />}
+                            onClick={() => toggleEditMode(record.id)}
+                            size="small"
+                            style={{ color: isEditing ? '#1890ff' : '#666' }}
+                            title={isEditing ? 'Chế độ xem' : 'Chế độ chỉnh sửa'}
+                        />
+                        <Popconfirm
+                            title="Xóa tag"
+                            description="Bạn có chắc chắn muốn xóa tag này?"
+                            onConfirm={() => onRemoveTag(record.id)}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                        >
+                            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                        </Popconfirm>
+                    </Space>
+                );
+            },
         },
     ];
 
@@ -634,18 +715,62 @@ const TagsTab = ({
                 />
             ) : (
                 <Card title="Danh sách Tags" style={{ marginTop: 16 }}>
-                    <Table
-                        columns={tagsColumns}
-                        dataSource={tagsData.tags}
-                        rowKey="id"
-                        pagination={false}
-                        className="tags-table"
-                        size="middle"
-                    />
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                        <Droppable droppableId="tags-table">
+                            {(provided) => (
+                                <div {...provided.droppableProps} ref={provided.innerRef}>
+                                    <Table
+                                        columns={tagsColumns}
+                                        dataSource={tagsData.tags}
+                                        rowKey="id"
+                                        pagination={false}
+                                        className="tags-table"
+                                        size="middle"
+                                        components={{
+                                            body: {
+                                                row: ({ children, ...props }) => (
+                                                    <Draggable
+                                                        draggableId={props['data-row-key'].toString()}
+                                                        index={props.index}
+                                                    >
+                                                        {(provided, snapshot) => (
+                                                            <tr
+                                                                {...props}
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                style={{
+                                                                    ...provided.draggableProps.style,
+                                                                    backgroundColor: snapshot.isDragging ? '#fafafa' : 'transparent',
+                                                                }}
+                                                            >
+                                                                {React.cloneElement(children, {
+                                                                    dragHandleProps: provided.dragHandleProps
+                                                                })}
+                                                            </tr>
+                                                        )}
+                                                    </Draggable>
+                                                ),
+                                            },
+                                        }}
+                                        onRow={(record, index) => ({
+                                            index,
+                                            'data-row-key': record.id,
+                                            dragHandleProps: {}, // Will be set by Draggable
+                                        })}
+                                    />
+                                    {provided.placeholder}
+                                </div>
+                            )}
+                        </Droppable>
+                    </DragDropContext>
 
                     <div style={{ marginTop: 16 }}>
                         <Text type="secondary">
                             Tổng cộng: <Text strong>{tagsData.tags.length}</Text> tags
+                        </Text>
+                        <br />
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                            💡 Kéo thả icon <DragOutlined /> để thay đổi thứ tự • Nhấn <EditOutlined /> để chỉnh sửa
                         </Text>
                     </div>
                 </Card>

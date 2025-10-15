@@ -1,0 +1,407 @@
+import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+    Alert,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Form,
+    Input,
+    InputNumber,
+    message,
+    Popconfirm,
+    Row,
+    Select,
+    Table,
+    Typography
+} from 'antd';
+import { useState } from 'react';
+
+const { Option } = Select;
+const { Title, Text } = Typography;
+
+const BasicTab = ({
+    basicData,
+    mockData,
+    onDataChange,
+    onAddDataSource,
+    onRemoveDataSource,
+    estimatedCosts
+}) => {
+    const [form] = Form.useForm();
+    const [dataSourceForm] = Form.useForm();
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [selectedTier, setSelectedTier] = useState('');
+    const [availableDataSources, setAvailableDataSources] = useState([]);
+
+    // Handle form values change
+    const handleValuesChange = (changedValues, allValues) => {
+        onDataChange(allValues);
+    };
+
+    // Handle category change
+    const handleCategoryChange = (category) => {
+        setSelectedCategory(category);
+        setSelectedTier('');
+        setAvailableDataSources([]);
+        dataSourceForm.setFieldsValue({ tier: undefined, dataSource: undefined });
+    };
+
+    // Handle tier change
+    const handleTierChange = (tier) => {
+        setSelectedTier(tier);
+        const sources = mockData.dataSources[selectedCategory]?.[tier] || [];
+        setAvailableDataSources(sources);
+        dataSourceForm.setFieldsValue({ dataSource: undefined });
+    };
+
+    // Handle add data source
+    const handleAddDataSource = () => {
+        dataSourceForm.validateFields().then(values => {
+            const selectedSource = availableDataSources.find(source => source.id === values.dataSource);
+            if (selectedSource) {
+                // Check if already added
+                const exists = basicData.selectedDataSources.find(
+                    source => source.id === selectedSource.id
+                );
+
+                if (exists) {
+                    message.warning('Nguồn dữ liệu này đã được thêm');
+                    return;
+                }
+
+                const dataSourceToAdd = {
+                    ...selectedSource,
+                    category: selectedCategory,
+                    tier: selectedTier,
+                    categoryLabel: mockData.dataTierCategories.find(cat => cat.value === selectedCategory)?.label,
+                    tierLabel: mockData.dataTiers.find(t => t.value === selectedTier)?.label
+                };
+
+                onAddDataSource(dataSourceToAdd);
+                dataSourceForm.resetFields();
+                setSelectedCategory('');
+                setSelectedTier('');
+                setAvailableDataSources([]);
+            }
+        });
+    };
+
+    // Data source table columns
+    const dataSourceColumns = [
+        {
+            title: 'Tên nguồn dữ liệu',
+            dataIndex: 'label',
+            key: 'label',
+            render: (text, record) => (
+                <div>
+                    <Text strong>{text}</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                        {record.parameterName} ({record.unit})
+                    </Text>
+                </div>
+            ),
+        },
+        {
+            title: 'Danh mục',
+            dataIndex: 'categoryLabel',
+            key: 'categoryLabel',
+        },
+        {
+            title: 'Gói',
+            dataIndex: 'tierLabel',
+            key: 'tierLabel',
+        },
+        {
+            title: 'Chi phí cơ sở',
+            dataIndex: 'baseCost',
+            key: 'baseCost',
+            render: (cost) => `$${cost}/tháng`,
+        },
+        {
+            title: 'Hành động',
+            key: 'action',
+            render: (_, record) => (
+                <Popconfirm
+                    title="Xóa nguồn dữ liệu"
+                    description="Bạn có chắc chắn muốn xóa nguồn dữ liệu này?"
+                    onConfirm={() => onRemoveDataSource(record.id)}
+                    okText="Xóa"
+                    cancelText="Hủy"
+                >
+                    <Button type="text" danger icon={<DeleteOutlined />} />
+                </Popconfirm>
+            ),
+        },
+    ];
+
+    // Get filtered tiers based on category
+    const getFilteredTiers = (category) => {
+        if (!category) return mockData.dataTiers;
+        return mockData.dataTiers.filter(tier => tier.categories.includes(category));
+    };
+
+    return (
+        <div className="basic-tab">
+            <Title level={4}>Thông tin Cơ bản</Title>
+
+            <Form
+                form={form}
+                layout="vertical"
+                initialValues={basicData}
+                onValuesChange={handleValuesChange}
+                className="basic-form"
+            >
+                <Row gutter={24}>
+                    <Col span={12}>
+                        <Form.Item
+                            name="productName"
+                            label="Tên Sản phẩm"
+                            rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
+                        >
+                            <Input
+                                placeholder="Nhập tên sản phẩm bảo hiểm"
+                                size="large"
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            name="productCode"
+                            label="Mã Sản phẩm"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập mã sản phẩm' },
+                                {
+                                    pattern: /^[A-Z0-9_]+$/,
+                                    message: 'Mã sản phẩm chỉ chứa chữ hoa, số và dấu gạch dưới'
+                                }
+                            ]}
+                        >
+                            <Input
+                                placeholder="VD: RICE_WINTER_2025"
+                                size="large"
+                                style={{ textTransform: 'uppercase' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row gutter={24}>
+                    <Col span={12}>
+                        <Form.Item
+                            name="insuranceProviderId"
+                            label="Đối tác Bảo hiểm"
+                            rules={[{ required: true, message: 'Vui lòng nhập mã đối tác' }]}
+                        >
+                            <Input
+                                placeholder="VD: PARTNER_001"
+                                size="large"
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            name="cropType"
+                            label="Loại Cây trồng"
+                            rules={[{ required: true, message: 'Vui lòng chọn loại cây trồng' }]}
+                        >
+                            <Select
+                                placeholder="Chọn loại cây trồng"
+                                size="large"
+                                optionLabelProp="label"
+                            >
+                                {mockData.cropTypes.map(crop => (
+                                    <Option key={crop.value} value={crop.value} label={crop.label}>
+                                        <div>
+                                            <Text>{crop.label}</Text>
+                                            <br />
+                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                {crop.description}
+                                            </Text>
+                                        </div>
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row gutter={24}>
+                    <Col span={12}>
+                        <Form.Item
+                            name="premiumBaseRate"
+                            label="Tỷ lệ Phí BH Cơ sở (%)"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập tỷ lệ phí' },
+                                { type: 'number', min: 0.01, max: 1, message: 'Tỷ lệ từ 0.01 đến 1.0' }
+                            ]}
+                        >
+                            <InputNumber
+                                placeholder="0.05"
+                                min={0.01}
+                                max={1}
+                                step={0.01}
+                                size="large"
+                                style={{ width: '100%' }}
+                                formatter={value => `${value}%`}
+                                parser={value => value.replace('%', '')}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            name="coverageDurationDays"
+                            label="Thời hạn Bảo hiểm (Ngày)"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập thời hạn bảo hiểm' },
+                                { type: 'number', min: 1, message: 'Thời hạn tối thiểu 1 ngày' }
+                            ]}
+                        >
+                            <InputNumber
+                                placeholder="120"
+                                min={1}
+                                size="large"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+            </Form>
+
+            <Divider />
+
+            <Title level={4}>
+                Cấu hình Gói Dữ liệu
+                <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
+                    (Chi phí ước tính: ${estimatedCosts.monthlyDataCost}/tháng)
+                </Text>
+            </Title>
+
+            <Card className="data-source-card">
+                <Form
+                    form={dataSourceForm}
+                    layout="vertical"
+                    className="data-source-form"
+                >
+                    <Row gutter={16} align="middle">
+                        <Col span={6}>
+                            <Form.Item
+                                name="category"
+                                label="Danh mục dữ liệu"
+                                rules={[{ required: true, message: 'Chọn danh mục' }]}
+                            >
+                                <Select
+                                    placeholder="Chọn danh mục"
+                                    onChange={handleCategoryChange}
+                                    size="large"
+                                    optionLabelProp="label"
+                                >
+                                    {mockData.dataTierCategories.map(category => (
+                                        <Option key={category.value} value={category.value} label={category.label}>
+                                            <div>
+                                                <Text>{category.label}</Text>
+                                                <br />
+                                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                    {category.description}
+                                                </Text>
+                                            </div>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item
+                                name="tier"
+                                label="Gói dịch vụ"
+                                rules={[{ required: true, message: 'Chọn gói' }]}
+                            >
+                                <Select
+                                    placeholder="Chọn gói"
+                                    disabled={!selectedCategory}
+                                    onChange={handleTierChange}
+                                    size="large"
+                                    optionLabelProp="label"
+                                >
+                                    {getFilteredTiers(selectedCategory).map(tier => (
+                                        <Option key={tier.value} value={tier.value} label={tier.label}>
+                                            <div>
+                                                <Text>{tier.label}</Text>
+                                                <br />
+                                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                    {tier.description} (x{tier.tierMultiplier})
+                                                </Text>
+                                            </div>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                name="dataSource"
+                                label="Nguồn dữ liệu"
+                                rules={[{ required: true, message: 'Chọn nguồn dữ liệu' }]}
+                            >
+                                <Select
+                                    placeholder="Chọn nguồn dữ liệu"
+                                    disabled={!selectedTier}
+                                    size="large"
+                                    optionLabelProp="label"
+                                >
+                                    {availableDataSources.map(source => (
+                                        <Option key={source.id} value={source.id} label={source.label}>
+                                            <div>
+                                                <Text>{source.label}</Text>
+                                                <br />
+                                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                    {source.description} - ${source.baseCost}/tháng
+                                                </Text>
+                                            </div>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item label=" ">
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={handleAddDataSource}
+                                    disabled={!selectedCategory || !selectedTier}
+                                    size="large"
+                                    block
+                                >
+                                    Thêm
+                                </Button>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </Form>
+
+                {basicData.selectedDataSources.length === 0 ? (
+                    <Alert
+                        message="Chưa có nguồn dữ liệu nào được chọn"
+                        description="Vui lòng thêm ít nhất một nguồn dữ liệu để tiếp tục"
+                        type="info"
+                        icon={<InfoCircleOutlined />}
+                        className="no-data-alert"
+                    />
+                ) : (
+                    <Table
+                        columns={dataSourceColumns}
+                        dataSource={basicData.selectedDataSources}
+                        rowKey="id"
+                        pagination={false}
+                        className="data-source-table"
+                        size="middle"
+                    />
+                )}
+            </Card>
+        </div>
+    );
+};
+
+export default BasicTab;

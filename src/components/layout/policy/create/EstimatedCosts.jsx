@@ -22,109 +22,121 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
     const complexityInfo = getComplexityLevel(dataComplexityScore);
 
     return (
-        <Card title={
-            <Space>
-                <CalculatorOutlined />
-                <span>Chi phí Ước tính</span>
-            </Space>
-        }>
+        <Card
+            title={
+                <Space size="small">
+                    <CalculatorOutlined />
+                    <span style={{ fontSize: '14px' }}>Chi phí Ước tính</span>
+                </Space>
+            }
+            size="small"
+            style={{
+                fontSize: '12px',
+                maxHeight: '100%',
+                overflow: 'hidden'
+            }}
+            bodyStyle={{
+                padding: '12px',
+                maxHeight: 'calc(100vh - 200px)',
+                overflowY: 'auto'
+            }}
+        >
             {/* Monthly Data Cost */}
-            <div className="cost-section">
+            <div className="cost-section" style={{ marginBottom: '12px' }}>
                 <Statistic
-                    title="Chi phí Dữ liệu Hàng tháng"
+                    title="Chi phí Dữ liệu/tháng"
                     value={monthlyDataCost}
                     prefix={<DollarOutlined />}
                     suffix="USD"
                     precision={2}
-                    valueStyle={{ color: '#1890ff', fontSize: '18px' }}
+                    valueStyle={{ color: '#1890ff', fontSize: '14px' }}
                 />
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                    Tổng chi phí sử dụng {basicData.selectedDataSources.length} nguồn dữ liệu
+                <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
+                    {basicData.selectedDataSources.length} nguồn dữ liệu
                 </Text>
             </div>
 
-            <Divider />
+            <Divider style={{ margin: '8px 0' }} />
 
             {/* Data Complexity Score */}
-            <div className="cost-section">
-                <Row justify="space-between" align="middle">
+            <div className="cost-section" style={{ marginBottom: '12px' }}>
+                <Row justify="space-between" align="middle" style={{ marginBottom: '4px' }}>
                     <Col>
-                        <Text strong>Độ phức tạp Dữ liệu</Text>
+                        <Text strong style={{ fontSize: '11px' }}>Độ phức tạp</Text>
                     </Col>
                     <Col>
-                        <Tag color={complexityInfo.color}>{complexityInfo.level}</Tag>
+                        <Tag color={complexityInfo.color} size="small">{complexityInfo.level}</Tag>
                     </Col>
                 </Row>
-                <div style={{ marginTop: 8 }}>
-                    <Statistic
-                        value={dataComplexityScore}
-                        suffix="nguồn dữ liệu"
-                        valueStyle={{ fontSize: '16px' }}
-                    />
+                <div>
+                    <Text style={{ fontSize: '12px' }}>{dataComplexityScore} nguồn</Text>
                     <Progress
                         percent={Math.min(dataComplexityScore * 20, 100)}
                         showInfo={false}
                         strokeColor="#1890ff"
                         size="small"
+                        style={{ marginTop: '4px' }}
                     />
                 </div>
             </div>
 
-            <Divider />
+            <Divider style={{ margin: '8px 0' }} />
 
             {/* Premium Base Rate */}
-            <div className="cost-section">
+            <div className="cost-section" style={{ marginBottom: '12px' }}>
                 <Statistic
-                    title="Tỷ lệ Phí BH Cơ sở"
+                    title="Tỷ lệ Phí BH"
                     value={premiumBaseRate * 100}
                     prefix={<PercentageOutlined />}
                     suffix="%"
                     precision={2}
-                    valueStyle={{ fontSize: '16px' }}
+                    valueStyle={{ fontSize: '12px' }}
                 />
             </div>
 
-            <Divider />
+            <Divider style={{ margin: '8px 0' }} />
 
             {/* Total Estimated Cost */}
-            <div className="cost-section">
+            <div className="cost-section" style={{ marginBottom: '12px' }}>
                 <Statistic
-                    title="Tổng Chi phí Ước tính/Tháng"
+                    title="Tổng Chi phí/Tháng"
                     value={totalEstimatedCost}
                     prefix={<DollarOutlined />}
                     suffix="USD"
                     precision={2}
                     valueStyle={{
                         color: '#52c41a',
-                        fontSize: '20px',
+                        fontSize: '16px',
                         fontWeight: 'bold'
                     }}
                 />
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                    Chi phí mà AGRISA thu từ đối tác bảo hiểm để vận hành Policy
+                <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
+                    Chi phí AGRISA thu từ đối tác
                 </Text>
             </div>
 
             {/* Data Sources Breakdown */}
             {basicData.selectedDataSources.length > 0 && (
                 <>
-                    <Divider />
+                    <Divider style={{ margin: '8px 0' }} />
                     <div className="data-sources-breakdown">
-                        <Title level={5}>Chi tiết Nguồn dữ liệu</Title>
+                        <Text strong style={{ fontSize: '11px', marginBottom: '8px', display: 'block' }}>
+                            Chi tiết Nguồn dữ liệu
+                        </Text>
                         {basicData.selectedDataSources.map((source, index) => (
-                            <div key={source.id} className="data-source-item">
-                                <Row justify="space-between" align="middle">
-                                    <Col span={16}>
-                                        <Text strong style={{ fontSize: '12px' }}>
+                            <div key={source.id} className="data-source-item" style={{ marginBottom: '6px' }}>
+                                <Row justify="space-between" align="top">
+                                    <Col span={14}>
+                                        <Text strong style={{ fontSize: '10px' }}>
                                             {source.label}
                                         </Text>
                                         <br />
-                                        <Text type="secondary" style={{ fontSize: '11px' }}>
+                                        <Text type="secondary" style={{ fontSize: '9px' }}>
                                             {source.categoryLabel} • {source.tierLabel}
                                         </Text>
                                     </Col>
-                                    <Col span={8} style={{ textAlign: 'right' }}>
-                                        <Text style={{ fontSize: '12px' }}>
+                                    <Col span={10} style={{ textAlign: 'right' }}>
+                                        <Text style={{ fontSize: '10px' }}>
                                             ${(source.baseCost *
                                                 (source.category === 'weather' ? 1.0 :
                                                     source.category === 'satellite' ? 1.5 : 2.0) *
@@ -135,7 +147,7 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
                                     </Col>
                                 </Row>
                                 {index < basicData.selectedDataSources.length - 1 && (
-                                    <Divider style={{ margin: '8px 0' }} />
+                                    <Divider style={{ margin: '4px 0' }} />
                                 )}
                             </div>
                         ))}
@@ -144,18 +156,18 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
             )}
 
             {/* Cost Calculation Info */}
-            <Divider />
-            <div style={{ background: '#f5f5f5', padding: '12px', borderRadius: '6px' }}>
-                <Title level={5}>Cách tính Chi phí</Title>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                    Chi phí = Chi phí cơ sở × Hệ số danh mục × Hệ số gói dịch vụ
+            <Divider style={{ margin: '8px 0' }} />
+            <div style={{ background: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
+                <Text strong style={{ fontSize: '10px', display: 'block', marginBottom: '4px' }}>
+                    Cách tính Chi phí
                 </Text>
-                <div style={{ marginTop: 8 }}>
-                    <Text type="secondary" style={{ fontSize: '11px' }}>
-                        • Thời tiết: 1.0x | Vệ tinh: 1.5x | Phân tích: 2.0x<br />
-                        • Cơ bản: 1.0x | Cao cấp: 1.8x | Doanh nghiệp: 3.0x
-                    </Text>
-                </div>
+                <Text type="secondary" style={{ fontSize: '9px', display: 'block', marginBottom: '4px' }}>
+                    Chi phí = Cơ sở × Danh mục × Gói
+                </Text>
+                <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                    • Thời tiết: 1.0x | Vệ tinh: 1.5x | Phân tích: 2.0x<br />
+                    • Cơ bản: 1.0x | Cao cấp: 1.8x | Doanh nghiệp: 3.0x
+                </Text>
             </div>
         </Card>
     );

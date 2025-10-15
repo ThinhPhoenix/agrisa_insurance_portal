@@ -275,7 +275,7 @@ const CreatePolicyPage = () => {
       />
 
       {/* Main Content */}
-      <Row gutter={24}>
+      <Row gutter={24} style={{ position: "relative" }}>
         {/* Left Content - Tabs */}
         <Col span={16}>
           <Card>
@@ -290,10 +290,21 @@ const CreatePolicyPage = () => {
 
         {/* Right Content - Estimated Costs */}
         <Col span={8}>
-          <EstimatedCosts
-            estimatedCosts={estimatedCosts}
-            basicData={basicData}
-          />
+          <div
+            style={{
+              position: "sticky",
+              top: "24px",
+              height: "fit-content",
+              maxHeight: "calc(100vh - 200px)",
+              overflowY: "auto",
+              zIndex: 100,
+            }}
+          >
+            <EstimatedCosts
+              estimatedCosts={estimatedCosts}
+              basicData={basicData}
+            />
+          </div>
         </Col>
       </Row>
 

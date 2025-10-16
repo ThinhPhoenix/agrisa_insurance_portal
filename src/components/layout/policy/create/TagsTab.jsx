@@ -13,6 +13,7 @@ import {
     Select,
     Space,
     Table,
+    Tooltip,
     Typography
 } from 'antd';
 import React from 'react';
@@ -659,26 +660,42 @@ const TagsTab = ({
                                 >
                                     {mockData.tagDataTypes.map(type => (
                                         <Option key={type.value} value={type.value} label={type.label}>
-                                            <div style={{ maxWidth: '330px' }}>
-                                                <Text style={{
-                                                    fontSize: '13px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    {type.label}
-                                                </Text>
-                                                <Text type="secondary" style={{
-                                                    fontSize: '11px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    {type.description}
-                                                </Text>
-                                            </div>
+                                            <Tooltip
+                                                title={
+                                                    <div>
+                                                        <div><strong>{type.label}</strong></div>
+                                                        <div style={{ marginTop: '4px' }}>{type.description}</div>
+                                                    </div>
+                                                }
+                                                placement="right"
+                                                mouseEnterDelay={0.3}
+                                            >
+                                                <div style={{
+                                                    maxWidth: '330px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                    className="option-hover-item"
+                                                >
+                                                    <Text style={{
+                                                        fontSize: '13px',
+                                                        display: 'block',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        {type.label}
+                                                    </Text>
+                                                    <Text type="secondary" style={{
+                                                        fontSize: '11px',
+                                                        display: 'block',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        {type.description}
+                                                    </Text>
+                                                </div>
+                                            </Tooltip>
                                         </Option>
                                     ))}
                                 </Select>

@@ -535,11 +535,11 @@ const TagsTab = ({
             title: 'Hành động',
             key: 'action',
             width: '15%',
-            render: (_, record, index, { dragHandleProps }) => {
+            render: (_, record) => {
                 const isEditing = editingRows.has(record.id);
                 return (
                     <Space size="small">
-                        <div {...dragHandleProps} className="drag-handle">
+                        <div className="drag-handle">
                             <DragOutlined
                                 style={{ color: '#999', cursor: 'grab', fontSize: '14px' }}
                                 title="Kéo thả để thay đổi thứ tự"
@@ -738,14 +738,13 @@ const TagsTab = ({
                                                                 {...props}
                                                                 ref={provided.innerRef}
                                                                 {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
                                                                 style={{
                                                                     ...provided.draggableProps.style,
                                                                     backgroundColor: snapshot.isDragging ? '#fafafa' : 'transparent',
                                                                 }}
                                                             >
-                                                                {React.cloneElement(children, {
-                                                                    dragHandleProps: provided.dragHandleProps
-                                                                })}
+                                                                {children}
                                                             </tr>
                                                         )}
                                                     </Draggable>
@@ -755,7 +754,6 @@ const TagsTab = ({
                                         onRow={(record, index) => ({
                                             index,
                                             'data-row-key': record.id,
-                                            dragHandleProps: {}, // Will be set by Draggable
                                         })}
                                     />
                                     {provided.placeholder}

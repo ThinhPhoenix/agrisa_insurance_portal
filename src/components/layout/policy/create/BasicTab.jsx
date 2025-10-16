@@ -121,7 +121,7 @@ const BasicTab = ({
             title: 'Chi phí cơ sở',
             dataIndex: 'baseCost',
             key: 'baseCost',
-            render: (cost) => `$${cost}/tháng`,
+            render: (cost) => `${cost.toLocaleString()} ₫/tháng`,
         },
         {
             title: 'Hành động',
@@ -279,7 +279,7 @@ const BasicTab = ({
             <Title level={4}>
                 Cấu hình Gói Dữ liệu
                 <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
-                    (Chi phí ước tính: ${estimatedCosts.monthlyDataCost}/tháng)
+                    (Chi phí ước tính: {estimatedCosts.monthlyDataCost.toLocaleString()} ₫/tháng)
                 </Text>
             </Title>
 
@@ -396,7 +396,7 @@ const BasicTab = ({
                                                         <div><strong>{source.label}</strong></div>
                                                         <div style={{ marginTop: '4px' }}>{source.description}</div>
                                                         <div style={{ marginTop: '4px', color: '#52c41a' }}>
-                                                            Chi phí: ${source.baseCost}/tháng
+                                                            Chi phí: {source.baseCost.toLocaleString()} ₫/tháng
                                                         </div>
                                                     </div>
                                                 }
@@ -411,7 +411,7 @@ const BasicTab = ({
                                                     <Text>{source.label}</Text>
                                                     <br />
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        {source.description} - ${source.baseCost}/tháng
+                                                        {source.description} - {source.baseCost.toLocaleString()} ₫/tháng
                                                     </Text>
                                                 </div>
                                             </Tooltip>

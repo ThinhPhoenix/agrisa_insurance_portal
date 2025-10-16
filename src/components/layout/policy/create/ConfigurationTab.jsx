@@ -344,17 +344,17 @@ const ConfigurationTab = ({
                             <Col span={8}>
                                 <Form.Item
                                     name="maxPayoutAmount"
-                                    label="Số tiền thanh toán tối đa (USD)"
+                                    label="Số tiền thanh toán tối đa (VND)"
                                     rules={[
                                         { required: true, message: 'Vui lòng nhập số tiền tối đa' },
-                                        { type: 'number', min: 1000, message: 'Tối thiểu $1,000' }
+                                        { type: 'number', min: 25000000, message: 'Tối thiểu 25,000,000 ₫' }
                                     ]}
                                 >
                                     <InputNumber
-                                        min={1000}
-                                        step={1000}
-                                        formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        min={25000000}
+                                        step={1000000}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
+                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
                                         size="large"
                                         style={{ width: '100%' }}
                                     />
@@ -971,7 +971,7 @@ const ConfigurationTab = ({
                                 <div className="logic-preview">
                                     <Text>
                                         Thanh toán <Text strong>{configurationData.payoutPercentage}%</Text> (tối đa{' '}
-                                        <Text strong>${configurationData.maxPayoutAmount?.toLocaleString()}</Text>) khi{' '}
+                                        <Text strong>{configurationData.maxPayoutAmount?.toLocaleString()} ₫</Text>) khi{' '}
                                         <Text strong>
                                             {configurationData.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
                                         </Text>

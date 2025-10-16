@@ -36,8 +36,7 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
                 overflow: 'unset'
             }}
             bodyStyle={{
-                padding: '12px',
-                maxHeight: 'calc(100vh - 200px)',
+                padding: '12px'
             }}
         >
             {/* Monthly Data Cost */}
@@ -46,8 +45,8 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
                     title="Chi phí Dữ liệu/tháng"
                     value={monthlyDataCost}
                     prefix={<DollarOutlined />}
-                    suffix="USD"
-                    precision={2}
+                    suffix="VND"
+                    precision={0}
                     valueStyle={{ color: '#1890ff', fontSize: '14px' }}
                 />
                 <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
@@ -101,8 +100,8 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
                     title="Tổng Chi phí/Tháng"
                     value={totalEstimatedCost}
                     prefix={<DollarOutlined />}
-                    suffix="USD"
-                    precision={2}
+                    suffix="VND"
+                    precision={0}
                     valueStyle={{
                         color: '#52c41a',
                         fontSize: '16px',
@@ -136,12 +135,12 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
                                     </Col>
                                     <Col span={10} style={{ textAlign: 'right' }}>
                                         <Text style={{ fontSize: '10px' }}>
-                                            ${(source.baseCost *
+                                            {(source.baseCost *
                                                 (source.category === 'weather' ? 1.0 :
                                                     source.category === 'satellite' ? 1.5 : 2.0) *
                                                 (source.tier === 'basic' ? 1.0 :
                                                     source.tier === 'premium' ? 1.8 : 3.0)
-                                            ).toFixed(2)}
+                                            ).toLocaleString()} ₫
                                         </Text>
                                     </Col>
                                 </Row>

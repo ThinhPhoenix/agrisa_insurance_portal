@@ -66,7 +66,7 @@ const ReviewTab = ({
                         record.category === 'satellite' ? 1.5 : 2.0) *
                     (record.tier === 'basic' ? 1.0 :
                         record.tier === 'premium' ? 1.8 : 3.0);
-                return `$${cost.toFixed(2)}/tháng`;
+                return `${cost.toLocaleString()} ₫/tháng`;
             },
         },
     ];
@@ -287,8 +287,8 @@ const ReviewTab = ({
                                 title="Chi phí Dữ liệu Hàng tháng"
                                 value={estimatedCosts.monthlyDataCost}
                                 prefix={<DollarOutlined />}
-                                suffix="USD"
-                                precision={2}
+                                suffix="VND"
+                                precision={0}
                             />
 
                             <Statistic
@@ -311,8 +311,8 @@ const ReviewTab = ({
                                     title="Tổng Chi phí Ước tính/Tháng"
                                     value={estimatedCosts.totalEstimatedCost}
                                     prefix={<DollarOutlined />}
-                                    suffix="USD"
-                                    precision={2}
+                                    suffix="VND"
+                                    precision={0}
                                     valueStyle={{
                                         color: '#52c41a',
                                         fontSize: '24px',

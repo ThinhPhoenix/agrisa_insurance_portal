@@ -79,3 +79,9 @@
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
+
+/* Option hover effect - use default Ant Design styling */
+.option-hover-item {
+  border-radius: 4px !important;
+  transition: background-color 0.2s !important;
+}

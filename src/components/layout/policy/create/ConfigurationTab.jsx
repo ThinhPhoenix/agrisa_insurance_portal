@@ -28,6 +28,7 @@ import {
     Space,
     Switch,
     Tag,
+    Tooltip,
     Typography
 } from 'antd';
 import { useState } from 'react';
@@ -220,29 +221,49 @@ const ConfigurationTab = ({
                                         placeholder="Chọn loại bảo hiểm"
                                         size="large"
                                         dropdownStyle={{ maxWidth: '300px' }}
+                                        optionLabelProp="label"
                                     >
                                         {mockData.coverageTypes?.map(type => (
-                                            <Option key={type.value} value={type.value}>
-                                                <div style={{ maxWidth: '280px' }}>
-                                                    <Text strong style={{
-                                                        fontSize: '13px',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {type.label}
-                                                    </Text>
-                                                    <Text type="secondary" style={{
-                                                        fontSize: '11px',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {type.description} - Phí: {(type.premium_rate * 100).toFixed(1)}%
-                                                    </Text>
-                                                </div>
+                                            <Option key={type.value} value={type.value} label={type.label}>
+                                                <Tooltip
+                                                    title={
+                                                        <div>
+                                                            <div><strong>{type.label}</strong></div>
+                                                            <div style={{ marginTop: '4px' }}>{type.description}</div>
+                                                            <div style={{ marginTop: '4px' }}>
+                                                                Tỷ lệ phí: {(type.premium_rate * 100).toFixed(1)}%
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    placement="right"
+                                                    mouseEnterDelay={0.3}
+                                                >
+                                                    <div style={{
+                                                        maxWidth: '280px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                        className="option-hover-item"
+                                                    >
+                                                        <Text strong style={{
+                                                            fontSize: '13px',
+                                                            display: 'block',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {type.label}
+                                                        </Text>
+                                                        <Text type="secondary" style={{
+                                                            fontSize: '11px',
+                                                            display: 'block',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {type.description} - Phí: {(type.premium_rate * 100).toFixed(1)}%
+                                                        </Text>
+                                                    </div>
+                                                </Tooltip>
                                             </Option>
                                         ))}
                                     </Select>

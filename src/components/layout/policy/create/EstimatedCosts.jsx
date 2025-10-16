@@ -33,12 +33,11 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
             style={{
                 fontSize: '12px',
                 maxHeight: '100%',
-                overflow: 'hidden'
+                overflow: 'unset'
             }}
             bodyStyle={{
                 padding: '12px',
                 maxHeight: 'calc(100vh - 200px)',
-                overflowY: 'auto'
             }}
         >
             {/* Monthly Data Cost */}

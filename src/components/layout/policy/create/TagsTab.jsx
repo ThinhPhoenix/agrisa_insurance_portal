@@ -534,11 +534,12 @@ const TagsTab = ({
         {
             title: 'Hành động',
             key: 'action',
-            width: '15%',
+            fixed: 'right',
+            width: 150,
             render: (_, record) => {
                 const isEditing = editingRows.has(record.id);
                 return (
-                    <Space size="small">
+                    <div className="flex gap-2">
                         <div className="drag-handle">
                             <DragOutlined
                                 style={{ color: '#999', cursor: 'grab', fontSize: '14px' }}
@@ -546,13 +547,14 @@ const TagsTab = ({
                             />
                         </div>
                         <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            onClick={() => toggleEditMode(record.id)}
+                            type="dashed"
                             size="small"
-                            style={{ color: isEditing ? '#1890ff' : '#666' }}
+                            className="!bg-orange-100 !border-orange-200 !text-orange-800 hover:!bg-orange-200"
+                            onClick={() => toggleEditMode(record.id)}
                             title={isEditing ? 'Chế độ xem' : 'Chế độ chỉnh sửa'}
-                        />
+                        >
+                            <EditOutlined size={14} />
+                        </Button>
                         <Popconfirm
                             title="Xóa tag"
                             description="Bạn có chắc chắn muốn xóa tag này?"
@@ -560,9 +562,16 @@ const TagsTab = ({
                             okText="Xóa"
                             cancelText="Hủy"
                         >
-                            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                            <Button
+                                type="dashed"
+                                size="small"
+                                className="!bg-red-100 !border-red-200 !text-red-800 hover:!bg-red-200"
+                                title="Xóa"
+                            >
+                                <DeleteOutlined size={14} />
+                            </Button>
                         </Popconfirm>
-                    </Space>
+                    </div>
                 );
             },
         },

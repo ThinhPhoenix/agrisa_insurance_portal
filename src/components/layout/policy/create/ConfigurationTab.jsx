@@ -1,3 +1,4 @@
+import CustomTable from '@/components/custom-table';
 import {
     AlertOutlined,
     ClockCircleOutlined,
@@ -26,9 +27,7 @@ import {
     Slider,
     Space,
     Switch,
-    Table,
     Tag,
-    Tooltip,
     Typography
 } from 'antd';
 import { useState } from 'react';
@@ -155,16 +154,20 @@ const ConfigurationTab = ({
         },
         {
             title: 'Hành động',
+            fixed: 'right',
             key: 'action',
+            width: 150,
             render: (_, record) => (
-                <Space>
-                    <Tooltip title="Chỉnh sửa">
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            onClick={() => handleEditCondition(record)}
-                        />
-                    </Tooltip>
+                <div className="flex gap-2">
+                    <Button
+                        type="dashed"
+                        size="small"
+                        className="!bg-orange-100 !border-orange-200 !text-orange-800 hover:!bg-orange-200"
+                        onClick={() => handleEditCondition(record)}
+                        title="Chỉnh sửa"
+                    >
+                        <EditOutlined size={14} />
+                    </Button>
                     <Popconfirm
                         title="Xóa điều kiện"
                         description="Bạn có chắc chắn muốn xóa điều kiện này?"
@@ -172,9 +175,16 @@ const ConfigurationTab = ({
                         okText="Xóa"
                         cancelText="Hủy"
                     >
-                        <Button type="text" danger icon={<DeleteOutlined />} />
+                        <Button
+                            type="dashed"
+                            size="small"
+                            className="!bg-red-100 !border-red-200 !text-red-800 hover:!bg-red-200"
+                            title="Xóa"
+                        >
+                            <DeleteOutlined size={14} />
+                        </Button>
                     </Popconfirm>
-                </Space>
+                </div>
             ),
         },
     ];
@@ -821,12 +831,10 @@ const ConfigurationTab = ({
                                 className="no-conditions-alert"
                             />
                         ) : (
-                            <Table
+                            <CustomTable
                                 columns={conditionsColumns}
                                 dataSource={configurationData.conditions}
-                                rowKey="id"
                                 pagination={false}
-                                className="conditions-table"
                             />
                         )}
 

@@ -384,29 +384,46 @@ const ConfigurationTab = ({
                                         placeholder="Chọn phương thức"
                                         size="large"
                                         dropdownStyle={{ maxWidth: '300px' }}
+                                        optionLabelProp="label"
                                     >
                                         {mockData.payoutMethods?.map(method => (
-                                            <Option key={method.value} value={method.value}>
-                                                <div style={{ maxWidth: '280px' }}>
-                                                    <Text strong style={{
-                                                        fontSize: '13px',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {method.label}
-                                                    </Text>
-                                                    <Text type="secondary" style={{
-                                                        fontSize: '11px',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {method.description}
-                                                    </Text>
-                                                </div>
+                                            <Option key={method.value} value={method.value} label={method.label}>
+                                                <Tooltip
+                                                    title={
+                                                        <div>
+                                                            <div><strong>{method.label}</strong></div>
+                                                            <div style={{ marginTop: '4px' }}>{method.description}</div>
+                                                        </div>
+                                                    }
+                                                    placement="right"
+                                                    mouseEnterDelay={0.3}
+                                                >
+                                                    <div style={{
+                                                        maxWidth: '280px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                        className="option-hover-item"
+                                                    >
+                                                        <Text strong style={{
+                                                            fontSize: '13px',
+                                                            display: 'block',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {method.label}
+                                                        </Text>
+                                                        <Text type="secondary" style={{
+                                                            fontSize: '11px',
+                                                            display: 'block',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {method.description}
+                                                        </Text>
+                                                    </div>
+                                                </Tooltip>
                                             </Option>
                                         ))}
                                     </Select>
@@ -422,29 +439,46 @@ const ConfigurationTab = ({
                                         placeholder="Chọn phương thức tính"
                                         size="large"
                                         dropdownStyle={{ maxWidth: '300px' }}
+                                        optionLabelProp="label"
                                     >
                                         {mockData.payoutCalculationMethods?.map(method => (
-                                            <Option key={method.value} value={method.value}>
-                                                <div style={{ maxWidth: '280px' }}>
-                                                    <Text strong style={{
-                                                        fontSize: '13px',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {method.label}
-                                                    </Text>
-                                                    <Text type="secondary" style={{
-                                                        fontSize: '11px',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {method.description}
-                                                    </Text>
-                                                </div>
+                                            <Option key={method.value} value={method.value} label={method.label}>
+                                                <Tooltip
+                                                    title={
+                                                        <div>
+                                                            <div><strong>{method.label}</strong></div>
+                                                            <div style={{ marginTop: '4px' }}>{method.description}</div>
+                                                        </div>
+                                                    }
+                                                    placement="right"
+                                                    mouseEnterDelay={0.3}
+                                                >
+                                                    <div style={{
+                                                        maxWidth: '280px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                        className="option-hover-item"
+                                                    >
+                                                        <Text strong style={{
+                                                            fontSize: '13px',
+                                                            display: 'block',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {method.label}
+                                                        </Text>
+                                                        <Text type="secondary" style={{
+                                                            fontSize: '11px',
+                                                            display: 'block',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {method.description}
+                                                        </Text>
+                                                    </div>
+                                                </Tooltip>
                                             </Option>
                                         ))}
                                     </Select>
@@ -518,29 +552,46 @@ const ConfigurationTab = ({
                                         placeholder="Chọn tần suất"
                                         size="large"
                                         dropdownStyle={{ maxWidth: '300px' }}
+                                        optionLabelProp="label"
                                     >
                                         {mockData.monitoringFrequencies?.map(freq => (
-                                            <Option key={freq.value} value={freq.value}>
-                                                <div style={{ maxWidth: '280px' }}>
-                                                    <Text strong style={{
-                                                        fontSize: '13px',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {freq.label}
-                                                    </Text>
-                                                    <Text type="secondary" style={{
-                                                        fontSize: '11px',
-                                                        display: 'block',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis'
-                                                    }}>
-                                                        {freq.description}
-                                                    </Text>
-                                                </div>
+                                            <Option key={freq.value} value={freq.value} label={freq.label}>
+                                                <Tooltip
+                                                    title={
+                                                        <div>
+                                                            <div><strong>{freq.label}</strong></div>
+                                                            <div style={{ marginTop: '4px' }}>{freq.description}</div>
+                                                        </div>
+                                                    }
+                                                    placement="right"
+                                                    mouseEnterDelay={0.3}
+                                                >
+                                                    <div style={{
+                                                        maxWidth: '280px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                        className="option-hover-item"
+                                                    >
+                                                        <Text strong style={{
+                                                            fontSize: '13px',
+                                                            display: 'block',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {freq.label}
+                                                        </Text>
+                                                        <Text type="secondary" style={{
+                                                            fontSize: '11px',
+                                                            display: 'block',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            {freq.description}
+                                                        </Text>
+                                                    </div>
+                                                </Tooltip>
                                             </Option>
                                         ))}
                                     </Select>
@@ -658,26 +709,45 @@ const ConfigurationTab = ({
                                                 >
                                                     {availableDataSources.map(source => (
                                                         <Option key={source.value} value={source.value} label={source.label}>
-                                                            <div style={{ maxWidth: '280px' }}>
-                                                                <Text style={{
-                                                                    fontSize: '13px',
-                                                                    display: 'block',
-                                                                    whiteSpace: 'nowrap',
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis'
-                                                                }}>
-                                                                    {source.label}
-                                                                </Text>
-                                                                <Text type="secondary" style={{
-                                                                    fontSize: '11px',
-                                                                    display: 'block',
-                                                                    whiteSpace: 'nowrap',
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis'
-                                                                }}>
-                                                                    {source.parameterName} ({source.unit})
-                                                                </Text>
-                                                            </div>
+                                                            <Tooltip
+                                                                title={
+                                                                    <div>
+                                                                        <div><strong>{source.label}</strong></div>
+                                                                        <div style={{ marginTop: '4px' }}>{source.parameterName}</div>
+                                                                        <div style={{ marginTop: '4px', color: '#52c41a' }}>
+                                                                            Đơn vị: {source.unit}
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                                placement="right"
+                                                                mouseEnterDelay={0.3}
+                                                            >
+                                                                <div style={{
+                                                                    maxWidth: '280px',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                    className="option-hover-item"
+                                                                >
+                                                                    <Text style={{
+                                                                        fontSize: '13px',
+                                                                        display: 'block',
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
+                                                                    }}>
+                                                                        {source.label}
+                                                                    </Text>
+                                                                    <Text type="secondary" style={{
+                                                                        fontSize: '11px',
+                                                                        display: 'block',
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
+                                                                    }}>
+                                                                        {source.parameterName} ({source.unit})
+                                                                    </Text>
+                                                                </div>
+                                                            </Tooltip>
                                                         </Option>
                                                     ))}
                                                 </Select>
@@ -698,26 +768,42 @@ const ConfigurationTab = ({
                                                 >
                                                     {mockData.aggregationFunctions?.map(func => (
                                                         <Option key={func.value} value={func.value} label={func.label}>
-                                                            <div style={{ maxWidth: '280px' }}>
-                                                                <Text style={{
-                                                                    fontSize: '13px',
-                                                                    display: 'block',
-                                                                    whiteSpace: 'nowrap',
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis'
-                                                                }}>
-                                                                    {func.label}
-                                                                </Text>
-                                                                <Text type="secondary" style={{
-                                                                    fontSize: '11px',
-                                                                    display: 'block',
-                                                                    whiteSpace: 'nowrap',
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis'
-                                                                }}>
-                                                                    {func.description}
-                                                                </Text>
-                                                            </div>
+                                                            <Tooltip
+                                                                title={
+                                                                    <div>
+                                                                        <div><strong>{func.label}</strong></div>
+                                                                        <div style={{ marginTop: '4px' }}>{func.description}</div>
+                                                                    </div>
+                                                                }
+                                                                placement="right"
+                                                                mouseEnterDelay={0.3}
+                                                            >
+                                                                <div style={{
+                                                                    maxWidth: '280px',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                    className="option-hover-item"
+                                                                >
+                                                                    <Text style={{
+                                                                        fontSize: '13px',
+                                                                        display: 'block',
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
+                                                                    }}>
+                                                                        {func.label}
+                                                                    </Text>
+                                                                    <Text type="secondary" style={{
+                                                                        fontSize: '11px',
+                                                                        display: 'block',
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
+                                                                    }}>
+                                                                        {func.description}
+                                                                    </Text>
+                                                                </div>
+                                                            </Tooltip>
                                                         </Option>
                                                     ))}
                                                 </Select>
@@ -758,26 +844,42 @@ const ConfigurationTab = ({
                                                 >
                                                     {mockData.thresholdOperators?.map(operator => (
                                                         <Option key={operator.value} value={operator.value} label={operator.label}>
-                                                            <div style={{ maxWidth: '280px' }}>
-                                                                <Text style={{
-                                                                    fontSize: '13px',
-                                                                    display: 'block',
-                                                                    whiteSpace: 'nowrap',
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis'
-                                                                }}>
-                                                                    {operator.label}
-                                                                </Text>
-                                                                <Text type="secondary" style={{
-                                                                    fontSize: '11px',
-                                                                    display: 'block',
-                                                                    whiteSpace: 'nowrap',
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis'
-                                                                }}>
-                                                                    {operator.description}
-                                                                </Text>
-                                                            </div>
+                                                            <Tooltip
+                                                                title={
+                                                                    <div>
+                                                                        <div><strong>{operator.label}</strong></div>
+                                                                        <div style={{ marginTop: '4px' }}>{operator.description}</div>
+                                                                    </div>
+                                                                }
+                                                                placement="right"
+                                                                mouseEnterDelay={0.3}
+                                                            >
+                                                                <div style={{
+                                                                    maxWidth: '280px',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                    className="option-hover-item"
+                                                                >
+                                                                    <Text style={{
+                                                                        fontSize: '13px',
+                                                                        display: 'block',
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
+                                                                    }}>
+                                                                        {operator.label}
+                                                                    </Text>
+                                                                    <Text type="secondary" style={{
+                                                                        fontSize: '11px',
+                                                                        display: 'block',
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
+                                                                    }}>
+                                                                        {operator.description}
+                                                                    </Text>
+                                                                </div>
+                                                            </Tooltip>
                                                         </Option>
                                                     ))}
                                                 </Select>

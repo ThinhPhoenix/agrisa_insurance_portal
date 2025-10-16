@@ -13,6 +13,7 @@ import {
     Row,
     Select,
     Table,
+    Tooltip,
     Typography
 } from 'antd';
 import { useState } from 'react';
@@ -303,13 +304,28 @@ const BasicTab = ({
                                 >
                                     {mockData.dataTierCategories.map(category => (
                                         <Option key={category.value} value={category.value} label={category.label}>
-                                            <div>
-                                                <Text>{category.label}</Text>
-                                                <br />
-                                                <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                    {category.description}
-                                                </Text>
-                                            </div>
+                                            <Tooltip
+                                                title={
+                                                    <div>
+                                                        <div><strong>{category.label}</strong></div>
+                                                        <div style={{ marginTop: '4px' }}>{category.description}</div>
+                                                    </div>
+                                                }
+                                                placement="right"
+                                                mouseEnterDelay={0.3}
+                                            >
+                                                <div style={{
+                                                    cursor: 'pointer'
+                                                }}
+                                                    className="option-hover-item"
+                                                >
+                                                    <Text>{category.label}</Text>
+                                                    <br />
+                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                        {category.description}
+                                                    </Text>
+                                                </div>
+                                            </Tooltip>
                                         </Option>
                                     ))}
                                 </Select>
@@ -330,13 +346,31 @@ const BasicTab = ({
                                 >
                                     {getFilteredTiers(selectedCategory).map(tier => (
                                         <Option key={tier.value} value={tier.value} label={tier.label}>
-                                            <div>
-                                                <Text>{tier.label}</Text>
-                                                <br />
-                                                <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                    {tier.description} (x{tier.tierMultiplier})
-                                                </Text>
-                                            </div>
+                                            <Tooltip
+                                                title={
+                                                    <div>
+                                                        <div><strong>{tier.label}</strong></div>
+                                                        <div style={{ marginTop: '4px' }}>{tier.description}</div>
+                                                        <div style={{ marginTop: '4px', color: '#52c41a' }}>
+                                                            Hệ số nhân: x{tier.tierMultiplier}
+                                                        </div>
+                                                    </div>
+                                                }
+                                                placement="right"
+                                                mouseEnterDelay={0.3}
+                                            >
+                                                <div style={{
+                                                    cursor: 'pointer'
+                                                }}
+                                                    className="option-hover-item"
+                                                >
+                                                    <Text>{tier.label}</Text>
+                                                    <br />
+                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                        {tier.description} (x{tier.tierMultiplier})
+                                                    </Text>
+                                                </div>
+                                            </Tooltip>
                                         </Option>
                                     ))}
                                 </Select>
@@ -356,13 +390,31 @@ const BasicTab = ({
                                 >
                                     {availableDataSources.map(source => (
                                         <Option key={source.id} value={source.id} label={source.label}>
-                                            <div>
-                                                <Text>{source.label}</Text>
-                                                <br />
-                                                <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                    {source.description} - ${source.baseCost}/tháng
-                                                </Text>
-                                            </div>
+                                            <Tooltip
+                                                title={
+                                                    <div>
+                                                        <div><strong>{source.label}</strong></div>
+                                                        <div style={{ marginTop: '4px' }}>{source.description}</div>
+                                                        <div style={{ marginTop: '4px', color: '#52c41a' }}>
+                                                            Chi phí: ${source.baseCost}/tháng
+                                                        </div>
+                                                    </div>
+                                                }
+                                                placement="right"
+                                                mouseEnterDelay={0.3}
+                                            >
+                                                <div style={{
+                                                    cursor: 'pointer'
+                                                }}
+                                                    className="option-hover-item"
+                                                >
+                                                    <Text>{source.label}</Text>
+                                                    <br />
+                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                        {source.description} - ${source.baseCost}/tháng
+                                                    </Text>
+                                                </div>
+                                            </Tooltip>
                                         </Option>
                                     ))}
                                 </Select>

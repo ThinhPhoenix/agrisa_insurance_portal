@@ -1,5 +1,7 @@
 "use client";
 
+import "./create-policy.css";
+
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,

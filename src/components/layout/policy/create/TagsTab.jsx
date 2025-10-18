@@ -1,6 +1,4 @@
-import Assets from '@/assets';
 import {
-    CloseOutlined,
     DeleteOutlined,
     DownloadOutlined,
     DragOutlined,
@@ -11,6 +9,7 @@ import {
     FullscreenOutlined,
     InfoCircleOutlined,
     PlusOutlined,
+    PrinterOutlined,
     TagOutlined
 } from '@ant-design/icons';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
@@ -24,7 +23,6 @@ import {
     Form,
     Input,
     InputNumber,
-    message,
     Modal,
     Popconfirm,
     Row,
@@ -37,6 +35,8 @@ import {
     Typography
 } from 'antd';
 import React from 'react';
+import ContractPreview from './ContractPreview';
+
 const { Option } = Select;
 const { Title, Text } = Typography;
 
@@ -46,16 +46,18 @@ const TagsTab = ({
     onDataChange,
     onAddTag,
     onRemoveTag,
-    onUpdateTag
+    onUpdateTag,
+    previewVisible = true,
+    onPreviewVisibleChange
 }) => {
     const [tagForm] = Form.useForm();
     const [selectedDataType, setSelectedDataType] = React.useState('string');
     const [selectOptions, setSelectOptions] = React.useState(['']);
     const [isMultipleSelect, setIsMultipleSelect] = React.useState(false);
     const [editingRows, setEditingRows] = React.useState(new Set()); // Track which rows are in edit mode
-    const [previewVisible, setPreviewVisible] = React.useState(true); // Toggle contract preview
     const [previewFullscreen, setPreviewFullscreen] = React.useState(false); // Fullscreen preview mode
-    const [fieldWidth, setFieldWidth] = React.useState(50); // Field width percentage for layout
+    const [fieldWidth, setFieldWidth] = React.useState(40); // Field width percentage for layout (default 40% = 2 fields/row)
+    const [textareaRows, setTextareaRows] = React.useState(3); // Number of rows for textarea
 
     // Handle data type change
     const handleDataTypeChange = (value) => {
@@ -66,6 +68,15 @@ const TagsTab = ({
         if (value === 'select') {
             setSelectOptions(['']);
             setIsMultipleSelect(false);
+        }
+
+        // Textarea always uses 100% width
+        if (value === 'textarea') {
+            setFieldWidth(100);
+            setTextareaRows(3); // Default 3 rows
+        } else if (fieldWidth === 100 && value !== 'textarea') {
+            // Reset to default when changing from textarea
+            setFieldWidth(40);
         }
     };
 
@@ -259,6 +270,34 @@ const TagsTab = ({
                         </Select>
                     </div>
                 );
+            case 'textarea':
+                return (
+                    <div>
+                        <Input.TextArea
+                            placeholder="Nhập nội dung văn bản dài (có thể nhiều dòng)"
+                            rows={4}
+                            size="large"
+                            showCount
+                            maxLength={500}
+                            style={{ marginBottom: 8 }}
+                        />
+                        <div style={{ marginTop: 8 }}>
+                            <Text strong style={{ fontSize: '12px' }}>Số dòng hiển thị trên hợp đồng:</Text>
+                        </div>
+                        <InputNumber
+                            min={1}
+                            max={10}
+                            value={textareaRows}
+                            onChange={(value) => setTextareaRows(value || 3)}
+                            size="small"
+                            style={{ width: 100, marginTop: 4 }}
+                            addonAfter="dòng"
+                        />
+                        <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: 4 }}>
+                            💡 Textarea luôn chiếm full width (100%) trên hợp đồng
+                        </Text>
+                    </div>
+                );
             case 'string':
             default:
                 return (
@@ -350,9 +389,10 @@ const TagsTab = ({
                 value: displayValue || '',
                 options: values.dataType === 'select' ? selectOptions.filter(opt => opt.trim() !== '') : undefined,
                 isMultipleSelect: values.dataType === 'select' ? isMultipleSelect : undefined,
+                rows: values.dataType === 'textarea' ? textareaRows : undefined, // Number of rows for textarea
                 index: tagsData.tags.length + 1, // Auto increment index
                 dataTypeLabel: dataType?.label || '',
-                width: fieldWidth // Layout configuration
+                width: fieldWidth // Layout configuration (textarea always 100%)
             };
 
             onAddTag(tag);
@@ -360,7 +400,8 @@ const TagsTab = ({
             setSelectedDataType('string'); // Reset to default
             setSelectOptions(['']); // Reset options
             setIsMultipleSelect(false); // Reset multiple select
-            setFieldWidth(50); // Reset width
+            setTextareaRows(3); // Reset rows
+            setFieldWidth(40); // Reset width to default 40%
         });
     };
 
@@ -622,387 +663,31 @@ const TagsTab = ({
         });
     };
 
-    // Render contract preview
-    const renderContractPreview = () => {
-        const sortedTags = [...tagsData.tags].sort((a, b) => a.index - b.index);
-
-        // Group fields into rows based on width
-        const rows = [];
-        let currentRow = [];
-        let currentRowWidth = 0;
-
-        sortedTags.forEach(tag => {
-            const fieldWidth = tag.width || 50;
-            if (currentRowWidth + fieldWidth > 100 && currentRow.length > 0) {
-                rows.push([...currentRow]);
-                currentRow = [tag];
-                currentRowWidth = fieldWidth;
-            } else {
-                currentRow.push(tag);
-                currentRowWidth += fieldWidth;
-            }
-        });
-        if (currentRow.length > 0) {
-            rows.push(currentRow);
-        }
-
-        return (
-            <div style={{
-                width: '100%',
-                height: '100%',
-                backgroundColor: '#f5f5f5',
-                padding: '16px',
-                overflowY: 'auto'
-            }}>
-                {/* A4 Page Container - Scaled for sidebar */}
-                <div className="contract-preview-a4" style={{
-                    width: '100%',
-                    minHeight: '500px',
-                    backgroundColor: 'white',
-                    margin: '0 auto',
-                    padding: '20px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    fontFamily: 'Arial, sans-serif',
-                    fontSize: '11px',
-                    position: 'relative'
-                }}>
-                    {/* Contract Header with Logo */}
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        marginBottom: '20px',
-                        paddingBottom: '16px',
-                        borderBottom: '3px double #1890ff'
-                    }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                <img
-                                    src={Assets.Agrisa.src}
-                                    alt="Agrisa Logo"
-                                    style={{ width: '32px', height: '32px' }}
-                                />
-                                <div>
-                                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1890ff' }}>
-                                        AGRISA IPP
-                                    </div>
-                                    <div style={{ fontSize: '9px', color: '#666' }}>
-                                        Insurance Partner Platform
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '10px', color: '#666' }}>
-                                Số HĐ: <strong>AGRI-{new Date().getFullYear()}-XXXX</strong>
-                            </div>
-                            <div style={{ fontSize: '9px', color: '#999', marginTop: '4px' }}>
-                                Ngày lập: {new Date().toLocaleDateString('vi-VN')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                        <Title level={5} style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#000', textTransform: 'uppercase' }}>
-                            HỢP ĐỒNG BẢO HIỂM NÔNG NGHIỆP
-                        </Title>
-                        <Text type="secondary" style={{ fontSize: '10px', fontStyle: 'italic' }}>
-                            Agricultural Insurance Contract
-                        </Text>
-                    </div>
-
-                    {/* Contract Content - Dynamic Tags in responsive layout */}
-                    <div style={{ marginTop: '20px', minHeight: '300px' }}>
-                        {sortedTags.length === 0 ? (
-                            <div style={{
-                                textAlign: 'center',
-                                padding: '60px 20px',
-                                color: '#999',
-                                border: '2px dashed #e0e0e0',
-                                borderRadius: '8px'
-                            }}>
-                                <InfoCircleOutlined style={{ fontSize: '36px', marginBottom: '12px', color: '#d9d9d9' }} />
-                                <div style={{ fontSize: '12px', fontWeight: '500' }}>Chưa có trường thông tin</div>
-                                <div style={{ fontSize: '10px', marginTop: '6px', color: '#bbb' }}>
-                                    Thêm các trường từ bên trái để xem trước hợp đồng
-                                </div>
-                            </div>
-                        ) : (
-                            <div>
-                                {rows.map((row, rowIdx) => (
-                                    <div key={rowIdx} style={{
-                                        display: 'flex',
-                                        gap: '12px',
-                                        marginBottom: '14px',
-                                        alignItems: 'flex-start'
-                                    }}>
-                                        {row.map((tag) => (
-                                            <div key={tag.id} className="contract-field" style={{
-                                                flex: `0 0 calc(${tag.width || 50}% - 6px)`,
-                                                padding: '6px 8px',
-                                                minHeight: '32px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px'
-                                            }}>
-                                                <div style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    width: '100%'
-                                                }}>
-                                                    <span style={{
-                                                        fontSize: '9px',
-                                                        color: '#1890ff',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        {tag.index}.
-                                                    </span>
-                                                    <Text strong style={{ fontSize: '10px', color: '#333', whiteSpace: 'nowrap' }}>
-                                                        {tag.key}:
-                                                    </Text>
-                                                    {tag.dataType === 'boolean' ? (
-                                                        <div style={{ display: 'flex', gap: '12px', fontSize: '10px' }}>
-                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'default' }}>
-                                                                <span style={{
-                                                                    fontSize: '14px',
-                                                                    border: '1.5px solid #666',
-                                                                    width: '14px',
-                                                                    height: '14px',
-                                                                    display: 'inline-block',
-                                                                    textAlign: 'center',
-                                                                    lineHeight: '12px'
-                                                                }}>
-                                                                    {tag.value === 'true' ? '✓' : ''}
-                                                                </span>
-                                                                <span>Có</span>
-                                                            </label>
-                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'default' }}>
-                                                                <span style={{
-                                                                    fontSize: '14px',
-                                                                    border: '1.5px solid #666',
-                                                                    width: '14px',
-                                                                    height: '14px',
-                                                                    display: 'inline-block',
-                                                                    textAlign: 'center',
-                                                                    lineHeight: '12px'
-                                                                }}>
-                                                                    {tag.value === 'false' ? '✓' : ''}
-                                                                </span>
-                                                                <span>Không</span>
-                                                            </label>
-                                                        </div>
-                                                    ) : tag.dataType === 'select' ? (
-                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '10px', flex: 1 }}>
-                                                            {tag.options && tag.options.length > 0 ? tag.options.map((option, idx) => (
-                                                                <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'default' }}>
-                                                                    <span style={{
-                                                                        fontSize: '10px',
-                                                                        border: '1.5px solid #666',
-                                                                        width: '14px',
-                                                                        height: '14px',
-                                                                        display: 'inline-flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center',
-                                                                        borderRadius: tag.isMultipleSelect ? '2px' : '50%'
-                                                                    }}>
-                                                                        {tag.isMultipleSelect ? (
-                                                                            tag.value && tag.value.includes(option) ? '✓' : ''
-                                                                        ) : (
-                                                                            tag.value === option ? '●' : ''
-                                                                        )}
-                                                                    </span>
-                                                                    <span>{option}</span>
-                                                                </label>
-                                                            )) : (
-                                                                <span style={{ color: '#999' }}>___________________</span>
-                                                            )}
-                                                        </div>
-                                                    ) : tag.dataType === 'date' ? (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '80px',
-                                                            fontSize: '10px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '500' : 'normal',
-                                                            minHeight: '16px',
-                                                            display: 'flex',
-                                                            alignItems: 'flex-end',
-                                                            gap: '4px'
-                                                        }}>
-                                                            {tag.value || (
-                                                                <>
-                                                                    <span style={{ display: 'inline-block', width: '30px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>/</span>
-                                                                    <span style={{ display: 'inline-block', width: '30px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>/</span>
-                                                                    <span style={{ display: 'inline-block', width: '50px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ) : tag.dataType === 'time' ? (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '60px',
-                                                            fontSize: '10px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '500' : 'normal',
-                                                            minHeight: '16px',
-                                                            display: 'flex',
-                                                            alignItems: 'flex-end',
-                                                            gap: '4px'
-                                                        }}>
-                                                            {tag.value || (
-                                                                <>
-                                                                    <span style={{ display: 'inline-block', width: '30px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>:</span>
-                                                                    <span style={{ display: 'inline-block', width: '30px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ) : tag.dataType === 'datetime' ? (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '120px',
-                                                            fontSize: '10px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '500' : 'normal',
-                                                            minHeight: '16px',
-                                                            display: 'flex',
-                                                            alignItems: 'flex-end',
-                                                            gap: '4px'
-                                                        }}>
-                                                            {tag.value || (
-                                                                <>
-                                                                    <span style={{ display: 'inline-block', width: '25px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>/</span>
-                                                                    <span style={{ display: 'inline-block', width: '25px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>/</span>
-                                                                    <span style={{ display: 'inline-block', width: '40px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ marginLeft: '4px', marginRight: '4px', lineHeight: '14px' }}>-</span>
-                                                                    <span style={{ display: 'inline-block', width: '25px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>:</span>
-                                                                    <span style={{ display: 'inline-block', width: '25px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '100px',
-                                                            fontSize: '10px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '500' : 'normal',
-                                                            minHeight: '16px',
-                                                            display: 'flex',
-                                                            alignItems: 'flex-end'
-                                                        }}>
-                                                            {tag.value || (
-                                                                <span style={{ display: 'inline-block', width: '100%', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Contract Footer - Signatures */}
-                    <div style={{
-                        marginTop: '40px',
-                        paddingTop: '20px',
-                        borderTop: '2px solid #e8e8e8'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '40px' }}>
-                            <div style={{ flex: 1, textAlign: 'center' }}>
-                                <Text strong style={{ fontSize: '11px', display: 'block', marginBottom: '8px' }}>
-                                    BÊN MUA BẢO HIỂM
-                                </Text>
-                                <Text type="secondary" style={{ fontSize: '9px', fontStyle: 'italic', display: 'block', marginBottom: '40px' }}>
-                                    (Ký, ghi rõ họ tên)
-                                </Text>
-                                <div style={{
-                                    borderTop: '1px solid #333',
-                                    paddingTop: '6px',
-                                    marginLeft: '30px',
-                                    marginRight: '30px'
-                                }}>
-                                    <Text type="secondary" style={{ fontSize: '9px' }}></Text>
-                                </div>
-                            </div>
-                            <div style={{ flex: 1, textAlign: 'center' }}>
-                                <Text strong style={{ fontSize: '11px', display: 'block', marginBottom: '8px' }}>
-                                    BÊN BẢO HIỂM
-                                </Text>
-                                <Text type="secondary" style={{ fontSize: '9px', fontStyle: 'italic', display: 'block', marginBottom: '40px' }}>
-                                    (Ký, đóng dấu, ghi rõ họ tên)
-                                </Text>
-                                <div style={{
-                                    borderTop: '1px solid #333',
-                                    paddingTop: '6px',
-                                    marginLeft: '30px',
-                                    marginRight: '30px'
-                                }}>
-                                    <Text type="secondary" style={{ fontSize: '9px' }}></Text>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Footer note */}
-                    <div style={{
-                        marginTop: '20px',
-                        padding: '8px',
-                        backgroundColor: '#f0f0f0',
-                        borderRadius: '4px',
-                        fontSize: '8px',
-                        color: '#666',
-                        textAlign: 'center'
-                    }}>
-                        Hợp đồng này được tạo và quản lý thông qua nền tảng Agrisa Insurance Partner Platform
-                    </div>
-                </div>
-
-                {/* Export PDF Button */}
-                <div className="no-print" style={{ textAlign: 'center', marginTop: '16px', marginBottom: '16px' }}>
-                    <Button
-                        type="primary"
-                        icon={<DownloadOutlined />}
-                        block
-                        onClick={() => message.info('Chức năng xuất PDF sẽ được triển khai sau')}
-                    >
-                        Xuất PDF
-                    </Button>
-                    <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '8px' }}>
-                        Hợp đồng sẽ được tạo với định dạng A4 chuẩn
-                    </Text>
-                </div>
-            </div>
-        );
-    }; return (
-        <div className="tags-tab">
+    return (
+        <div className="tags-tab" style={{ position: 'relative', minHeight: '100%' }}>
             {/* Main Content */}
             <div style={{
                 width: '100%',
-                transition: 'all 0.3s ease',
-                overflowY: 'auto',
-                paddingRight: previewVisible && !previewFullscreen ? '420px' : '0'
+                minHeight: '100vh'
             }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                     <Title level={4} style={{ margin: 0 }}>
                         <TagOutlined /> Gắn thẻ & Metadata
                     </Title>
-                    <Space>
+                    <Space wrap>
+                        <Button
+                            type="default"
+                            icon={<FullscreenOutlined />}
+                            onClick={() => setPreviewFullscreen(true)}
+                        >
+                            Xem toàn màn hình
+                        </Button>
                         <Button
                             type={previewVisible ? 'primary' : 'default'}
                             icon={previewVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                            onClick={() => setPreviewVisible(!previewVisible)}
+                            onClick={() => onPreviewVisibleChange && onPreviewVisibleChange(!previewVisible)}
                         >
-                            {previewVisible ? 'Ẩn xem trước' : 'Xem trước hợp đồng'}
+                            {previewVisible ? 'Ẩn xem trước' : 'Hiện xem trước'}
                         </Button>
                     </Space>
                 </div>
@@ -1119,17 +804,25 @@ const TagsTab = ({
                                                             Độ rộng trường chiếm % của hợp đồng:
                                                         </div>
                                                         <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>25%</strong>: Trường ngắn - 4 trường/hàng
+                                                            • <strong>20%</strong>: Rất ngắn - 5 trường/hàng
                                                         </div>
                                                         <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>50%</strong>: Trường vừa - 2 trường/hàng
+                                                            • <strong>40%</strong>: Ngắn - 2-3 trường/hàng
                                                         </div>
                                                         <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>75%</strong>: Trường dài - 1.33 trường/hàng
+                                                            • <strong>60%</strong>: Vừa - 1-2 trường/hàng
+                                                        </div>
+                                                        <div style={{ marginBottom: '4px' }}>
+                                                            • <strong>80%</strong>: Dài - 1 trường/hàng
                                                         </div>
                                                         <div>
                                                             • <strong>100%</strong>: Toàn bộ - 1 trường/hàng
                                                         </div>
+                                                        {selectedDataType === 'textarea' && (
+                                                            <div style={{ marginTop: '8px', color: '#faad14', fontSize: '11px' }}>
+                                                                ⚠️ Văn bản dài luôn dùng 100%
+                                                            </div>
+                                                        )}
                                                         <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)', fontSize: '11px' }}>
                                                             💡 Hệ thống tự động sắp xếp các trường vào hàng dựa trên tổng % độ rộng
                                                         </div>
@@ -1145,26 +838,29 @@ const TagsTab = ({
                                     <Slider
                                         value={fieldWidth}
                                         onChange={setFieldWidth}
-                                        min={25}
+                                        min={20}
                                         max={100}
-                                        step={25}
+                                        step={20}
                                         marks={{
-                                            25: '25%',
-                                            50: '50%',
-                                            75: '75%',
+                                            20: '20%',
+                                            40: '40%',
+                                            60: '60%',
+                                            80: '80%',
                                             100: '100%'
                                         }}
                                         tooltip={{
                                             formatter: (value) => {
                                                 const descriptions = {
-                                                    25: '25% - Ngắn (4 trường/hàng)',
-                                                    50: '50% - Vừa (2 trường/hàng)',
-                                                    75: '75% - Dài (1.33 trường/hàng)',
+                                                    20: '20% - Rất ngắn (5 trường/hàng)',
+                                                    40: '40% - Ngắn (2-3 trường/hàng)',
+                                                    60: '60% - Vừa (1-2 trường/hàng)',
+                                                    80: '80% - Dài (1 trường/hàng)',
                                                     100: '100% - Toàn bộ (1 trường/hàng)'
                                                 };
                                                 return descriptions[value] || `${value}%`;
                                             }
                                         }}
+                                        disabled={selectedDataType === 'textarea'}
                                     />
                                 </Form.Item>
                             </Col>
@@ -1292,15 +988,18 @@ const TagsTab = ({
                         <Col span={12}>
                             <Title level={5}>💡 Cấu hình Layout:</Title>
                             <ul style={{ fontSize: '13px' }}>
-                                <li><Text strong>Độ rộng:</Text> 25%, 50%, 75%, 100%</li>
-                                <li>25% = 4 trường/hàng (thông tin ngắn)</li>
-                                <li>50% = 2 trường/hàng (thông tin vừa)</li>
-                                <li>100% = 1 trường/hàng (thông tin dài)</li>
-                                <li>Hệ thống tự sắp xếp responsive</li>
+                                <li><Text strong>Độ rộng:</Text> 20%, 40%, 60%, 80%, 100%</li>
+                                <li>20% = 5 trường/hàng (thông tin rất ngắn)</li>
+                                <li>40% = 2-3 trường/hàng (thông tin ngắn)</li>
+                                <li>60% = 1-2 trường/hàng (thông tin vừa)</li>
+                                <li>80% = 1 trường/hàng (thông tin dài)</li>
+                                <li>100% = 1 trường/hàng (toàn bộ)</li>
+                                <li><Text type="warning">Văn bản dài luôn 100%</Text></li>
                             </ul>
                             <Title level={5} style={{ marginTop: '16px' }}>✨ Tính năng:</Title>
                             <ul style={{ fontSize: '13px' }}>
                                 <li>Tất cả giá trị có thể để trống</li>
+                                <li>Văn bản dài: Nhiều dòng, full width</li>
                                 <li>Kéo thả <DragOutlined /> để sắp xếp</li>
                                 <li>Xem trước realtime bên phải</li>
                                 <li>Xuất PDF khi hoàn thành</li>
@@ -1310,69 +1009,45 @@ const TagsTab = ({
                 </Card>
             </div>
 
-            {/* Contract Preview Panel - Overlays the right sidebar */}
-            {previewVisible && !previewFullscreen && (
-                <div className="contract-preview-panel" style={{
-                    position: 'fixed',
-                    right: 0,
-                    top: 0,
-                    width: '400px',
-                    height: '100vh',
-                    borderLeft: '2px solid #d9d9d9',
-                    backgroundColor: 'white',
-                    overflowY: 'auto',
-                    zIndex: 1050,
-                    boxShadow: '-4px 0 12px rgba(0,0,0,0.08)'
-                }}>
-                    <div style={{
-                        padding: '16px',
-                        borderBottom: '2px solid #e8e8e8',
-                        backgroundColor: 'white',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1051
-                    }}>
-                        <Title level={5} style={{ margin: 0, fontSize: '14px' }}>
-                            <FileTextOutlined /> Xem trước hợp đồng
-                        </Title>
-                        <Space size="small">
-                            <Button
-                                size="small"
-                                icon={<FullscreenOutlined />}
-                                onClick={() => setPreviewFullscreen(true)}
-                                title="Xem toàn màn hình"
-                            />
-                            <Button
-                                size="small"
-                                icon={<CloseOutlined />}
-                                onClick={() => setPreviewVisible(false)}
-                                title="Đóng"
-                            />
-                        </Space>
-                    </div>
-                    {renderContractPreview()}
-                </div>
-            )}
-
             {/* Fullscreen Preview Modal */}
             <Modal
                 open={previewFullscreen}
                 onCancel={() => setPreviewFullscreen(false)}
                 width="100%"
                 style={{ top: 0, paddingBottom: 0, maxWidth: '100vw' }}
-                bodyStyle={{ height: 'calc(100vh - 110px)', padding: 0, overflow: 'hidden' }}
+                bodyStyle={{ height: 'calc(100vh - 110px)', padding: 0, overflow: 'auto' }}
                 title={
                     <Space>
                         <FileTextOutlined />
                         <span>Xem trước hợp đồng - Toàn màn hình</span>
                     </Space>
                 }
-                footer={null}
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Space>
+                            <Button
+                                type="primary"
+                                icon={<DownloadOutlined />}
+                                onClick={() => message.info('Chức năng xuất PDF sẽ được triển khai sau')}
+                            >
+                                Xuất PDF
+                            </Button>
+                            <Button
+                                icon={<PrinterOutlined />}
+                                onClick={() => window.print()}
+                            >
+                                In ấn
+                            </Button>
+                        </Space>
+                        <Space>
+                            <Button onClick={() => setPreviewFullscreen(false)}>
+                                Đóng
+                            </Button>
+                        </Space>
+                    </div>
+                }
             >
-                {renderContractPreview()}
+                <ContractPreview tagsData={tagsData} isFullscreen={true} />
             </Modal>
         </div>
     );

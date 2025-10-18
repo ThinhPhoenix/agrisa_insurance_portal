@@ -468,6 +468,11 @@
       "value": "select",
       "label": "Lựa chọn (Select)",
       "description": "Danh sách tùy chọn - VD: Giới tính, quốc tịch"
+    },
+    {
+      "value": "textarea",
+      "label": "Văn bản dài (Textarea)",
+      "description": "Văn bản nhiều dòng, luôn full width - VD: Ghi chú, điều khoản"
     }
   ],
   "sampleData": {

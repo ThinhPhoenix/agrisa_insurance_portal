@@ -344,17 +344,17 @@ const ConfigurationTab = ({
                             <Col span={8}>
                                 <Form.Item
                                     name="maxPayoutAmount"
-                                    label="Số tiền thanh toán tối đa (USD)"
+                                    label="Số tiền thanh toán tối đa (VND)"
                                     rules={[
                                         { required: true, message: 'Vui lòng nhập số tiền tối đa' },
-                                        { type: 'number', min: 1000, message: 'Tối thiểu $1,000' }
+                                        { type: 'number', min: 25000000, message: 'Tối thiểu 25,000,000 ₫' }
                                     ]}
                                 >
                                     <InputNumber
-                                        min={1000}
-                                        step={1000}
-                                        formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        min={25000000}
+                                        step={1000000}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
+                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
                                         size="large"
                                         style={{ width: '100%' }}
                                     />
@@ -368,7 +368,7 @@ const ConfigurationTab = ({
                         header={
                             <Space>
                                 <DollarOutlined />
-                                <span>Cấu hình Thanh toán</span>
+                                <span>Cấu hình Thanh toán chi trả</span>
                             </Space>
                         }
                         key="payout"
@@ -376,118 +376,81 @@ const ConfigurationTab = ({
                         <Row gutter={24}>
                             <Col span={8}>
                                 <Form.Item
-                                    name="payoutMethod"
-                                    label="Phương thức thanh toán"
-                                    rules={[{ required: true, message: 'Vui lòng chọn phương thức thanh toán' }]}
+                                    name="fixedPayoutAmount"
+                                    label="Số tiền chi trả cố định (VND)"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
+                                        { type: 'number', min: 0, message: 'Số tiền phải lớn hơn 0' }
+                                    ]}
                                 >
-                                    <Select
-                                        placeholder="Chọn phương thức"
+                                    <InputNumber
+                                        min={0}
+                                        step={100000}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
+                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
                                         size="large"
-                                        dropdownStyle={{ maxWidth: '300px' }}
-                                        optionLabelProp="label"
-                                    >
-                                        {mockData.payoutMethods?.map(method => (
-                                            <Option key={method.value} value={method.value} label={method.label}>
-                                                <Tooltip
-                                                    title={
-                                                        <div>
-                                                            <div><strong>{method.label}</strong></div>
-                                                            <div style={{ marginTop: '4px' }}>{method.description}</div>
-                                                        </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div style={{
-                                                        maxWidth: '280px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                        className="option-hover-item"
-                                                    >
-                                                        <Text strong style={{
-                                                            fontSize: '13px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {method.label}
-                                                        </Text>
-                                                        <Text type="secondary" style={{
-                                                            fontSize: '11px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {method.description}
-                                                        </Text>
-                                                    </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
-                                    </Select>
+                                        style={{ width: '100%' }}
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
                                 <Form.Item
-                                    name="payoutCalculationMethod"
-                                    label="Phương thức tính toán"
-                                    rules={[{ required: true, message: 'Vui lòng chọn phương thức tính' }]}
+                                    name="basedOnHectare"
+                                    label="Lấy theo héc ta"
+                                    valuePropName="checked"
                                 >
-                                    <Select
-                                        placeholder="Chọn phương thức tính"
-                                        size="large"
-                                        dropdownStyle={{ maxWidth: '300px' }}
-                                        optionLabelProp="label"
-                                    >
-                                        {mockData.payoutCalculationMethods?.map(method => (
-                                            <Option key={method.value} value={method.value} label={method.label}>
-                                                <Tooltip
-                                                    title={
-                                                        <div>
-                                                            <div><strong>{method.label}</strong></div>
-                                                            <div style={{ marginTop: '4px' }}>{method.description}</div>
-                                                        </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div style={{
-                                                        maxWidth: '280px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                        className="option-hover-item"
-                                                    >
-                                                        <Text strong style={{
-                                                            fontSize: '13px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {method.label}
-                                                        </Text>
-                                                        <Text type="secondary" style={{
-                                                            fontSize: '11px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {method.description}
-                                                        </Text>
-                                                    </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
-                                    </Select>
+                                    <Switch
+                                        checkedChildren="Có"
+                                        unCheckedChildren="Không"
+                                        size="default"
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
+                                <Form.Item
+                                    name="exceedingThresholdRate"
+                                    label="Tỉ lệ chi trả vượt ngưỡng chỉ số"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+                                    ]}
+                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
+                                >
+                                    <InputNumber
+                                        min={0.01}
+                                        max={1}
+                                        step={0.01}
+                                        size="large"
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={24}>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="basicPayoutRate"
+                                    label="Tỉ lệ chi trả cơ bản"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+                                    ]}
+                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
+                                >
+                                    <InputNumber
+                                        min={0.01}
+                                        max={1}
+                                        step={0.01}
+                                        size="large"
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
                                 <Form.Item
                                     name="payoutDelayDays"
-                                    label="Thời gian trì hoãn thanh toán (ngày)"
+                                    label="Thời gian thanh toán (ngày)"
                                     tooltip="Số ngày chờ đợi trước khi thanh toán tự động"
                                 >
                                     <InputNumber
@@ -500,12 +463,42 @@ const ConfigurationTab = ({
                                 </Form.Item>
                             </Col>
                         </Row>
+                    </Panel>
 
+                    {/* Insurance Cost Configuration */}
+                    <Panel
+                        header={
+                            <Space>
+                                <DollarOutlined />
+                                <span>Cấu hình chi phí bảo hiểm</span>
+                            </Space>
+                        }
+                        key="insurance-cost"
+                    >
                         <Row gutter={24}>
-                            <Col span={12}>
+                            <Col span={8}>
                                 <Form.Item
-                                    name="requireManualApproval"
-                                    label="Yêu cầu phê duyệt thủ công"
+                                    name="insuranceFixedPayoutAmount"
+                                    label="Số tiền chi trả cố định (VND)"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
+                                        { type: 'number', min: 0, message: 'Số tiền phải lớn hơn hoặc bằng 0' }
+                                    ]}
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        step={100000}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
+                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
+                                        size="large"
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
+                                <Form.Item
+                                    name="insuranceBasedOnHectare"
+                                    label="Lấy theo héc ta"
                                     valuePropName="checked"
                                 >
                                     <Switch
@@ -515,16 +508,22 @@ const ConfigurationTab = ({
                                     />
                                 </Form.Item>
                             </Col>
-                            <Col span={12}>
+                            <Col span={8}>
                                 <Form.Item
-                                    name="enablePartialPayout"
-                                    label="Cho phép thanh toán một phần"
-                                    valuePropName="checked"
+                                    name="insuranceBasicPayoutRate"
+                                    label="Tỉ lệ chi trả cơ bản"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+                                    ]}
+                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
                                 >
-                                    <Switch
-                                        checkedChildren="Có"
-                                        unCheckedChildren="Không"
-                                        size="default"
+                                    <InputNumber
+                                        min={0.01}
+                                        max={1}
+                                        step={0.01}
+                                        size="large"
+                                        style={{ width: '100%' }}
                                     />
                                 </Form.Item>
                             </Col>
@@ -544,77 +543,172 @@ const ConfigurationTab = ({
                         <Row gutter={24}>
                             <Col span={8}>
                                 <Form.Item
-                                    name="monitoringFrequency"
-                                    label="Tần suất giám sát"
-                                    rules={[{ required: true, message: 'Vui lòng chọn tần suất giám sát' }]}
-                                >
-                                    <Select
-                                        placeholder="Chọn tần suất"
-                                        size="large"
-                                        dropdownStyle={{ maxWidth: '300px' }}
-                                        optionLabelProp="label"
-                                    >
-                                        {mockData.monitoringFrequencies?.map(freq => (
-                                            <Option key={freq.value} value={freq.value} label={freq.label}>
-                                                <Tooltip
-                                                    title={
-                                                        <div>
-                                                            <div><strong>{freq.label}</strong></div>
-                                                            <div style={{ marginTop: '4px' }}>{freq.description}</div>
-                                                        </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div style={{
-                                                        maxWidth: '280px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                        className="option-hover-item"
-                                                    >
-                                                        <Text strong style={{
-                                                            fontSize: '13px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {freq.label}
-                                                        </Text>
-                                                        <Text type="secondary" style={{
-                                                            fontSize: '11px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {freq.description}
-                                                        </Text>
-                                                    </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="alertThreshold"
-                                    label="Ngưỡng cảnh báo sớm (%)"
-                                    tooltip="Cảnh báo khi gần đạt điều kiện kích hoạt"
+                                    name="monitoringFrequencyValue"
+                                    label="Số lần giám sát"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập số lần giám sát' },
+                                        { type: 'number', min: 1, message: 'Tối thiểu 1 lần' }
+                                    ]}
                                 >
                                     <InputNumber
-                                        min={50}
-                                        max={95}
-                                        placeholder="80"
-                                        formatter={value => `${value}%`}
-                                        parser={value => value.replace('%', '')}
+                                        min={1}
+                                        placeholder="1"
                                         size="large"
                                         style={{ width: '100%' }}
                                     />
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
+                                <Form.Item
+                                    name="monitoringFrequencyUnit"
+                                    label="Đơn vị thời gian"
+                                    rules={[{ required: true, message: 'Vui lòng chọn đơn vị thời gian' }]}
+                                >
+                                    <Select
+                                        placeholder="Chọn đơn vị"
+                                        size="large"
+                                        dropdownStyle={{ maxWidth: '300px' }}
+                                        optionLabelProp="label"
+                                    >
+                                        <Option key="hours" value="hours" label="giờ">
+                                            <div style={{
+                                                maxWidth: '280px',
+                                                cursor: 'pointer'
+                                            }}
+                                                className="option-hover-item"
+                                            >
+                                                <Text strong style={{
+                                                    fontSize: '13px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Giờ
+                                                </Text>
+                                                <Text type="secondary" style={{
+                                                    fontSize: '11px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Giám sát theo giờ
+                                                </Text>
+                                            </div>
+                                        </Option>
+                                        <Option key="days" value="days" label="ngày">
+                                            <div style={{
+                                                maxWidth: '280px',
+                                                cursor: 'pointer'
+                                            }}
+                                                className="option-hover-item"
+                                            >
+                                                <Text strong style={{
+                                                    fontSize: '13px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Ngày
+                                                </Text>
+                                                <Text type="secondary" style={{
+                                                    fontSize: '11px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Giám sát theo ngày
+                                                </Text>
+                                            </div>
+                                        </Option>
+                                        <Option key="weeks" value="weeks" label="tuần">
+                                            <div style={{
+                                                maxWidth: '280px',
+                                                cursor: 'pointer'
+                                            }}
+                                                className="option-hover-item"
+                                            >
+                                                <Text strong style={{
+                                                    fontSize: '13px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Tuần
+                                                </Text>
+                                                <Text type="secondary" style={{
+                                                    fontSize: '11px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Giám sát theo tuần
+                                                </Text>
+                                            </div>
+                                        </Option>
+                                        <Option key="months" value="months" label="tháng">
+                                            <div style={{
+                                                maxWidth: '280px',
+                                                cursor: 'pointer'
+                                            }}
+                                                className="option-hover-item"
+                                            >
+                                                <Text strong style={{
+                                                    fontSize: '13px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Tháng
+                                                </Text>
+                                                <Text type="secondary" style={{
+                                                    fontSize: '11px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Giám sát theo tháng
+                                                </Text>
+                                            </div>
+                                        </Option>
+                                        <Option key="years" value="years" label="năm">
+                                            <div style={{
+                                                maxWidth: '280px',
+                                                cursor: 'pointer'
+                                            }}
+                                                className="option-hover-item"
+                                            >
+                                                <Text strong style={{
+                                                    fontSize: '13px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Năm
+                                                </Text>
+                                                <Text type="secondary" style={{
+                                                    fontSize: '11px',
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    Giám sát theo năm
+                                                </Text>
+                                            </div>
+                                        </Option>
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col span={16}>
                                 <Form.Item
                                     name="alertTypes"
                                     label="Loại cảnh báo"
@@ -625,37 +719,7 @@ const ConfigurationTab = ({
                                             label: type.label,
                                             value: type.value
                                         }))}
-                                        style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={24}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="enableRealTimeAlerts"
-                                    label="Cảnh báo thời gian thực"
-                                    valuePropName="checked"
-                                >
-                                    <Switch
-                                        checkedChildren="Bật"
-                                        unCheckedChildren="Tắt"
-                                        size="default"
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="enablePredictiveAlerts"
-                                    label="Cảnh báo dự đoán"
-                                    valuePropName="checked"
-                                    tooltip="Cảnh báo dựa trên dự đoán AI"
-                                >
-                                    <Switch
-                                        checkedChildren="Bật"
-                                        unCheckedChildren="Tắt"
-                                        size="default"
+                                        style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}
                                     />
                                 </Form.Item>
                             </Col>
@@ -900,6 +964,29 @@ const ConfigurationTab = ({
                                             </Form.Item>
                                         </Col>
 
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="alertThreshold"
+                                                label="Ngưỡng cảnh báo sớm (%)"
+                                                tooltip="Cảnh báo khi gần đạt điều kiện kích hoạt cho nguồn dữ liệu này"
+                                                rules={[
+                                                    { type: 'number', min: 50, max: 95, message: 'Từ 50% đến 95%' }
+                                                ]}
+                                            >
+                                                <InputNumber
+                                                    min={50}
+                                                    max={95}
+                                                    placeholder="80"
+                                                    formatter={value => `${value}%`}
+                                                    parser={value => value.replace('%', '')}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+
+                                    <Row gutter={16}>
                                         {isChangeAggregation === 'change' && (
                                             <Col span={8}>
                                                 <Form.Item
@@ -971,7 +1058,7 @@ const ConfigurationTab = ({
                                 <div className="logic-preview">
                                     <Text>
                                         Thanh toán <Text strong>{configurationData.payoutPercentage}%</Text> (tối đa{' '}
-                                        <Text strong>${configurationData.maxPayoutAmount?.toLocaleString()}</Text>) khi{' '}
+                                        <Text strong>{configurationData.maxPayoutAmount?.toLocaleString()} ₫</Text>) khi{' '}
                                         <Text strong>
                                             {configurationData.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
                                         </Text>

@@ -66,3 +66,38 @@
   border-radius: 4px !important;
   transition: background-color 0.2s !important;
 }
+
+/* Contract Preview Panel Styles */
+.contract-preview-panel {
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.contract-preview-a4 {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  transition: box-shadow 0.3s ease !important;
+}
+
+.contract-preview-a4:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Contract field styling */
+.contract-field {
+  transition: background-color 0.2s ease !important;
+}
+
+.contract-field:hover {
+  background-color: #e6f7ff !important;
+}
+
+/* Print media query for PDF export */
+@media print {
+  .contract-preview-a4 {
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

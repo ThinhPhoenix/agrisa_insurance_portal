@@ -494,6 +494,71 @@ const ConfigurationTab = ({
                         </Row> */}
                     </Panel>
 
+                    {/* Insurance Cost Configuration */}
+                    <Panel
+                        header={
+                            <Space>
+                                <DollarOutlined />
+                                <span>Cấu hình chi phí bảo hiểm</span>
+                            </Space>
+                        }
+                        key="insurance-cost"
+                    >
+                        <Row gutter={24}>
+                            <Col span={8}>
+                                <Form.Item
+                                    name="insuranceFixedPayoutAmount"
+                                    label="Số tiền chi trả cố định (VND)"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
+                                        { type: 'number', min: 0, message: 'Số tiền phải lớn hơn hoặc bằng 0' }
+                                    ]}
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        step={100000}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
+                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
+                                        size="large"
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
+                                <Form.Item
+                                    name="insuranceBasedOnHectare"
+                                    label="Lấy theo héc ta"
+                                    valuePropName="checked"
+                                >
+                                    <Switch
+                                        checkedChildren="Có"
+                                        unCheckedChildren="Không"
+                                        size="default"
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
+                                <Form.Item
+                                    name="insuranceBasicPayoutRate"
+                                    label="Tỉ lệ chi trả cơ bản"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+                                    ]}
+                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
+                                >
+                                    <InputNumber
+                                        min={0.01}
+                                        max={1}
+                                        step={0.01}
+                                        size="large"
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Panel>
+
                     {/* Monitoring & Alerts */}
                     <Panel
                         header={

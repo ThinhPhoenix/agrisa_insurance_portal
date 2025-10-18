@@ -463,35 +463,6 @@ const ConfigurationTab = ({
                                 </Form.Item>
                             </Col>
                         </Row>
-
-                        {/* <Row gutter={24}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="requireManualApproval"
-                                    label="Yêu cầu phê duyệt thủ công"
-                                    valuePropName="checked"
-                                >
-                                    <Switch
-                                        checkedChildren="Có"
-                                        unCheckedChildren="Không"
-                                        size="default"
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="enablePartialPayout"
-                                    label="Cho phép thanh toán một phần"
-                                    valuePropName="checked"
-                                >
-                                    <Switch
-                                        checkedChildren="Có"
-                                        unCheckedChildren="Không"
-                                        size="default"
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row> */}
                     </Panel>
 
                     {/* Insurance Cost Configuration */}

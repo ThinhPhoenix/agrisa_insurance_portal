@@ -368,7 +368,7 @@ const ConfigurationTab = ({
                         header={
                             <Space>
                                 <DollarOutlined />
-                                <span>Cấu hình Thanh toán</span>
+                                <span>Cấu hình Thanh toán chi trả</span>
                             </Space>
                         }
                         key="payout"
@@ -376,115 +376,78 @@ const ConfigurationTab = ({
                         <Row gutter={24}>
                             <Col span={8}>
                                 <Form.Item
-                                    name="payoutMethod"
-                                    label="Phương thức thanh toán"
-                                    rules={[{ required: true, message: 'Vui lòng chọn phương thức thanh toán' }]}
+                                    name="fixedPayoutAmount"
+                                    label="Số tiền chi trả cố định (VND)"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
+                                        { type: 'number', min: 0, message: 'Số tiền phải lớn hơn 0' }
+                                    ]}
                                 >
-                                    <Select
-                                        placeholder="Chọn phương thức"
+                                    <InputNumber
+                                        min={0}
+                                        step={100000}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
+                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
                                         size="large"
-                                        dropdownStyle={{ maxWidth: '300px' }}
-                                        optionLabelProp="label"
-                                    >
-                                        {mockData.payoutMethods?.map(method => (
-                                            <Option key={method.value} value={method.value} label={method.label}>
-                                                <Tooltip
-                                                    title={
-                                                        <div>
-                                                            <div><strong>{method.label}</strong></div>
-                                                            <div style={{ marginTop: '4px' }}>{method.description}</div>
-                                                        </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div style={{
-                                                        maxWidth: '280px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                        className="option-hover-item"
-                                                    >
-                                                        <Text strong style={{
-                                                            fontSize: '13px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {method.label}
-                                                        </Text>
-                                                        <Text type="secondary" style={{
-                                                            fontSize: '11px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {method.description}
-                                                        </Text>
-                                                    </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
-                                    </Select>
+                                        style={{ width: '100%' }}
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
                                 <Form.Item
-                                    name="payoutCalculationMethod"
-                                    label="Phương thức tính toán"
-                                    rules={[{ required: true, message: 'Vui lòng chọn phương thức tính' }]}
+                                    name="basedOnHectare"
+                                    label="Lấy theo héc ta"
+                                    valuePropName="checked"
                                 >
-                                    <Select
-                                        placeholder="Chọn phương thức tính"
-                                        size="large"
-                                        dropdownStyle={{ maxWidth: '300px' }}
-                                        optionLabelProp="label"
-                                    >
-                                        {mockData.payoutCalculationMethods?.map(method => (
-                                            <Option key={method.value} value={method.value} label={method.label}>
-                                                <Tooltip
-                                                    title={
-                                                        <div>
-                                                            <div><strong>{method.label}</strong></div>
-                                                            <div style={{ marginTop: '4px' }}>{method.description}</div>
-                                                        </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div style={{
-                                                        maxWidth: '280px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                        className="option-hover-item"
-                                                    >
-                                                        <Text strong style={{
-                                                            fontSize: '13px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {method.label}
-                                                        </Text>
-                                                        <Text type="secondary" style={{
-                                                            fontSize: '11px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {method.description}
-                                                        </Text>
-                                                    </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
-                                    </Select>
+                                    <Switch
+                                        checkedChildren="Có"
+                                        unCheckedChildren="Không"
+                                        size="default"
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
+                                <Form.Item
+                                    name="exceedingThresholdRate"
+                                    label="Tỉ lệ chi trả vượt ngưỡng chỉ số"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+                                    ]}
+                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
+                                >
+                                    <InputNumber
+                                        min={0.01}
+                                        max={1}
+                                        step={0.01}
+                                        size="large"
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={24}>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="basicPayoutRate"
+                                    label="Tỉ lệ chi trả cơ bản"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+                                    ]}
+                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
+                                >
+                                    <InputNumber
+                                        min={0.01}
+                                        max={1}
+                                        step={0.01}
+                                        size="large"
+                                        style={{ width: '100%' }}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
                                 <Form.Item
                                     name="payoutDelayDays"
                                     label="Thời gian thanh toán (ngày)"
@@ -501,7 +464,7 @@ const ConfigurationTab = ({
                             </Col>
                         </Row>
 
-                        <Row gutter={24}>
+                        {/* <Row gutter={24}>
                             <Col span={12}>
                                 <Form.Item
                                     name="requireManualApproval"
@@ -528,7 +491,7 @@ const ConfigurationTab = ({
                                     />
                                 </Form.Item>
                             </Col>
-                        </Row>
+                        </Row> */}
                     </Panel>
 
                     {/* Monitoring & Alerts */}

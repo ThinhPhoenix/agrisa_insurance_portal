@@ -8,6 +8,7 @@ import {
   InputNumber,
   Radio,
   Select,
+  Slider,
   Spin,
   Switch,
   Upload,
@@ -37,6 +38,7 @@ export const CustomForm = forwardRef(function CustomForm(
     getFieldsValue: () => form.getFieldsValue(),
     resetFields: () => form.resetFields(),
     setFieldsValue: (values) => form.setFieldsValue(values),
+    getForm: () => form, // Export form instance for Form.useWatch
   }));
 
   useEffect(() => {
@@ -145,6 +147,8 @@ export const CustomForm = forwardRef(function CustomForm(
               ...(field.itemStyle ?? field.style),
             }}
             className={field.itemClassName ?? field.className}
+            tooltip={field.tooltip}
+            dependencies={field.dependencies}
           >
             <InputNumber
               placeholder={field.placeholder}
@@ -153,6 +157,9 @@ export const CustomForm = forwardRef(function CustomForm(
               min={field.min}
               max={field.max}
               step={field.step}
+              formatter={field.formatter}
+              parser={field.parser}
+              disabled={field.disabled}
               onChange={(value) => {
                 field?.onChange && field.onChange(value, form);
               }}
@@ -171,6 +178,8 @@ export const CustomForm = forwardRef(function CustomForm(
               ...(field.itemStyle ?? field.style),
             }}
             className={field.itemClassName ?? field.className}
+            tooltip={field.tooltip}
+            dependencies={field.dependencies}
           >
             <Select
               placeholder={field.placeholder}
@@ -180,6 +189,9 @@ export const CustomForm = forwardRef(function CustomForm(
               showSearch={field.showSearch}
               allowClear={field.allowClear !== false}
               loading={field.loading}
+              size={field.size}
+              optionLabelProp={field.optionLabelProp}
+              dropdownStyle={field.dropdownStyle}
               filterOption={
                 field.filterOption ||
                 ((input, option) =>
@@ -206,8 +218,14 @@ export const CustomForm = forwardRef(function CustomForm(
               }
             >
               {field.options?.map((option) => (
-                <Option key={option.value} value={option.value}>
-                  {option.label}
+                <Option
+                  key={option.value}
+                  value={option.value}
+                  label={option.labelProp || option.label}
+                >
+                  {field.renderOption
+                    ? field.renderOption(option)
+                    : option.label}
                 </Option>
               ))}
             </Select>
@@ -409,12 +427,16 @@ export const CustomForm = forwardRef(function CustomForm(
               ...(field.itemStyle ?? field.style),
             }}
             className={field.itemClassName ?? field.className}
+            tooltip={field.tooltip}
           >
             <TextArea
               placeholder={field.placeholder}
-              rows={4}
+              rows={field.rows || 4}
               style={field.inputStyle ?? field.style}
               className={field.className}
+              showCount={field.showCount}
+              maxLength={field.maxLength}
+              disabled={field.disabled}
               onChange={(e) => {
                 field?.onChange && field.onChange(e.target.value, form);
               }}
@@ -491,10 +513,42 @@ export const CustomForm = forwardRef(function CustomForm(
             valuePropName="checked"
             rules={rules}
             style={{ gridColumn: field.gridColumn, ...field.style }}
+            tooltip={field.tooltip}
           >
             <Switch
+              checkedChildren={field.checkedChildren}
+              unCheckedChildren={field.unCheckedChildren}
+              size={field.size}
+              disabled={field.disabled}
               onChange={(checked) => {
                 field?.onChange && field.onChange(checked, form);
+              }}
+            />
+          </Form.Item>
+        );
+      case "slider":
+        return (
+          <Form.Item
+            key={field.name}
+            label={field.label}
+            name={field.name}
+            rules={rules}
+            style={{
+              gridColumn: field.gridColumn,
+              ...(field.itemStyle ?? field.style),
+            }}
+            className={field.itemClassName ?? field.className}
+            tooltip={field.tooltip}
+          >
+            <Slider
+              min={field.min}
+              max={field.max}
+              step={field.step}
+              marks={field.marks}
+              tooltip={field.sliderTooltip}
+              disabled={field.disabled}
+              onChange={(value) => {
+                field?.onChange && field.onChange(value, form);
               }}
             />
           </Form.Item>

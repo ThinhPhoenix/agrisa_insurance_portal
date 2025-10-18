@@ -1,3 +1,4 @@
+import CustomForm from '@/components/custom-form';
 import CustomTable from '@/components/custom-table';
 import {
     AlertOutlined,
@@ -13,31 +14,18 @@ import {
     Alert,
     Button,
     Card,
-    Checkbox,
-    Col,
     Collapse,
-    DatePicker,
     Form,
-    Input,
-    InputNumber,
     Popconfirm,
-    Radio,
-    Row,
-    Select,
-    Slider,
     Space,
-    Switch,
     Tag,
     Tooltip,
     Typography
 } from 'antd';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
-const { Option } = Select;
-const { Title, Text } = Typography;
+const { Title, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
-const { RangePicker } = DatePicker;
-const { TextArea } = Input;
 
 const ConfigurationTab = ({
     configurationData,
@@ -48,8 +36,8 @@ const ConfigurationTab = ({
     onUpdateTriggerCondition,
     getAvailableDataSourcesForTrigger
 }) => {
-    const [form] = Form.useForm();
-    const [conditionForm] = Form.useForm();
+    const formRef = useRef();
+    const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
@@ -61,7 +49,7 @@ const ConfigurationTab = ({
 
     // Handle add/update condition
     const handleSaveCondition = () => {
-        conditionForm.validateFields().then(values => {
+        conditionFormRef.current?.validateFields().then(values => {
             const selectedDataSource = availableDataSources.find(ds => ds.value === values.dataSourceId);
 
             const condition = {
@@ -81,24 +69,24 @@ const ConfigurationTab = ({
                 onAddTriggerCondition(condition);
             }
 
-            conditionForm.resetFields();
+            conditionFormRef.current?.resetFields();
         });
     };
 
     // Handle edit condition
     const handleEditCondition = (condition) => {
         setEditingCondition(condition);
-        conditionForm.setFieldsValue(condition);
+        conditionFormRef.current?.setFieldsValue(condition);
     };
 
     // Handle cancel edit
     const handleCancelEdit = () => {
         setEditingCondition(null);
-        conditionForm.resetFields();
+        conditionFormRef.current?.resetFields();
     };
 
     // Check if aggregation function is 'change'
-    const isChangeAggregation = Form.useWatch('aggregationFunction', conditionForm);
+    const isChangeAggregation = Form.useWatch('aggregationFunction', conditionFormRef.current?.getForm());
 
     // Get filtered data sources by selected category
     const getFilteredDataSources = (categoryValue) => {
@@ -109,6 +97,498 @@ const ConfigurationTab = ({
         );
     };
 
+    // Helper function to render select option with tooltip
+    const renderOptionWithTooltip = (option, tooltipContent) => {
+        return (
+            <Tooltip
+                title={tooltipContent}
+                placement="right"
+                mouseEnterDelay={0.3}
+            >
+                <div style={{ maxWidth: '280px', cursor: 'pointer' }} className="option-hover-item">
+                    <TypographyText style={{
+                        fontSize: '13px',
+                        display: 'block',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                    }}>
+                        {option.label}
+                    </TypographyText>
+                    {option.description && (
+                        <TypographyText type="secondary" style={{
+                            fontSize: '11px',
+                            display: 'block',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                        }}>
+                            {option.description}
+                        </TypographyText>
+                    )}
+                </div>
+            </Tooltip>
+        );
+    };
+
+    // Generate basic configuration fields
+    const getBasicConfigFields = () => [
+        {
+            name: 'coverageType',
+            label: 'Loại bảo hiểm',
+            type: 'select',
+            placeholder: 'Chọn loại bảo hiểm',
+            required: true,
+            size: 'large',
+            gridColumn: '1',
+            optionLabelProp: 'label',
+            dropdownStyle: { maxWidth: '300px' },
+            options: mockData.coverageTypes?.map(type => ({
+                value: type.value,
+                label: type.label,
+                labelProp: type.label,
+                description: type.description,
+                premium_rate: type.premium_rate
+            })),
+            renderOption: (option) => renderOptionWithTooltip(option, (
+                <div>
+                    <div><strong>{option.label}</strong></div>
+                    <div style={{ marginTop: '4px' }}>{option.description}</div>
+                    <div style={{ marginTop: '4px' }}>
+                        Tỷ lệ phí: {(option.premium_rate * 100).toFixed(1)}%
+                    </div>
+                </div>
+            ))
+        },
+        {
+            name: 'riskLevel',
+            label: 'Mức độ rủi ro',
+            type: 'select',
+            placeholder: 'Chọn mức độ rủi ro',
+            required: true,
+            size: 'large',
+            gridColumn: '2',
+            options: mockData.riskLevels?.map(level => ({
+                value: level.value,
+                label: level.label,
+                color: level.color,
+                multiplier: level.multiplier
+            })),
+            renderOption: (option) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        width: '12px',
+                        height: '12px',
+                        backgroundColor: option.color,
+                        borderRadius: '50%'
+                    }} />
+                    <TypographyText strong>{option.label}</TypographyText>
+                    <TypographyText type="secondary">({option.multiplier}x)</TypographyText>
+                </div>
+            )
+        },
+        {
+            name: 'logicalOperator',
+            label: 'Toán tử Logic giữa các điều kiện',
+            type: 'radioGroup',
+            required: true,
+            gridColumn: '1',
+            options: mockData.logicalOperators?.map(operator => ({
+                value: operator.value,
+                label: (
+                    <div>
+                        <TypographyText strong>{operator.label}</TypographyText>
+                        <br />
+                        <TypographyText type="secondary" style={{ fontSize: '11px' }}>
+                            {operator.description}
+                        </TypographyText>
+                    </div>
+                )
+            }))
+        },
+        {
+            name: 'payoutPercentage',
+            label: 'Tỷ lệ Thanh toán (%)',
+            type: 'slider',
+            required: true,
+            gridColumn: '2',
+            min: 1,
+            max: 100,
+            marks: {
+                25: '25%',
+                50: '50%',
+                75: '75%',
+                100: '100%'
+            },
+            sliderTooltip: { formatter: value => `${value}%` },
+            rules: [
+                { required: true, message: 'Vui lòng nhập tỷ lệ thanh toán' },
+                { type: 'number', min: 1, max: 100, message: 'Tỷ lệ từ 1% đến 100%' }
+            ]
+        },
+        {
+            name: 'maxPayoutAmount',
+            label: 'Số tiền thanh toán tối đa (VND)',
+            type: 'number',
+            required: true,
+            gridColumn: '3',
+            min: 25000000,
+            step: 1000000,
+            size: 'large',
+            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
+            parser: value => value.replace(/\s?₫|(,*)/g, ''),
+            rules: [
+                { required: true, message: 'Vui lòng nhập số tiền tối đa' },
+                { type: 'number', min: 25000000, message: 'Tối thiểu 25,000,000 ₫' }
+            ]
+        }
+    ];
+
+    // Generate payout configuration fields
+    const getPayoutConfigFields = () => [
+        {
+            name: 'fixedPayoutAmount',
+            label: 'Số tiền chi trả cố định (VND)',
+            type: 'number',
+            required: true,
+            gridColumn: '1',
+            min: 0,
+            step: 100000,
+            size: 'large',
+            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
+            parser: value => value.replace(/\s?₫|(,*)/g, ''),
+            rules: [
+                { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
+                { type: 'number', min: 0, message: 'Số tiền phải lớn hơn 0' }
+            ]
+        },
+        {
+            name: 'basedOnHectare',
+            label: 'Lấy theo héc ta',
+            type: 'switch',
+            gridColumn: '2',
+            checkedChildren: 'Có',
+            unCheckedChildren: 'Không'
+        },
+        {
+            name: 'exceedingThresholdRate',
+            label: 'Tỉ lệ chi trả vượt ngưỡng chỉ số',
+            type: 'number',
+            required: true,
+            gridColumn: '3',
+            min: 0.01,
+            max: 1,
+            step: 0.01,
+            size: 'large',
+            tooltip: 'Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm',
+            rules: [
+                { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+            ]
+        },
+        {
+            name: 'basicPayoutRate',
+            label: 'Tỉ lệ chi trả cơ bản',
+            type: 'number',
+            required: true,
+            gridColumn: '1',
+            min: 0.01,
+            max: 1,
+            step: 0.01,
+            size: 'large',
+            tooltip: 'Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm',
+            rules: [
+                { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+            ]
+        },
+        {
+            name: 'payoutDelayDays',
+            label: 'Thời gian thanh toán (ngày)',
+            type: 'number',
+            gridColumn: '2',
+            min: 0,
+            max: 30,
+            placeholder: '3',
+            size: 'large',
+            tooltip: 'Số ngày chờ đợi trước khi thanh toán tự động'
+        }
+    ];
+
+    // Generate insurance cost fields
+    const getInsuranceCostFields = () => [
+        {
+            name: 'insuranceFixedPayoutAmount',
+            label: 'Số tiền chi trả cố định (VND)',
+            type: 'number',
+            required: true,
+            gridColumn: '1',
+            min: 0,
+            step: 100000,
+            size: 'large',
+            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
+            parser: value => value.replace(/\s?₫|(,*)/g, ''),
+            rules: [
+                { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
+                { type: 'number', min: 0, message: 'Số tiền phải lớn hơn hoặc bằng 0' }
+            ]
+        },
+        {
+            name: 'insuranceBasedOnHectare',
+            label: 'Lấy theo héc ta',
+            type: 'switch',
+            gridColumn: '2',
+            checkedChildren: 'Có',
+            unCheckedChildren: 'Không'
+        },
+        {
+            name: 'insuranceBasicPayoutRate',
+            label: 'Tỉ lệ chi trả cơ bản',
+            type: 'number',
+            required: true,
+            gridColumn: '3',
+            min: 0.01,
+            max: 1,
+            step: 0.01,
+            size: 'large',
+            tooltip: 'Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm',
+            rules: [
+                { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+            ]
+        }
+    ];
+
+    // Generate monitoring fields
+    const getMonitoringFields = () => [
+        {
+            name: 'monitoringFrequencyValue',
+            label: 'Số lần giám sát',
+            type: 'number',
+            required: true,
+            gridColumn: '1',
+            min: 1,
+            placeholder: '1',
+            size: 'large',
+            rules: [
+                { required: true, message: 'Vui lòng nhập số lần giám sát' },
+                { type: 'number', min: 1, message: 'Tối thiểu 1 lần' }
+            ]
+        },
+        {
+            name: 'monitoringFrequencyUnit',
+            label: 'Đơn vị thời gian',
+            type: 'select',
+            required: true,
+            gridColumn: '2',
+            placeholder: 'Chọn đơn vị',
+            size: 'large',
+            optionLabelProp: 'label',
+            dropdownStyle: { maxWidth: '300px' },
+            options: [
+                { value: 'hours', label: 'giờ', description: 'Giám sát theo giờ' },
+                { value: 'days', label: 'ngày', description: 'Giám sát theo ngày' },
+                { value: 'weeks', label: 'tuần', description: 'Giám sát theo tuần' },
+                { value: 'months', label: 'tháng', description: 'Giám sát theo tháng' },
+                { value: 'years', label: 'năm', description: 'Giám sát theo năm' }
+            ],
+            renderOption: (option) => renderOptionWithTooltip(option, null)
+        },
+        {
+            name: 'alertTypes',
+            label: 'Loại cảnh báo',
+            type: 'checkbox-group',
+            required: true,
+            gridColumn: '1 / -1',
+            options: mockData.alertTypes?.map(type => ({
+                value: type.value,
+                label: type.label
+            })),
+            rules: [{ required: true, message: 'Vui lòng chọn ít nhất một loại cảnh báo' }]
+        }
+    ];
+
+    // Generate additional settings fields  
+    const getAdditionalSettingsFields = () => [
+        {
+            name: 'policyDescription',
+            label: 'Mô tả Policy',
+            type: 'textarea',
+            rows: 4,
+            placeholder: 'Mô tả chi tiết về policy bảo hiểm này...',
+            showCount: true,
+            maxLength: 500,
+            rules: [{ max: 500, message: 'Tối đa 500 ký tự' }]
+        },
+        {
+            name: 'enableGracePeriod',
+            label: 'Cho phép thời gian ân hạn',
+            type: 'switch',
+            gridColumn: '1',
+            checkedChildren: 'Có',
+            unCheckedChildren: 'Không',
+            tooltip: 'Thời gian ân hạn trước khi policy có hiệu lực'
+        },
+        {
+            name: 'gracePeriodDays',
+            label: 'Thời gian ân hạn (ngày)',
+            type: 'number',
+            gridColumn: '2',
+            min: 1,
+            max: 30,
+            placeholder: '7',
+            size: 'large',
+            dependencies: ['enableGracePeriod'],
+            disabled: !formRef.current?.getFieldsValue()?.enableGracePeriod
+        },
+        {
+            name: 'enableAutoRenewal',
+            label: 'Tự động gia hạn',
+            type: 'switch',
+            gridColumn: '3',
+            checkedChildren: 'Có',
+            unCheckedChildren: 'Không'
+        }
+    ];
+
+    // Generate condition form fields
+    const getConditionFormFields = () => {
+        const fields = [
+            {
+                name: 'dataSourceId',
+                label: 'Nguồn dữ liệu',
+                type: 'select',
+                required: true,
+                gridColumn: '1',
+                placeholder: 'Chọn nguồn dữ liệu',
+                size: 'large',
+                optionLabelProp: 'label',
+                dropdownStyle: { maxWidth: '300px' },
+                options: availableDataSources.map(source => ({
+                    value: source.value,
+                    label: source.label,
+                    labelProp: source.label,
+                    parameterName: source.parameterName,
+                    unit: source.unit
+                })),
+                renderOption: (option) => renderOptionWithTooltip(option, (
+                    <div>
+                        <div><strong>{option.label}</strong></div>
+                        <div style={{ marginTop: '4px' }}>{option.parameterName}</div>
+                        <div style={{ marginTop: '4px', color: '#52c41a' }}>
+                            Đơn vị: {option.unit}
+                        </div>
+                    </div>
+                ))
+            },
+            {
+                name: 'aggregationFunction',
+                label: 'Hàm tổng hợp',
+                type: 'select',
+                required: true,
+                gridColumn: '2',
+                placeholder: 'Chọn hàm tổng hợp',
+                size: 'large',
+                optionLabelProp: 'label',
+                dropdownStyle: { maxWidth: '300px' },
+                options: mockData.aggregationFunctions?.map(func => ({
+                    value: func.value,
+                    label: func.label,
+                    labelProp: func.label,
+                    description: func.description
+                })),
+                renderOption: (option) => renderOptionWithTooltip(option, (
+                    <div>
+                        <div><strong>{option.label}</strong></div>
+                        <div style={{ marginTop: '4px' }}>{option.description}</div>
+                    </div>
+                ))
+            },
+            {
+                name: 'aggregationWindowDays',
+                label: 'Cửa sổ Tổng hợp (Ngày)',
+                type: 'number',
+                required: true,
+                gridColumn: '3',
+                placeholder: '30',
+                min: 1,
+                size: 'large',
+                rules: [
+                    { required: true, message: 'Nhập cửa sổ tổng hợp' },
+                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                ]
+            },
+            {
+                name: 'thresholdOperator',
+                label: 'Toán tử Ngưỡng',
+                type: 'select',
+                required: true,
+                gridColumn: '1',
+                placeholder: 'Chọn toán tử',
+                size: 'large',
+                optionLabelProp: 'label',
+                dropdownStyle: { maxWidth: '300px' },
+                options: mockData.thresholdOperators?.map(operator => ({
+                    value: operator.value,
+                    label: operator.label,
+                    labelProp: operator.label,
+                    description: operator.description
+                })),
+                renderOption: (option) => renderOptionWithTooltip(option, (
+                    <div>
+                        <div><strong>{option.label}</strong></div>
+                        <div style={{ marginTop: '4px' }}>{option.description}</div>
+                    </div>
+                ))
+            },
+            {
+                name: 'thresholdValue',
+                label: 'Giá trị Ngưỡng',
+                type: 'number',
+                required: true,
+                gridColumn: '2',
+                placeholder: '200',
+                size: 'large'
+            },
+            {
+                name: 'alertThreshold',
+                label: 'Ngưỡng cảnh báo sớm (%)',
+                type: 'number',
+                gridColumn: '3',
+                min: 50,
+                max: 95,
+                placeholder: '80',
+                size: 'large',
+                tooltip: 'Cảnh báo khi gần đạt điều kiện kích hoạt cho nguồn dữ liệu này',
+                formatter: value => `${value}%`,
+                parser: value => value.replace('%', ''),
+                rules: [
+                    { type: 'number', min: 50, max: 95, message: 'Từ 50% đến 95%' }
+                ]
+            }
+        ];
+
+        // Add baseline window field if aggregation function is 'change'
+        if (isChangeAggregation === 'change') {
+            fields.push({
+                name: 'baselineWindowDays',
+                label: 'Cửa sổ Baseline (Ngày)',
+                type: 'number',
+                required: true,
+                gridColumn: '1',
+                placeholder: '365',
+                min: 1,
+                size: 'large',
+                rules: [
+                    { required: true, message: 'Nhập cửa sổ baseline' },
+                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                ]
+            });
+        }
+
+        return fields;
+    };
+
     // Trigger conditions table columns
     const conditionsColumns = [
         {
@@ -117,11 +597,11 @@ const ConfigurationTab = ({
             key: 'dataSourceLabel',
             render: (text, record) => (
                 <div>
-                    <Text strong>{text}</Text>
+                    <TypographyText strong>{text}</TypographyText>
                     <br />
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <TypographyText type="secondary" style={{ fontSize: '12px' }}>
                         {record.parameterName} ({record.unit})
-                    </Text>
+                    </TypographyText>
                 </div>
             ),
         },
@@ -133,12 +613,12 @@ const ConfigurationTab = ({
                 <div>
                     <Tag color="blue">{text}</Tag>
                     <br />
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <TypographyText type="secondary" style={{ fontSize: '12px' }}>
                         {record.aggregationWindowDays} ngày
                         {record.baselineWindowDays && (
                             <> | Baseline: {record.baselineWindowDays} ngày</>
                         )}
-                    </Text>
+                    </TypographyText>
                 </div>
             ),
         },
@@ -147,9 +627,9 @@ const ConfigurationTab = ({
             key: 'condition',
             render: (_, record) => (
                 <div>
-                    <Text>
+                    <TypographyText>
                         {record.thresholdOperatorLabel} {record.thresholdValue} {record.unit}
-                    </Text>
+                    </TypographyText>
                 </div>
             ),
         },
@@ -192,972 +672,214 @@ const ConfigurationTab = ({
 
     return (
         <div className="configuration-tab">
-            <Form
-                form={form}
-                layout="vertical"
-                initialValues={configurationData}
-                onValuesChange={handleValuesChange}
-                className="configuration-form"
-            >
-                <Collapse defaultActiveKey={['basic', 'conditions']} size="large">
-                    {/* Basic Policy Configuration */}
-                    <Panel
-                        header={
-                            <Space>
-                                <SettingOutlined />
-                                <span>Cấu hình Policy Cơ bản</span>
-                            </Space>
-                        }
-                        key="basic"
-                    >
-                        <Row gutter={24}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="coverageType"
-                                    label="Loại bảo hiểm"
-                                    rules={[{ required: true, message: 'Vui lòng chọn loại bảo hiểm' }]}
-                                >
-                                    <Select
-                                        placeholder="Chọn loại bảo hiểm"
-                                        size="large"
-                                        dropdownStyle={{ maxWidth: '300px' }}
-                                        optionLabelProp="label"
-                                    >
-                                        {mockData.coverageTypes?.map(type => (
-                                            <Option key={type.value} value={type.value} label={type.label}>
-                                                <Tooltip
-                                                    title={
-                                                        <div>
-                                                            <div><strong>{type.label}</strong></div>
-                                                            <div style={{ marginTop: '4px' }}>{type.description}</div>
-                                                            <div style={{ marginTop: '4px' }}>
-                                                                Tỷ lệ phí: {(type.premium_rate * 100).toFixed(1)}%
-                                                            </div>
-                                                        </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div style={{
-                                                        maxWidth: '280px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                        className="option-hover-item"
-                                                    >
-                                                        <Text strong style={{
-                                                            fontSize: '13px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {type.label}
-                                                        </Text>
-                                                        <Text type="secondary" style={{
-                                                            fontSize: '11px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {type.description} - Phí: {(type.premium_rate * 100).toFixed(1)}%
-                                                        </Text>
-                                                    </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="riskLevel"
-                                    label="Mức độ rủi ro"
-                                    rules={[{ required: true, message: 'Vui lòng chọn mức độ rủi ro' }]}
-                                >
-                                    <Select placeholder="Chọn mức độ rủi ro" size="large">
-                                        {mockData.riskLevels?.map(level => (
-                                            <Option key={level.value} value={level.value}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <div
-                                                        style={{
-                                                            width: '12px',
-                                                            height: '12px',
-                                                            backgroundColor: level.color,
-                                                            borderRadius: '50%'
-                                                        }}
-                                                    />
-                                                    <Text strong>{level.label}</Text>
-                                                    <Text type="secondary">({level.multiplier}x)</Text>
-                                                </div>
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+            <Collapse defaultActiveKey={['basic', 'conditions']} size="large">
+                {/* Basic Policy Configuration */}
+                <Panel
+                    header={
+                        <Space>
+                            <SettingOutlined />
+                            <span>Cấu hình Policy Cơ bản</span>
+                        </Space>
+                    }
+                    key="basic"
+                >
+                    <CustomForm
+                        ref={formRef}
+                        fields={getBasicConfigFields()}
+                        initialValues={configurationData}
+                        onValuesChange={onDataChange}
+                        gridColumns="repeat(3, 1fr)"
+                        gap="24px"
+                    />
+                </Panel>
 
-                        <Row gutter={24}>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="logicalOperator"
-                                    label="Toán tử Logic giữa các điều kiện"
-                                    rules={[{ required: true, message: 'Vui lòng chọn toán tử logic' }]}
-                                >
-                                    <Radio.Group size="large">
-                                        {mockData.logicalOperators?.map(operator => (
-                                            <Radio key={operator.value} value={operator.value}>
-                                                <div>
-                                                    <Text strong>{operator.label}</Text>
-                                                    <br />
-                                                    <Text type="secondary" style={{ fontSize: '11px' }}>
-                                                        {operator.description}
-                                                    </Text>
-                                                </div>
-                                            </Radio>
-                                        ))}
-                                    </Radio.Group>
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="payoutPercentage"
-                                    label="Tỷ lệ Thanh toán (%)"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập tỷ lệ thanh toán' },
-                                        { type: 'number', min: 1, max: 100, message: 'Tỷ lệ từ 1% đến 100%' }
-                                    ]}
-                                >
-                                    <Slider
-                                        min={1}
-                                        max={100}
-                                        marks={{
-                                            25: '25%',
-                                            50: '50%',
-                                            75: '75%',
-                                            100: '100%'
-                                        }}
-                                        tooltip={{ formatter: value => `${value}%` }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="maxPayoutAmount"
-                                    label="Số tiền thanh toán tối đa (VND)"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập số tiền tối đa' },
-                                        { type: 'number', min: 25000000, message: 'Tối thiểu 25,000,000 ₫' }
-                                    ]}
-                                >
-                                    <InputNumber
-                                        min={25000000}
-                                        step={1000000}
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
-                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Panel>
+                {/* Payout Configuration */}
+                <Panel
+                    header={
+                        <Space>
+                            <DollarOutlined />
+                            <span>Cấu hình Thanh toán chi trả</span>
+                        </Space>
+                    }
+                    key="payout"
+                >
+                    <CustomForm
+                        ref={formRef}
+                        fields={getPayoutConfigFields()}
+                        initialValues={configurationData}
+                        onValuesChange={onDataChange}
+                        gridColumns="repeat(3, 1fr)"
+                        gap="24px"
+                    />
+                </Panel>
 
-                    {/* Payout Configuration */}
-                    <Panel
-                        header={
-                            <Space>
-                                <DollarOutlined />
-                                <span>Cấu hình Thanh toán chi trả</span>
-                            </Space>
-                        }
-                        key="payout"
-                    >
-                        <Row gutter={24}>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="fixedPayoutAmount"
-                                    label="Số tiền chi trả cố định (VND)"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
-                                        { type: 'number', min: 0, message: 'Số tiền phải lớn hơn 0' }
-                                    ]}
-                                >
-                                    <InputNumber
-                                        min={0}
-                                        step={100000}
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
-                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="basedOnHectare"
-                                    label="Lấy theo héc ta"
-                                    valuePropName="checked"
-                                >
-                                    <Switch
-                                        checkedChildren="Có"
-                                        unCheckedChildren="Không"
-                                        size="default"
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="exceedingThresholdRate"
-                                    label="Tỉ lệ chi trả vượt ngưỡng chỉ số"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
-                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
-                                    ]}
-                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
-                                >
-                                    <InputNumber
-                                        min={0.01}
-                                        max={1}
-                                        step={0.01}
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                {/* Insurance Cost Configuration */}
+                <Panel
+                    header={
+                        <Space>
+                            <DollarOutlined />
+                            <span>Cấu hình chi phí bảo hiểm</span>
+                        </Space>
+                    }
+                    key="insurance-cost"
+                >
+                    <CustomForm
+                        ref={formRef}
+                        fields={getInsuranceCostFields()}
+                        initialValues={configurationData}
+                        onValuesChange={onDataChange}
+                        gridColumns="repeat(3, 1fr)"
+                        gap="24px"
+                    />
+                </Panel>
 
-                        <Row gutter={24}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="basicPayoutRate"
-                                    label="Tỉ lệ chi trả cơ bản"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
-                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
-                                    ]}
-                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
-                                >
-                                    <InputNumber
-                                        min={0.01}
-                                        max={1}
-                                        step={0.01}
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="payoutDelayDays"
-                                    label="Thời gian thanh toán (ngày)"
-                                    tooltip="Số ngày chờ đợi trước khi thanh toán tự động"
-                                >
-                                    <InputNumber
-                                        min={0}
-                                        max={30}
-                                        placeholder="3"
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Panel>
+                {/* Monitoring & Alerts */}
+                <Panel
+                    header={
+                        <Space>
+                            <AlertOutlined />
+                            <span>Giám sát & Cảnh báo</span>
+                        </Space>
+                    }
+                    key="monitoring"
+                >
+                    <CustomForm
+                        ref={formRef}
+                        fields={getMonitoringFields()}
+                        initialValues={configurationData}
+                        onValuesChange={onDataChange}
+                        gridColumns="repeat(2, 1fr)"
+                        gap="24px"
+                    />
+                </Panel>
 
-                    {/* Insurance Cost Configuration */}
-                    <Panel
-                        header={
-                            <Space>
-                                <DollarOutlined />
-                                <span>Cấu hình chi phí bảo hiểm</span>
-                            </Space>
-                        }
-                        key="insurance-cost"
-                    >
-                        <Row gutter={24}>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="insuranceFixedPayoutAmount"
-                                    label="Số tiền chi trả cố định (VND)"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
-                                        { type: 'number', min: 0, message: 'Số tiền phải lớn hơn hoặc bằng 0' }
-                                    ]}
-                                >
-                                    <InputNumber
-                                        min={0}
-                                        step={100000}
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
-                                        parser={value => value.replace(/\s?₫|(,*)/g, '')}
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="insuranceBasedOnHectare"
-                                    label="Lấy theo héc ta"
-                                    valuePropName="checked"
-                                >
-                                    <Switch
-                                        checkedChildren="Có"
-                                        unCheckedChildren="Không"
-                                        size="default"
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="insuranceBasicPayoutRate"
-                                    label="Tỉ lệ chi trả cơ bản"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập tỉ lệ' },
-                                        { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
-                                    ]}
-                                    tooltip="Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm"
-                                >
-                                    <InputNumber
-                                        min={0.01}
-                                        max={1}
-                                        step={0.01}
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Panel>
+                {/* Trigger Conditions */}
+                <Panel
+                    header={
+                        <Space>
+                            <ClockCircleOutlined />
+                            <span>Điều kiện Kích hoạt</span>
+                            <Tag color={configurationData.conditions?.length > 0 ? 'green' : 'orange'}>
+                                {configurationData.conditions?.length || 0} điều kiện
+                            </Tag>
+                        </Space>
+                    }
+                    key="conditions"
+                >
+                    {/* Add/Edit Condition Form */}
+                    <Card className="condition-form-card" style={{ marginBottom: 16 }}>
+                        <Title level={5}>
+                            {editingCondition ? 'Chỉnh sửa Điều kiện' : 'Thêm Điều kiện Mới'}
+                        </Title>
 
-                    {/* Monitoring & Alerts */}
-                    <Panel
-                        header={
-                            <Space>
-                                <AlertOutlined />
-                                <span>Giám sát & Cảnh báo</span>
-                            </Space>
-                        }
-                        key="monitoring"
-                    >
-                        <Row gutter={24}>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="monitoringFrequencyValue"
-                                    label="Số lần giám sát"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập số lần giám sát' },
-                                        { type: 'number', min: 1, message: 'Tối thiểu 1 lần' }
-                                    ]}
-                                >
-                                    <InputNumber
-                                        min={1}
-                                        placeholder="1"
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="monitoringFrequencyUnit"
-                                    label="Đơn vị thời gian"
-                                    rules={[{ required: true, message: 'Vui lòng chọn đơn vị thời gian' }]}
-                                >
-                                    <Select
-                                        placeholder="Chọn đơn vị"
-                                        size="large"
-                                        dropdownStyle={{ maxWidth: '300px' }}
-                                        optionLabelProp="label"
-                                    >
-                                        <Option key="hours" value="hours" label="giờ">
-                                            <div style={{
-                                                maxWidth: '280px',
-                                                cursor: 'pointer'
-                                            }}
-                                                className="option-hover-item"
-                                            >
-                                                <Text strong style={{
-                                                    fontSize: '13px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Giờ
-                                                </Text>
-                                                <Text type="secondary" style={{
-                                                    fontSize: '11px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Giám sát theo giờ
-                                                </Text>
-                                            </div>
-                                        </Option>
-                                        <Option key="days" value="days" label="ngày">
-                                            <div style={{
-                                                maxWidth: '280px',
-                                                cursor: 'pointer'
-                                            }}
-                                                className="option-hover-item"
-                                            >
-                                                <Text strong style={{
-                                                    fontSize: '13px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Ngày
-                                                </Text>
-                                                <Text type="secondary" style={{
-                                                    fontSize: '11px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Giám sát theo ngày
-                                                </Text>
-                                            </div>
-                                        </Option>
-                                        <Option key="weeks" value="weeks" label="tuần">
-                                            <div style={{
-                                                maxWidth: '280px',
-                                                cursor: 'pointer'
-                                            }}
-                                                className="option-hover-item"
-                                            >
-                                                <Text strong style={{
-                                                    fontSize: '13px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Tuần
-                                                </Text>
-                                                <Text type="secondary" style={{
-                                                    fontSize: '11px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Giám sát theo tuần
-                                                </Text>
-                                            </div>
-                                        </Option>
-                                        <Option key="months" value="months" label="tháng">
-                                            <div style={{
-                                                maxWidth: '280px',
-                                                cursor: 'pointer'
-                                            }}
-                                                className="option-hover-item"
-                                            >
-                                                <Text strong style={{
-                                                    fontSize: '13px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Tháng
-                                                </Text>
-                                                <Text type="secondary" style={{
-                                                    fontSize: '11px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Giám sát theo tháng
-                                                </Text>
-                                            </div>
-                                        </Option>
-                                        <Option key="years" value="years" label="năm">
-                                            <div style={{
-                                                maxWidth: '280px',
-                                                cursor: 'pointer'
-                                            }}
-                                                className="option-hover-item"
-                                            >
-                                                <Text strong style={{
-                                                    fontSize: '13px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Năm
-                                                </Text>
-                                                <Text type="secondary" style={{
-                                                    fontSize: '11px',
-                                                    display: 'block',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    Giám sát theo năm
-                                                </Text>
-                                            </div>
-                                        </Option>
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col span={16}>
-                                <Form.Item
-                                    name="alertTypes"
-                                    label="Loại cảnh báo"
-                                    rules={[{ required: true, message: 'Vui lòng chọn ít nhất một loại cảnh báo' }]}
-                                >
-                                    <Checkbox.Group
-                                        options={mockData.alertTypes?.map(type => ({
-                                            label: type.label,
-                                            value: type.value
-                                        }))}
-                                        style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Panel>
-
-                    {/* Trigger Conditions */}
-                    <Panel
-                        header={
-                            <Space>
-                                <ClockCircleOutlined />
-                                <span>Điều kiện Kích hoạt</span>
-                                <Tag color={configurationData.conditions?.length > 0 ? 'green' : 'orange'}>
-                                    {configurationData.conditions?.length || 0} điều kiện
-                                </Tag>
-                            </Space>
-                        }
-                        key="conditions"
-                    >
-                        {/* Add/Edit Condition Form */}
-                        <Card className="condition-form-card" style={{ marginBottom: 16 }}>
-                            <Title level={5}>
-                                {editingCondition ? 'Chỉnh sửa Điều kiện' : 'Thêm Điều kiện Mới'}
-                            </Title>
-
-                            {availableDataSources.length === 0 ? (
-                                <Alert
-                                    message="Chưa có nguồn dữ liệu"
-                                    description="Vui lòng thêm nguồn dữ liệu ở tab 'Thông tin Cơ bản' trước khi tạo điều kiện"
-                                    type="warning"
-                                    showIcon
-                                />
-                            ) : (
-                                <Form
-                                    form={conditionForm}
-                                    layout="vertical"
-                                    className="condition-form"
-                                >
-                                    <Row gutter={16}>
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="dataSourceId"
-                                                label="Nguồn dữ liệu"
-                                                rules={[{ required: true, message: 'Chọn nguồn dữ liệu' }]}
-                                            >
-                                                <Select
-                                                    placeholder="Chọn nguồn dữ liệu"
-                                                    size="large"
-                                                    optionLabelProp="label"
-                                                    dropdownStyle={{ maxWidth: '300px' }}
-                                                >
-                                                    {availableDataSources.map(source => (
-                                                        <Option key={source.value} value={source.value} label={source.label}>
-                                                            <Tooltip
-                                                                title={
-                                                                    <div>
-                                                                        <div><strong>{source.label}</strong></div>
-                                                                        <div style={{ marginTop: '4px' }}>{source.parameterName}</div>
-                                                                        <div style={{ marginTop: '4px', color: '#52c41a' }}>
-                                                                            Đơn vị: {source.unit}
-                                                                        </div>
-                                                                    </div>
-                                                                }
-                                                                placement="right"
-                                                                mouseEnterDelay={0.3}
-                                                            >
-                                                                <div style={{
-                                                                    maxWidth: '280px',
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                                    className="option-hover-item"
-                                                                >
-                                                                    <Text style={{
-                                                                        fontSize: '13px',
-                                                                        display: 'block',
-                                                                        whiteSpace: 'nowrap',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis'
-                                                                    }}>
-                                                                        {source.label}
-                                                                    </Text>
-                                                                    <Text type="secondary" style={{
-                                                                        fontSize: '11px',
-                                                                        display: 'block',
-                                                                        whiteSpace: 'nowrap',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis'
-                                                                    }}>
-                                                                        {source.parameterName} ({source.unit})
-                                                                    </Text>
-                                                                </div>
-                                                            </Tooltip>
-                                                        </Option>
-                                                    ))}
-                                                </Select>
-                                            </Form.Item>
-                                        </Col>
-
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="aggregationFunction"
-                                                label="Hàm tổng hợp"
-                                                rules={[{ required: true, message: 'Chọn hàm tổng hợp' }]}
-                                            >
-                                                <Select
-                                                    placeholder="Chọn hàm tổng hợp"
-                                                    size="large"
-                                                    optionLabelProp="label"
-                                                    dropdownStyle={{ maxWidth: '300px' }}
-                                                >
-                                                    {mockData.aggregationFunctions?.map(func => (
-                                                        <Option key={func.value} value={func.value} label={func.label}>
-                                                            <Tooltip
-                                                                title={
-                                                                    <div>
-                                                                        <div><strong>{func.label}</strong></div>
-                                                                        <div style={{ marginTop: '4px' }}>{func.description}</div>
-                                                                    </div>
-                                                                }
-                                                                placement="right"
-                                                                mouseEnterDelay={0.3}
-                                                            >
-                                                                <div style={{
-                                                                    maxWidth: '280px',
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                                    className="option-hover-item"
-                                                                >
-                                                                    <Text style={{
-                                                                        fontSize: '13px',
-                                                                        display: 'block',
-                                                                        whiteSpace: 'nowrap',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis'
-                                                                    }}>
-                                                                        {func.label}
-                                                                    </Text>
-                                                                    <Text type="secondary" style={{
-                                                                        fontSize: '11px',
-                                                                        display: 'block',
-                                                                        whiteSpace: 'nowrap',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis'
-                                                                    }}>
-                                                                        {func.description}
-                                                                    </Text>
-                                                                </div>
-                                                            </Tooltip>
-                                                        </Option>
-                                                    ))}
-                                                </Select>
-                                            </Form.Item>
-                                        </Col>
-
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="aggregationWindowDays"
-                                                label="Cửa sổ Tổng hợp (Ngày)"
-                                                rules={[
-                                                    { required: true, message: 'Nhập cửa sổ tổng hợp' },
-                                                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
-                                                ]}
-                                            >
-                                                <InputNumber
-                                                    placeholder="30"
-                                                    min={1}
-                                                    size="large"
-                                                    style={{ width: '100%' }}
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                    </Row>
-
-                                    <Row gutter={16}>
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="thresholdOperator"
-                                                label="Toán tử Ngưỡng"
-                                                rules={[{ required: true, message: 'Chọn toán tử ngưỡng' }]}
-                                            >
-                                                <Select
-                                                    placeholder="Chọn toán tử"
-                                                    size="large"
-                                                    optionLabelProp="label"
-                                                    dropdownStyle={{ maxWidth: '300px' }}
-                                                >
-                                                    {mockData.thresholdOperators?.map(operator => (
-                                                        <Option key={operator.value} value={operator.value} label={operator.label}>
-                                                            <Tooltip
-                                                                title={
-                                                                    <div>
-                                                                        <div><strong>{operator.label}</strong></div>
-                                                                        <div style={{ marginTop: '4px' }}>{operator.description}</div>
-                                                                    </div>
-                                                                }
-                                                                placement="right"
-                                                                mouseEnterDelay={0.3}
-                                                            >
-                                                                <div style={{
-                                                                    maxWidth: '280px',
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                                    className="option-hover-item"
-                                                                >
-                                                                    <Text style={{
-                                                                        fontSize: '13px',
-                                                                        display: 'block',
-                                                                        whiteSpace: 'nowrap',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis'
-                                                                    }}>
-                                                                        {operator.label}
-                                                                    </Text>
-                                                                    <Text type="secondary" style={{
-                                                                        fontSize: '11px',
-                                                                        display: 'block',
-                                                                        whiteSpace: 'nowrap',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis'
-                                                                    }}>
-                                                                        {operator.description}
-                                                                    </Text>
-                                                                </div>
-                                                            </Tooltip>
-                                                        </Option>
-                                                    ))}
-                                                </Select>
-                                            </Form.Item>
-                                        </Col>
-
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="thresholdValue"
-                                                label="Giá trị Ngưỡng"
-                                                rules={[{ required: true, message: 'Nhập giá trị ngưỡng' }]}
-                                            >
-                                                <InputNumber
-                                                    placeholder="200"
-                                                    size="large"
-                                                    style={{ width: '100%' }}
-                                                />
-                                            </Form.Item>
-                                        </Col>
-
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="alertThreshold"
-                                                label="Ngưỡng cảnh báo sớm (%)"
-                                                tooltip="Cảnh báo khi gần đạt điều kiện kích hoạt cho nguồn dữ liệu này"
-                                                rules={[
-                                                    { type: 'number', min: 50, max: 95, message: 'Từ 50% đến 95%' }
-                                                ]}
-                                            >
-                                                <InputNumber
-                                                    min={50}
-                                                    max={95}
-                                                    placeholder="80"
-                                                    formatter={value => `${value}%`}
-                                                    parser={value => value.replace('%', '')}
-                                                    size="large"
-                                                    style={{ width: '100%' }}
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                    </Row>
-
-                                    <Row gutter={16}>
-                                        {isChangeAggregation === 'change' && (
-                                            <Col span={8}>
-                                                <Form.Item
-                                                    name="baselineWindowDays"
-                                                    label="Cửa sổ Baseline (Ngày)"
-                                                    rules={[
-                                                        { required: true, message: 'Nhập cửa sổ baseline' },
-                                                        { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
-                                                    ]}
-                                                >
-                                                    <InputNumber
-                                                        placeholder="365"
-                                                        min={1}
-                                                        size="large"
-                                                        style={{ width: '100%' }}
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                        )}
-                                    </Row>
-
-                                    <Row>
-                                        <Col span={24}>
-                                            <Space>
-                                                <Button
-                                                    type="primary"
-                                                    icon={editingCondition ? <EditOutlined /> : <PlusOutlined />}
-                                                    onClick={handleSaveCondition}
-                                                    size="large"
-                                                >
-                                                    {editingCondition ? 'Cập nhật Điều kiện' : 'Thêm Điều kiện'}
-                                                </Button>
-                                                {editingCondition && (
-                                                    <Button onClick={handleCancelEdit} size="large">
-                                                        Hủy
-                                                    </Button>
-                                                )}
-                                            </Space>
-                                        </Col>
-                                    </Row>
-                                </Form>
-                            )}
-                        </Card>
-
-                        {/* Conditions Table */}
-                        {configurationData.conditions?.length === 0 ? (
+                        {availableDataSources.length === 0 ? (
                             <Alert
-                                message="Chưa có điều kiện nào được tạo"
-                                description="Vui lòng thêm ít nhất một điều kiện kích hoạt để tiếp tục"
-                                type="info"
-                                icon={<InfoCircleOutlined />}
-                                className="no-conditions-alert"
+                                message="Chưa có nguồn dữ liệu"
+                                description="Vui lòng thêm nguồn dữ liệu ở tab 'Thông tin Cơ bản' trước khi tạo điều kiện"
+                                type="warning"
+                                showIcon
                             />
                         ) : (
-                            <CustomTable
-                                columns={conditionsColumns}
-                                dataSource={configurationData.conditions}
-                                pagination={false}
-                            />
-                        )}
-
-                        {/* Logic Preview */}
-                        {configurationData.conditions?.length > 0 && (
-                            <Card
-                                title="Xem trước Logic Kích hoạt"
-                                className="logic-preview-card"
-                                style={{ marginTop: 16 }}
-                            >
-                                <div className="logic-preview">
-                                    <Text>
-                                        Thanh toán <Text strong>{configurationData.payoutPercentage}%</Text> (tối đa{' '}
-                                        <Text strong>{configurationData.maxPayoutAmount?.toLocaleString()} ₫</Text>) khi{' '}
-                                        <Text strong>
-                                            {configurationData.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
-                                        </Text>
-                                        {' '}các điều kiện sau được thỏa mãn:
-                                    </Text>
-                                    <ul style={{ marginTop: 8 }}>
-                                        {configurationData.conditions.map((condition, index) => (
-                                            <li key={condition.id}>
-                                                <Text>
-                                                    {condition.aggregationFunctionLabel} của {condition.dataSourceLabel}{' '}
-                                                    trong {condition.aggregationWindowDays} ngày{' '}
-                                                    {condition.thresholdOperatorLabel} {condition.thresholdValue} {condition.unit}
-                                                    {condition.baselineWindowDays && (
-                                                        <> (baseline: {condition.baselineWindowDays} ngày)</>
-                                                    )}
-                                                </Text>
-                                            </li>
-                                        ))}
-                                    </ul>
+                            <>
+                                <CustomForm
+                                    ref={conditionFormRef}
+                                    fields={getConditionFormFields()}
+                                    gridColumns="repeat(3, 1fr)"
+                                    gap="16px"
+                                />
+                                <div style={{ marginTop: 16 }}>
+                                    <Space>
+                                        <Button
+                                            type="primary"
+                                            icon={editingCondition ? <EditOutlined /> : <PlusOutlined />}
+                                            onClick={handleSaveCondition}
+                                            size="large"
+                                        >
+                                            {editingCondition ? 'Cập nhật Điều kiện' : 'Thêm Điều kiện'}
+                                        </Button>
+                                        {editingCondition && (
+                                            <Button onClick={handleCancelEdit} size="large">
+                                                Hủy
+                                            </Button>
+                                        )}
+                                    </Space>
                                 </div>
-                            </Card>
+                            </>
                         )}
-                    </Panel>
+                    </Card>
 
-                    {/* Additional Settings */}
-                    <Panel
-                        header={
-                            <Space>
-                                <SettingOutlined />
-                                <span>Cài đặt Bổ sung</span>
-                            </Space>
-                        }
-                        key="additional"
-                    >
-                        <Row gutter={24}>
-                            <Col span={24}>
-                                <Form.Item
-                                    name="policyDescription"
-                                    label="Mô tả Policy"
-                                    rules={[{ max: 500, message: 'Tối đa 500 ký tự' }]}
-                                >
-                                    <TextArea
-                                        rows={4}
-                                        placeholder="Mô tả chi tiết về policy bảo hiểm này..."
-                                        showCount
-                                        maxLength={500}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                    {/* Conditions Table */}
+                    {configurationData.conditions?.length === 0 ? (
+                        <Alert
+                            message="Chưa có điều kiện nào được tạo"
+                            description="Vui lòng thêm ít nhất một điều kiện kích hoạt để tiếp tục"
+                            type="info"
+                            icon={<InfoCircleOutlined />}
+                            className="no-conditions-alert"
+                        />
+                    ) : (
+                        <CustomTable
+                            columns={conditionsColumns}
+                            dataSource={configurationData.conditions}
+                            pagination={false}
+                        />
+                    )}
 
-                        <Row gutter={24}>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="enableGracePeriod"
-                                    label="Cho phép thời gian ân hạn"
-                                    valuePropName="checked"
-                                    tooltip="Thời gian ân hạn trước khi policy có hiệu lực"
-                                >
-                                    <Switch
-                                        checkedChildren="Có"
-                                        unCheckedChildren="Không"
-                                        size="default"
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="gracePeriodDays"
-                                    label="Thời gian ân hạn (ngày)"
-                                    dependencies={['enableGracePeriod']}
-                                >
-                                    <InputNumber
-                                        min={1}
-                                        max={30}
-                                        placeholder="7"
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                        disabled={!Form.useWatch('enableGracePeriod', form)}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="enableAutoRenewal"
-                                    label="Tự động gia hạn"
-                                    valuePropName="checked"
-                                >
-                                    <Switch
-                                        checkedChildren="Có"
-                                        unCheckedChildren="Không"
-                                        size="default"
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Panel>
-                </Collapse>
-            </Form>
+                    {/* Logic Preview */}
+                    {configurationData.conditions?.length > 0 && (
+                        <Card
+                            title="Xem trước Logic Kích hoạt"
+                            className="logic-preview-card"
+                            style={{ marginTop: 16 }}
+                        >
+                            <div className="logic-preview">
+                                <TypographyText>
+                                    Thanh toán <TypographyText strong>{configurationData.payoutPercentage}%</TypographyText> (tối đa{' '}
+                                    <TypographyText strong>{configurationData.maxPayoutAmount?.toLocaleString()} ₫</TypographyText>) khi{' '}
+                                    <TypographyText strong>
+                                        {configurationData.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
+                                    </TypographyText>
+                                    {' '}các điều kiện sau được thỏa mãn:
+                                </TypographyText>
+                                <ul style={{ marginTop: 8 }}>
+                                    {configurationData.conditions.map((condition, index) => (
+                                        <li key={condition.id}>
+                                            <TypographyText>
+                                                {condition.aggregationFunctionLabel} của {condition.dataSourceLabel}{' '}
+                                                trong {condition.aggregationWindowDays} ngày{' '}
+                                                {condition.thresholdOperatorLabel} {condition.thresholdValue} {condition.unit}
+                                                {condition.baselineWindowDays && (
+                                                    <> (baseline: {condition.baselineWindowDays} ngày)</>
+                                                )}
+                                            </TypographyText>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </Card>
+                    )}
+                </Panel>
+
+                {/* Additional Settings */}
+                <Panel
+                    header={
+                        <Space>
+                            <SettingOutlined />
+                            <span>Cài đặt Bổ sung</span>
+                        </Space>
+                    }
+                    key="additional"
+                >
+                    <CustomForm
+                        ref={formRef}
+                        fields={getAdditionalSettingsFields()}
+                        initialValues={configurationData}
+                        onValuesChange={onDataChange}
+                        gridColumns="repeat(3, 1fr)"
+                        gap="24px"
+                    />
+                </Panel>
+            </Collapse>
         </div>
     );
 };

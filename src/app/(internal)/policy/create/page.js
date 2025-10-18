@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import "./create-policy.css";
 
 import {
@@ -19,6 +20,7 @@ import { useRouter } from "next/navigation";
 // Components
 import BasicTab from "@/components/layout/policy/create/BasicTab";
 import ConfigurationTab from "@/components/layout/policy/create/ConfigurationTab";
+import ContractPreview from "@/components/layout/policy/create/ContractPreview";
 import EstimatedCosts from "@/components/layout/policy/create/EstimatedCosts";
 import ReviewTab from "@/components/layout/policy/create/ReviewTab";
 import TagsTab from "@/components/layout/policy/create/TagsTab";
@@ -30,6 +32,8 @@ const { Title, Text } = Typography;
 
 const CreatePolicyPage = () => {
   const router = useRouter();
+  const [contractPreviewVisible, setContractPreviewVisible] =
+    React.useState(true);
   const {
     // State
     currentTab,
@@ -220,6 +224,8 @@ const CreatePolicyPage = () => {
           onAddTag={handleAddTag}
           onRemoveTag={handleRemoveTag}
           onUpdateTag={handleUpdateTag}
+          previewVisible={contractPreviewVisible}
+          onPreviewVisibleChange={setContractPreviewVisible}
         />
       ),
     },
@@ -290,7 +296,7 @@ const CreatePolicyPage = () => {
           </Card>
         </Col>
 
-        {/* Right Content - Estimated Costs */}
+        {/* Right Content - Estimated Costs or Contract Preview */}
         <Col span={8}>
           <div
             style={{
@@ -302,10 +308,14 @@ const CreatePolicyPage = () => {
               zIndex: 100,
             }}
           >
-            <EstimatedCosts
-              estimatedCosts={estimatedCosts}
-              basicData={basicData}
-            />
+            {currentTab === TABS.TAGS && contractPreviewVisible ? (
+              <ContractPreview tagsData={tagsData} />
+            ) : (
+              <EstimatedCosts
+                estimatedCosts={estimatedCosts}
+                basicData={basicData}
+              />
+            )}
           </div>
         </Col>
       </Row>

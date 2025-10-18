@@ -66,3 +66,91 @@
   border-radius: 4px !important;
   transition: background-color 0.2s !important;
 }
+
+/* Contract Preview Styles - A4 with Scale */
+.contract-preview-a4 {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  transition: box-shadow 0.3s ease, transform 0.2s ease-out !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  hyphens: auto !important;
+  will-change: transform !important;
+  backface-visibility: hidden !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+.contract-preview-a4:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Prevent content overflow in scaled container */
+.contract-preview-a4 * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.contract-preview-a4 img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+}
+
+/* Smooth scaling for A4 container */
+.contract-preview-a4-scaler {
+  transform-origin: top center !important;
+  transition: transform 0.2s ease-out !important;
+}
+
+/* Contract field styling */
+.contract-field {
+  transition: background-color 0.2s ease !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.contract-field:hover {
+  background-color: #e6f7ff !important;
+}
+
+/* Page break for printing */
+@page {
+  size: A4;
+  margin: 20mm;
+}
+
+.contract-page-break {
+  page-break-after: always !important;
+  break-after: page !important;
+}
+
+/* Ensure tables are responsive */
+.tags-table {
+  overflow-x: auto !important;
+}
+
+@media (max-width: 1600px) {
+  /* Adjust table columns for medium screens */
+  .tags-table .ant-table-wrapper {
+    font-size: 13px !important;
+  }
+}
+
+/* Print media query for PDF export */
+@media print {
+  .contract-preview-a4 {
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .contract-preview-panel {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}

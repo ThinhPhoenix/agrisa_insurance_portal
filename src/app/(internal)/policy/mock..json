@@ -431,28 +431,48 @@
   "tagDataTypes": [
     {
       "value": "string",
-      "label": "Chuỗi ký tự (String)",
-      "description": "Dữ liệu dạng văn bản"
+      "label": "Văn bản (String)",
+      "description": "Chữ, số, ký tự - VD: Họ tên, địa chỉ"
     },
     {
       "value": "integer",
       "label": "Số nguyên (Integer)",
-      "description": "Dữ liệu số nguyên"
+      "description": "Số không có phần thập phân - VD: Tuổi, số lượng"
     },
     {
       "value": "decimal",
       "label": "Số thập phân (Decimal)",
-      "description": "Dữ liệu số thập phân"
+      "description": "Số có phần thập phân - VD: Tiền, phần trăm"
+    },
+    {
+      "value": "date",
+      "label": "Ngày tháng (Date)",
+      "description": "Ngày/tháng/năm - VD: Ngày sinh, ngày hết hạn"
+    },
+    {
+      "value": "time",
+      "label": "Giờ (Time)",
+      "description": "Giờ:phút - VD: Giờ hẹn, giờ bắt đầu"
+    },
+    {
+      "value": "datetime",
+      "label": "Ngày giờ (DateTime)",
+      "description": "Ngày/tháng/năm giờ:phút - VD: Thời gian ký kết"
     },
     {
       "value": "boolean",
-      "label": "Đúng/Sai (Boolean)",
-      "description": "Dữ liệu logic đúng/sai"
+      "label": "Có/Không (Boolean)",
+      "description": "Checkbox - VD: Độc thân, kết hôn"
     },
     {
       "value": "select",
       "label": "Lựa chọn (Select)",
-      "description": "Danh sách các tùy chọn để chọn một hoặc nhiều giá trị"
+      "description": "Danh sách tùy chọn - VD: Giới tính, quốc tịch"
+    },
+    {
+      "value": "textarea",
+      "label": "Văn bản dài (Textarea)",
+      "description": "Văn bản nhiều dòng, luôn full width - VD: Ghi chú, điều khoản"
     }
   ],
   "sampleData": {

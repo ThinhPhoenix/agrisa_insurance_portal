@@ -35,7 +35,7 @@ import {
     Typography
 } from 'antd';
 import React from 'react';
-import ContractPreview from './ContractPreview';
+import ContractPreview from '../ContractPreview';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -85,11 +85,15 @@ const TagsTab = ({
         const newOptions = [...selectOptions];
         newOptions[index] = value;
         setSelectOptions(newOptions);
+        // Reset value to ensure no auto-selection
+        tagForm.setFieldsValue({ value: '' });
     };
 
     // Add new option
     const addOption = () => {
         setSelectOptions([...selectOptions, '']);
+        // Reset value to ensure no auto-selection
+        tagForm.setFieldsValue({ value: '' });
     };
 
     // Remove option
@@ -251,23 +255,9 @@ const TagsTab = ({
                             Thêm tùy chọn
                         </Button>
 
-                        <div style={{ marginTop: 8 }}>
-                            <Text strong style={{ fontSize: '12px' }}>Giá trị mặc định (tùy chọn):</Text>
+                        <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
+                            💡 Giá trị sẽ để trống khi tạo tag mới. Người dùng có thể chọn từ các tùy chọn đã định nghĩa.
                         </div>
-
-                        <Select
-                            placeholder="Để trống hoặc chọn giá trị mặc định"
-                            size="large"
-                            mode={isMultipleSelect ? 'multiple' : undefined}
-                            allowClear
-                            style={{ marginTop: 4 }}
-                        >
-                            {selectOptions.filter(opt => opt.trim() !== '').map((option, index) => (
-                                <Option key={index} value={option}>
-                                    {option}
-                                </Option>
-                            ))}
-                        </Select>
                     </div>
                 );
             case 'textarea':
@@ -354,8 +344,8 @@ const TagsTab = ({
                     processedValue = values.value === 'true';
                     break;
                 case 'select':
-                    // For select, value should be the selected options
-                    processedValue = values.value || '';
+                    // For select, always leave value empty - user will select later
+                    processedValue = '';
                     // Only validate options if user is trying to use select type
                     const validOptions = selectOptions.filter(opt => opt.trim() !== '');
                     if (validOptions.length < 2) {
@@ -710,7 +700,7 @@ const TagsTab = ({
                         className="tag-form"
                     >
                         <Row gutter={16} align="middle">
-                            <Col span={6}>
+                            <Col span={12}>
                                 <Form.Item
                                     name="key"
                                     label="Tên trường (Key)"
@@ -725,7 +715,7 @@ const TagsTab = ({
                                 </Form.Item>
                             </Col>
 
-                            <Col span={6}>
+                            <Col span={12}>
                                 <Form.Item
                                     name="value"
                                     label="Giá trị (Value)"
@@ -734,8 +724,10 @@ const TagsTab = ({
                                     {renderValueInput()}
                                 </Form.Item>
                             </Col>
+                        </Row>
 
-                            <Col span={6}>
+                        <Row gutter={16} align="middle">
+                            <Col span={12}>
                                 <Form.Item
                                     name="dataType"
                                     label="Loại dữ liệu"
@@ -792,7 +784,7 @@ const TagsTab = ({
                                 </Form.Item>
                             </Col>
 
-                            <Col span={6}>
+                            <Col span={12}>
                                 <Form.Item
                                     label={
                                         <Space size={4}>
@@ -883,15 +875,6 @@ const TagsTab = ({
                             </Col>
                         </Row>
                     </Form>
-
-                    <Space style={{ marginTop: 16 }}>
-                        <Button onClick={handleLoadDefaults} type="dashed">
-                            Tải Tags Mặc định
-                        </Button>
-                        <Text type="secondary">
-                            Tải các tags thông dụng như: region, season, area_hectares
-                        </Text>
-                    </Space>
                 </Card>
 
                 {/* Tags Table */}
@@ -1016,14 +999,13 @@ const TagsTab = ({
                 width="100%"
                 style={{ top: 0, paddingBottom: 0, maxWidth: '100vw' }}
                 bodyStyle={{ height: 'calc(100vh - 110px)', padding: 0, overflow: 'auto' }}
+                closable={false}
                 title={
-                    <Space>
-                        <FileTextOutlined />
-                        <span>Xem trước hợp đồng - Toàn màn hình</span>
-                    </Space>
-                }
-                footer={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <Space>
+                            <FileTextOutlined />
+                            <span>Xem trước hợp đồng - Toàn màn hình</span>
+                        </Space>
                         <Space>
                             <Button
                                 type="primary"
@@ -1038,14 +1020,13 @@ const TagsTab = ({
                             >
                                 In ấn
                             </Button>
-                        </Space>
-                        <Space>
                             <Button onClick={() => setPreviewFullscreen(false)}>
                                 Đóng
                             </Button>
                         </Space>
                     </div>
                 }
+                footer={null}
             >
                 <ContractPreview tagsData={tagsData} isFullscreen={true} />
             </Modal>

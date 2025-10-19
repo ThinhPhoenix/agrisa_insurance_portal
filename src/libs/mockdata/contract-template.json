@@ -1,0 +1,186 @@
+{
+  "tags": [
+    {
+      "id": "tag-1",
+      "key": "hoTen",
+      "label": "Họ và tên",
+      "value": "",
+      "dataType": "string",
+      "index": 1,
+      "width": 40
+    },
+    {
+      "id": "tag-2",
+      "key": "ngaySinh",
+      "label": "Ngày sinh",
+      "value": "",
+      "dataType": "date",
+      "index": 2,
+      "width": 40
+    },
+    {
+      "id": "tag-3",
+      "key": "soCMND",
+      "label": "Số CMND/CCCD",
+      "value": "",
+      "dataType": "string",
+      "index": 3,
+      "width": 40
+    },
+    {
+      "id": "tag-4",
+      "key": "ngayCap",
+      "label": "Ngày cấp",
+      "value": "",
+      "dataType": "date",
+      "index": 4,
+      "width": 60
+    },
+    {
+      "id": "tag-5",
+      "key": "dienThoai",
+      "label": "Số điện thoại",
+      "value": "",
+      "dataType": "string",
+      "index": 5,
+      "width": 60
+    },
+    {
+      "id": "tag-6",
+      "key": "email",
+      "label": "Email",
+      "value": "",
+      "dataType": "string",
+      "index": 6,
+      "width": 40
+    },
+    {
+      "id": "tag-7",
+      "key": "diaChi",
+      "label": "Địa chỉ thường trú",
+      "value": "",
+      "dataType": "textarea",
+      "index": 7,
+      "width": 100,
+      "rows": 3
+    },
+    {
+      "id": "tag-8",
+      "key": "loaiCayTrong",
+      "label": "Loại cây trồng",
+      "value": "",
+      "dataType": "select",
+      "index": 8,
+      "width": 60
+    },
+    {
+      "id": "tag-9",
+      "key": "dienTich",
+      "label": "Diện tích (ha)",
+      "value": "",
+      "dataType": "decimal",
+      "index": 9,
+      "width": 40
+    },
+    {
+      "id": "tag-10",
+      "key": "giaTriBaoHiem",
+      "label": "Giá trị bảo hiểm (VNĐ)",
+      "value": "",
+      "dataType": "integer",
+      "index": 10,
+      "width": 60
+    },
+    {
+      "id": "tag-11",
+      "key": "phiBaoHiem",
+      "label": "Phí bảo hiểm (VNĐ)",
+      "value": "",
+      "dataType": "integer",
+      "index": 11,
+      "width": 40
+    },
+    {
+      "id": "tag-12",
+      "key": "thoiHanBaoHiem",
+      "label": "Thời hạn BH (tháng)",
+      "value": "",
+      "dataType": "integer",
+      "index": 12,
+      "width": 60
+    },
+    {
+      "id": "tag-13",
+      "key": "ngayBatDau",
+      "label": "Ngày bắt đầu hiệu lực",
+      "value": "",
+      "dataType": "date",
+      "index": 13,
+      "width": 40
+    },
+    {
+      "id": "tag-14",
+      "key": "ngayKetThuc",
+      "label": "Ngày kết thúc",
+      "value": "",
+      "dataType": "date",
+      "index": 14,
+      "width": 40
+    },
+    {
+      "id": "tag-15",
+      "key": "thoiGianKyHopDong",
+      "label": "Thời gian ký hợp đồng",
+      "value": "",
+      "dataType": "datetime",
+      "index": 15,
+      "width": 60
+    },
+    {
+      "id": "tag-16",
+      "key": "gioHenGap",
+      "label": "Giờ hẹn gặp đại diện",
+      "value": "",
+      "dataType": "time",
+      "index": 16,
+      "width": 40
+    },
+    {
+      "id": "tag-17",
+      "key": "dongYDieuKhoan",
+      "label": "Đồng ý với điều khoản",
+      "value": "",
+      "dataType": "boolean",
+      "index": 17,
+      "width": 60
+    },
+    {
+      "id": "tag-18",
+      "key": "nhanThongBao",
+      "label": "Nhận thông báo qua email",
+      "value": "",
+      "dataType": "boolean",
+      "index": 18,
+      "width": 40
+    },
+    {
+      "id": "tag-19",
+      "key": "riskCoverage",
+      "label": "Rủi ro được bảo hiểm",
+      "value": "",
+      "dataType": "select",
+      "index": 19,
+      "width": 100
+    },
+    {
+      "id": "tag-20",
+      "key": "ghiChu",
+      "label": "Ghi chú thêm",
+      "value": "",
+      "dataType": "textarea",
+      "index": 20,
+      "width": 100,
+      "rows": 4
+    }
+  ]
+}

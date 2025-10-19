@@ -1,0 +1,73 @@
+/* Policy Management Page Styles */
+.policy-content {
+  @apply p-6;
+}
+
+.policy-space {
+  @apply space-y-6;
+}
+
+.policy-header {
+  @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6;
+}
+
+.policy-title {
+  @apply text-2xl font-bold text-gray-800 mb-0 flex items-center gap-2;
+}
+
+.policy-icon {
+  @apply text-blue-600;
+}
+
+.policy-subtitle {
+  @apply text-sm text-gray-600 mt-1;
+}
+
+/* Summary Cards */
+.policy-summary-row {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-4 mb-6;
+}
+
+.policy-summary-card-compact {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-3 hover:shadow-md transition-shadow duration-200;
+}
+
+.policy-summary-content {
+  @apply flex-1;
+}
+
+.policy-summary-value-compact {
+  @apply text-xl font-bold text-gray-800 mb-1 leading-tight;
+}
+
+.policy-summary-label-compact {
+  @apply text-sm text-gray-600 leading-tight;
+}
+
+.policy-summary-icon {
+  @apply w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg font-bold;
+}
+
+.policy-summary-icon.total {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.policy-summary-icon.active {
+  @apply bg-green-100 text-green-600;
+}
+
+.policy-summary-icon.providers {
+  @apply bg-purple-100 text-purple-600;
+}
+
+.policy-summary-icon.premium {
+  @apply bg-yellow-100 text-yellow-600;
+}
+
+.policy-actions-cell {
+  @apply flex gap-1;
+}
+
+.policy-action-btn {
+  @apply flex items-center justify-center;
+}

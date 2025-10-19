@@ -148,25 +148,41 @@ const ContractPreview = ({ tagsData, isFullscreen = false }) => {
                     padding: '6px 8px',
                     minHeight: '32px',
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: tag.dataType === 'textarea' ? 'flex-start' : 'center',
                     gap: '8px'
                 }}>
                     <div style={{
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: tag.dataType === 'textarea' ? 'flex-start' : 'center',
                         gap: '6px',
-                        width: '100%'
+                        width: '100%',
+                        flexDirection: tag.dataType === 'textarea' ? 'column' : 'row'
                     }}>
-                        <span style={{
-                            fontSize: '9px',
-                            color: '#1890ff',
-                            fontWeight: 'bold'
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            width: '100%'
                         }}>
-                            {tag.index}.
-                        </span>
-                        <Text strong style={{ fontSize: '10px', color: '#333', whiteSpace: 'nowrap' }}>
-                            {tag.key}:
-                        </Text>
+                            <span style={{
+                                fontSize: '9px',
+                                color: '#1890ff',
+                                fontWeight: 'bold'
+                            }}>
+                                {tag.index}.
+                            </span>
+                            <Text strong style={{ fontSize: '10px', color: '#333', whiteSpace: 'nowrap' }}>
+                                {tag.key}:
+                            </Text>
+                            {tag.dataType === 'textarea' && (
+                                <span style={{
+                                    flex: 1,
+                                    borderBottom: '1px solid #999',
+                                    height: '14px',
+                                    marginBottom: '2px'
+                                }}></span>
+                            )}
+                        </div>
                         {tag.dataType === 'boolean' ? (
                             <div style={{ display: 'flex', gap: '12px', fontSize: '10px' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'default' }}>
@@ -295,15 +311,14 @@ const ContractPreview = ({ tagsData, isFullscreen = false }) => {
                         ) : tag.dataType === 'textarea' ? (
                             <div style={{
                                 flex: 1,
-                                minWidth: '100%',
+                                width: '100%',
                                 fontSize: '9px',
                                 color: tag.value ? '#000' : '#999',
                                 fontWeight: tag.value ? '400' : 'normal',
                                 minHeight: tag.rows ? `${tag.rows * 20}px` : '60px',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '4px',
-                                marginTop: '6px'
+                                gap: '4px'
                             }}>
                                 {tag.value ? (
                                     <div style={{
@@ -319,7 +334,7 @@ const ContractPreview = ({ tagsData, isFullscreen = false }) => {
                                     </div>
                                 ) : (
                                     <>
-                                        {Array.from({ length: tag.rows || 3 }).map((_, idx) => (
+                                        {Array.from({ length: (tag.rows || 3) - 1 }).map((_, idx) => (
                                             <span key={idx} style={{
                                                 display: 'block',
                                                 width: '100%',
@@ -346,6 +361,7 @@ const ContractPreview = ({ tagsData, isFullscreen = false }) => {
                                 )}
                             </div>
                         )}
+                        {tag.dataType !== 'textarea' && <></>}
                     </div>
                 </div>
             ))}
@@ -523,222 +539,7 @@ const ContractPreview = ({ tagsData, isFullscreen = false }) => {
                             </div>
                         ) : (
                             <div>
-                                {rows.map((row, rowIdx) => (
-                                    <div key={rowIdx} style={{
-                                        display: 'flex',
-                                        gap: '12px',
-                                        marginBottom: '14px',
-                                        alignItems: 'flex-start'
-                                    }}>
-                                        {row.map((tag) => (
-                                            <div key={tag.id} className="contract-field" style={{
-                                                flex: `0 0 calc(${tag.width || 50}% - 6px)`,
-                                                padding: '6px 8px',
-                                                minHeight: '32px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px'
-                                            }}>
-                                                <div style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    width: '100%'
-                                                }}>
-                                                    <span style={{
-                                                        fontSize: '9px',
-                                                        color: '#1890ff',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        {tag.index}.
-                                                    </span>
-                                                    <Text strong style={{ fontSize: '10px', color: '#333', whiteSpace: 'nowrap' }}>
-                                                        {tag.key}:
-                                                    </Text>
-                                                    {tag.dataType === 'boolean' ? (
-                                                        <div style={{ display: 'flex', gap: '12px', fontSize: '10px' }}>
-                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'default' }}>
-                                                                <span style={{
-                                                                    fontSize: '14px',
-                                                                    border: '1.5px solid #666',
-                                                                    width: '14px',
-                                                                    height: '14px',
-                                                                    display: 'inline-block',
-                                                                    textAlign: 'center',
-                                                                    lineHeight: '12px'
-                                                                }}>
-                                                                    {tag.value === 'true' ? '✓' : ''}
-                                                                </span>
-                                                                <span>Có</span>
-                                                            </label>
-                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'default' }}>
-                                                                <span style={{
-                                                                    fontSize: '14px',
-                                                                    border: '1.5px solid #666',
-                                                                    width: '14px',
-                                                                    height: '14px',
-                                                                    display: 'inline-block',
-                                                                    textAlign: 'center',
-                                                                    lineHeight: '12px'
-                                                                }}>
-                                                                    {tag.value === 'false' ? '✓' : ''}
-                                                                </span>
-                                                                <span>Không</span>
-                                                            </label>
-                                                        </div>
-                                                    ) : tag.dataType === 'select' ? (
-                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '10px', flex: 1 }}>
-                                                            {tag.options && tag.options.length > 0 ? tag.options.map((option, idx) => (
-                                                                <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'default' }}>
-                                                                    <span style={{
-                                                                        fontSize: '10px',
-                                                                        border: '1.5px solid #666',
-                                                                        width: '14px',
-                                                                        height: '14px',
-                                                                        display: 'inline-flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center',
-                                                                        borderRadius: tag.isMultipleSelect ? '2px' : '50%'
-                                                                    }}>
-                                                                        {tag.isMultipleSelect ? (
-                                                                            tag.value && tag.value.includes(option) ? '✓' : ''
-                                                                        ) : (
-                                                                            tag.value === option ? '●' : ''
-                                                                        )}
-                                                                    </span>
-                                                                    <span>{option}</span>
-                                                                </label>
-                                                            )) : (
-                                                                <span style={{ color: '#999' }}>___________________</span>
-                                                            )}
-                                                        </div>
-                                                    ) : tag.dataType === 'date' ? (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '80px',
-                                                            fontSize: '10px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '500' : 'normal',
-                                                            minHeight: '16px',
-                                                            display: 'flex',
-                                                            alignItems: 'flex-end',
-                                                            gap: '4px'
-                                                        }}>
-                                                            {tag.value || (
-                                                                <>
-                                                                    <span style={{ display: 'inline-block', width: '30px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>/</span>
-                                                                    <span style={{ display: 'inline-block', width: '30px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>/</span>
-                                                                    <span style={{ display: 'inline-block', width: '50px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ) : tag.dataType === 'time' ? (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '60px',
-                                                            fontSize: '10px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '500' : 'normal',
-                                                            minHeight: '16px',
-                                                            display: 'flex',
-                                                            alignItems: 'flex-end',
-                                                            gap: '4px'
-                                                        }}>
-                                                            {tag.value || (
-                                                                <>
-                                                                    <span style={{ display: 'inline-block', width: '30px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>:</span>
-                                                                    <span style={{ display: 'inline-block', width: '30px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ) : tag.dataType === 'datetime' ? (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '120px',
-                                                            fontSize: '10px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '500' : 'normal',
-                                                            minHeight: '16px',
-                                                            display: 'flex',
-                                                            alignItems: 'flex-end',
-                                                            gap: '4px'
-                                                        }}>
-                                                            {tag.value || (
-                                                                <>
-                                                                    <span style={{ display: 'inline-block', width: '25px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>/</span>
-                                                                    <span style={{ display: 'inline-block', width: '25px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>/</span>
-                                                                    <span style={{ display: 'inline-block', width: '40px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ marginLeft: '4px', marginRight: '4px', lineHeight: '14px' }}>-</span>
-                                                                    <span style={{ display: 'inline-block', width: '25px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                    <span style={{ lineHeight: '14px' }}>:</span>
-                                                                    <span style={{ display: 'inline-block', width: '25px', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ) : tag.dataType === 'textarea' ? (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '100%',
-                                                            fontSize: '9px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '400' : 'normal',
-                                                            minHeight: tag.rows ? `${tag.rows * 20}px` : '60px',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            gap: '4px',
-                                                            marginTop: '6px'
-                                                        }}>
-                                                            {tag.value ? (
-                                                                <div style={{
-                                                                    whiteSpace: 'pre-wrap',
-                                                                    wordBreak: 'break-word',
-                                                                    lineHeight: '1.6',
-                                                                    padding: '6px',
-                                                                    backgroundColor: '#fafafa',
-                                                                    borderRadius: '2px',
-                                                                    border: '1px solid #e0e0e0'
-                                                                }}>
-                                                                    {tag.value}
-                                                                </div>
-                                                            ) : (
-                                                                <>
-                                                                    {Array.from({ length: tag.rows || 3 }).map((_, idx) => (
-                                                                        <span key={idx} style={{
-                                                                            display: 'block',
-                                                                            width: '100%',
-                                                                            borderBottom: '1px solid #999',
-                                                                            height: '18px'
-                                                                        }}></span>
-                                                                    ))}
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <div style={{
-                                                            flex: 1,
-                                                            minWidth: '100px',
-                                                            fontSize: '10px',
-                                                            color: tag.value ? '#000' : '#999',
-                                                            fontWeight: tag.value ? '500' : 'normal',
-                                                            minHeight: '16px',
-                                                            display: 'flex',
-                                                            alignItems: 'flex-end'
-                                                        }}>
-                                                            {tag.value || (
-                                                                <span style={{ display: 'inline-block', width: '100%', borderBottom: '1px solid #999', height: '14px' }}></span>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
+                                {rows.map((row, rowIdx) => renderRow(row, rowIdx))}
                             </div>
                         )}
                     </div>

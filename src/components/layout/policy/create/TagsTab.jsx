@@ -999,14 +999,13 @@ const TagsTab = ({
                 width="100%"
                 style={{ top: 0, paddingBottom: 0, maxWidth: '100vw' }}
                 bodyStyle={{ height: 'calc(100vh - 110px)', padding: 0, overflow: 'auto' }}
+                closable={false}
                 title={
-                    <Space>
-                        <FileTextOutlined />
-                        <span>Xem trước hợp đồng - Toàn màn hình</span>
-                    </Space>
-                }
-                footer={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <Space>
+                            <FileTextOutlined />
+                            <span>Xem trước hợp đồng - Toàn màn hình</span>
+                        </Space>
                         <Space>
                             <Button
                                 type="primary"
@@ -1021,14 +1020,13 @@ const TagsTab = ({
                             >
                                 In ấn
                             </Button>
-                        </Space>
-                        <Space>
                             <Button onClick={() => setPreviewFullscreen(false)}>
                                 Đóng
                             </Button>
                         </Space>
                     </div>
                 }
+                footer={null}
             >
                 <ContractPreview tagsData={tagsData} isFullscreen={true} />
             </Modal>

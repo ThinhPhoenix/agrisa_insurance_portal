@@ -440,6 +440,11 @@
       "description": "Số không có phần thập phân - VD: Tuổi, số lượng"
     },
     {
+      "value": "textarea",
+      "label": "Văn bản dài (Textarea)",
+      "description": "Văn bản nhiều dòng, luôn full width - VD: Ghi chú, điều khoản"
+    },
+    {
       "value": "decimal",
       "label": "Số thập phân (Decimal)",
       "description": "Số có phần thập phân - VD: Tiền, phần trăm"
@@ -468,11 +473,6 @@
       "value": "select",
       "label": "Lựa chọn (Select)",
       "description": "Danh sách tùy chọn - VD: Giới tính, quốc tịch"
-    },
-    {
-      "value": "textarea",
-      "label": "Văn bản dài (Textarea)",
-      "description": "Văn bản nhiều dòng, luôn full width - VD: Ghi chú, điều khoản"
     }
   ],
   "sampleData": {

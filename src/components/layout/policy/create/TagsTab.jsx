@@ -35,7 +35,7 @@ import {
     Typography
 } from 'antd';
 import React from 'react';
-import ContractPreview from './ContractPreview';
+import ContractPreview from '../ContractPreview';
 
 const { Option } = Select;
 const { Title, Text } = Typography;

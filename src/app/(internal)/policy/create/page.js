@@ -18,9 +18,9 @@ import { Alert, Button, Card, Col, Row, Space, Tabs, Typography } from "antd";
 import { useRouter } from "next/navigation";
 
 // Components
+import ContractPreview from "@/components/layout/policy/ContractPreview";
 import BasicTab from "@/components/layout/policy/create/BasicTab";
 import ConfigurationTab from "@/components/layout/policy/create/ConfigurationTab";
-import ContractPreview from "@/components/layout/policy/create/ContractPreview";
 import EstimatedCosts from "@/components/layout/policy/create/EstimatedCosts";
 import ReviewTab from "@/components/layout/policy/create/ReviewTab";
 import TagsTab from "@/components/layout/policy/create/TagsTab";

@@ -25,7 +25,7 @@
       "value": "",
       "dataType": "string",
       "index": 3,
-      "width": 20
+      "width": 40
     },
     {
       "id": "tag-4",
@@ -34,7 +34,7 @@
       "value": "",
       "dataType": "date",
       "index": 4,
-      "width": 40
+      "width": 60
     },
     {
       "id": "tag-5",
@@ -43,7 +43,7 @@
       "value": "",
       "dataType": "string",
       "index": 5,
-      "width": 40
+      "width": 60
     },
     {
       "id": "tag-6",
@@ -52,7 +52,7 @@
       "value": "",
       "dataType": "string",
       "index": 6,
-      "width": 20
+      "width": 40
     },
     {
       "id": "tag-7",
@@ -89,7 +89,7 @@
       "value": "",
       "dataType": "integer",
       "index": 10,
-      "width": 40
+      "width": 60
     },
     {
       "id": "tag-11",
@@ -98,16 +98,16 @@
       "value": "",
       "dataType": "integer",
       "index": 11,
-      "width": 20
+      "width": 40
     },
     {
       "id": "tag-12",
       "key": "thoiHanBaoHiem",
-      "label": "Thời hạn bảo hiểm (tháng)",
+      "label": "Thời hạn BH (tháng)",
       "value": "",
       "dataType": "integer",
       "index": 12,
-      "width": 40
+      "width": 60
     },
     {
       "id": "tag-13",
@@ -125,7 +125,7 @@
       "value": "",
       "dataType": "date",
       "index": 14,
-      "width": 20
+      "width": 40
     },
     {
       "id": "tag-15",
@@ -152,7 +152,7 @@
       "value": "",
       "dataType": "boolean",
       "index": 17,
-      "width": 20
+      "width": 60
     },
     {
       "id": "tag-18",
@@ -161,7 +161,7 @@
       "value": "",
       "dataType": "boolean",
       "index": 18,
-      "width": 20
+      "width": 40
     },
     {
       "id": "tag-19",
@@ -170,7 +170,7 @@
       "value": "",
       "dataType": "select",
       "index": 19,
-      "width": 80
+      "width": 100
     },
     {
       "id": "tag-20",

@@ -30,7 +30,8 @@ const TagsDetail = ({ policyData, mockData }) => {
         return tag.value;
     };
 
-    const tags = policyData.tags || [];
+    // Use contract-template.json data instead of policyData.tags
+    const tags = contractTemplate.tags || [];
 
     // Columns for tags table
     const tagColumns = [
@@ -92,7 +93,11 @@ const TagsDetail = ({ policyData, mockData }) => {
                             <CustomTable
                                 columns={tagColumns}
                                 dataSource={tags}
-                                pagination={false}
+                                pagination={{
+                                    pageSize: 5,
+                                    showSizeChanger: false,
+                                    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} tags`,
+                                }}
                             />
                         )}
                     </Card>

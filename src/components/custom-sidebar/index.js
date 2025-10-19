@@ -41,6 +41,11 @@ const items = [
     label: "Quản lý người thụ hưởng",
     icon: <Users size={16} />,
   },
+  {
+    key: "policy",
+    label: "Quản lý điều khoản bảo hiểm",
+    icon: <FileText size={16} />,
+  },
   //configuration section
   {
     key: "configuration",

@@ -475,6 +475,53 @@
       "description": "Danh sách tùy chọn - VD: Giới tính, quốc tịch"
     }
   ],
+  "policies": [
+    {
+      "id": "policy_001",
+      "productName": "Bảo hiểm Lúa Mùa Đông 2025",
+      "productCode": "RICE_WINTER_2025",
+      "insuranceProviderId": "PARTNER_001",
+      "cropType": "rice",
+      "premiumBaseRate": 0.05,
+      "coverageDurationDays": 120
+    },
+    {
+      "id": "policy_002",
+      "productName": "Bảo hiểm Cà phê Mùa Thu 2025",
+      "productCode": "COFFEE_AUTUMN_2025",
+      "insuranceProviderId": "PARTNER_002",
+      "cropType": "coffee",
+      "premiumBaseRate": 0.08,
+      "coverageDurationDays": 365
+    },
+    {
+      "id": "policy_003",
+      "productName": "Bảo hiểm Lúa Mùa Hè 2025",
+      "productCode": "RICE_SUMMER_2025",
+      "insuranceProviderId": "PARTNER_001",
+      "cropType": "rice",
+      "premiumBaseRate": 0.06,
+      "coverageDurationDays": 150
+    },
+    {
+      "id": "policy_004",
+      "productName": "Bảo hiểm Cà phê Mùa Xuân 2025",
+      "productCode": "COFFEE_SPRING_2025",
+      "insuranceProviderId": "PARTNER_002",
+      "cropType": "coffee",
+      "premiumBaseRate": 0.07,
+      "coverageDurationDays": 300
+    },
+    {
+      "id": "policy_005",
+      "productName": "Bảo hiểm Lúa Mùa Thu 2025",
+      "productCode": "RICE_AUTUMN_2025",
+      "insuranceProviderId": "PARTNER_003",
+      "cropType": "rice",
+      "premiumBaseRate": 0.04,
+      "coverageDurationDays": 100
+    }
+  ],
   "sampleData": {
     "productName": "Bảo hiểm Lúa Mùa Đông 2025",
     "productCode": "RICE_WINTER_2025",

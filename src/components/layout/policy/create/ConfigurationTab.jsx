@@ -271,11 +271,27 @@ const ConfigurationTab = ({
             unCheckedChildren: 'Không'
         },
         {
+            name: 'payoutMaxAmount',
+            label: 'Số tiền chi trả tối đa (VND)',
+            type: 'number',
+            required: true,
+            gridColumn: '3',
+            min: 0,
+            step: 100000,
+            size: 'large',
+            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
+            parser: value => value.replace(/\s?₫|(,*)/g, ''),
+            rules: [
+                { required: true, message: 'Vui lòng nhập số tiền tối đa' },
+                { type: 'number', min: 0, message: 'Số tiền phải lớn hơn hoặc bằng 0' }
+            ]
+        },
+        {
             name: 'exceedingThresholdRate',
             label: 'Tỉ lệ chi trả vượt ngưỡng chỉ số',
             type: 'number',
             required: true,
-            gridColumn: '3',
+            gridColumn: '2',
             min: 0.01,
             max: 1,
             step: 0.01,
@@ -304,9 +320,9 @@ const ConfigurationTab = ({
         },
         {
             name: 'payoutDelayDays',
-            label: 'Thời gian thanh toán (ngày)',
+            label: 'Thời gian chờ thanh toán (ngày)',
             type: 'number',
-            gridColumn: '2',
+            gridColumn: '3',
             min: 0,
             max: 30,
             placeholder: '3',

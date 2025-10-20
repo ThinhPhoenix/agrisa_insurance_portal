@@ -7,7 +7,6 @@ import {
     Divider,
     Form,
     Input,
-    InputNumber,
     message,
     Popconfirm,
     Row,
@@ -232,46 +231,6 @@ const BasicTab = ({
                     </Col>
                 </Row>
 
-                <Row gutter={24}>
-                    <Col span={12}>
-                        <Form.Item
-                            name="premiumBaseRate"
-                            label="Tỷ lệ Phí BH Cơ sở (%)"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập tỷ lệ phí' },
-                                { type: 'number', min: 0.01, max: 1, message: 'Tỷ lệ từ 0.01 đến 1.0' }
-                            ]}
-                        >
-                            <InputNumber
-                                placeholder="0.05"
-                                min={0.01}
-                                max={1}
-                                step={0.01}
-                                size="large"
-                                style={{ width: '100%' }}
-                                formatter={value => `${value}%`}
-                                parser={value => value.replace('%', '')}
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item
-                            name="coverageDurationDays"
-                            label="Thời hạn Bảo hiểm (Ngày)"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập thời hạn bảo hiểm' },
-                                { type: 'number', min: 1, message: 'Thời hạn tối thiểu 1 ngày' }
-                            ]}
-                        >
-                            <InputNumber
-                                placeholder="120"
-                                min={1}
-                                size="large"
-                                style={{ width: '100%' }}
-                            />
-                        </Form.Item>
-                    </Col>
-                </Row>
             </Form>
 
             <Divider />

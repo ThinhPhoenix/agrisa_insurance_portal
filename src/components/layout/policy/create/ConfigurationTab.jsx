@@ -14,17 +14,20 @@ import {
     Alert,
     Button,
     Card,
+    Col,
     Collapse,
     Form,
+    Input,
     Popconfirm,
+    Row,
     Space,
     Tag,
     Tooltip,
     Typography
 } from 'antd';
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-const { Title, Text: TypographyText } = Typography;
+const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
 
 const ConfigurationTab = ({
@@ -39,12 +42,64 @@ const ConfigurationTab = ({
     const formRef = useRef();
     const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
+    const [notifications, setNotifications] = useState(Array.isArray(configurationData.importantNotifications) ? configurationData.importantNotifications : []);
+
+    // Update notifications when configurationData changes
+    useEffect(() => {
+        setNotifications(Array.isArray(configurationData.importantNotifications) ? configurationData.importantNotifications : []);
+    }, [configurationData.importantNotifications]);
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
-        onDataChange(allValues);
+        const currentNotifications = Array.isArray(notifications) ? notifications : [];
+        onDataChange({
+            ...allValues,
+            importantNotifications: currentNotifications
+        });
+    };
+
+    // Handle add notification
+    const handleAddNotification = () => {
+        const currentNotifications = Array.isArray(notifications) ? notifications : [];
+        const newNotification = {
+            id: Date.now().toString(),
+            title: '',
+            description: ''
+        };
+        const updatedNotifications = [...currentNotifications, newNotification];
+        setNotifications(updatedNotifications);
+        onDataChange({
+            ...configurationData,
+            importantNotifications: updatedNotifications
+        });
+    };
+
+    // Handle remove notification
+    const handleRemoveNotification = (id) => {
+        const currentNotifications = Array.isArray(notifications) ? notifications : [];
+        const updatedNotifications = currentNotifications.filter(notification => notification.id !== id);
+        setNotifications(updatedNotifications);
+        onDataChange({
+            ...configurationData,
+            importantNotifications: updatedNotifications
+        });
+    };
+
+    // Handle update notification
+    const handleUpdateNotification = (id, field, value) => {
+        const currentNotifications = Array.isArray(notifications) ? notifications : [];
+        const updatedNotifications = currentNotifications.map(notification =>
+            notification.id === id
+                ? { ...notification, [field]: value }
+                : notification
+        );
+        setNotifications(updatedNotifications);
+        onDataChange({
+            ...configurationData,
+            importantNotifications: updatedNotifications
+        });
     };
 
     // Handle add/update condition
@@ -497,6 +552,91 @@ const ConfigurationTab = ({
             unCheckedChildren: 'Không'
         }
     ];
+
+    // Memoized Notifications Manager Component
+    const NotificationsManager = useMemo(() => (
+        <div className="notifications-manager">
+            <div style={{ marginBottom: 16 }}>
+                <Button
+                    type="dashed"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddNotification}
+                    size="large"
+                >
+                    Thêm Thông báo
+                </Button>
+            </div>
+
+            {(!Array.isArray(notifications) || notifications.length === 0) ? (
+                <Alert
+                    message="Chưa có thông báo nào"
+                    description="Nhấp vào nút 'Thêm Thông báo' để thêm thông báo quan trọng"
+                    type="info"
+                    showIcon
+                />
+            ) : (
+                <div className="notifications-list">
+                    {notifications.map((notification, index) => (
+                        <Card
+                            key={notification.id}
+                            size="small"
+                            className="notification-item"
+                            style={{ marginBottom: 16 }}
+                            extra={
+                                <Button
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => handleRemoveNotification(notification.id)}
+                                    size="small"
+                                />
+                            }
+                        >
+                            <div style={{ marginBottom: 12 }}>
+                                <Text strong style={{ color: '#1890ff' }}>
+                                    #{index + 1}
+                                </Text>
+                            </div>
+
+                            <Row gutter={16}>
+                                <Col span={8}>
+                                    <Form.Item
+                                        label="Tiêu đề"
+                                        required
+                                        style={{ marginBottom: 8 }}
+                                    >
+                                        <Input
+                                            placeholder="Ví dụ: Quy định ruộng"
+                                            value={notification.title}
+                                            onChange={(e) => handleUpdateNotification(notification.id, 'title', e.target.value)}
+                                            size="large"
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={16}>
+                                    <Form.Item
+                                        label="Mô tả chi tiết"
+                                        required
+                                        style={{ marginBottom: 8 }}
+                                    >
+                                        <Input.TextArea
+                                            placeholder="Ví dụ: Không được tự ý phá ruộng chủ quan để đòi bồi thường"
+                                            value={notification.description}
+                                            onChange={(e) => handleUpdateNotification(notification.id, 'description', e.target.value)}
+                                            rows={2}
+                                            showCount
+                                            maxLength={300}
+                                            size="large"
+                                        />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </Card>
+                    ))}
+                </div>
+            )}
+        </div>
+    ), [notifications, handleAddNotification, handleRemoveNotification, handleUpdateNotification]);
 
     // Generate condition form fields
     const getConditionFormFields = () => {
@@ -990,6 +1130,12 @@ const ConfigurationTab = ({
                         gridColumns="repeat(3, 1fr)"
                         gap="24px"
                     />
+
+                    {/* Notifications Manager */}
+                    <div style={{ marginTop: 24 }}>
+                        <Title level={5} style={{ marginBottom: 16 }}>Thông tin quan trọng cần thông báo</Title>
+                        {NotificationsManager}
+                    </div>
                 </Panel>
             </Collapse>
         </div>

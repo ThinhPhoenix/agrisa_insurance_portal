@@ -183,7 +183,7 @@ const CreatePolicyPage = () => {
       label: (
         <Space>
           <SettingOutlined />
-          <span>Cấu hình</span>
+          <span>Cấu hình nâng cao</span>
           {isTabCompleted(TABS.CONFIGURATION) ? (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
           ) : (

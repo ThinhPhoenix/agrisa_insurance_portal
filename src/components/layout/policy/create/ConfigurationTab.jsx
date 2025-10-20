@@ -14,17 +14,20 @@ import {
     Alert,
     Button,
     Card,
+    Col,
     Collapse,
     Form,
+    Input,
     Popconfirm,
+    Row,
     Space,
     Tag,
     Tooltip,
     Typography
 } from 'antd';
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-const { Title, Text: TypographyText } = Typography;
+const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
 
 const ConfigurationTab = ({
@@ -39,12 +42,64 @@ const ConfigurationTab = ({
     const formRef = useRef();
     const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
+    const [notifications, setNotifications] = useState(Array.isArray(configurationData.importantNotifications) ? configurationData.importantNotifications : []);
+
+    // Update notifications when configurationData changes
+    useEffect(() => {
+        setNotifications(Array.isArray(configurationData.importantNotifications) ? configurationData.importantNotifications : []);
+    }, [configurationData.importantNotifications]);
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
-        onDataChange(allValues);
+        const currentNotifications = Array.isArray(notifications) ? notifications : [];
+        onDataChange({
+            ...allValues,
+            importantNotifications: currentNotifications
+        });
+    };
+
+    // Handle add notification
+    const handleAddNotification = () => {
+        const currentNotifications = Array.isArray(notifications) ? notifications : [];
+        const newNotification = {
+            id: Date.now().toString(),
+            title: '',
+            description: ''
+        };
+        const updatedNotifications = [...currentNotifications, newNotification];
+        setNotifications(updatedNotifications);
+        onDataChange({
+            ...configurationData,
+            importantNotifications: updatedNotifications
+        });
+    };
+
+    // Handle remove notification
+    const handleRemoveNotification = (id) => {
+        const currentNotifications = Array.isArray(notifications) ? notifications : [];
+        const updatedNotifications = currentNotifications.filter(notification => notification.id !== id);
+        setNotifications(updatedNotifications);
+        onDataChange({
+            ...configurationData,
+            importantNotifications: updatedNotifications
+        });
+    };
+
+    // Handle update notification
+    const handleUpdateNotification = (id, field, value) => {
+        const currentNotifications = Array.isArray(notifications) ? notifications : [];
+        const updatedNotifications = currentNotifications.map(notification =>
+            notification.id === id
+                ? { ...notification, [field]: value }
+                : notification
+        );
+        setNotifications(updatedNotifications);
+        onDataChange({
+            ...configurationData,
+            importantNotifications: updatedNotifications
+        });
     };
 
     // Handle add/update condition
@@ -131,119 +186,6 @@ const ConfigurationTab = ({
         );
     };
 
-    // Generate basic configuration fields
-    const getBasicConfigFields = () => [
-        {
-            name: 'coverageType',
-            label: 'Loại bảo hiểm',
-            type: 'select',
-            placeholder: 'Chọn loại bảo hiểm',
-            required: true,
-            size: 'large',
-            gridColumn: '1',
-            optionLabelProp: 'label',
-            dropdownStyle: { maxWidth: '300px' },
-            options: mockData.coverageTypes?.map(type => ({
-                value: type.value,
-                label: type.label,
-                labelProp: type.label,
-                description: type.description,
-                premium_rate: type.premium_rate
-            })),
-            renderOption: (option) => renderOptionWithTooltip(option, (
-                <div>
-                    <div><strong>{option.label}</strong></div>
-                    <div style={{ marginTop: '4px' }}>{option.description}</div>
-                    <div style={{ marginTop: '4px' }}>
-                        Tỷ lệ phí: {(option.premium_rate * 100).toFixed(1)}%
-                    </div>
-                </div>
-            ))
-        },
-        {
-            name: 'riskLevel',
-            label: 'Mức độ rủi ro',
-            type: 'select',
-            placeholder: 'Chọn mức độ rủi ro',
-            required: true,
-            size: 'large',
-            gridColumn: '2',
-            options: mockData.riskLevels?.map(level => ({
-                value: level.value,
-                label: level.label,
-                color: level.color,
-                multiplier: level.multiplier
-            })),
-            renderOption: (option) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                        width: '12px',
-                        height: '12px',
-                        backgroundColor: option.color,
-                        borderRadius: '50%'
-                    }} />
-                    <TypographyText strong>{option.label}</TypographyText>
-                    <TypographyText type="secondary">({option.multiplier}x)</TypographyText>
-                </div>
-            )
-        },
-        {
-            name: 'logicalOperator',
-            label: 'Toán tử Logic giữa các điều kiện',
-            type: 'radioGroup',
-            required: true,
-            gridColumn: '1',
-            options: mockData.logicalOperators?.map(operator => ({
-                value: operator.value,
-                label: (
-                    <div>
-                        <TypographyText strong>{operator.label}</TypographyText>
-                        <br />
-                        <TypographyText type="secondary" style={{ fontSize: '11px' }}>
-                            {operator.description}
-                        </TypographyText>
-                    </div>
-                )
-            }))
-        },
-        {
-            name: 'payoutPercentage',
-            label: 'Tỷ lệ Thanh toán (%)',
-            type: 'slider',
-            required: true,
-            gridColumn: '2',
-            min: 1,
-            max: 100,
-            marks: {
-                25: '25%',
-                50: '50%',
-                75: '75%',
-                100: '100%'
-            },
-            sliderTooltip: { formatter: value => `${value}%` },
-            rules: [
-                { required: true, message: 'Vui lòng nhập tỷ lệ thanh toán' },
-                { type: 'number', min: 1, max: 100, message: 'Tỷ lệ từ 1% đến 100%' }
-            ]
-        },
-        {
-            name: 'maxPayoutAmount',
-            label: 'Số tiền thanh toán tối đa (VND)',
-            type: 'number',
-            required: true,
-            gridColumn: '3',
-            min: 25000000,
-            step: 1000000,
-            size: 'large',
-            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
-            parser: value => value.replace(/\s?₫|(,*)/g, ''),
-            rules: [
-                { required: true, message: 'Vui lòng nhập số tiền tối đa' },
-                { type: 'number', min: 25000000, message: 'Tối thiểu 25,000,000 ₫' }
-            ]
-        }
-    ];
-
     // Generate payout configuration fields
     const getPayoutConfigFields = () => [
         {
@@ -264,18 +206,34 @@ const ConfigurationTab = ({
         },
         {
             name: 'basedOnHectare',
-            label: 'Lấy theo héc ta',
+            label: 'Lấy theo diện tích',
             type: 'switch',
             gridColumn: '2',
             checkedChildren: 'Có',
             unCheckedChildren: 'Không'
         },
         {
+            name: 'payoutMaxAmount',
+            label: 'Số tiền chi trả tối đa (VND)',
+            type: 'number',
+            required: true,
+            gridColumn: '3',
+            min: 0,
+            step: 100000,
+            size: 'large',
+            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
+            parser: value => value.replace(/\s?₫|(,*)/g, ''),
+            rules: [
+                { required: true, message: 'Vui lòng nhập số tiền tối đa' },
+                { type: 'number', min: 0, message: 'Số tiền phải lớn hơn hoặc bằng 0' }
+            ]
+        },
+        {
             name: 'exceedingThresholdRate',
             label: 'Tỉ lệ chi trả vượt ngưỡng chỉ số',
             type: 'number',
             required: true,
-            gridColumn: '3',
+            gridColumn: '2',
             min: 0.01,
             max: 1,
             step: 0.01,
@@ -304,9 +262,9 @@ const ConfigurationTab = ({
         },
         {
             name: 'payoutDelayDays',
-            label: 'Thời gian thanh toán (ngày)',
+            label: 'Thời gian chờ thanh toán (ngày)',
             type: 'number',
-            gridColumn: '2',
+            gridColumn: '3',
             min: 0,
             max: 30,
             placeholder: '3',
@@ -335,7 +293,7 @@ const ConfigurationTab = ({
         },
         {
             name: 'insuranceBasedOnHectare',
-            label: 'Lấy theo héc ta',
+            label: 'Lấy theo diện tích',
             type: 'switch',
             gridColumn: '2',
             checkedChildren: 'Có',
@@ -346,7 +304,7 @@ const ConfigurationTab = ({
             label: 'Tỉ lệ chi trả cơ bản',
             type: 'number',
             required: true,
-            gridColumn: '3',
+            gridColumn: '1',
             min: 0.01,
             max: 1,
             step: 0.01,
@@ -355,6 +313,21 @@ const ConfigurationTab = ({
             rules: [
                 { required: true, message: 'Vui lòng nhập tỉ lệ' },
                 { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+            ]
+        },
+        {
+            name: 'maxRenewalTime',
+            label: 'Thời gian gia hạn tối đa (ngày)',
+            type: 'number',
+            gridColumn: '2',
+            min: 1,
+            step: 1,
+            placeholder: '12',
+            size: 'large',
+            tooltip: 'Thời gian tối đa có thể gia hạn hợp đồng bảo hiểm',
+            rules: [
+                { required: true, message: 'Vui lòng nhập thời gian gia hạn tối đa' },
+                { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
             ]
         }
     ];
@@ -400,11 +373,141 @@ const ConfigurationTab = ({
             type: 'checkbox-group',
             required: true,
             gridColumn: '1 / -1',
+            direction: 'horizontal',
             options: mockData.alertTypes?.map(type => ({
                 value: type.value,
                 label: type.label
             })),
             rules: [{ required: true, message: 'Vui lòng chọn ít nhất một loại cảnh báo' }]
+        }
+    ];
+
+    // Generate registration time fields
+    const getRegistrationTimeFields = () => [
+        {
+            name: 'insuranceEffectiveStartDate',
+            label: 'Thời gian hiệu lực bảo hiểm (bắt đầu quan sát)',
+            type: 'datepicker',
+            required: true,
+            gridColumn: '1',
+            placeholder: 'Chọn ngày bắt đầu',
+            size: 'large',
+            rules: [
+                { required: true, message: 'Vui lòng chọn ngày bắt đầu' }
+            ]
+        },
+        {
+            name: 'insuranceEffectiveEndDate',
+            label: 'Thời gian kết thúc hiệu lực bảo hiểm (kết thúc quan sát)',
+            type: 'datepicker',
+            required: true,
+            gridColumn: '2',
+            placeholder: 'Chọn ngày kết thúc',
+            size: 'large',
+            rules: [
+                { required: true, message: 'Vui lòng chọn ngày kết thúc' }
+            ]
+        }
+    ];
+
+    // Generate lifecycle fields
+    const getLifecycleFields = () => [
+        {
+            name: 'autoRenew',
+            label: 'Tự động làm mới (gia hạn) hợp đồng',
+            type: 'switch',
+            gridColumn: '1',
+            checkedChildren: 'Có',
+            unCheckedChildren: 'Không',
+            tooltip: 'Tự động gia hạn hợp đồng khi đến hạn'
+        },
+        {
+            name: 'renewalDiscount',
+            label: 'Gia hạn nhiều thì có giảm giá (%)',
+            type: 'number',
+            gridColumn: '2',
+            min: 0,
+            max: 100,
+            step: 0.1,
+            placeholder: '0.0',
+            size: 'large',
+            tooltip: 'Phần trăm giảm giá khi gia hạn nhiều lần',
+            formatter: value => `${value}%`,
+            parser: value => value.replace('%', ''),
+            rules: [
+                { type: 'number', min: 0, max: 100, message: 'Giảm giá từ 0% đến 100%' }
+            ]
+        },
+        {
+            name: 'originalInsuranceYears',
+            label: 'Năm',
+            type: 'number',
+            gridColumn: '1',
+            min: 0,
+            step: 1,
+            placeholder: '0',
+            size: 'large',
+            tooltip: 'Số năm tồn tại của bảo hiểm gốc',
+            rules: [
+                ({ getFieldValue }) => ({
+                    validator(_, value) {
+                        const months = getFieldValue('originalInsuranceMonths') || 0;
+                        const days = getFieldValue('originalInsuranceDays') || 0;
+                        if ((value || 0) === 0 && months === 0 && days === 0) {
+                            return Promise.reject(new Error('Vui lòng nhập ít nhất năm, tháng hoặc ngày'));
+                        }
+                        return Promise.resolve();
+                    }
+                })
+            ]
+        },
+        {
+            name: 'originalInsuranceMonths',
+            label: 'Tháng',
+            type: 'number',
+            gridColumn: '2',
+            min: 0,
+            max: 11,
+            step: 1,
+            placeholder: '0',
+            size: 'large',
+            tooltip: 'Số tháng tồn tại của bảo hiểm gốc (0-11)',
+            rules: [
+                ({ getFieldValue }) => ({
+                    validator(_, value) {
+                        const years = getFieldValue('originalInsuranceYears') || 0;
+                        const days = getFieldValue('originalInsuranceDays') || 0;
+                        if (years === 0 && (value || 0) === 0 && days === 0) {
+                            return Promise.reject(new Error('Vui lòng nhập ít nhất năm, tháng hoặc ngày'));
+                        }
+                        return Promise.resolve();
+                    }
+                })
+            ]
+        },
+        {
+            name: 'originalInsuranceDays',
+            label: 'Ngày',
+            type: 'number',
+            gridColumn: '3',
+            min: 0,
+            max: 30,
+            step: 1,
+            placeholder: '0',
+            size: 'large',
+            tooltip: 'Số ngày tồn tại của bảo hiểm gốc (0-30)',
+            rules: [
+                ({ getFieldValue }) => ({
+                    validator(_, value) {
+                        const years = getFieldValue('originalInsuranceYears') || 0;
+                        const months = getFieldValue('originalInsuranceMonths') || 0;
+                        if (years === 0 && months === 0 && (value || 0) === 0) {
+                            return Promise.reject(new Error('Vui lòng nhập ít nhất năm, tháng hoặc ngày'));
+                        }
+                        return Promise.resolve();
+                    }
+                })
+            ]
         }
     ];
 
@@ -451,8 +554,102 @@ const ConfigurationTab = ({
         }
     ];
 
+    // Memoized Notifications Manager Component
+    const NotificationsManager = useMemo(() => (
+        <div className="notifications-manager">
+            <div style={{ marginBottom: 16 }}>
+                <Button
+                    type="dashed"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddNotification}
+                    size="large"
+                >
+                    Thêm Thông báo
+                </Button>
+            </div>
+
+            {(!Array.isArray(notifications) || notifications.length === 0) ? (
+                <Alert
+                    message="Chưa có thông báo nào"
+                    description="Nhấp vào nút 'Thêm Thông báo' để thêm thông báo quan trọng"
+                    type="info"
+                    showIcon
+                />
+            ) : (
+                <div className="notifications-list">
+                    {notifications.map((notification, index) => (
+                        <Card
+                            key={notification.id}
+                            size="small"
+                            className="notification-item"
+                            style={{ marginBottom: 16 }}
+                            extra={
+                                <Button
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => handleRemoveNotification(notification.id)}
+                                    size="small"
+                                />
+                            }
+                        >
+                            <div style={{ marginBottom: 12 }}>
+                                <Text strong style={{ color: '#1890ff' }}>
+                                    #{index + 1}
+                                </Text>
+                            </div>
+
+                            <Row gutter={16}>
+                                <Col span={8}>
+                                    <Form.Item
+                                        label="Tiêu đề"
+                                        required
+                                        style={{ marginBottom: 8 }}
+                                    >
+                                        <Input
+                                            placeholder="Ví dụ: Quy định ruộng"
+                                            value={notification.title}
+                                            onChange={(e) => handleUpdateNotification(notification.id, 'title', e.target.value)}
+                                            size="large"
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={16}>
+                                    <Form.Item
+                                        label="Mô tả chi tiết"
+                                        required
+                                        style={{ marginBottom: 8 }}
+                                    >
+                                        <Input.TextArea
+                                            placeholder="Ví dụ: Không được tự ý phá ruộng chủ quan để đòi bồi thường"
+                                            value={notification.description}
+                                            onChange={(e) => handleUpdateNotification(notification.id, 'description', e.target.value)}
+                                            rows={2}
+                                            showCount
+                                            maxLength={300}
+                                            size="large"
+                                        />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </Card>
+                    ))}
+                </div>
+            )}
+        </div>
+    ), [notifications, handleAddNotification, handleRemoveNotification, handleUpdateNotification]);
+
     // Generate condition form fields
     const getConditionFormFields = () => {
+        // Filter out data sources that are already used in conditions (except current editing condition)
+        const usedDataSourceIds = configurationData.conditions
+            ?.filter(condition => !editingCondition || condition.id !== editingCondition.id)
+            ?.map(condition => condition.dataSourceId) || [];
+
+        const availableDataSourcesFiltered = availableDataSources.filter(
+            source => !usedDataSourceIds.includes(source.value)
+        );
+
         const fields = [
             {
                 name: 'dataSourceId',
@@ -464,7 +661,7 @@ const ConfigurationTab = ({
                 size: 'large',
                 optionLabelProp: 'label',
                 dropdownStyle: { maxWidth: '300px' },
-                options: availableDataSources.map(source => ({
+                options: availableDataSourcesFiltered.map(source => ({
                     value: source.value,
                     label: source.label,
                     labelProp: source.label,
@@ -672,27 +869,7 @@ const ConfigurationTab = ({
 
     return (
         <div className="configuration-tab">
-            <Collapse defaultActiveKey={['basic', 'conditions']} size="large">
-                {/* Basic Policy Configuration */}
-                <Panel
-                    header={
-                        <Space>
-                            <SettingOutlined />
-                            <span>Cấu hình Policy Cơ bản</span>
-                        </Space>
-                    }
-                    key="basic"
-                >
-                    <CustomForm
-                        ref={formRef}
-                        fields={getBasicConfigFields()}
-                        initialValues={configurationData}
-                        onValuesChange={onDataChange}
-                        gridColumns="repeat(3, 1fr)"
-                        gap="24px"
-                    />
-                </Panel>
-
+            <Collapse defaultActiveKey={['payout']} size="large">
                 {/* Payout Configuration */}
                 <Panel
                     header={
@@ -709,7 +886,7 @@ const ConfigurationTab = ({
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
                         gridColumns="repeat(3, 1fr)"
-                        gap="24px"
+                        gap="16px"
                     />
                 </Panel>
 
@@ -728,8 +905,8 @@ const ConfigurationTab = ({
                         fields={getInsuranceCostFields()}
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
-                        gridColumns="repeat(3, 1fr)"
-                        gap="24px"
+                        gridColumns="repeat(2, 1fr)"
+                        gap="16px"
                     />
                 </Panel>
 
@@ -746,6 +923,52 @@ const ConfigurationTab = ({
                     <CustomForm
                         ref={formRef}
                         fields={getMonitoringFields()}
+                        initialValues={configurationData}
+                        onValuesChange={onDataChange}
+                        gridColumns="repeat(2, 1fr)"
+                        gap="24px"
+                    />
+                </Panel>
+
+                {/* Lifecycle Configuration */}
+                <Panel
+                    header={
+                        <Space>
+                            <SettingOutlined />
+                            <span>Cấu hình lifecycle (Chu kỳ sống của policy)</span>
+                        </Space>
+                    }
+                    key="lifecycle"
+                >
+                    <div style={{ marginBottom: 16 }}>
+                        <Title level={5} style={{ marginBottom: 8 }}>Thời gian sống/tồn tại của bảo hiểm gốc</Title>
+                        <TypographyText type="secondary">
+                            Nhập khoảng thời gian tồn tại của hợp đồng bảo hiểm gốc (ví dụ: 1 năm 2 tháng 13 ngày)
+                        </TypographyText>
+                    </div>
+                    <CustomForm
+                        ref={formRef}
+                        fields={getLifecycleFields()}
+                        initialValues={configurationData}
+                        onValuesChange={onDataChange}
+                        gridColumns="repeat(3, 1fr)"
+                        gap="24px"
+                    />
+                </Panel>
+
+                {/* Registration Time Configuration */}
+                <Panel
+                    header={
+                        <Space>
+                            <ClockCircleOutlined />
+                            <span>Cấu hình thời hạn bảo hiểm</span>
+                        </Space>
+                    }
+                    key="registration-time"
+                >
+                    <CustomForm
+                        ref={formRef}
+                        fields={getRegistrationTimeFields()}
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
                         gridColumns="repeat(2, 1fr)"
@@ -807,6 +1030,36 @@ const ConfigurationTab = ({
                             </>
                         )}
                     </Card>
+
+                    {/* Logical Operator Configuration */}
+                    {configurationData.conditions?.length > 0 && (
+                        <Card className="logical-operator-card" style={{ marginBottom: 16 }}>
+                            <Title level={5} style={{ marginBottom: 16 }}>Toán tử Logic giữa các điều kiện</Title>
+                            <CustomForm
+                                ref={formRef}
+                                fields={[{
+                                    name: 'logicalOperator',
+                                    label: '',
+                                    type: 'radioGroup',
+                                    required: true,
+                                    options: mockData.logicalOperators?.map(operator => ({
+                                        value: operator.value,
+                                        label: (
+                                            <div>
+                                                <TypographyText strong>{operator.label}</TypographyText>
+                                                <br />
+                                                <TypographyText type="secondary" style={{ fontSize: '11px' }}>
+                                                    {operator.description}
+                                                </TypographyText>
+                                            </div>
+                                        )
+                                    }))
+                                }]}
+                                initialValues={configurationData}
+                                onValuesChange={onDataChange}
+                            />
+                        </Card>
+                    )}
 
                     {/* Conditions Table */}
                     {configurationData.conditions?.length === 0 ? (
@@ -878,6 +1131,12 @@ const ConfigurationTab = ({
                         gridColumns="repeat(3, 1fr)"
                         gap="24px"
                     />
+
+                    {/* Notifications Manager */}
+                    <div style={{ marginTop: 24 }}>
+                        <Title level={5} style={{ marginBottom: 16 }}>Thông tin quan trọng cần thông báo</Title>
+                        {NotificationsManager}
+                    </div>
                 </Panel>
             </Collapse>
         </div>

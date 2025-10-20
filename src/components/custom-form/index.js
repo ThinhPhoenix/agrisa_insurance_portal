@@ -617,7 +617,12 @@ export const CustomForm = forwardRef(function CustomForm(
               }}
             >
               <div
-                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+                style={{
+                  display: "flex",
+                  flexDirection:
+                    field.direction === "horizontal" ? "row" : "column",
+                  gap: "8px",
+                }}
               >
                 {field.options?.map((option) => (
                   <div
@@ -707,6 +712,22 @@ export const CustomForm = forwardRef(function CustomForm(
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+        );
+      case "custom":
+        return (
+          <Form.Item
+            key={field.name}
+            label={field.label}
+            name={field.name}
+            rules={rules}
+            style={{
+              gridColumn: field.gridColumn,
+              ...(field.itemStyle ?? field.style),
+            }}
+            className={field.itemClassName ?? field.className}
+          >
+            {field.render ? field.render() : null}
           </Form.Item>
         );
       default:

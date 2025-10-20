@@ -617,7 +617,12 @@ export const CustomForm = forwardRef(function CustomForm(
               }}
             >
               <div
-                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+                style={{
+                  display: "flex",
+                  flexDirection:
+                    field.direction === "horizontal" ? "row" : "column",
+                  gap: "8px",
+                }}
               >
                 {field.options?.map((option) => (
                   <div

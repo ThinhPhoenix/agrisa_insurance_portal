@@ -206,7 +206,7 @@ const ConfigurationTab = ({
         },
         {
             name: 'basedOnHectare',
-            label: 'Lấy theo héc ta',
+            label: 'Lấy theo diện tích',
             type: 'switch',
             gridColumn: '2',
             checkedChildren: 'Có',
@@ -304,7 +304,7 @@ const ConfigurationTab = ({
             label: 'Tỉ lệ chi trả cơ bản',
             type: 'number',
             required: true,
-            gridColumn: '3',
+            gridColumn: '1',
             min: 0.01,
             max: 1,
             step: 0.01,
@@ -319,7 +319,7 @@ const ConfigurationTab = ({
             name: 'maxRenewalTime',
             label: 'Thời gian gia hạn tối đa (ngày)',
             type: 'number',
-            gridColumn: '1',
+            gridColumn: '2',
             min: 1,
             step: 1,
             placeholder: '12',
@@ -373,6 +373,7 @@ const ConfigurationTab = ({
             type: 'checkbox-group',
             required: true,
             gridColumn: '1 / -1',
+            direction: 'horizontal',
             options: mockData.alertTypes?.map(type => ({
                 value: type.value,
                 label: type.label
@@ -885,7 +886,7 @@ const ConfigurationTab = ({
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
                         gridColumns="repeat(3, 1fr)"
-                        gap="24px"
+                        gap="16px"
                     />
                 </Panel>
 
@@ -904,8 +905,8 @@ const ConfigurationTab = ({
                         fields={getInsuranceCostFields()}
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
-                        gridColumns="repeat(3, 1fr)"
-                        gap="24px"
+                        gridColumns="repeat(2, 1fr)"
+                        gap="16px"
                     />
                 </Panel>
 

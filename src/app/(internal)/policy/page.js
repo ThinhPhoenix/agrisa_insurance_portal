@@ -1,6 +1,7 @@
 "use client";
 
 import SelectedColumn from "@/components/column-selector";
+import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import {
   CheckCircleOutlined,
@@ -8,11 +9,13 @@ import {
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
+  FilterOutlined,
   PercentageOutlined,
   SafetyOutlined,
+  SearchOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { Button, Layout, Tag, Typography } from "antd";
+import { Button, Collapse, Layout, Space, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useState } from "react";
 import mockData from "./mock..json";
@@ -31,6 +34,19 @@ export default function PolicyPage() {
     "coverageDurationDays",
   ]);
 
+  // Filter state
+  const [filters, setFilters] = useState({
+    productName: "",
+    productCode: "",
+    insuranceProviderId: "",
+    cropType: "",
+    premiumRange: "",
+    durationRange: "",
+  });
+
+  // Filtered data
+  const [filteredData, setFilteredData] = useState(mockData.policies);
+
   // Calculate summary stats
   const summaryStats = {
     totalPolicies: mockData.policies.length,
@@ -43,6 +59,102 @@ export default function PolicyPage() {
         mockData.policies.length) *
       100
     ).toFixed(1),
+  };
+
+  // Filter options
+  const filterOptions = {
+    providers: [
+      { label: "PARTNER_001", value: "PARTNER_001" },
+      { label: "PARTNER_002", value: "PARTNER_002" },
+      { label: "PARTNER_003", value: "PARTNER_003" },
+    ],
+    cropTypes: mockData.cropTypes.map((type) => ({
+      label: type.label,
+      value: type.value,
+    })),
+    premiumRanges: [
+      { label: "Dưới 5%", value: "0-0.05" },
+      { label: "5% - 7%", value: "0.05-0.07" },
+      { label: "Trên 7%", value: "0.07-1" },
+    ],
+    durationRanges: [
+      { label: "Dưới 120 ngày", value: "0-120" },
+      { label: "120 - 300 ngày", value: "120-300" },
+      { label: "Trên 300 ngày", value: "300-999" },
+    ],
+  };
+
+  // Handle form submit
+  const handleFormSubmit = (formData) => {
+    setFilters(formData);
+    applyFilters(formData);
+  };
+
+  // Handle clear filters
+  const handleClearFilters = () => {
+    const clearedFilters = {
+      productName: "",
+      productCode: "",
+      insuranceProviderId: "",
+      cropType: "",
+      premiumRange: "",
+      durationRange: "",
+    };
+    setFilters(clearedFilters);
+    setFilteredData(mockData.policies);
+  };
+
+  // Apply filters
+  const applyFilters = (filterValues) => {
+    let filtered = [...mockData.policies];
+
+    if (filterValues.productName) {
+      filtered = filtered.filter((policy) =>
+        policy.productName
+          .toLowerCase()
+          .includes(filterValues.productName.toLowerCase())
+      );
+    }
+
+    if (filterValues.productCode) {
+      filtered = filtered.filter((policy) =>
+        policy.productCode
+          .toLowerCase()
+          .includes(filterValues.productCode.toLowerCase())
+      );
+    }
+
+    if (filterValues.insuranceProviderId) {
+      filtered = filtered.filter(
+        (policy) =>
+          policy.insuranceProviderId === filterValues.insuranceProviderId
+      );
+    }
+
+    if (filterValues.cropType) {
+      filtered = filtered.filter(
+        (policy) => policy.cropType === filterValues.cropType
+      );
+    }
+
+    if (filterValues.premiumRange) {
+      const [min, max] = filterValues.premiumRange.split("-").map(Number);
+      filtered = filtered.filter(
+        (policy) =>
+          policy.premiumBaseRate >= min && policy.premiumBaseRate < max
+      );
+    }
+
+    if (filterValues.durationRange) {
+      const [min, max] = filterValues.durationRange.split("-").map(Number);
+      filtered = filtered.filter(
+        (policy) =>
+          policy.coverageDurationDays >= min &&
+          policy.coverageDurationDays < max
+      );
+    }
+
+    setFilteredData(filtered);
   };
 
   // Get crop type label
@@ -132,6 +244,76 @@ export default function PolicyPage() {
     },
   ];
 
+  // Search fields - organized in 2 rows with 4 fields each
+  const searchFields = [
+    // First row - Main search fields (4 fields)
+    {
+      name: "productName",
+      label: "Tên sản phẩm",
+      type: "input",
+      placeholder: "Tìm kiếm theo tên sản phẩm...",
+      value: filters.productName,
+    },
+    {
+      name: "productCode",
+      label: "Mã sản phẩm",
+      type: "input",
+      placeholder: "Tìm kiếm theo mã sản phẩm...",
+      value: filters.productCode,
+    },
+    {
+      name: "cropType",
+      label: "Loại cây trồng",
+      type: "combobox",
+      placeholder: "Chọn loại cây trồng",
+      options: filterOptions.cropTypes,
+      value: filters.cropType,
+    },
+    {
+      name: "insuranceProviderId",
+      label: "Đối tác bảo hiểm",
+      type: "combobox",
+      placeholder: "Chọn đối tác bảo hiểm",
+      options: filterOptions.providers,
+      value: filters.insuranceProviderId,
+    },
+    // Second row - Range filters and actions (4 fields)
+    {
+      name: "premiumRange",
+      label: "Tỷ lệ phí BH",
+      type: "combobox",
+      placeholder: "Chọn khoảng tỷ lệ phí",
+      options: filterOptions.premiumRanges,
+      value: filters.premiumRange,
+    },
+    {
+      name: "durationRange",
+      label: "Thời hạn bảo hiểm",
+      type: "combobox",
+      placeholder: "Chọn khoảng thời hạn",
+      options: filterOptions.durationRanges,
+      value: filters.durationRange,
+    },
+    {
+      name: "searchButton",
+      label: " ",
+      type: "button",
+      variant: "primary",
+      buttonText: "Tìm kiếm",
+      startContent: <SearchOutlined size={14} />,
+      isSubmit: true,
+    },
+    {
+      name: "clearButton",
+      label: " ",
+      type: "button",
+      variant: "dashed",
+      buttonText: "Xóa bộ lọc",
+      startContent: <FilterOutlined size={14} />,
+      onClick: handleClearFilters,
+    },
+  ];
+
   return (
     <Layout.Content className="policy-content">
       <div className="policy-space">
@@ -203,6 +385,43 @@ export default function PolicyPage() {
           </div>
         </div>
 
+        {/* Filters */}
+        <div className="policy-filters">
+          <Collapse
+            items={[
+              {
+                key: "1",
+                label: (
+                  <Space>
+                    <FilterOutlined />
+                    Bộ lọc tìm kiếm
+                  </Space>
+                ),
+                children: (
+                  <div className="policy-filter-form">
+                    <div className="space-y-4">
+                      {/* First row - Main search fields */}
+                      <CustomForm
+                        fields={searchFields.slice(0, 4)}
+                        gridColumns="1fr 1fr 1fr 1fr"
+                        gap="16px"
+                        onSubmit={handleFormSubmit}
+                      />
+                      {/* Second row - Range filters and actions */}
+                      <CustomForm
+                        fields={searchFields.slice(4)}
+                        gridColumns="1fr 1fr 1fr 1fr"
+                        gap="16px"
+                        onSubmit={handleFormSubmit}
+                      />
+                    </div>
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </div>
+
         {/* Table */}
         <div>
           <div className="flex justify-start items-center gap-2 mb-2">
@@ -222,12 +441,12 @@ export default function PolicyPage() {
 
           <CustomTable
             columns={columns}
-            dataSource={mockData.policies}
+            dataSource={filteredData}
             visibleColumns={visibleColumns}
             rowKey="id"
             scroll={{ x: 1200 }}
             pagination={{
-              total: mockData.policies.length,
+              total: filteredData.length,
               pageSize: 10,
               showSizeChanger: true,
               showQuickJumper: true,

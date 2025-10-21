@@ -193,7 +193,7 @@ const ConfigurationTab = ({
     const getPayoutConfigFields = () => [
         {
             name: 'fixedPayoutAmount',
-            label: 'Số tiền chi trả cố định (VND)',
+            label: 'Chi cố định (VND)',
             type: 'number',
             required: true,
             gridColumn: '1',
@@ -208,19 +208,11 @@ const ConfigurationTab = ({
             ]
         },
         {
-            name: 'basedOnHectare',
-            label: 'Lấy theo diện tích',
-            type: 'switch',
-            gridColumn: '2',
-            checkedChildren: 'Có',
-            unCheckedChildren: 'Không'
-        },
-        {
             name: 'payoutMaxAmount',
-            label: 'Số tiền chi trả tối đa (VND)',
+            label: 'Chi trả tối đa (VND)',
             type: 'number',
             required: true,
-            gridColumn: '3',
+            gridColumn: '2',
             min: 0,
             step: 100000,
             size: 'middle',
@@ -232,8 +224,24 @@ const ConfigurationTab = ({
             ]
         },
         {
+            name: 'exceedingThresholdRate',
+            label: 'Chi vượt ngưỡng (%)',
+            type: 'number',
+            required: true,
+            gridColumn: '3',
+            min: 0.01,
+            max: 1,
+            step: 0.01,
+            size: 'middle',
+            tooltip: 'Tỉ lệ chi trả được tính theo công thức bên phía bảo hiểm',
+            rules: [
+                { required: true, message: 'Vui lòng nhập tỉ lệ' },
+                { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
+            ]
+        },
+        {
             name: 'basicPayoutRate',
-            label: 'Tỉ lệ chi trả cơ bản',
+            label: 'Chi trả cơ bản',
             type: 'number',
             required: true,
             gridColumn: '1',
@@ -249,30 +257,22 @@ const ConfigurationTab = ({
         },
         {
             name: 'payoutDelayDays',
-            label: 'Thời gian chờ thanh toán (ngày)',
+            label: 'Chờ thanh toán (ngày)',
             type: 'number',
             gridColumn: '2',
             min: 0,
             max: 30,
             placeholder: '3',
             size: 'middle',
-            tooltip: 'Số ngày chờ đợi trước khi thanh toán tự động'
+            tooltip: 'Số ngày chờ đợi trước khi thanh toán'
         },
         {
-            name: 'exceedingThresholdRate',
-            label: 'Tỉ lệ chi trả vượt ngưỡng chỉ số',
-            type: 'number',
-            required: true,
+            name: 'basedOnHectare',
+            label: 'Lấy theo diện tích',
+            type: 'switch',
             gridColumn: '3',
-            min: 0.01,
-            max: 1,
-            step: 0.01,
-            size: 'middle',
-            tooltip: 'Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm',
-            rules: [
-                { required: true, message: 'Vui lòng nhập tỉ lệ' },
-                { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
-            ]
+            checkedChildren: 'Có',
+            unCheckedChildren: 'Không'
         }
     ];    // Generate insurance cost fields
     const getInsuranceCostFields = () => [
@@ -293,19 +293,11 @@ const ConfigurationTab = ({
             ]
         },
         {
-            name: 'insuranceBasedOnHectare',
-            label: 'Lấy theo diện tích',
-            type: 'switch',
-            gridColumn: '2',
-            checkedChildren: 'Có',
-            unCheckedChildren: 'Không'
-        },
-        {
             name: 'insuranceBasicPayoutRate',
             label: 'Tỉ lệ chi trả cơ bản',
             type: 'number',
             required: true,
-            gridColumn: '1',
+            gridColumn: '2',
             min: 0.01,
             max: 1,
             step: 0.01,

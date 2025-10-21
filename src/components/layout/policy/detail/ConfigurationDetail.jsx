@@ -1,8 +1,9 @@
 import CustomTable from '@/components/custom-table';
 import { SettingOutlined } from '@ant-design/icons';
-import { Badge, Card, Descriptions, Divider, Tag, Typography } from 'antd';
+import { Card, Collapse, Descriptions, Tag, Typography } from 'antd';
 
 const { Title, Text } = Typography;
+const { Panel } = Collapse;
 
 const ConfigurationDetail = ({ policyData, mockData }) => {
     const getCoverageTypeInfo = (value) => {
@@ -42,12 +43,12 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             render: (_, record) => (
                 <div>
                     <Tag color="blue">
-                        {mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.label || 'N/A'}
+                        {record.dataSourceLabel || mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.label || 'N/A'}
                     </Tag>
                     <br />
                     <Text type="secondary" style={{ fontSize: 11 }}>
-                        {mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.parameterName || ''} (
-                        {mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.unit || ''})
+                        {record.parameterName || mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.parameterName || ''} (
+                        {record.unit || mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.unit || ''})
                     </Text>
                 </div>
             ),
@@ -56,15 +57,19 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             title: 'Hàm tổng hợp',
             key: 'aggregation',
             render: (_, record) => (
-                <Tag color="green">
-                    {mockData.aggregationFunctions.find(f => f.value === record.aggregationFunction)?.label || record.aggregationFunction}
-                </Tag>
+                <div>
+                    <Tag color="green">
+                        {record.aggregationFunctionLabel || mockData.aggregationFunctions.find(f => f.value === record.aggregationFunction)?.label || record.aggregationFunction}
+                    </Tag>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                        {record.aggregationWindowDays} ngày
+                        {record.baselineWindowDays && (
+                            <> | Baseline: {record.baselineWindowDays} ngày</>
+                        )}
+                    </Text>
+                </div>
             ),
-        },
-        {
-            title: 'Thời gian',
-            key: 'time',
-            render: (_, record) => `${record.timeWindow} ${record.timeUnit}`,
         },
         {
             title: 'Điều kiện',
@@ -72,14 +77,14 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             render: (_, record) => (
                 <div>
                     <Tag color="red">
-                        {mockData.thresholdOperators.find(op => op.value === record.thresholdOperator)?.label || record.thresholdOperator}
+                        {record.thresholdOperatorLabel || mockData.thresholdOperators.find(op => op.value === record.thresholdOperator)?.label || record.thresholdOperator}
                     </Tag>
-                    <Text strong> {record.thresholdValue}</Text>
-                    {record.baselineValue && (
+                    <Text strong> {record.thresholdValue}</Text> {record.unit}
+                    {record.alertThreshold && (
                         <>
                             <br />
                             <Text type="secondary" style={{ fontSize: 11 }}>
-                                Baseline: {record.baselineValue}
+                                Cảnh báo sớm: {record.alertThreshold}%
                             </Text>
                         </>
                     )}
@@ -95,110 +100,226 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                 Cấu hình Chính sách
             </Title>
 
-            <Title level={5}>Thông tin Bảo hiểm</Title>
-            <Descriptions bordered column={2} size="small">
-                <Descriptions.Item label="Loại bảo hiểm" span={2}>
-                    <div>
-                        <Tag color="purple">{coverageType.label}</Tag>
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
-                            {coverageType.description}
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
-                            Tỷ lệ phí: {((coverageType.premium_rate || 0) * 100).toFixed(1)}%
-                        </Text>
-                    </div>
-                </Descriptions.Item>
-                <Descriptions.Item label="Mức độ rủi ro">
-                    <div>
-                        <Badge color={riskLevel.color} text={riskLevel.label} />
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
-                            Hệ số: {riskLevel.multiplier}x
-                        </Text>
-                    </div>
-                </Descriptions.Item>
-                <Descriptions.Item label="Toán tử Logic">
-                    <div>
-                        <Tag color="blue">{policyData.configuration?.logicalOperator}</Tag>
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
-                            {mockData.logicalOperators.find(op => op.value === policyData.configuration?.logicalOperator)?.description || ''}
-                        </Text>
-                    </div>
-                </Descriptions.Item>
-            </Descriptions>
-
-            <Divider />
-
-            <Title level={5}>Thanh toán & Chi trả</Title>
-            <Descriptions bordered column={2} size="small">
-                <Descriptions.Item label="Tỷ lệ Thanh toán">
-                    <Text strong>{policyData.configuration?.payoutPercentage}%</Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Số tiền tối đa">
-                    <Text strong style={{ color: '#52c41a' }}>
-                        {policyData.configuration?.maxPayoutAmount?.toLocaleString()} ₫
-                    </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Phương thức thanh toán">
-                    <div>
-                        {getPayoutMethodLabel(policyData.configuration?.payoutMethod)}
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
-                            {mockData.payoutMethods.find(p => p.value === policyData.configuration?.payoutMethod)?.description || ''}
-                        </Text>
-                    </div>
-                </Descriptions.Item>
-                <Descriptions.Item label="Cách tính thanh toán">
-                    <div>
-                        {getPayoutCalculationLabel(policyData.configuration?.payoutCalculation)}
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
-                            {mockData.payoutCalculationMethods.find(p => p.value === policyData.configuration?.payoutCalculation)?.description || ''}
-                        </Text>
-                    </div>
-                </Descriptions.Item>
-            </Descriptions>
-
-            <Divider />
-
-            <Title level={5}>Giám sát & Cảnh báo</Title>
-            <Descriptions bordered column={2} size="small">
-                <Descriptions.Item label="Tần suất giám sát">
-                    <div>
-                        {getMonitoringFrequencyLabel(policyData.configuration?.monitoringFrequency)}
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
-                            {mockData.monitoringFrequencies.find(m => m.value === policyData.configuration?.monitoringFrequency)?.description || ''}
-                        </Text>
-                    </div>
-                </Descriptions.Item>
-                <Descriptions.Item label="Loại cảnh báo">
-                    <div>
-                        {policyData.configuration?.alertTypes?.map((type, index) => (
-                            <Tag key={index} color="orange" style={{ marginBottom: 4 }}>
-                                {mockData.alertTypes.find(a => a.value === type)?.label || type}
+            <Collapse defaultActiveKey={['payout']} size="large">
+                {/* Payout Configuration */}
+                <Panel
+                    header="Cấu hình Thanh toán chi trả"
+                    key="payout"
+                >
+                    <Descriptions bordered column={2} size="small">
+                        <Descriptions.Item label="Chi cố định (VND)">
+                            <Text strong>{policyData.fixedPayoutAmount?.toLocaleString()} ₫</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Chi trả tối đa (VND)">
+                            <Text strong>{policyData.payoutMaxAmount?.toLocaleString()} ₫</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Chi vượt ngưỡng (%)">
+                            <Text strong>{(policyData.exceedingThresholdRate * 100)?.toFixed(2)}%</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Chi trả cơ bản">
+                            <Text strong>{(policyData.basicPayoutRate * 100)?.toFixed(2)}%</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Chờ thanh toán (ngày)">
+                            <Text strong>{policyData.payoutDelayDays || 0} ngày</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Lấy theo diện tích">
+                            <Tag color={policyData.basedOnHectare ? 'green' : 'red'}>
+                                {policyData.basedOnHectare ? 'Có' : 'Không'}
                             </Tag>
-                        ))}
-                    </div>
-                </Descriptions.Item>
-            </Descriptions>
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Panel>
 
-            <Divider />
+                {/* Insurance Cost Configuration */}
+                <Panel
+                    header="Cấu hình chi phí bảo hiểm"
+                    key="insurance-cost"
+                >
+                    <Descriptions bordered column={2} size="small">
+                        <Descriptions.Item label="Số tiền chi trả cố định (VND)">
+                            <Text strong>{policyData.insuranceFixedPayoutAmount?.toLocaleString()} ₫</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Tỉ lệ chi trả cơ bản">
+                            <Text strong>{(policyData.insuranceBasicPayoutRate * 100)?.toFixed(2)}%</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thời gian gia hạn tối đa (ngày)">
+                            <Text strong>{policyData.maxRenewalTime} ngày</Text>
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Panel>
 
-            {/* Trigger Conditions */}
-            <Title level={5}>
-                Điều kiện Kích hoạt
-                <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
-                    ({policyData.configuration?.triggerConditions?.length || 0} điều kiện)
-                </Text>
-            </Title>
-            <CustomTable
-                columns={triggerColumns}
-                dataSource={policyData.configuration?.triggerConditions || []}
-                pagination={false}
-            />
+                {/* Monitoring & Alerts */}
+                <Panel
+                    header="Giám sát & Cảnh báo"
+                    key="monitoring"
+                >
+                    <Descriptions bordered column={2} size="small">
+                        <Descriptions.Item label="Số lần giám sát">
+                            <Text strong>{policyData.monitoringFrequencyValue} lần</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Đơn vị thời gian">
+                            <Text strong>{policyData.monitoringFrequencyUnit}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Loại cảnh báo" span={2}>
+                            <div>
+                                {policyData.alertTypes?.map((type, index) => (
+                                    <Tag key={index} color="orange" style={{ marginBottom: 4 }}>
+                                        {mockData.alertTypes.find(a => a.value === type)?.label || type}
+                                    </Tag>
+                                ))}
+                            </div>
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Panel>
+
+                {/* Lifecycle Configuration */}
+                <Panel
+                    header="Cấu hình lifecycle (Chu kỳ sống của policy)"
+                    key="lifecycle"
+                >
+                    <Descriptions bordered column={2} size="small">
+                        <Descriptions.Item label="Tự động làm mới (gia hạn) hợp đồng">
+                            <Tag color={policyData.autoRenew ? 'green' : 'red'}>
+                                {policyData.autoRenew ? 'Có' : 'Không'}
+                            </Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Gia hạn nhiều thì có giảm giá (%)">
+                            <Text strong>{policyData.renewalDiscount?.toFixed(2)}%</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thời gian sống/tồn tại của bảo hiểm gốc" span={2}>
+                            <Text strong>
+                                {policyData.originalInsuranceYears || 0} năm, {policyData.originalInsuranceMonths || 0} tháng, {policyData.originalInsuranceDays || 0} ngày
+                            </Text>
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Panel>
+
+                {/* Registration Time Configuration */}
+                <Panel
+                    header="Cấu hình thời hạn bảo hiểm"
+                    key="registration-time"
+                >
+                    <Descriptions bordered column={2} size="small">
+                        <Descriptions.Item label="Thời gian hiệu lực bảo hiểm (bắt đầu quan sát)">
+                            <Text strong>{policyData.insuranceEffectiveStartDate ? new Date(policyData.insuranceEffectiveStartDate).toLocaleDateString('vi-VN') : 'N/A'}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thời gian kết thúc hiệu lực bảo hiểm (kết thúc quan sát)">
+                            <Text strong>{policyData.insuranceEffectiveEndDate ? new Date(policyData.insuranceEffectiveEndDate).toLocaleDateString('vi-VN') : 'N/A'}</Text>
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Panel>
+
+                {/* Trigger Conditions */}
+                <Panel
+                    header={`Điều kiện Kích hoạt (${policyData.conditions?.length || 0} điều kiện)`}
+                    key="conditions"
+                >
+                    {policyData.conditions?.length > 0 && (
+                        <>
+                            <Descriptions bordered column={1} size="small" style={{ marginBottom: 16 }}>
+                                <Descriptions.Item label="Toán tử Logic giữa các điều kiện">
+                                    <Tag color="blue">{policyData.logicalOperator}</Tag>
+                                    <br />
+                                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                                        {mockData.logicalOperators.find(op => op.value === policyData.logicalOperator)?.description || ''}
+                                    </Text>
+                                </Descriptions.Item>
+                            </Descriptions>
+
+                            <CustomTable
+                                columns={triggerColumns}
+                                dataSource={policyData.conditions || []}
+                                pagination={false}
+                            />
+
+                            {/* Logic Preview */}
+                            <Card
+                                title="Xem trước Logic Kích hoạt"
+                                className="logic-preview-card"
+                                style={{ marginTop: 16 }}
+                            >
+                                <div className="logic-preview">
+                                    <Text>
+                                        Thanh toán <Text strong>{(policyData.basicPayoutRate * 100)?.toFixed(2)}%</Text> (tối đa{' '}
+                                        <Text strong>{policyData.payoutMaxAmount?.toLocaleString()} ₫</Text>) khi{' '}
+                                        <Text strong>
+                                            {policyData.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
+                                        </Text>
+                                        {' '}các điều kiện sau được thỏa mãn:
+                                    </Text>
+                                    <ul style={{ marginTop: 8 }}>
+                                        {policyData.conditions.map((condition, index) => (
+                                            <li key={condition.id}>
+                                                <Text>
+                                                    {condition.aggregationFunctionLabel} của {condition.dataSourceLabel}{' '}
+                                                    trong {condition.aggregationWindowDays} ngày{' '}
+                                                    {condition.thresholdOperatorLabel} {condition.thresholdValue} {condition.unit}
+                                                    {condition.baselineWindowDays && (
+                                                        <> (baseline: {condition.baselineWindowDays} ngày)</>
+                                                    )}
+                                                </Text>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </Card>
+                        </>
+                    )}
+
+                    {(!policyData.conditions || policyData.conditions.length === 0) && (
+                        <Text type="secondary">Chưa có điều kiện kích hoạt nào được cấu hình</Text>
+                    )}
+                </Panel>
+
+                {/* Additional Settings */}
+                <Panel
+                    header="Cài đặt Bổ sung"
+                    key="additional"
+                >
+                    <Descriptions bordered column={2} size="small">
+                        <Descriptions.Item label="Mô tả Policy" span={2}>
+                            <Text>{policyData.policyDescription || 'Không có mô tả'}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Cho phép thời gian ân hạn">
+                            <Tag color={policyData.enableGracePeriod ? 'green' : 'red'}>
+                                {policyData.enableGracePeriod ? 'Có' : 'Không'}
+                            </Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thời gian ân hạn (ngày)">
+                            <Text strong>{policyData.gracePeriodDays || 0} ngày</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Tự động gia hạn">
+                            <Tag color={policyData.enableAutoRenewal ? 'green' : 'red'}>
+                                {policyData.enableAutoRenewal ? 'Có' : 'Không'}
+                            </Tag>
+                        </Descriptions.Item>
+                    </Descriptions>
+
+                    {/* Notifications */}
+                    {policyData.importantNotifications?.length > 0 && (
+                        <div style={{ marginTop: 24 }}>
+                            <Title level={5}>Thông tin quan trọng cần thông báo</Title>
+                            <div className="notifications-list">
+                                {policyData.importantNotifications.map((notification, index) => (
+                                    <Card
+                                        key={notification.id}
+                                        size="small"
+                                        className="notification-item"
+                                        style={{ marginBottom: 16 }}
+                                    >
+                                        <div style={{ marginBottom: 12 }}>
+                                            <Text strong style={{ color: '#1890ff' }}>
+                                                #{index + 1}: {notification.title}
+                                            </Text>
+                                        </div>
+                                        <Text>{notification.description}</Text>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </Panel>
+            </Collapse>
         </Card>
     );
 };

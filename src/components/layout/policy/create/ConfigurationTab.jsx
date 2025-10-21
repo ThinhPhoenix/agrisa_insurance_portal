@@ -18,8 +18,10 @@ import {
     Collapse,
     Form,
     Input,
+    InputNumber,
     Popconfirm,
     Row,
+    Select,
     Space,
     Tag,
     Tooltip,
@@ -40,6 +42,7 @@ const ConfigurationTab = ({
     getAvailableDataSourcesForTrigger
 }) => {
     const formRef = useRef();
+    const [conditionForm] = Form.useForm();
     const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
     const [notifications, setNotifications] = useState(Array.isArray(configurationData.importantNotifications) ? configurationData.importantNotifications : []);
@@ -104,7 +107,7 @@ const ConfigurationTab = ({
 
     // Handle add/update condition
     const handleSaveCondition = () => {
-        conditionFormRef.current?.validateFields().then(values => {
+        conditionForm.validateFields().then(values => {
             const selectedDataSource = availableDataSources.find(ds => ds.value === values.dataSourceId);
 
             const condition = {
@@ -131,17 +134,17 @@ const ConfigurationTab = ({
     // Handle edit condition
     const handleEditCondition = (condition) => {
         setEditingCondition(condition);
-        conditionFormRef.current?.setFieldsValue(condition);
+        conditionForm.setFieldsValue(condition);
     };
 
     // Handle cancel edit
     const handleCancelEdit = () => {
         setEditingCondition(null);
-        conditionFormRef.current?.resetFields();
+        conditionForm.resetFields();
     };
 
     // Check if aggregation function is 'change'
-    const isChangeAggregation = Form.useWatch('aggregationFunction', conditionFormRef.current?.getForm());
+    const isChangeAggregation = Form.useWatch('aggregationFunction', conditionForm);
 
     // Get filtered data sources by selected category
     const getFilteredDataSources = (categoryValue) => {
@@ -659,15 +662,19 @@ const ConfigurationTab = ({
                 gridColumn: '1',
                 placeholder: 'Chọn nguồn dữ liệu',
                 size: 'large',
-                optionLabelProp: 'label',
+                optionLabelProp: 'displayLabel',
                 dropdownStyle: { maxWidth: '300px' },
-                options: availableDataSourcesFiltered.map(source => ({
-                    value: source.value,
-                    label: source.label,
-                    labelProp: source.label,
-                    parameterName: source.parameterName,
-                    unit: source.unit
-                })),
+                options: availableDataSourcesFiltered.map(source => {
+                    const displayLabel = source.label.length > 17 ? source.label.substring(0, 17) + '...' : source.label;
+                    return {
+                        value: source.value,
+                        label: source.label,
+                        displayLabel: displayLabel,
+                        labelProp: source.label,
+                        parameterName: source.parameterName,
+                        unit: source.unit
+                    };
+                }),
                 renderOption: (option) => renderOptionWithTooltip(option, (
                     <div>
                         <div><strong>{option.label}</strong></div>
@@ -1004,12 +1011,225 @@ const ConfigurationTab = ({
                             />
                         ) : (
                             <>
-                                <CustomForm
-                                    ref={conditionFormRef}
-                                    fields={getConditionFormFields()}
-                                    gridColumns="repeat(3, 1fr)"
-                                    gap="16px"
-                                />
+                                <Form
+                                    form={conditionForm}
+                                    layout="vertical"
+                                >
+                                    <Row gutter={16}>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="dataSourceId"
+                                                label="Nguồn dữ liệu"
+                                                rules={[{ required: true, message: 'Vui lòng chọn nguồn dữ liệu' }]}
+                                            >
+                                                <Select
+                                                    placeholder="Chọn nguồn dữ liệu"
+                                                    size="large"
+                                                    optionLabelProp="displayLabel"
+                                                    dropdownStyle={{ maxWidth: '300px' }}
+                                                >
+                                                    {availableDataSources.map(source => {
+                                                        const displayLabel = source.label.length > 17 ? source.label.substring(0, 17) + '...' : source.label;
+                                                        return (
+                                                            <Select.Option
+                                                                key={source.value}
+                                                                value={source.value}
+                                                                displayLabel={displayLabel}
+                                                                label={source.label}
+                                                                parameterName={source.parameterName}
+                                                                unit={source.unit}
+                                                            >
+                                                                <Tooltip
+                                                                    title={
+                                                                        <div>
+                                                                            <div><strong>{source.label}</strong></div>
+                                                                            <div style={{ marginTop: '4px' }}>{source.parameterName}</div>
+                                                                            <div style={{ marginTop: '4px', color: '#52c41a' }}>
+                                                                                Đơn vị: {source.unit}
+                                                                            </div>
+                                                                        </div>
+                                                                    }
+                                                                    placement="right"
+                                                                    mouseEnterDelay={0.3}
+                                                                >
+                                                                    <div style={{ maxWidth: '280px', cursor: 'pointer' }}>
+                                                                        <TypographyText style={{
+                                                                            fontSize: '13px',
+                                                                            display: 'block',
+                                                                            whiteSpace: 'nowrap',
+                                                                            overflow: 'hidden',
+                                                                            textOverflow: 'ellipsis'
+                                                                        }}>
+                                                                            {source.label}
+                                                                        </TypographyText>
+                                                                    </div>
+                                                                </Tooltip>
+                                                            </Select.Option>
+                                                        );
+                                                    })}
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="aggregationFunction"
+                                                label="Hàm tổng hợp"
+                                                rules={[{ required: true, message: 'Vui lòng chọn hàm tổng hợp' }]}
+                                            >
+                                                <Select
+                                                    placeholder="Chọn hàm tổng hợp"
+                                                    size="large"
+                                                    optionLabelProp="label"
+                                                    dropdownStyle={{ maxWidth: '300px' }}
+                                                >
+                                                    {mockData.aggregationFunctions?.map(func => (
+                                                        <Select.Option
+                                                            key={func.value}
+                                                            value={func.value}
+                                                            label={func.label}
+                                                            description={func.description}
+                                                        >
+                                                            <Tooltip
+                                                                title={
+                                                                    <div>
+                                                                        <div><strong>{func.label}</strong></div>
+                                                                        <div style={{ marginTop: '4px' }}>{func.description}</div>
+                                                                    </div>
+                                                                }
+                                                                placement="right"
+                                                                mouseEnterDelay={0.3}
+                                                            >
+                                                                <div style={{ maxWidth: '280px', cursor: 'pointer' }}>
+                                                                    <TypographyText style={{
+                                                                        fontSize: '13px',
+                                                                        display: 'block',
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
+                                                                    }}>
+                                                                        {func.label}
+                                                                    </TypographyText>
+                                                                </div>
+                                                            </Tooltip>
+                                                        </Select.Option>
+                                                    ))}
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="aggregationWindowDays"
+                                                label="Cửa sổ Tổng hợp (Ngày)"
+                                                rules={[
+                                                    { required: true, message: 'Nhập cửa sổ tổng hợp' },
+                                                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                                                ]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="30"
+                                                    min={1}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="thresholdOperator"
+                                                label="Toán tử Ngưỡng"
+                                                rules={[{ required: true, message: 'Vui lòng chọn toán tử' }]}
+                                            >
+                                                <Select
+                                                    placeholder="Chọn toán tử"
+                                                    size="large"
+                                                    optionLabelProp="label"
+                                                    dropdownStyle={{ maxWidth: '300px' }}
+                                                >
+                                                    {mockData.thresholdOperators?.map(operator => (
+                                                        <Select.Option
+                                                            key={operator.value}
+                                                            value={operator.value}
+                                                            label={operator.label}
+                                                            description={operator.description}
+                                                        >
+                                                            <Tooltip
+                                                                title={
+                                                                    <div>
+                                                                        <div><strong>{operator.label}</strong></div>
+                                                                        <div style={{ marginTop: '4px' }}>{operator.description}</div>
+                                                                    </div>
+                                                                }
+                                                                placement="right"
+                                                                mouseEnterDelay={0.3}
+                                                            >
+                                                                <div style={{ maxWidth: '280px', cursor: 'pointer' }}>
+                                                                    <TypographyText style={{
+                                                                        fontSize: '13px',
+                                                                        display: 'block',
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis'
+                                                                    }}>
+                                                                        {operator.label}
+                                                                    </TypographyText>
+                                                                </div>
+                                                            </Tooltip>
+                                                        </Select.Option>
+                                                    ))}
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="thresholdValue"
+                                                label="Giá trị Ngưỡng"
+                                                rules={[{ required: true, message: 'Vui lòng nhập giá trị ngưỡng' }]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="200"
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="alertThreshold"
+                                                label="Ngưỡng cảnh báo sớm (%)"
+                                                rules={[{ type: 'number', min: 50, max: 95, message: 'Từ 50% đến 95%' }]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="80"
+                                                    min={50}
+                                                    max={95}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                    formatter={value => `${value}%`}
+                                                    parser={value => value.replace('%', '')}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        {isChangeAggregation === 'change' && (
+                                            <Col span={8}>
+                                                <Form.Item
+                                                    name="baselineWindowDays"
+                                                    label="Cửa sổ Baseline (Ngày)"
+                                                    rules={[
+                                                        { required: true, message: 'Nhập cửa sổ baseline' },
+                                                        { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                                                    ]}
+                                                >
+                                                    <InputNumber
+                                                        placeholder="365"
+                                                        min={1}
+                                                        size="large"
+                                                        style={{ width: '100%' }}
+                                                    />
+                                                </Form.Item>
+                                            </Col>
+                                        )}
+                                    </Row>
+                                </Form>
                                 <div style={{ marginTop: 16 }}>
                                     <Space>
                                         <Button

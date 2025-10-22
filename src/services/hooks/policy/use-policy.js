@@ -52,6 +52,11 @@ const usePolicy = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState(null);
 
+  // State cho tiers
+  const [tiers, setTiers] = useState([]);
+  const [tiersLoading, setTiersLoading] = useState(false);
+  const [tiersError, setTiersError] = useState(null);
+
   // Tính toán chi phí ước tính theo thời gian thực
   const estimatedCosts = useMemo(() => {
     let monthlyDataCost = 0;
@@ -59,14 +64,14 @@ const usePolicy = () => {
 
     // Tính chi phí dữ liệu
     basicData.selectedDataSources.forEach((source) => {
-      const category = mockData.dataTierCategories.find(
-        (cat) => cat.value === source.category
+      const category = categories.find(
+        (cat) => cat.category_name === source.category
       );
-      const tier = mockData.dataTiers.find((t) => t.value === source.tier);
+      const tier = tiers.find((t) => t.value === source.tier);
 
       if (category && tier) {
         const cost =
-          source.baseCost * category.categoryMultiplier * tier.tierMultiplier;
+          source.baseCost * category.category_cost_multiplier * tier.data_tier_multiplier;
         monthlyDataCost += cost;
       }
     });
@@ -83,7 +88,7 @@ const usePolicy = () => {
       premiumBaseRate: basicData.premiumBaseRate,
       totalEstimatedCost: monthlyDataCost.toFixed(2),
     };
-  }, [basicData.selectedDataSources, basicData.premiumBaseRate]);
+  }, [basicData.selectedDataSources, basicData.premiumBaseRate, categories, tiers]);
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {
@@ -118,6 +123,56 @@ const usePolicy = () => {
       message.error(`Lỗi khi tải danh mục: ${errorMessage}`);
     } finally {
       setCategoriesLoading(false);
+    }
+  }, []);
+
+  // Fetch tiers by category
+  const fetchTiersByCategory = useCallback(async (categoryId) => {
+    if (!categoryId) {
+      setTiers([]);
+      return;
+    }
+
+    setTiersLoading(true);
+    setTiersError(null);
+
+    try {
+      console.log(
+        "🚀 Calling API:",
+        endpoints.policy.data_tier.tier.get_by_category(categoryId)
+      );
+      const response = await axiosInstance.get(
+        endpoints.policy.data_tier.tier.get_by_category(categoryId)
+      );
+
+      console.log("📥 Tiers Response:", response.data);
+
+      if (response.data.success) {
+        // Transform API response to match expected format
+        const transformedTiers = response.data.data.map(tier => ({
+          id: tier.tier_level, // Use tier_level as id
+          value: tier.tier_name.toLowerCase(), // Use tier_name lowercase as value
+          label: tier.tier_name, // Display name
+          description: `${tier.tier_name} Tier`,
+          tierMultiplier: tier.data_tier_multiplier,
+          data_tier_category_id: tier.data_tier_category_id,
+          tier_level: tier.tier_level,
+          tier_name: tier.tier_name,
+          data_tier_multiplier: tier.data_tier_multiplier
+        }));
+        setTiers(transformedTiers);
+      } else {
+        throw new Error(response.data.message || "Failed to fetch tiers");
+      }
+    } catch (error) {
+      console.error("❌ API Error:", error);
+      console.error("❌ Error response:", error.response?.data);
+      const errorMessage = error.response?.data?.message || "Failed to fetch tiers";
+      setTiersError(errorMessage);
+      message.error(`Lỗi khi tải gói dịch vụ: ${errorMessage}`);
+      setTiers([]);
+    } finally {
+      setTiersLoading(false);
     }
   }, []);
 
@@ -397,6 +452,9 @@ const usePolicy = () => {
     categories,
     categoriesLoading,
     categoriesError,
+    tiers,
+    tiersLoading,
+    tiersError,
 
     // Constants
     TABS,
@@ -420,6 +478,7 @@ const usePolicy = () => {
     handleCreatePolicy,
     handleReset,
     fetchCategories,
+    fetchTiersByCategory,
 
     // Utilities
     getAvailableDataSources,

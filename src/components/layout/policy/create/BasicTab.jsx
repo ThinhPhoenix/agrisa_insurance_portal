@@ -28,7 +28,10 @@ const BasicTab = ({
     onRemoveDataSource,
     estimatedCosts,
     categories = [],
-    categoriesLoading = false
+    categoriesLoading = false,
+    tiers = [],
+    tiersLoading = false,
+    fetchTiersByCategory
 }) => {
     const [form] = Form.useForm();
     const [dataSourceForm] = Form.useForm();
@@ -42,20 +45,26 @@ const BasicTab = ({
     };
 
     // Handle category change
-    const handleCategoryChange = (category) => {
-        setSelectedCategory(category);
+    const handleCategoryChange = (categoryName) => {
+        setSelectedCategory(categoryName);
         setSelectedTier('');
         setAvailableDataSources([]);
         dataSourceForm.setFieldsValue({ tier: undefined, dataSource: undefined });
+        
+        // Find the selected category to get its ID
+        const selectedCategoryObj = categories.find(cat => cat.category_name === categoryName);
+        if (selectedCategoryObj && fetchTiersByCategory) {
+            fetchTiersByCategory(selectedCategoryObj.id);
+        }
     };
 
     // Handle tier change
     const handleTierChange = (tier) => {
         setSelectedTier(tier);
-        // Find the tier ID from the selected tier value
-        const selectedTierData = mockData.dataTiers.find(t => t.value === tier);
-        // Filter data sources by the tier's ID
-        const sources = mockData.dataSources.filter(source => source.data_tier_id === selectedTierData?.id) || [];
+        // Find the selected tier data
+        const selectedTierData = tiers.find(t => t.value === tier);
+        // Filter data sources by the tier's level (since API uses tier_level)
+        const sources = mockData.dataSources.filter(source => source.data_tier_id === selectedTierData?.tier_level) || [];
         setAvailableDataSources(sources);
         dataSourceForm.setFieldsValue({ dataSource: undefined });
     };
@@ -79,8 +88,8 @@ const BasicTab = ({
                     ...selectedSource,
                     category: selectedCategory,
                     tier: selectedTier,
-                    categoryLabel: mockData.dataTierCategories.find(cat => cat.value === selectedCategory)?.label,
-                    tierLabel: mockData.dataTiers.find(t => t.value === selectedTier)?.label
+                    categoryLabel: selectedCategory, // Since selectedCategory is already the name
+                    tierLabel: tiers.find(t => t.value === selectedTier)?.label
                 };
 
                 onAddDataSource(dataSourceToAdd);
@@ -142,11 +151,7 @@ const BasicTab = ({
     ];
 
     // Get filtered tiers based on category
-    const getFilteredTiers = (category) => {
-        if (!category) return mockData.dataTiers;
-        const categoryId = mockData.dataTierCategories.find(cat => cat.value === category)?.id;
-        return mockData.dataTiers.filter(tier => tier.data_tier_category_id === categoryId);
-    };
+    // Note: Tiers are now fetched from API when category changes
 
     return (
         <div className="basic-tab">
@@ -301,8 +306,9 @@ const BasicTab = ({
                                     onChange={handleTierChange}
                                     size="large"
                                     optionLabelProp="label"
+                                    loading={tiersLoading}
                                 >
-                                    {getFilteredTiers(selectedCategory).map(tier => (
+                                    {tiers.map(tier => (
                                         <Option key={tier.value} value={tier.value} label={tier.label}>
                                             <Tooltip
                                                 title={

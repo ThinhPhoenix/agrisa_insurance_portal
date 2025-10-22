@@ -45,6 +45,8 @@ const CreatePolicyPage = () => {
     estimatedCosts,
     categories,
     categoriesLoading,
+    tiers,
+    tiersLoading,
 
     // Constants
     TABS,
@@ -67,6 +69,8 @@ const CreatePolicyPage = () => {
     handleUpdateTag,
     handleCreatePolicy,
     handleReset,
+    fetchCategories,
+    fetchTiersByCategory,
 
     // Utilities
     getAvailableDataSourcesForTrigger,
@@ -179,6 +183,9 @@ const CreatePolicyPage = () => {
           estimatedCosts={estimatedCosts}
           categories={categories}
           categoriesLoading={categoriesLoading}
+          tiers={tiers}
+          tiersLoading={tiersLoading}
+          fetchTiersByCategory={fetchTiersByCategory}
         />
       ),
     },

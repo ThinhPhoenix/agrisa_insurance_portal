@@ -20,6 +20,10 @@ export const endpoints = {
         get_one: (category_id) =>
           `/policy/protected/api/v2/data-tier-categories/${category_id}`,
       },
+      tier: {
+        get_by_category: (category_id) =>
+          `/policy/protected/api/v2/data-tiers/category/${category_id}`,
+      },
     },
   },
 };

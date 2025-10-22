@@ -71,7 +71,9 @@ const usePolicy = () => {
 
       if (category && tier) {
         const cost =
-          source.baseCost * category.category_cost_multiplier * tier.data_tier_multiplier;
+          source.baseCost *
+          category.category_cost_multiplier *
+          tier.data_tier_multiplier;
         monthlyDataCost += cost;
       }
     });
@@ -88,7 +90,12 @@ const usePolicy = () => {
       premiumBaseRate: basicData.premiumBaseRate,
       totalEstimatedCost: monthlyDataCost.toFixed(2),
     };
-  }, [basicData.selectedDataSources, basicData.premiumBaseRate, categories, tiers]);
+  }, [
+    basicData.selectedDataSources,
+    basicData.premiumBaseRate,
+    categories,
+    tiers,
+  ]);
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {
@@ -149,7 +156,7 @@ const usePolicy = () => {
 
       if (response.data.success) {
         // Transform API response to match expected format
-        const transformedTiers = response.data.data.map(tier => ({
+        const transformedTiers = response.data.data.map((tier) => ({
           id: tier.tier_level, // Use tier_level as id
           value: tier.tier_name.toLowerCase(), // Use tier_name lowercase as value
           label: tier.tier_name, // Display name
@@ -158,7 +165,7 @@ const usePolicy = () => {
           data_tier_category_id: tier.data_tier_category_id,
           tier_level: tier.tier_level,
           tier_name: tier.tier_name,
-          data_tier_multiplier: tier.data_tier_multiplier
+          data_tier_multiplier: tier.data_tier_multiplier,
         }));
         setTiers(transformedTiers);
       } else {
@@ -167,7 +174,8 @@ const usePolicy = () => {
     } catch (error) {
       console.error("❌ API Error:", error);
       console.error("❌ Error response:", error.response?.data);
-      const errorMessage = error.response?.data?.message || "Failed to fetch tiers";
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch tiers";
       setTiersError(errorMessage);
       message.error(`Lỗi khi tải gói dịch vụ: ${errorMessage}`);
       setTiers([]);

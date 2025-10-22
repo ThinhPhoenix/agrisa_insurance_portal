@@ -50,7 +50,7 @@ const BasicTab = ({
         setSelectedTier('');
         setAvailableDataSources([]);
         dataSourceForm.setFieldsValue({ tier: undefined, dataSource: undefined });
-        
+
         // Find the selected category to get its ID
         const selectedCategoryObj = categories.find(cat => cat.category_name === categoryName);
         if (selectedCategoryObj && fetchTiersByCategory) {

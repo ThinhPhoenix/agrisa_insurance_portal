@@ -57,6 +57,11 @@ const usePolicy = () => {
   const [tiersLoading, setTiersLoading] = useState(false);
   const [tiersError, setTiersError] = useState(null);
 
+  // State cho data sources
+  const [dataSources, setDataSources] = useState([]);
+  const [dataSourcesLoading, setDataSourcesLoading] = useState(false);
+  const [dataSourcesError, setDataSourcesError] = useState(null);
+
   // Tính toán chi phí ước tính theo thời gian thực
   const estimatedCosts = useMemo(() => {
     let monthlyDataCost = 0;
@@ -181,6 +186,67 @@ const usePolicy = () => {
       setTiers([]);
     } finally {
       setTiersLoading(false);
+    }
+  }, []);
+
+  // Fetch data sources by tier
+  const fetchDataSourcesByTier = useCallback(async (tierId) => {
+    if (!tierId) {
+      setDataSources([]);
+      return;
+    }
+
+    setDataSourcesLoading(true);
+    setDataSourcesError(null);
+
+    try {
+      console.log(
+        "🚀 Calling API:",
+        endpoints.policy.data_tier.tier.get_data_sources(tierId)
+      );
+      const response = await axiosInstance.get(
+        endpoints.policy.data_tier.tier.get_data_sources(tierId)
+      );
+
+      console.log("📥 Data Sources Response:", response.data);
+
+      if (response.data.success) {
+        // Transform API response to match expected format
+        const transformedDataSources = response.data.data.map((source) => ({
+          id: `${source.data_source}_${source.parameter_name}`, // Create unique ID
+          label: source.display_name_vi || source.parameter_name, // Use Vietnamese name if available
+          parameterName: source.parameter_name,
+          unit: source.unit,
+          description: source.description_vi || source.parameter_name,
+          baseCost: source.base_cost,
+          data_tier_id: source.data_tier_id,
+          data_provider: source.data_provider,
+          parameter_type: source.parameter_type,
+          min_value: source.min_value,
+          max_value: source.max_value,
+          update_frequency: source.update_frequency,
+          spatial_resolution: source.spatial_resolution,
+          accuracy_rating: source.accuracy_rating,
+          api_endpoint: source.api_endpoint,
+          // Keep original fields for reference
+          ...source,
+        }));
+        setDataSources(transformedDataSources);
+      } else {
+        throw new Error(
+          response.data.message || "Failed to fetch data sources"
+        );
+      }
+    } catch (error) {
+      console.error("❌ API Error:", error);
+      console.error("❌ Error response:", error.response?.data);
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch data sources";
+      setDataSourcesError(errorMessage);
+      message.error(`Lỗi khi tải nguồn dữ liệu: ${errorMessage}`);
+      setDataSources([]);
+    } finally {
+      setDataSourcesLoading(false);
     }
   }, []);
 
@@ -463,6 +529,9 @@ const usePolicy = () => {
     tiers,
     tiersLoading,
     tiersError,
+    dataSources,
+    dataSourcesLoading,
+    dataSourcesError,
 
     // Constants
     TABS,
@@ -487,6 +556,7 @@ const usePolicy = () => {
     handleReset,
     fetchCategories,
     fetchTiersByCategory,
+    fetchDataSourcesByTier,
 
     // Utilities
     getAvailableDataSources,

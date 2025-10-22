@@ -31,13 +31,15 @@ const BasicTab = ({
     categoriesLoading = false,
     tiers = [],
     tiersLoading = false,
-    fetchTiersByCategory
+    dataSources = [],
+    dataSourcesLoading = false,
+    fetchTiersByCategory,
+    fetchDataSourcesByTier
 }) => {
     const [form] = Form.useForm();
     const [dataSourceForm] = Form.useForm();
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedTier, setSelectedTier] = useState('');
-    const [availableDataSources, setAvailableDataSources] = useState([]);
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
@@ -48,7 +50,6 @@ const BasicTab = ({
     const handleCategoryChange = (categoryName) => {
         setSelectedCategory(categoryName);
         setSelectedTier('');
-        setAvailableDataSources([]);
         dataSourceForm.setFieldsValue({ tier: undefined, dataSource: undefined });
 
         // Find the selected category to get its ID
@@ -61,18 +62,19 @@ const BasicTab = ({
     // Handle tier change
     const handleTierChange = (tier) => {
         setSelectedTier(tier);
-        // Find the selected tier data
-        const selectedTierData = tiers.find(t => t.value === tier);
-        // Filter data sources by the tier's level (since API uses tier_level)
-        const sources = mockData.dataSources.filter(source => source.data_tier_id === selectedTierData?.tier_level) || [];
-        setAvailableDataSources(sources);
         dataSourceForm.setFieldsValue({ dataSource: undefined });
+
+        // Find the selected tier data to get its level/ID
+        const selectedTierData = tiers.find(t => t.value === tier);
+        if (selectedTierData && fetchDataSourcesByTier) {
+            fetchDataSourcesByTier(selectedTierData.tier_level);
+        }
     };
 
     // Handle add data source
     const handleAddDataSource = () => {
         dataSourceForm.validateFields().then(values => {
-            const selectedSource = availableDataSources.find(source => source.id === values.dataSource);
+            const selectedSource = dataSources.find(source => source.id === values.dataSource);
             if (selectedSource) {
                 // Check if already added
                 const exists = basicData.selectedDataSources.find(
@@ -96,7 +98,6 @@ const BasicTab = ({
                 dataSourceForm.resetFields();
                 setSelectedCategory('');
                 setSelectedTier('');
-                setAvailableDataSources([]);
             }
         });
     };
@@ -347,8 +348,9 @@ const BasicTab = ({
                                     disabled={!selectedTier}
                                     size="large"
                                     optionLabelProp="label"
+                                    loading={dataSourcesLoading}
                                 >
-                                    {availableDataSources.map(source => (
+                                    {dataSources.map(source => (
                                         <Option key={source.id} value={source.id} label={source.label}>
                                             <Tooltip
                                                 title={
@@ -356,6 +358,9 @@ const BasicTab = ({
                                                         <div><strong>{source.label}</strong></div>
                                                         <div style={{ marginTop: '4px' }}>{source.description}</div>
                                                         <div style={{ marginTop: '4px', color: '#52c41a' }}>
+                                                            Nhà cung cấp: {source.data_provider}
+                                                        </div>
+                                                        <div style={{ marginTop: '4px', color: '#1890ff' }}>
                                                             Chi phí: {source.baseCost.toLocaleString()} ₫/tháng
                                                         </div>
                                                     </div>
@@ -367,7 +372,7 @@ const BasicTab = ({
                                                     <Text>{source.label}</Text>
                                                     <br />
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        {source.description} - {source.baseCost.toLocaleString()} ₫/tháng
+                                                        {source.data_provider} - {source.baseCost.toLocaleString()} ₫/tháng
                                                     </Text>
                                                 </div>
                                             </Tooltip>

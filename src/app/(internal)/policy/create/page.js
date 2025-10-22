@@ -47,6 +47,8 @@ const CreatePolicyPage = () => {
     categoriesLoading,
     tiers,
     tiersLoading,
+    dataSources,
+    dataSourcesLoading,
 
     // Constants
     TABS,
@@ -71,6 +73,7 @@ const CreatePolicyPage = () => {
     handleReset,
     fetchCategories,
     fetchTiersByCategory,
+    fetchDataSourcesByTier,
 
     // Utilities
     getAvailableDataSourcesForTrigger,
@@ -185,7 +188,10 @@ const CreatePolicyPage = () => {
           categoriesLoading={categoriesLoading}
           tiers={tiers}
           tiersLoading={tiersLoading}
+          dataSources={dataSources}
+          dataSourcesLoading={dataSourcesLoading}
           fetchTiersByCategory={fetchTiersByCategory}
+          fetchDataSourcesByTier={fetchDataSourcesByTier}
         />
       ),
     },

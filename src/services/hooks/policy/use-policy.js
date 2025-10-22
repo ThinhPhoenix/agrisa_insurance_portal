@@ -1,6 +1,8 @@
 import mockData from "@/app/(internal)/policy/mock..json";
+import axiosInstance from "@/libs/axios-instance";
+import { endpoints } from "@/services/endpoints";
 import { message } from "antd";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const TABS = {
   BASIC: "basic",
@@ -45,6 +47,11 @@ const usePolicy = () => {
   // State cho loading
   const [loading, setLoading] = useState(false);
 
+  // State cho categories
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState(null);
+
   // Tính toán chi phí ước tính theo thời gian thực
   const estimatedCosts = useMemo(() => {
     let monthlyDataCost = 0;
@@ -77,6 +84,47 @@ const usePolicy = () => {
       totalEstimatedCost: monthlyDataCost.toFixed(2),
     };
   }, [basicData.selectedDataSources, basicData.premiumBaseRate]);
+
+  // Fetch categories
+  const fetchCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    setCategoriesError(null);
+
+    const token = localStorage.getItem("token");
+    console.log("🔑 Current token:", token);
+
+    try {
+      console.log(
+        "🚀 Calling API:",
+        endpoints.policy.data_tier.category.get_all
+      );
+      const response = await axiosInstance.get(
+        endpoints.policy.data_tier.category.get_all
+      );
+
+      console.log("📥 Response:", response.data);
+
+      if (response.data.success) {
+        setCategories(response.data.data);
+      } else {
+        throw new Error(response.data.message || "Failed to fetch categories");
+      }
+    } catch (error) {
+      console.error("❌ API Error:", error);
+      console.error("❌ Error response:", error.response?.data);
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch categories";
+      setCategoriesError(errorMessage);
+      message.error(`Lỗi khi tải danh mục: ${errorMessage}`);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Validate basic tab
   const validateBasicTab = useCallback(() => {
@@ -346,6 +394,9 @@ const usePolicy = () => {
     validationStatus,
     loading,
     estimatedCosts,
+    categories,
+    categoriesLoading,
+    categoriesError,
 
     // Constants
     TABS,
@@ -368,6 +419,7 @@ const usePolicy = () => {
     handleUpdateTag,
     handleCreatePolicy,
     handleReset,
+    fetchCategories,
 
     // Utilities
     getAvailableDataSources,

@@ -13,4 +13,13 @@ export const endpoints = {
     update: (id) => `${prefix}/users/${id}`,
     delete: (id) => `${prefix}/users/${id}`,
   },
+  policy: {
+    data_tier: {
+      category: {
+        get_all: "/policy/protected/api/v2/data-tier-categories/",
+        get_one: (category_id) =>
+          `/policy/protected/api/v2/data-tier-categories/${category_id}`,
+      },
+    },
+  },
 };

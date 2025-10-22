@@ -26,7 +26,9 @@ const BasicTab = ({
     onDataChange,
     onAddDataSource,
     onRemoveDataSource,
-    estimatedCosts
+    estimatedCosts,
+    categories = [],
+    categoriesLoading = false
 }) => {
     const [form] = Form.useForm();
     const [dataSourceForm] = Form.useForm();
@@ -260,28 +262,25 @@ const BasicTab = ({
                                     onChange={handleCategoryChange}
                                     size="large"
                                     optionLabelProp="label"
+                                    loading={categoriesLoading}
                                 >
-                                    {mockData.dataTierCategories.map(category => (
-                                        <Option key={category.value} value={category.value} label={category.label}>
+                                    {categories.map(category => (
+                                        <Option key={category.id} value={category.category_name} label={category.category_name}>
                                             <Tooltip
                                                 title={
                                                     <div>
-                                                        <div><strong>{category.label}</strong></div>
-                                                        <div style={{ marginTop: '4px' }}>{category.description}</div>
+                                                        <div><strong>{category.category_name}</strong></div>
+                                                        <div style={{ marginTop: '4px' }}>{category.category_description}</div>
                                                     </div>
                                                 }
                                                 placement="right"
                                                 mouseEnterDelay={0.3}
                                             >
-                                                <div style={{
-                                                    cursor: 'pointer'
-                                                }}
-                                                    className="option-hover-item"
-                                                >
-                                                    <Text>{category.label}</Text>
+                                                <div style={{ cursor: 'pointer' }}>
+                                                    <Text>{category.category_name}</Text>
                                                     <br />
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        {category.description}
+                                                        {category.category_description}
                                                     </Text>
                                                 </div>
                                             </Tooltip>
@@ -318,11 +317,7 @@ const BasicTab = ({
                                                 placement="right"
                                                 mouseEnterDelay={0.3}
                                             >
-                                                <div style={{
-                                                    cursor: 'pointer'
-                                                }}
-                                                    className="option-hover-item"
-                                                >
+                                                <div style={{ cursor: 'pointer' }}>
                                                     <Text>{tier.label}</Text>
                                                     <br />
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -362,11 +357,7 @@ const BasicTab = ({
                                                 placement="right"
                                                 mouseEnterDelay={0.3}
                                             >
-                                                <div style={{
-                                                    cursor: 'pointer'
-                                                }}
-                                                    className="option-hover-item"
-                                                >
+                                                <div style={{ cursor: 'pointer' }}>
                                                     <Text>{source.label}</Text>
                                                     <br />
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>

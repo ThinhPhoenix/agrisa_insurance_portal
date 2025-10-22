@@ -22,13 +22,21 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+import { useAuthStore } from "@/stores/auth-store";
+
 axiosInstance.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
     if (error.response?.status === 401) {
-      console.log(`Unauthorized!`);
+      console.log(`Unauthorized! Clearing user and redirecting to login.`);
+      const { clearUser } = useAuthStore.getState();
+      clearUser();
+      // Redirect to sign-in page
+      if (typeof window !== "undefined") {
+        window.location.href = "/sign-in";
+      }
     }
     return Promise.reject(error);
   }

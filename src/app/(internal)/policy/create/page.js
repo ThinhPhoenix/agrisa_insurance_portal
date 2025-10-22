@@ -43,6 +43,8 @@ const CreatePolicyPage = () => {
     validationStatus,
     loading,
     estimatedCosts,
+    categories,
+    categoriesLoading,
 
     // Constants
     TABS,
@@ -175,6 +177,8 @@ const CreatePolicyPage = () => {
           onAddDataSource={handleAddDataSource}
           onRemoveDataSource={handleRemoveDataSource}
           estimatedCosts={estimatedCosts}
+          categories={categories}
+          categoriesLoading={categoriesLoading}
         />
       ),
     },

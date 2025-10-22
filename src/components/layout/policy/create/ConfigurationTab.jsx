@@ -518,7 +518,7 @@ const ConfigurationTab = ({
         },
         {
             name: 'enableGracePeriod',
-            label: 'Cho phép thời gian ân hạn',
+            label: 'Thời gian ân hạn',
             type: 'switch',
             gridColumn: '1',
             checkedChildren: 'Có',
@@ -544,6 +544,15 @@ const ConfigurationTab = ({
             gridColumn: '3',
             checkedChildren: 'Có',
             unCheckedChildren: 'Không'
+        },
+        {
+            name: 'enableStorage',
+            label: 'Lưu trữ',
+            type: 'switch',
+            gridColumn: '4',
+            checkedChildren: 'Có',
+            unCheckedChildren: 'Không',
+            tooltip: 'Cho phép lưu trữ dữ liệu policy'
         }
     ];
 
@@ -1338,8 +1347,8 @@ const ConfigurationTab = ({
                         fields={getAdditionalSettingsFields()}
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
-                        gridColumns="repeat(3, 1fr)"
-                        gap="24px"
+                        gridColumns="repeat(4, 1fr)"
+                        gap="88px"
                     />
 
                     {/* Notifications Manager */}

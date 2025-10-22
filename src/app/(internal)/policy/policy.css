@@ -64,6 +64,15 @@
   @apply bg-yellow-100 text-yellow-600;
 }
 
+/* Filters */
+.policy-filters {
+  @apply mb-6;
+}
+
+.policy-filter-form {
+  @apply p-4 rounded-lg;
+}
+
 .policy-actions-cell {
   @apply flex gap-1;
 }

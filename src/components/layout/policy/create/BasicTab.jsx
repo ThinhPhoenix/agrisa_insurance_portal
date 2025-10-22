@@ -26,13 +26,20 @@ const BasicTab = ({
     onDataChange,
     onAddDataSource,
     onRemoveDataSource,
-    estimatedCosts
+    estimatedCosts,
+    categories = [],
+    categoriesLoading = false,
+    tiers = [],
+    tiersLoading = false,
+    dataSources = [],
+    dataSourcesLoading = false,
+    fetchTiersByCategory,
+    fetchDataSourcesByTier
 }) => {
     const [form] = Form.useForm();
     const [dataSourceForm] = Form.useForm();
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedTier, setSelectedTier] = useState('');
-    const [availableDataSources, setAvailableDataSources] = useState([]);
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
@@ -40,28 +47,34 @@ const BasicTab = ({
     };
 
     // Handle category change
-    const handleCategoryChange = (category) => {
-        setSelectedCategory(category);
+    const handleCategoryChange = (categoryName) => {
+        setSelectedCategory(categoryName);
         setSelectedTier('');
-        setAvailableDataSources([]);
         dataSourceForm.setFieldsValue({ tier: undefined, dataSource: undefined });
+
+        // Find the selected category to get its ID
+        const selectedCategoryObj = categories.find(cat => cat.category_name === categoryName);
+        if (selectedCategoryObj && fetchTiersByCategory) {
+            fetchTiersByCategory(selectedCategoryObj.id);
+        }
     };
 
     // Handle tier change
     const handleTierChange = (tier) => {
         setSelectedTier(tier);
-        // Find the tier ID from the selected tier value
-        const selectedTierData = mockData.dataTiers.find(t => t.value === tier);
-        // Filter data sources by the tier's ID
-        const sources = mockData.dataSources.filter(source => source.data_tier_id === selectedTierData?.id) || [];
-        setAvailableDataSources(sources);
         dataSourceForm.setFieldsValue({ dataSource: undefined });
+
+        // Find the selected tier data to get its level/ID
+        const selectedTierData = tiers.find(t => t.value === tier);
+        if (selectedTierData && fetchDataSourcesByTier) {
+            fetchDataSourcesByTier(selectedTierData.tier_level);
+        }
     };
 
     // Handle add data source
     const handleAddDataSource = () => {
         dataSourceForm.validateFields().then(values => {
-            const selectedSource = availableDataSources.find(source => source.id === values.dataSource);
+            const selectedSource = dataSources.find(source => source.id === values.dataSource);
             if (selectedSource) {
                 // Check if already added
                 const exists = basicData.selectedDataSources.find(
@@ -77,15 +90,14 @@ const BasicTab = ({
                     ...selectedSource,
                     category: selectedCategory,
                     tier: selectedTier,
-                    categoryLabel: mockData.dataTierCategories.find(cat => cat.value === selectedCategory)?.label,
-                    tierLabel: mockData.dataTiers.find(t => t.value === selectedTier)?.label
+                    categoryLabel: selectedCategory, // Since selectedCategory is already the name
+                    tierLabel: tiers.find(t => t.value === selectedTier)?.label
                 };
 
                 onAddDataSource(dataSourceToAdd);
                 dataSourceForm.resetFields();
                 setSelectedCategory('');
                 setSelectedTier('');
-                setAvailableDataSources([]);
             }
         });
     };
@@ -140,11 +152,7 @@ const BasicTab = ({
     ];
 
     // Get filtered tiers based on category
-    const getFilteredTiers = (category) => {
-        if (!category) return mockData.dataTiers;
-        const categoryId = mockData.dataTierCategories.find(cat => cat.value === category)?.id;
-        return mockData.dataTiers.filter(tier => tier.data_tier_category_id === categoryId);
-    };
+    // Note: Tiers are now fetched from API when category changes
 
     return (
         <div className="basic-tab">
@@ -252,7 +260,7 @@ const BasicTab = ({
                         <Col span={6}>
                             <Form.Item
                                 name="category"
-                                label="Danh mục dữ liệu"
+                                label="Mục dữ liệu"
                                 rules={[{ required: true, message: 'Chọn danh mục' }]}
                             >
                                 <Select
@@ -260,28 +268,25 @@ const BasicTab = ({
                                     onChange={handleCategoryChange}
                                     size="large"
                                     optionLabelProp="label"
+                                    loading={categoriesLoading}
                                 >
-                                    {mockData.dataTierCategories.map(category => (
-                                        <Option key={category.value} value={category.value} label={category.label}>
+                                    {categories.map(category => (
+                                        <Option key={category.id} value={category.category_name} label={category.category_name}>
                                             <Tooltip
                                                 title={
                                                     <div>
-                                                        <div><strong>{category.label}</strong></div>
-                                                        <div style={{ marginTop: '4px' }}>{category.description}</div>
+                                                        <div><strong>{category.category_name}</strong></div>
+                                                        <div style={{ marginTop: '4px' }}>{category.category_description}</div>
                                                     </div>
                                                 }
                                                 placement="right"
                                                 mouseEnterDelay={0.3}
                                             >
-                                                <div style={{
-                                                    cursor: 'pointer'
-                                                }}
-                                                    className="option-hover-item"
-                                                >
-                                                    <Text>{category.label}</Text>
+                                                <div style={{ cursor: 'pointer' }}>
+                                                    <Text>{category.category_name}</Text>
                                                     <br />
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        {category.description}
+                                                        {category.category_description}
                                                     </Text>
                                                 </div>
                                             </Tooltip>
@@ -302,8 +307,9 @@ const BasicTab = ({
                                     onChange={handleTierChange}
                                     size="large"
                                     optionLabelProp="label"
+                                    loading={tiersLoading}
                                 >
-                                    {getFilteredTiers(selectedCategory).map(tier => (
+                                    {tiers.map(tier => (
                                         <Option key={tier.value} value={tier.value} label={tier.label}>
                                             <Tooltip
                                                 title={
@@ -318,11 +324,7 @@ const BasicTab = ({
                                                 placement="right"
                                                 mouseEnterDelay={0.3}
                                             >
-                                                <div style={{
-                                                    cursor: 'pointer'
-                                                }}
-                                                    className="option-hover-item"
-                                                >
+                                                <div style={{ cursor: 'pointer' }}>
                                                     <Text>{tier.label}</Text>
                                                     <br />
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -346,8 +348,9 @@ const BasicTab = ({
                                     disabled={!selectedTier}
                                     size="large"
                                     optionLabelProp="label"
+                                    loading={dataSourcesLoading}
                                 >
-                                    {availableDataSources.map(source => (
+                                    {dataSources.map(source => (
                                         <Option key={source.id} value={source.id} label={source.label}>
                                             <Tooltip
                                                 title={
@@ -355,6 +358,9 @@ const BasicTab = ({
                                                         <div><strong>{source.label}</strong></div>
                                                         <div style={{ marginTop: '4px' }}>{source.description}</div>
                                                         <div style={{ marginTop: '4px', color: '#52c41a' }}>
+                                                            Nhà cung cấp: {source.data_provider}
+                                                        </div>
+                                                        <div style={{ marginTop: '4px', color: '#1890ff' }}>
                                                             Chi phí: {source.baseCost.toLocaleString()} ₫/tháng
                                                         </div>
                                                     </div>
@@ -362,15 +368,11 @@ const BasicTab = ({
                                                 placement="right"
                                                 mouseEnterDelay={0.3}
                                             >
-                                                <div style={{
-                                                    cursor: 'pointer'
-                                                }}
-                                                    className="option-hover-item"
-                                                >
+                                                <div style={{ cursor: 'pointer' }}>
                                                     <Text>{source.label}</Text>
                                                     <br />
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        {source.description} - {source.baseCost.toLocaleString()} ₫/tháng
+                                                        {source.data_provider} - {source.baseCost.toLocaleString()} ₫/tháng
                                                     </Text>
                                                 </div>
                                             </Tooltip>

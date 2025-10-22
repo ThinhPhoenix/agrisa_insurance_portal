@@ -43,6 +43,12 @@ const CreatePolicyPage = () => {
     validationStatus,
     loading,
     estimatedCosts,
+    categories,
+    categoriesLoading,
+    tiers,
+    tiersLoading,
+    dataSources,
+    dataSourcesLoading,
 
     // Constants
     TABS,
@@ -65,6 +71,9 @@ const CreatePolicyPage = () => {
     handleUpdateTag,
     handleCreatePolicy,
     handleReset,
+    fetchCategories,
+    fetchTiersByCategory,
+    fetchDataSourcesByTier,
 
     // Utilities
     getAvailableDataSourcesForTrigger,
@@ -175,6 +184,14 @@ const CreatePolicyPage = () => {
           onAddDataSource={handleAddDataSource}
           onRemoveDataSource={handleRemoveDataSource}
           estimatedCosts={estimatedCosts}
+          categories={categories}
+          categoriesLoading={categoriesLoading}
+          tiers={tiers}
+          tiersLoading={tiersLoading}
+          dataSources={dataSources}
+          dataSourcesLoading={dataSourcesLoading}
+          fetchTiersByCategory={fetchTiersByCategory}
+          fetchDataSourcesByTier={fetchDataSourcesByTier}
         />
       ),
     },

@@ -44,9 +44,9 @@ export const useAuthStore = create((set, get) => ({
     });
   },
 
-  // Check if user is authenticated
-  isAuthenticated: () => {
+  // Get current token
+  getToken: () => {
     const state = get();
-    return !!state.user?.token;
+    return state.user?.token || localStorage.getItem("token");
   },
 }));

@@ -260,7 +260,7 @@ const BasicTab = ({
                         <Col span={6}>
                             <Form.Item
                                 name="category"
-                                label="Danh mục dữ liệu"
+                                label="Mục dữ liệu"
                                 rules={[{ required: true, message: 'Chọn danh mục' }]}
                             >
                                 <Select

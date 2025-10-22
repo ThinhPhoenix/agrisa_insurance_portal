@@ -33,10 +33,6 @@ axiosInstance.interceptors.response.use(
       console.log(`Unauthorized! Clearing user and redirecting to login.`);
       const { clearUser } = useAuthStore.getState();
       clearUser();
-      // Redirect to sign-in page
-      if (typeof window !== "undefined") {
-        window.location.href = "/sign-in";
-      }
     }
     return Promise.reject(error);
   }

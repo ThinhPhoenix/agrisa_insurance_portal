@@ -27,7 +27,6 @@ import {
     Popconfirm,
     Row,
     Select,
-    Slider,
     Space,
     Table,
     TimePicker,
@@ -560,7 +559,7 @@ const TagsTab = ({
             title: 'Loại dữ liệu',
             dataIndex: 'dataType',
             key: 'dataType',
-            width: '18%',
+            width: '30%',
             render: (value, record) => {
                 const isEditing = editingRows.has(record.id);
                 if (isEditing) {
@@ -581,17 +580,6 @@ const TagsTab = ({
                 }
                 return <Text type="secondary" style={{ fontSize: '12px' }}>{record.dataTypeLabel}</Text>;
             },
-        },
-        {
-            title: 'Độ rộng',
-            dataIndex: 'width',
-            key: 'width',
-            width: '12%',
-            render: (width) => (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                    {width || 50}%
-                </Text>
-            ),
         },
         {
             title: 'Hành động',
@@ -717,18 +705,6 @@ const TagsTab = ({
 
                             <Col span={12}>
                                 <Form.Item
-                                    name="value"
-                                    label="Giá trị (Value)"
-                                    rules={getValueValidationRules()}
-                                >
-                                    {renderValueInput()}
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={16} align="middle">
-                            <Col span={12}>
-                                <Form.Item
                                     name="dataType"
                                     label="Loại dữ liệu"
                                     rules={[{ required: true, message: 'Chọn loại dữ liệu' }]}
@@ -781,79 +757,6 @@ const TagsTab = ({
                                             </Option>
                                         ))}
                                     </Select>
-                                </Form.Item>
-                            </Col>
-
-                            <Col span={12}>
-                                <Form.Item
-                                    label={
-                                        <Space size={4}>
-                                            <span>Độ rộng trường</span>
-                                            <Tooltip
-                                                title={
-                                                    <div>
-                                                        <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                                                            Độ rộng trường chiếm % của hợp đồng:
-                                                        </div>
-                                                        <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>20%</strong>: Rất ngắn - 5 trường/hàng
-                                                        </div>
-                                                        <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>40%</strong>: Ngắn - 2-3 trường/hàng
-                                                        </div>
-                                                        <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>60%</strong>: Vừa - 1-2 trường/hàng
-                                                        </div>
-                                                        <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>80%</strong>: Dài - 1 trường/hàng
-                                                        </div>
-                                                        <div>
-                                                            • <strong>100%</strong>: Toàn bộ - 1 trường/hàng
-                                                        </div>
-                                                        {selectedDataType === 'textarea' && (
-                                                            <div style={{ marginTop: '8px', color: '#faad14', fontSize: '11px' }}>
-                                                                ⚠️ Văn bản dài luôn dùng 100%
-                                                            </div>
-                                                        )}
-                                                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)', fontSize: '11px' }}>
-                                                            💡 Hệ thống tự động sắp xếp các trường vào hàng dựa trên tổng % độ rộng
-                                                        </div>
-                                                    </div>
-                                                }
-                                                placement="topLeft"
-                                            >
-                                                <InfoCircleOutlined style={{ color: '#1890ff', cursor: 'help' }} />
-                                            </Tooltip>
-                                        </Space>
-                                    }
-                                >
-                                    <Slider
-                                        value={fieldWidth}
-                                        onChange={setFieldWidth}
-                                        min={20}
-                                        max={100}
-                                        step={20}
-                                        marks={{
-                                            20: '20%',
-                                            40: '40%',
-                                            60: '60%',
-                                            80: '80%',
-                                            100: '100%'
-                                        }}
-                                        tooltip={{
-                                            formatter: (value) => {
-                                                const descriptions = {
-                                                    20: '20% - Rất ngắn (5 trường/hàng)',
-                                                    40: '40% - Ngắn (2-3 trường/hàng)',
-                                                    60: '60% - Vừa (1-2 trường/hàng)',
-                                                    80: '80% - Dài (1 trường/hàng)',
-                                                    100: '100% - Toàn bộ (1 trường/hàng)'
-                                                };
-                                                return descriptions[value] || `${value}%`;
-                                            }
-                                        }}
-                                        disabled={selectedDataType === 'textarea'}
-                                    />
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -947,49 +850,6 @@ const TagsTab = ({
                         </div>
                     </Card>
                 )}
-
-                {/* Tag Usage Guidelines */}
-                <Card
-                    title="Hướng dẫn sử dụng"
-                    style={{ marginTop: 16 }}
-                    className="guidelines-card"
-                >
-                    <Row gutter={24}>
-                        <Col span={12}>
-                            <Title level={5}>📋 Các loại trường phổ biến:</Title>
-                            <ul style={{ fontSize: '13px' }}>
-                                <li><Text strong>Họ và tên:</Text> Văn bản (String)</li>
-                                <li><Text strong>Ngày sinh:</Text> Ngày tháng (Date)</li>
-                                <li><Text strong>Địa chỉ:</Text> Văn bản (String)</li>
-                                <li><Text strong>Số điện thoại:</Text> Văn bản (String)</li>
-                                <li><Text strong>Số tiền bảo hiểm:</Text> Số thập phân (Decimal)</li>
-                                <li><Text strong>Giới tính:</Text> Có/Không (Boolean)</li>
-                                <li><Text strong>Ngày ký:</Text> Ngày giờ (DateTime)</li>
-                                <li><Text strong>Quốc tịch:</Text> Lựa chọn (Select)</li>
-                            </ul>
-                        </Col>
-                        <Col span={12}>
-                            <Title level={5}>💡 Cấu hình Layout:</Title>
-                            <ul style={{ fontSize: '13px' }}>
-                                <li><Text strong>Độ rộng:</Text> 20%, 40%, 60%, 80%, 100%</li>
-                                <li>20% = 5 trường/hàng (thông tin rất ngắn)</li>
-                                <li>40% = 2-3 trường/hàng (thông tin ngắn)</li>
-                                <li>60% = 1-2 trường/hàng (thông tin vừa)</li>
-                                <li>80% = 1 trường/hàng (thông tin dài)</li>
-                                <li>100% = 1 trường/hàng (toàn bộ)</li>
-                                <li><Text type="warning">Văn bản dài luôn 100%</Text></li>
-                            </ul>
-                            <Title level={5} style={{ marginTop: '16px' }}>✨ Tính năng:</Title>
-                            <ul style={{ fontSize: '13px' }}>
-                                <li>Tất cả giá trị có thể để trống</li>
-                                <li>Văn bản dài: Nhiều dòng, full width</li>
-                                <li>Kéo thả <DragOutlined /> để sắp xếp</li>
-                                <li>Xem trước realtime bên phải</li>
-                                <li>Xuất PDF khi hoàn thành</li>
-                            </ul>
-                        </Col>
-                    </Row>
-                </Card>
             </div>
 
             {/* Fullscreen Preview Modal */}

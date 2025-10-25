@@ -1,41 +1,28 @@
 import {
     DeleteOutlined,
-    DownloadOutlined,
     DragOutlined,
     EditOutlined,
     EyeInvisibleOutlined,
     EyeOutlined,
-    FileTextOutlined,
-    FullscreenOutlined,
-    InfoCircleOutlined,
     PlusOutlined,
-    PrinterOutlined,
     TagOutlined
 } from '@ant-design/icons';
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import {
     Alert,
     Button,
-    Card,
     Checkbox,
-    Col,
     DatePicker,
     Form,
     Input,
     InputNumber,
-    Modal,
     Popconfirm,
-    Row,
     Select,
-    Slider,
     Space,
-    Table,
     TimePicker,
-    Tooltip,
     Typography
 } from 'antd';
 import React from 'react';
-import ContractPreview from '../ContractPreview';
+import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -48,14 +35,20 @@ const TagsTab = ({
     onRemoveTag,
     onUpdateTag,
     previewVisible = true,
-    onPreviewVisibleChange
+    onPreviewVisibleChange,
+    onFileUpload,
+    onFileRemove
+    ,
+    // New handlers from parent (page.js)
+    onOpenPaste,
+    onOpenFullscreen,
+    placeholders = []
 }) => {
     const [tagForm] = Form.useForm();
     const [selectedDataType, setSelectedDataType] = React.useState('string');
     const [selectOptions, setSelectOptions] = React.useState(['']);
     const [isMultipleSelect, setIsMultipleSelect] = React.useState(false);
     const [editingRows, setEditingRows] = React.useState(new Set()); // Track which rows are in edit mode
-    const [previewFullscreen, setPreviewFullscreen] = React.useState(false); // Fullscreen preview mode
     const [fieldWidth, setFieldWidth] = React.useState(40); // Field width percentage for layout (default 40% = 2 fields/row)
     const [textareaRows, setTextareaRows] = React.useState(3); // Number of rows for textarea
 
@@ -560,7 +553,7 @@ const TagsTab = ({
             title: 'Loại dữ liệu',
             dataIndex: 'dataType',
             key: 'dataType',
-            width: '18%',
+            width: '30%',
             render: (value, record) => {
                 const isEditing = editingRows.has(record.id);
                 if (isEditing) {
@@ -581,17 +574,6 @@ const TagsTab = ({
                 }
                 return <Text type="secondary" style={{ fontSize: '12px' }}>{record.dataTypeLabel}</Text>;
             },
-        },
-        {
-            title: 'Độ rộng',
-            dataIndex: 'width',
-            key: 'width',
-            width: '12%',
-            render: (width) => (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                    {width || 50}%
-                </Text>
-            ),
         },
         {
             title: 'Hành động',
@@ -666,13 +648,6 @@ const TagsTab = ({
                     </Title>
                     <Space wrap>
                         <Button
-                            type="default"
-                            icon={<FullscreenOutlined />}
-                            onClick={() => setPreviewFullscreen(true)}
-                        >
-                            Xem toàn màn hình
-                        </Button>
-                        <Button
                             type={previewVisible ? 'primary' : 'default'}
                             icon={previewVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                             onClick={() => onPreviewVisibleChange && onPreviewVisibleChange(!previewVisible)}
@@ -690,346 +665,35 @@ const TagsTab = ({
                     style={{ marginBottom: 24 }}
                 />
 
-                {/* Add Tag Form */}
-                <Card className="add-tag-card">
-                    <Title level={5}>Thêm Tag Mới</Title>
+                {/* (Thêm Tag Nhanh đã bị loại bỏ — dùng ô Map trong bảng để tạo và map trực tiếp) */}
 
-                    <Form
-                        form={tagForm}
-                        layout="vertical"
-                        className="tag-form"
-                    >
-                        <Row gutter={16} align="middle">
-                            <Col span={12}>
-                                <Form.Item
-                                    name="key"
-                                    label="Tên trường (Key)"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập tên trường' }
-                                    ]}
-                                >
-                                    <Input
-                                        placeholder="VD: Họ và tên, Ngày sinh, Địa chỉ"
-                                        size="large"
-                                    />
-                                </Form.Item>
-                            </Col>
+                {/* Placeholder mapping panel replaces the tags table */}
 
-                            <Col span={12}>
-                                <Form.Item
-                                    name="value"
-                                    label="Giá trị (Value)"
-                                    rules={getValueValidationRules()}
-                                >
-                                    {renderValueInput()}
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={16} align="middle">
-                            <Col span={12}>
-                                <Form.Item
-                                    name="dataType"
-                                    label="Loại dữ liệu"
-                                    rules={[{ required: true, message: 'Chọn loại dữ liệu' }]}
-                                >
-                                    <Select
-                                        placeholder="Chọn loại"
-                                        size="large"
-                                        optionLabelProp="label"
-                                        dropdownStyle={{ maxWidth: '350px' }}
-                                        onChange={handleDataTypeChange}
-                                    >
-                                        {mockData.tagDataTypes.map(type => (
-                                            <Option key={type.value} value={type.value} label={type.label}>
-                                                <Tooltip
-                                                    title={
-                                                        <div>
-                                                            <div><strong>{type.label}</strong></div>
-                                                            <div style={{ marginTop: '4px' }}>{type.description}</div>
-                                                        </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div style={{
-                                                        maxWidth: '330px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                        className="option-hover-item"
-                                                    >
-                                                        <Text style={{
-                                                            fontSize: '13px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {type.label}
-                                                        </Text>
-                                                        <Text type="secondary" style={{
-                                                            fontSize: '11px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {type.description}
-                                                        </Text>
-                                                    </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-
-                            <Col span={12}>
-                                <Form.Item
-                                    label={
-                                        <Space size={4}>
-                                            <span>Độ rộng trường</span>
-                                            <Tooltip
-                                                title={
-                                                    <div>
-                                                        <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                                                            Độ rộng trường chiếm % của hợp đồng:
-                                                        </div>
-                                                        <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>20%</strong>: Rất ngắn - 5 trường/hàng
-                                                        </div>
-                                                        <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>40%</strong>: Ngắn - 2-3 trường/hàng
-                                                        </div>
-                                                        <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>60%</strong>: Vừa - 1-2 trường/hàng
-                                                        </div>
-                                                        <div style={{ marginBottom: '4px' }}>
-                                                            • <strong>80%</strong>: Dài - 1 trường/hàng
-                                                        </div>
-                                                        <div>
-                                                            • <strong>100%</strong>: Toàn bộ - 1 trường/hàng
-                                                        </div>
-                                                        {selectedDataType === 'textarea' && (
-                                                            <div style={{ marginTop: '8px', color: '#faad14', fontSize: '11px' }}>
-                                                                ⚠️ Văn bản dài luôn dùng 100%
-                                                            </div>
-                                                        )}
-                                                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)', fontSize: '11px' }}>
-                                                            💡 Hệ thống tự động sắp xếp các trường vào hàng dựa trên tổng % độ rộng
-                                                        </div>
-                                                    </div>
-                                                }
-                                                placement="topLeft"
-                                            >
-                                                <InfoCircleOutlined style={{ color: '#1890ff', cursor: 'help' }} />
-                                            </Tooltip>
-                                        </Space>
-                                    }
-                                >
-                                    <Slider
-                                        value={fieldWidth}
-                                        onChange={setFieldWidth}
-                                        min={20}
-                                        max={100}
-                                        step={20}
-                                        marks={{
-                                            20: '20%',
-                                            40: '40%',
-                                            60: '60%',
-                                            80: '80%',
-                                            100: '100%'
-                                        }}
-                                        tooltip={{
-                                            formatter: (value) => {
-                                                const descriptions = {
-                                                    20: '20% - Rất ngắn (5 trường/hàng)',
-                                                    40: '40% - Ngắn (2-3 trường/hàng)',
-                                                    60: '60% - Vừa (1-2 trường/hàng)',
-                                                    80: '80% - Dài (1 trường/hàng)',
-                                                    100: '100% - Toàn bộ (1 trường/hàng)'
-                                                };
-                                                return descriptions[value] || `${value}%`;
-                                            }
-                                        }}
-                                        disabled={selectedDataType === 'textarea'}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={16}>
-                            <Col span={24}>
-                                <Form.Item>
-                                    <Button
-                                        type="primary"
-                                        icon={<PlusOutlined />}
-                                        onClick={handleAddTag}
-                                        size="large"
-                                        block
-                                        style={{ height: '48px', fontSize: '15px' }}
-                                    >
-                                        Thêm
-                                    </Button>
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Form>
-                </Card>
-
-                {/* Tags Table */}
-                {tagsData.tags.length === 0 ? (
-                    <Alert
-                        message="Chưa có tag nào được tạo"
-                        description="Tags là tùy chọn, bạn có thể bỏ qua hoặc thêm các thông tin metadata để hỗ trợ quản lý policy"
-                        type="info"
-                        icon={<InfoCircleOutlined />}
-                        className="no-tags-alert"
-                        style={{ marginTop: 16 }}
+                {placeholders && placeholders.length > 0 ? (
+                    <PlaceholderMappingPanel
+                        placeholders={placeholders}
+                        tags={tagsData?.tags || []}
+                        tagDataTypes={mockData.tagDataTypes || []}
+                        onCreateTag={(tag) => onAddTag(tag)}
+                        onMappingChange={(mappings) => {
+                            // Store mappings into tagsData so parent can persist if needed
+                            onDataChange && onDataChange({ ...tagsData, mappings });
+                        }}
+                        onExportSchema={(schema) => console.log('Exported schema', schema)}
                     />
                 ) : (
-                    <Card title="Danh sách Tags" style={{ marginTop: 16 }}>
-                        <DragDropContext onDragEnd={handleDragEnd}>
-                            <Droppable droppableId="tags-table">
-                                {(provided) => (
-                                    <div {...provided.droppableProps} ref={provided.innerRef}>
-                                        <Table
-                                            columns={tagsColumns}
-                                            dataSource={tagsData.tags}
-                                            rowKey="id"
-                                            pagination={false}
-                                            className="tags-table"
-                                            size="middle"
-                                            components={{
-                                                body: {
-                                                    row: ({ children, ...props }) => (
-                                                        <Draggable
-                                                            draggableId={props['data-row-key'].toString()}
-                                                            index={props.index}
-                                                        >
-                                                            {(provided, snapshot) => (
-                                                                <tr
-                                                                    {...props}
-                                                                    ref={provided.innerRef}
-                                                                    {...provided.draggableProps}
-                                                                    {...provided.dragHandleProps}
-                                                                    style={{
-                                                                        ...provided.draggableProps.style,
-                                                                        backgroundColor: snapshot.isDragging ? '#fafafa' : 'transparent',
-                                                                    }}
-                                                                >
-                                                                    {children}
-                                                                </tr>
-                                                            )}
-                                                        </Draggable>
-                                                    ),
-                                                },
-                                            }}
-                                            onRow={(record, index) => ({
-                                                index,
-                                                'data-row-key': record.id,
-                                            })}
-                                        />
-                                        {provided.placeholder}
-                                    </div>
-                                )}
-                            </Droppable>
-                        </DragDropContext>
-
-                        <div style={{ marginTop: 16 }}>
-                            <Text type="secondary">
-                                Tổng cộng: <Text strong>{tagsData.tags.length}</Text> tags
-                            </Text>
-                            <br />
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                                💡 Kéo thả icon <DragOutlined /> để thay đổi thứ tự • Nhấn <EditOutlined /> để chỉnh sửa
-                            </Text>
-                        </div>
-                    </Card>
+                    <Alert
+                        message="Chưa có placeholders"
+                        description="Upload hoặc paste text từ PDF để phát hiện placeholders và map với tags"
+                        type="info"
+                        showIcon
+                    />
                 )}
 
-                {/* Tag Usage Guidelines */}
-                <Card
-                    title="Hướng dẫn sử dụng"
-                    style={{ marginTop: 16 }}
-                    className="guidelines-card"
-                >
-                    <Row gutter={24}>
-                        <Col span={12}>
-                            <Title level={5}>📋 Các loại trường phổ biến:</Title>
-                            <ul style={{ fontSize: '13px' }}>
-                                <li><Text strong>Họ và tên:</Text> Văn bản (String)</li>
-                                <li><Text strong>Ngày sinh:</Text> Ngày tháng (Date)</li>
-                                <li><Text strong>Địa chỉ:</Text> Văn bản (String)</li>
-                                <li><Text strong>Số điện thoại:</Text> Văn bản (String)</li>
-                                <li><Text strong>Số tiền bảo hiểm:</Text> Số thập phân (Decimal)</li>
-                                <li><Text strong>Giới tính:</Text> Có/Không (Boolean)</li>
-                                <li><Text strong>Ngày ký:</Text> Ngày giờ (DateTime)</li>
-                                <li><Text strong>Quốc tịch:</Text> Lựa chọn (Select)</li>
-                            </ul>
-                        </Col>
-                        <Col span={12}>
-                            <Title level={5}>💡 Cấu hình Layout:</Title>
-                            <ul style={{ fontSize: '13px' }}>
-                                <li><Text strong>Độ rộng:</Text> 20%, 40%, 60%, 80%, 100%</li>
-                                <li>20% = 5 trường/hàng (thông tin rất ngắn)</li>
-                                <li>40% = 2-3 trường/hàng (thông tin ngắn)</li>
-                                <li>60% = 1-2 trường/hàng (thông tin vừa)</li>
-                                <li>80% = 1 trường/hàng (thông tin dài)</li>
-                                <li>100% = 1 trường/hàng (toàn bộ)</li>
-                                <li><Text type="warning">Văn bản dài luôn 100%</Text></li>
-                            </ul>
-                            <Title level={5} style={{ marginTop: '16px' }}>✨ Tính năng:</Title>
-                            <ul style={{ fontSize: '13px' }}>
-                                <li>Tất cả giá trị có thể để trống</li>
-                                <li>Văn bản dài: Nhiều dòng, full width</li>
-                                <li>Kéo thả <DragOutlined /> để sắp xếp</li>
-                                <li>Xem trước realtime bên phải</li>
-                                <li>Xuất PDF khi hoàn thành</li>
-                            </ul>
-                        </Col>
-                    </Row>
-                </Card>
+                <div style={{ marginTop: 12 }}>
+                    <Text type="secondary">Tổng tags hiện tại: <Text strong>{tagsData.tags.length}</Text></Text>
+                </div>
             </div>
-
-            {/* Fullscreen Preview Modal */}
-            <Modal
-                open={previewFullscreen}
-                onCancel={() => setPreviewFullscreen(false)}
-                width="100%"
-                style={{ top: 0, paddingBottom: 0, maxWidth: '100vw' }}
-                bodyStyle={{ height: 'calc(100vh - 110px)', padding: 0, overflow: 'auto' }}
-                closable={false}
-                title={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                        <Space>
-                            <FileTextOutlined />
-                            <span>Xem trước hợp đồng - Toàn màn hình</span>
-                        </Space>
-                        <Space>
-                            <Button
-                                type="primary"
-                                icon={<DownloadOutlined />}
-                                onClick={() => message.info('Chức năng xuất PDF sẽ được triển khai sau')}
-                            >
-                                Xuất PDF
-                            </Button>
-                            <Button
-                                icon={<PrinterOutlined />}
-                                onClick={() => window.print()}
-                            >
-                                In ấn
-                            </Button>
-                            <Button onClick={() => setPreviewFullscreen(false)}>
-                                Đóng
-                            </Button>
-                        </Space>
-                    </div>
-                }
-                footer={null}
-            >
-                <ContractPreview tagsData={tagsData} isFullscreen={true} />
-            </Modal>
         </div>
     );
 };

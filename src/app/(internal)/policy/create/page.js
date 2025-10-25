@@ -18,10 +18,10 @@ import { Alert, Button, Card, Col, Row, Space, Tabs, Typography } from "antd";
 import { useRouter } from "next/navigation";
 
 // Components
-import ContractPreview from "@/components/layout/policy/ContractPreview";
 import BasicTab from "@/components/layout/policy/create/BasicTab";
 import ConfigurationTab from "@/components/layout/policy/create/ConfigurationTab";
 import EstimatedCosts from "@/components/layout/policy/create/EstimatedCosts";
+import FileUploadPreview from "@/components/layout/policy/create/FileUploadPreview";
 import ReviewTab from "@/components/layout/policy/create/ReviewTab";
 import TagsTab from "@/components/layout/policy/create/TagsTab";
 
@@ -34,6 +34,10 @@ const CreatePolicyPage = () => {
   const router = useRouter();
   const [contractPreviewVisible, setContractPreviewVisible] =
     React.useState(true);
+  const [uploadedFile, setUploadedFile] = React.useState(null);
+  const [fileUrl, setFileUrl] = React.useState(null);
+  const filePreviewRef = React.useRef(null);
+  const [detectedPlaceholders, setDetectedPlaceholders] = React.useState([]);
   const {
     // State
     currentTab,
@@ -92,6 +96,48 @@ const CreatePolicyPage = () => {
   // Handle cancel
   const handleCancel = () => {
     router.push("/policy");
+  };
+
+  // Handle file upload
+  const handleFileUpload = (file, url) => {
+    setUploadedFile(file);
+    setFileUrl(url);
+  };
+
+  // Handle file remove
+  const handleFileRemove = () => {
+    // Clear local preview state
+    setUploadedFile(null);
+    setFileUrl(null);
+
+    // Clear detected placeholders
+    setDetectedPlaceholders([]);
+
+    // Remove all tags when PDF is deleted to avoid stale mappings
+    try {
+      if (
+        tagsData &&
+        Array.isArray(tagsData.tags) &&
+        tagsData.tags.length > 0
+      ) {
+        // copy ids to avoid mutation during iteration
+        const ids = tagsData.tags.map((t) => t.id);
+        ids.forEach((id) => {
+          try {
+            handleRemoveTag(id);
+          } catch (e) {
+            // ignore individual remove errors
+            console.warn("Error removing tag", id, e);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Error clearing tags on file remove", e);
+    }
+  };
+
+  const handlePlaceholdersDetected = (placeholders) => {
+    setDetectedPlaceholders(placeholders || []);
   };
 
   // Get current step index
@@ -243,6 +289,17 @@ const CreatePolicyPage = () => {
           onUpdateTag={handleUpdateTag}
           previewVisible={contractPreviewVisible}
           onPreviewVisibleChange={setContractPreviewVisible}
+          onFileUpload={handleFileUpload}
+          onFileRemove={handleFileRemove}
+          onOpenPaste={() =>
+            filePreviewRef.current?.openPasteModal &&
+            filePreviewRef.current.openPasteModal()
+          }
+          onOpenFullscreen={() =>
+            filePreviewRef.current?.openFullscreen &&
+            filePreviewRef.current.openFullscreen()
+          }
+          placeholders={detectedPlaceholders}
         />
       ),
     },
@@ -326,7 +383,16 @@ const CreatePolicyPage = () => {
             }}
           >
             {currentTab === TABS.TAGS && contractPreviewVisible ? (
-              <ContractPreview tagsData={tagsData} />
+              <FileUploadPreview
+                ref={filePreviewRef}
+                tagsData={tagsData}
+                onFileUpload={handleFileUpload}
+                onFileRemove={handleFileRemove}
+                uploadedFile={uploadedFile}
+                fileUrl={fileUrl}
+                onPlaceholdersDetected={handlePlaceholdersDetected}
+                compactButtons={true}
+              />
             ) : (
               <EstimatedCosts
                 estimatedCosts={estimatedCosts}

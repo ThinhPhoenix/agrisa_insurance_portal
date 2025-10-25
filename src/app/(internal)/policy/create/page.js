@@ -18,10 +18,10 @@ import { Alert, Button, Card, Col, Row, Space, Tabs, Typography } from "antd";
 import { useRouter } from "next/navigation";
 
 // Components
-import ContractPreview from "@/components/layout/policy/ContractPreview";
 import BasicTab from "@/components/layout/policy/create/BasicTab";
 import ConfigurationTab from "@/components/layout/policy/create/ConfigurationTab";
 import EstimatedCosts from "@/components/layout/policy/create/EstimatedCosts";
+import FileUploadPreview from "@/components/layout/policy/create/FileUploadPreview";
 import ReviewTab from "@/components/layout/policy/create/ReviewTab";
 import TagsTab from "@/components/layout/policy/create/TagsTab";
 
@@ -34,6 +34,8 @@ const CreatePolicyPage = () => {
   const router = useRouter();
   const [contractPreviewVisible, setContractPreviewVisible] =
     React.useState(true);
+  const [uploadedFile, setUploadedFile] = React.useState(null);
+  const [fileUrl, setFileUrl] = React.useState(null);
   const {
     // State
     currentTab,
@@ -92,6 +94,18 @@ const CreatePolicyPage = () => {
   // Handle cancel
   const handleCancel = () => {
     router.push("/policy");
+  };
+
+  // Handle file upload
+  const handleFileUpload = (file, url) => {
+    setUploadedFile(file);
+    setFileUrl(url);
+  };
+
+  // Handle file remove
+  const handleFileRemove = () => {
+    setUploadedFile(null);
+    setFileUrl(null);
   };
 
   // Get current step index
@@ -243,6 +257,8 @@ const CreatePolicyPage = () => {
           onUpdateTag={handleUpdateTag}
           previewVisible={contractPreviewVisible}
           onPreviewVisibleChange={setContractPreviewVisible}
+          onFileUpload={handleFileUpload}
+          onFileRemove={handleFileRemove}
         />
       ),
     },
@@ -326,7 +342,11 @@ const CreatePolicyPage = () => {
             }}
           >
             {currentTab === TABS.TAGS && contractPreviewVisible ? (
-              <ContractPreview tagsData={tagsData} />
+              <FileUploadPreview
+                tagsData={tagsData}
+                onFileUpload={handleFileUpload}
+                onFileRemove={handleFileRemove}
+              />
             ) : (
               <EstimatedCosts
                 estimatedCosts={estimatedCosts}

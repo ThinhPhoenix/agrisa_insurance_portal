@@ -1,15 +1,11 @@
 import {
     DeleteOutlined,
-    DownloadOutlined,
     DragOutlined,
     EditOutlined,
     EyeInvisibleOutlined,
     EyeOutlined,
-    FileTextOutlined,
-    FullscreenOutlined,
     InfoCircleOutlined,
     PlusOutlined,
-    PrinterOutlined,
     TagOutlined
 } from '@ant-design/icons';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
@@ -23,7 +19,6 @@ import {
     Form,
     Input,
     InputNumber,
-    Modal,
     Popconfirm,
     Row,
     Select,
@@ -34,7 +29,6 @@ import {
     Typography
 } from 'antd';
 import React from 'react';
-import ContractPreview from '../ContractPreview';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -47,14 +41,15 @@ const TagsTab = ({
     onRemoveTag,
     onUpdateTag,
     previewVisible = true,
-    onPreviewVisibleChange
+    onPreviewVisibleChange,
+    onFileUpload,
+    onFileRemove
 }) => {
     const [tagForm] = Form.useForm();
     const [selectedDataType, setSelectedDataType] = React.useState('string');
     const [selectOptions, setSelectOptions] = React.useState(['']);
     const [isMultipleSelect, setIsMultipleSelect] = React.useState(false);
     const [editingRows, setEditingRows] = React.useState(new Set()); // Track which rows are in edit mode
-    const [previewFullscreen, setPreviewFullscreen] = React.useState(false); // Fullscreen preview mode
     const [fieldWidth, setFieldWidth] = React.useState(40); // Field width percentage for layout (default 40% = 2 fields/row)
     const [textareaRows, setTextareaRows] = React.useState(3); // Number of rows for textarea
 
@@ -654,13 +649,6 @@ const TagsTab = ({
                     </Title>
                     <Space wrap>
                         <Button
-                            type="default"
-                            icon={<FullscreenOutlined />}
-                            onClick={() => setPreviewFullscreen(true)}
-                        >
-                            Xem toàn màn hình
-                        </Button>
-                        <Button
                             type={previewVisible ? 'primary' : 'default'}
                             icon={previewVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                             onClick={() => onPreviewVisibleChange && onPreviewVisibleChange(!previewVisible)}
@@ -851,45 +839,6 @@ const TagsTab = ({
                     </Card>
                 )}
             </div>
-
-            {/* Fullscreen Preview Modal */}
-            <Modal
-                open={previewFullscreen}
-                onCancel={() => setPreviewFullscreen(false)}
-                width="100%"
-                style={{ top: 0, paddingBottom: 0, maxWidth: '100vw' }}
-                bodyStyle={{ height: 'calc(100vh - 110px)', padding: 0, overflow: 'auto' }}
-                closable={false}
-                title={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                        <Space>
-                            <FileTextOutlined />
-                            <span>Xem trước hợp đồng - Toàn màn hình</span>
-                        </Space>
-                        <Space>
-                            <Button
-                                type="primary"
-                                icon={<DownloadOutlined />}
-                                onClick={() => message.info('Chức năng xuất PDF sẽ được triển khai sau')}
-                            >
-                                Xuất PDF
-                            </Button>
-                            <Button
-                                icon={<PrinterOutlined />}
-                                onClick={() => window.print()}
-                            >
-                                In ấn
-                            </Button>
-                            <Button onClick={() => setPreviewFullscreen(false)}>
-                                Đóng
-                            </Button>
-                        </Space>
-                    </div>
-                }
-                footer={null}
-            >
-                <ContractPreview tagsData={tagsData} isFullscreen={true} />
-            </Modal>
         </div>
     );
 };

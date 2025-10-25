@@ -4,31 +4,25 @@ import {
     EditOutlined,
     EyeInvisibleOutlined,
     EyeOutlined,
-    InfoCircleOutlined,
     PlusOutlined,
     TagOutlined
 } from '@ant-design/icons';
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import {
     Alert,
     Button,
-    Card,
     Checkbox,
-    Col,
     DatePicker,
     Form,
     Input,
     InputNumber,
     Popconfirm,
-    Row,
     Select,
     Space,
-    Table,
     TimePicker,
-    Tooltip,
     Typography
 } from 'antd';
 import React from 'react';
+import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -44,6 +38,11 @@ const TagsTab = ({
     onPreviewVisibleChange,
     onFileUpload,
     onFileRemove
+    ,
+    // New handlers from parent (page.js)
+    onOpenPaste,
+    onOpenFullscreen,
+    placeholders = []
 }) => {
     const [tagForm] = Form.useForm();
     const [selectedDataType, setSelectedDataType] = React.useState('string');
@@ -666,178 +665,34 @@ const TagsTab = ({
                     style={{ marginBottom: 24 }}
                 />
 
-                {/* Add Tag Form */}
-                <Card className="add-tag-card">
-                    <Title level={5}>Thêm Tag Mới</Title>
+                {/* (Thêm Tag Nhanh đã bị loại bỏ — dùng ô Map trong bảng để tạo và map trực tiếp) */}
 
-                    <Form
-                        form={tagForm}
-                        layout="vertical"
-                        className="tag-form"
-                    >
-                        <Row gutter={16} align="middle">
-                            <Col span={12}>
-                                <Form.Item
-                                    name="key"
-                                    label="Tên trường (Key)"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập tên trường' }
-                                    ]}
-                                >
-                                    <Input
-                                        placeholder="VD: Họ và tên, Ngày sinh, Địa chỉ"
-                                        size="large"
-                                    />
-                                </Form.Item>
-                            </Col>
+                {/* Placeholder mapping panel replaces the tags table */}
 
-                            <Col span={12}>
-                                <Form.Item
-                                    name="dataType"
-                                    label="Loại dữ liệu"
-                                    rules={[{ required: true, message: 'Chọn loại dữ liệu' }]}
-                                >
-                                    <Select
-                                        placeholder="Chọn loại"
-                                        size="large"
-                                        optionLabelProp="label"
-                                        dropdownStyle={{ maxWidth: '350px' }}
-                                        onChange={handleDataTypeChange}
-                                    >
-                                        {mockData.tagDataTypes.map(type => (
-                                            <Option key={type.value} value={type.value} label={type.label}>
-                                                <Tooltip
-                                                    title={
-                                                        <div>
-                                                            <div><strong>{type.label}</strong></div>
-                                                            <div style={{ marginTop: '4px' }}>{type.description}</div>
-                                                        </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div style={{
-                                                        maxWidth: '330px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                        className="option-hover-item"
-                                                    >
-                                                        <Text style={{
-                                                            fontSize: '13px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {type.label}
-                                                        </Text>
-                                                        <Text type="secondary" style={{
-                                                            fontSize: '11px',
-                                                            display: 'block',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {type.description}
-                                                        </Text>
-                                                    </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={16}>
-                            <Col span={24}>
-                                <Form.Item>
-                                    <Button
-                                        type="primary"
-                                        icon={<PlusOutlined />}
-                                        onClick={handleAddTag}
-                                        size="large"
-                                        block
-                                        style={{ height: '48px', fontSize: '15px' }}
-                                    >
-                                        Thêm
-                                    </Button>
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Form>
-                </Card>
-
-                {/* Tags Table */}
-                {tagsData.tags.length === 0 ? (
-                    <Alert
-                        message="Chưa có tag nào được tạo"
-                        description="Tags là tùy chọn, bạn có thể bỏ qua hoặc thêm các thông tin metadata để hỗ trợ quản lý policy"
-                        type="info"
-                        icon={<InfoCircleOutlined />}
-                        className="no-tags-alert"
-                        style={{ marginTop: 16 }}
+                {placeholders && placeholders.length > 0 ? (
+                    <PlaceholderMappingPanel
+                        placeholders={placeholders}
+                        tags={tagsData?.tags || []}
+                        tagDataTypes={mockData.tagDataTypes || []}
+                        onCreateTag={(tag) => onAddTag(tag)}
+                        onMappingChange={(mappings) => {
+                            // Store mappings into tagsData so parent can persist if needed
+                            onDataChange && onDataChange({ ...tagsData, mappings });
+                        }}
+                        onExportSchema={(schema) => console.log('Exported schema', schema)}
                     />
                 ) : (
-                    <Card title="Danh sách Tags" style={{ marginTop: 16 }}>
-                        <DragDropContext onDragEnd={handleDragEnd}>
-                            <Droppable droppableId="tags-table">
-                                {(provided) => (
-                                    <div {...provided.droppableProps} ref={provided.innerRef}>
-                                        <Table
-                                            columns={tagsColumns}
-                                            dataSource={tagsData.tags}
-                                            rowKey="id"
-                                            pagination={false}
-                                            className="tags-table"
-                                            size="middle"
-                                            components={{
-                                                body: {
-                                                    row: ({ children, ...props }) => (
-                                                        <Draggable
-                                                            draggableId={props['data-row-key'].toString()}
-                                                            index={props.index}
-                                                        >
-                                                            {(provided, snapshot) => (
-                                                                <tr
-                                                                    {...props}
-                                                                    ref={provided.innerRef}
-                                                                    {...provided.draggableProps}
-                                                                    {...provided.dragHandleProps}
-                                                                    style={{
-                                                                        ...provided.draggableProps.style,
-                                                                        backgroundColor: snapshot.isDragging ? '#fafafa' : 'transparent',
-                                                                    }}
-                                                                >
-                                                                    {children}
-                                                                </tr>
-                                                            )}
-                                                        </Draggable>
-                                                    ),
-                                                },
-                                            }}
-                                            onRow={(record, index) => ({
-                                                index,
-                                                'data-row-key': record.id,
-                                            })}
-                                        />
-                                        {provided.placeholder}
-                                    </div>
-                                )}
-                            </Droppable>
-                        </DragDropContext>
-
-                        <div style={{ marginTop: 16 }}>
-                            <Text type="secondary">
-                                Tổng cộng: <Text strong>{tagsData.tags.length}</Text> tags
-                            </Text>
-                            <br />
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                                💡 Kéo thả icon <DragOutlined /> để thay đổi thứ tự • Nhấn <EditOutlined /> để chỉnh sửa
-                            </Text>
-                        </div>
-                    </Card>
+                    <Alert
+                        message="Chưa có placeholders"
+                        description="Upload hoặc paste text từ PDF để phát hiện placeholders và map với tags"
+                        type="info"
+                        showIcon
+                    />
                 )}
+
+                <div style={{ marginTop: 12 }}>
+                    <Text type="secondary">Tổng tags hiện tại: <Text strong>{tagsData.tags.length}</Text></Text>
+                </div>
             </div>
         </div>
     );

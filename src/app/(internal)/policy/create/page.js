@@ -36,6 +36,8 @@ const CreatePolicyPage = () => {
     React.useState(true);
   const [uploadedFile, setUploadedFile] = React.useState(null);
   const [fileUrl, setFileUrl] = React.useState(null);
+  const filePreviewRef = React.useRef(null);
+  const [detectedPlaceholders, setDetectedPlaceholders] = React.useState([]);
   const {
     // State
     currentTab,
@@ -104,8 +106,38 @@ const CreatePolicyPage = () => {
 
   // Handle file remove
   const handleFileRemove = () => {
+    // Clear local preview state
     setUploadedFile(null);
     setFileUrl(null);
+
+    // Clear detected placeholders
+    setDetectedPlaceholders([]);
+
+    // Remove all tags when PDF is deleted to avoid stale mappings
+    try {
+      if (
+        tagsData &&
+        Array.isArray(tagsData.tags) &&
+        tagsData.tags.length > 0
+      ) {
+        // copy ids to avoid mutation during iteration
+        const ids = tagsData.tags.map((t) => t.id);
+        ids.forEach((id) => {
+          try {
+            handleRemoveTag(id);
+          } catch (e) {
+            // ignore individual remove errors
+            console.warn("Error removing tag", id, e);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Error clearing tags on file remove", e);
+    }
+  };
+
+  const handlePlaceholdersDetected = (placeholders) => {
+    setDetectedPlaceholders(placeholders || []);
   };
 
   // Get current step index
@@ -259,6 +291,15 @@ const CreatePolicyPage = () => {
           onPreviewVisibleChange={setContractPreviewVisible}
           onFileUpload={handleFileUpload}
           onFileRemove={handleFileRemove}
+          onOpenPaste={() =>
+            filePreviewRef.current?.openPasteModal &&
+            filePreviewRef.current.openPasteModal()
+          }
+          onOpenFullscreen={() =>
+            filePreviewRef.current?.openFullscreen &&
+            filePreviewRef.current.openFullscreen()
+          }
+          placeholders={detectedPlaceholders}
         />
       ),
     },
@@ -343,9 +384,14 @@ const CreatePolicyPage = () => {
           >
             {currentTab === TABS.TAGS && contractPreviewVisible ? (
               <FileUploadPreview
+                ref={filePreviewRef}
                 tagsData={tagsData}
                 onFileUpload={handleFileUpload}
                 onFileRemove={handleFileRemove}
+                uploadedFile={uploadedFile}
+                fileUrl={fileUrl}
+                onPlaceholdersDetected={handlePlaceholdersDetected}
+                compactButtons={true}
               />
             ) : (
               <EstimatedCosts

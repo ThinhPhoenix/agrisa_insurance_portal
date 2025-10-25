@@ -1,9 +1,7 @@
 import {
     CheckCircleOutlined,
-    DownloadOutlined,
     ExclamationCircleOutlined,
-    LinkOutlined,
-    SyncOutlined
+    LinkOutlined
 } from '@ant-design/icons';
 import {
     Alert,
@@ -12,18 +10,17 @@ import {
     Card,
     Divider,
     Empty,
+    Input,
     Select,
     Space,
-    Table,
     Tag,
-    Tooltip,
     Typography,
     message
 } from 'antd';
 import { useEffect, useState } from 'react';
+import CustomTable from '../../../custom-table';
 
 const { Text, Title } = Typography;
-const { Option } = Select;
 
 /**
  * Panel để map placeholders trong PDF với tags đã tạo
@@ -31,6 +28,8 @@ const { Option } = Select;
 const PlaceholderMappingPanel = ({
     placeholders = [],
     tags = [],
+    tagDataTypes = [],
+    onCreateTag,
     onMappingChange,
     onExportSchema
 }) => {
@@ -68,117 +67,24 @@ const PlaceholderMappingPanel = ({
         }
     };
 
-    // Auto-map placeholders với tags có cùng index
-    const handleAutoMap = () => {
-        const newMappings = { ...mappings };
-        let autoMappedCount = 0;
+    const [tempInputs, setTempInputs] = useState({});
 
-        placeholders.forEach(placeholder => {
-            if (placeholder.type === 'numbered') {
-                // Tìm tag có index matching
-                const matchingTag = tags.find(tag =>
-                    tag.index === parseInt(placeholder.extractedKey)
-                );
-
-                if (matchingTag) {
-                    newMappings[placeholder.id] = matchingTag.id;
-                    autoMappedCount++;
-                }
-            }
-        });
-
-        setMappings(newMappings);
-
-        if (onMappingChange) {
-            onMappingChange(newMappings);
-        }
-
-        message.success(`Đã tự động map ${autoMappedCount} placeholders`);
-    };
-
-    // Clear all mappings
-    const handleClearMappings = () => {
-        setMappings({});
-        if (onMappingChange) {
-            onMappingChange({});
-        }
-        message.info('Đã xóa tất cả mappings');
-    };
-
-    // Export schema
-    const handleExportSchema = () => {
-        const schema = {
-            version: '1.0',
-            createdAt: new Date().toISOString(),
-            mappings: placeholders.map(ph => {
-                const tagId = mappings[ph.id];
-                const mappedTag = tags.find(t => t.id === tagId);
-
-                return {
-                    placeholder: {
-                        id: ph.id,
-                        original: ph.original,
-                        type: ph.type,
-                        extractedKey: ph.extractedKey,
-                        position: ph.position
-                    },
-                    tag: mappedTag ? {
-                        id: mappedTag.id,
-                        key: mappedTag.key,
-                        dataType: mappedTag.dataType,
-                        dataTypeLabel: mappedTag.dataTypeLabel,
-                        value: mappedTag.value,
-                        index: mappedTag.index
-                    } : null,
-                    mapped: !!tagId
-                };
-            }),
-            stats: {
-                totalPlaceholders: stats.total,
-                mappedPlaceholders: stats.mapped,
-                unmappedPlaceholders: stats.unmapped,
-                mappingProgress: stats.total > 0 ? Math.round((stats.mapped / stats.total) * 100) : 0
-            }
-        };
-
-        // Download JSON file
-        const blob = new Blob([JSON.stringify(schema, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `template-schema-${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        if (onExportSchema) {
-            onExportSchema(schema);
-        }
-
-        message.success('Đã export schema thành công');
+    const setTempInput = (id, value) => {
+        setTempInputs(prev => ({ ...prev, [id]: value }));
     };
 
     // Table columns
     const columns = [
         {
-            title: 'STT',
-            dataIndex: 'index',
-            key: 'index',
-            width: 60,
-            render: (_, __, index) => <Text strong>{index + 1}</Text>
-        },
-        {
-            title: 'Placeholder trong PDF',
+            title: 'Vị trí',
             dataIndex: 'original',
             key: 'original',
-            width: 200,
+            width: 30,
             render: (text, record) => (
                 <Space direction="vertical" size={0}>
                     <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '13px' }}>
                         {text}
                     </Tag>
-                    <Text type="secondary" style={{ fontSize: '11px' }}>
-                        Loại: {record.type}
-                    </Text>
                 </Space>
             )
         },
@@ -190,35 +96,73 @@ const PlaceholderMappingPanel = ({
                 const selectedTagId = mappings[record.id];
                 const selectedTag = tags.find(t => t.id === selectedTagId);
 
+                const local = tempInputs[record.id] || { key: '', dataType: tagDataTypes?.[0]?.value || 'string' };
+
+                // Use flex layout so controls scale and the row remains aligned regardless of text length
                 return (
-                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
-                        <Select
-                            placeholder="Chọn tag để map"
-                            style={{ width: '100%' }}
-                            value={selectedTagId}
-                            onChange={(value) => handleMapPlaceholder(record.id, value)}
-                            allowClear
-                            showSearch
-                            optionFilterProp="children"
-                        >
-                            {tags.map(tag => (
-                                <Option key={tag.id} value={tag.id}>
-                                    <Space>
-                                        <Tag color="green">#{tag.index}</Tag>
-                                        <Text strong>{tag.key}</Text>
-                                        <Text type="secondary" style={{ fontSize: '11px' }}>
-                                            ({tag.dataTypeLabel})
-                                        </Text>
-                                    </Space>
-                                </Option>
-                            ))}
-                        </Select>
-                        {selectedTag && (
-                            <Text type="secondary" style={{ fontSize: '11px' }}>
-                                ✓ Mapped: <Text code>{selectedTag.key}</Text>
-                            </Text>
+                    <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
+                        {selectedTag ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    <Text strong style={{ display: 'block' }}>{selectedTag.key}</Text>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>{selectedTag.dataTypeLabel}</Text>
+                                </div>
+
+                                <div style={{ flex: '0 0 auto' }}>
+                                    <Button size="small" onClick={() => handleMapPlaceholder(record.id, null)} danger>Unmap</Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <Input
+                                    placeholder="Tên trường (key)"
+                                    value={local.key}
+                                    onChange={(e) => setTempInput(record.id, { ...local, key: e.target.value })}
+                                    // make input occupy ~1/3 of the Map cell so it's not overly wide
+                                    style={{ flex: '0 0 28%', minWidth: 100 }}
+                                    size="middle"
+                                />
+
+                                <Select
+                                    value={local.dataType}
+                                    onChange={(val) => setTempInput(record.id, { ...local, dataType: val })}
+                                    style={{ flex: '0 0 20%', minWidth: 100 }}
+                                    size="middle"
+                                    options={(tagDataTypes || []).map(dt => ({ label: dt.label, value: dt.value }))}
+                                />
+
+                                <Button
+                                    type="primary"
+                                    size="middle"
+                                    onClick={async () => {
+                                        if (!local.key || !local.dataType) {
+                                            message.warning('Vui lòng nhập tên trường và chọn loại dữ liệu');
+                                            return;
+                                        }
+
+                                        const newId = `local-${Date.now()}`;
+                                        const dataTypeLabel = tagDataTypes.find(t => t.value === local.dataType)?.label || local.dataType;
+                                        const newTag = {
+                                            id: newId,
+                                            key: local.key,
+                                            dataType: local.dataType,
+                                            dataTypeLabel,
+                                            value: '',
+                                            index: tags.length + 1
+                                        };
+
+                                        if (onCreateTag) {
+                                            onCreateTag(newTag);
+                                        }
+
+                                        handleMapPlaceholder(record.id, newId);
+                                    }}
+                                >
+                                    Áp dụng
+                                </Button>
+                            </>
                         )}
-                    </Space>
+                    </div>
                 );
             }
         },
@@ -226,7 +170,8 @@ const PlaceholderMappingPanel = ({
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            width: 120,
+            width: 50,
+            fixed: 'right',
             align: 'center',
             render: (_, record) => {
                 const isMapped = !!mappings[record.id];
@@ -242,6 +187,9 @@ const PlaceholderMappingPanel = ({
             }
         }
     ];
+
+    // compute horizontal scroll width (fallback)
+    const tableX = Math.max(900, columns.reduce((acc, c) => acc + (c.width || 200), 0));
 
     if (placeholders.length === 0) {
         return (
@@ -272,27 +220,7 @@ const PlaceholderMappingPanel = ({
                     />
                 </Space>
             }
-            extra={
-                <Space>
-                    <Tooltip title="Tự động map placeholders với tags có cùng index">
-                        <Button
-                            icon={<SyncOutlined />}
-                            onClick={handleAutoMap}
-                            disabled={tags.length === 0}
-                        >
-                            Auto Map
-                        </Button>
-                    </Tooltip>
-                    <Button
-                        type="primary"
-                        icon={<DownloadOutlined />}
-                        onClick={handleExportSchema}
-                        disabled={stats.mapped === 0}
-                    >
-                        Export Schema
-                    </Button>
-                </Space>
-            }
+
         >
             {/* Stats Alert */}
             <Alert
@@ -312,27 +240,16 @@ const PlaceholderMappingPanel = ({
                 style={{ marginBottom: 16 }}
             />
 
-            {/* Mapping Table */}
-            <Table
+            {/* Mapping Table (custom for horizontal overflow and fixed status column) */}
+            <CustomTable
                 columns={columns}
                 dataSource={placeholders}
                 rowKey="id"
                 pagination={false}
-                size="small"
-                scroll={{ y: 400 }}
+                scroll={{ x: tableX, y: 400 }}
             />
 
             <Divider />
-
-            {/* Actions */}
-            <Space>
-                <Button onClick={handleClearMappings} danger>
-                    Xóa tất cả mappings
-                </Button>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                    💡 Tip: Sử dụng "Auto Map" để tự động map placeholders có số index với tags
-                </Text>
-            </Space>
         </Card>
     );
 };

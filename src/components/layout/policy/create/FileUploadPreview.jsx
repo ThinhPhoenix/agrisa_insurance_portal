@@ -15,23 +15,31 @@ import {
     Progress,
     Space,
     Spin,
-    Tabs,
+    Tooltip,
     Typography,
     Upload
 } from 'antd';
-import { useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { analyzePDFForPlaceholders } from './PDFPlaceholderDetector';
-import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
 
-const FileUploadPreview = ({
+const FileUploadPreview = forwardRef(({
     tagsData,
     onFileUpload,
     onFileRemove,
-    onPlaceholdersDetected
-}) => {
+    onPlaceholdersDetected,
+    compactButtons = false,
+    // allow parent to control/persist uploaded file across unmounts
+    uploadedFile: uploadedFileProp = null,
+    fileUrl: fileUrlProp = null
+}, ref) => {
+    useImperativeHandle(ref, () => ({
+        openPasteModal: () => handleOpenPasteModal(),
+        openFullscreen: () => handleFullscreenOpen()
+    }));
+
     const [uploadedFile, setUploadedFile] = useState(null);
     const [fileUrl, setFileUrl] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -40,12 +48,28 @@ const FileUploadPreview = ({
     const [fullscreenVisible, setFullscreenVisible] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
     const [placeholders, setPlaceholders] = useState([]);
-    const [activeTab, setActiveTab] = useState('preview');
     const [pasteTextModalVisible, setPasteTextModalVisible] = useState(false);
     const [pastedText, setPastedText] = useState('');
     const [modifiedText, setModifiedText] = useState(null);
     const [modifiedTextUrl, setModifiedTextUrl] = useState(null);
     const fileInputRef = useRef(null);
+
+    // Sync with parent-controlled uploaded file (preserve across unmounts)
+    useEffect(() => {
+        if (uploadedFileProp) {
+            // parent has a file; adopt it
+            setUploadedFile(uploadedFileProp);
+            setFileUrl(fileUrlProp);
+        } else {
+            // parent cleared file
+            setUploadedFile(null);
+            setFileUrl(null);
+            setPlaceholders([]);
+            setPdfError(null);
+        }
+        // only respond to explicit prop changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [uploadedFileProp, fileUrlProp]);
 
     // Upload props for Ant Design Upload component
     const uploadProps = {
@@ -54,24 +78,13 @@ const FileUploadPreview = ({
         accept: '.pdf',
         showUploadList: false,
         beforeUpload: async (file) => {
-            console.log('📁 Starting file upload process...', file.name);
-
             // Validate file type - only PDF
             const validExtensions = ['.pdf'];
             const fileName = file.name.toLowerCase();
             const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
 
-            const validMimeTypes = [
-                'application/pdf'
-            ];
+            const validMimeTypes = ['application/pdf'];
             const hasValidMimeType = validMimeTypes.includes(file.type);
-
-            console.log('✅ File validation:', {
-                hasValidExtension,
-                hasValidMimeType,
-                fileType: file.type,
-                fileName: file.name
-            });
 
             if (!hasValidExtension && !hasValidMimeType) {
                 message.error(`File ${file.name} không được hỗ trợ. Chỉ chấp nhận file PDF`);
@@ -85,42 +98,24 @@ const FileUploadPreview = ({
                 return false;
             }
 
-            console.log('⏳ Processing file...');
-
-            // Process the file directly here
             try {
                 setLoading(true);
                 setUploadProgress(50);
 
-                // Create file URL for preview
                 const url = URL.createObjectURL(file);
-                console.log('🔗 Created URL:', url);
-
                 setFileUrl(url);
                 setUploadedFile(file);
-
-                console.log('💾 State updated:', {
-                    uploadedFile: file.name,
-                    fileUrl: url
-                });
 
                 setUploadProgress(100);
                 message.success(`${file.name} đã được tải lên thành công`);
 
-                // Call parent callback if provided
-                if (onFileUpload) {
-                    console.log('📤 Calling parent callback...');
-                    onFileUpload(file, url);
-                }
-
-                console.log('✅ Upload complete!');
+                if (onFileUpload) onFileUpload(file, url);
 
                 // Auto analyze PDF for placeholders
                 analyzePDF(file);
-
             } catch (error) {
-                console.error('❌ File processing error:', error);
-                message.error('Có lỗi xảy ra khi xử lý file: ' + error.message);
+                console.error('File processing error:', error);
+                message.error('Có lỗi xảy ra khi xử lý file: ' + (error?.message || error));
             } finally {
                 setLoading(false);
                 setUploadProgress(0);
@@ -129,30 +124,22 @@ const FileUploadPreview = ({
             return false; // Prevent auto upload
         },
         onChange: (info) => {
-            // Handle file removal
             if (info.fileList.length === 0) {
                 setUploadedFile(null);
                 setFileUrl(null);
                 setPdfError(null);
-                if (onFileRemove) {
-                    onFileRemove();
-                }
+                if (onFileRemove) onFileRemove();
             }
         },
         onRemove: () => {
-            if (fileUrl) {
-                URL.revokeObjectURL(fileUrl);
-            }
+            if (fileUrl) URL.revokeObjectURL(fileUrl);
             setUploadedFile(null);
             setFileUrl(null);
-            setNumPages(null);
-            setPageNumber(1);
             setPdfError(null);
-            if (onFileRemove) {
-                onFileRemove();
-            }
+            if (onFileRemove) onFileRemove();
         }
     };
+
 
     const handleRemoveFile = () => {
         if (fileUrl) {
@@ -162,7 +149,6 @@ const FileUploadPreview = ({
         setFileUrl(null);
         setPdfError(null);
         setPlaceholders([]);
-        setActiveTab('preview');
         if (onFileRemove) {
             onFileRemove();
         }
@@ -178,10 +164,7 @@ const FileUploadPreview = ({
             if (result && result.placeholders) {
                 setPlaceholders(result.placeholders);
 
-                // Switch to mapping tab if placeholders found
-                if (result.placeholders.length > 0) {
-                    setActiveTab('mapping');
-                }
+                // Notify parent
 
                 // Notify parent
                 if (onPlaceholdersDetected) {
@@ -220,7 +203,6 @@ const FileUploadPreview = ({
 
             if (detectedPlaceholders.length > 0) {
                 message.success(`Tìm thấy ${detectedPlaceholders.length} placeholders!`);
-                setActiveTab('mapping');
 
                 // Notify parent
                 if (onPlaceholdersDetected) {
@@ -237,57 +219,7 @@ const FileUploadPreview = ({
         }
     };
 
-    // Handle mapping changes
-    const handleMappingChange = async (mappings) => {
-        console.log('📊 Mappings updated:', mappings);
-
-        // Check if we have complete mappings
-        const mappedCount = Object.values(mappings).filter(Boolean).length;
-
-        if (mappedCount > 0 && uploadedFile) {
-            // Generate preview with mappings
-            await updatePreviewWithMappings(mappings);
-        }
-    };
-
-    // Update preview with mappings applied
-    const updatePreviewWithMappings = async (mappings) => {
-        try {
-            setAnalyzing(true);
-
-            // Import function
-            const { replacePlaceholdersInPDF } = await import('./PDFPlaceholderDetector');
-
-            // Generate new text with replacements
-            const result = await replacePlaceholdersInPDF(
-                uploadedFile,
-                mappings,
-                tagsData?.tags || []
-            );
-
-            if (result.success) {
-                setModifiedText(result.modifiedText);
-                setModifiedTextUrl(result.modifiedTextUrl);
-
-                message.success(
-                    `✅ Đã thay thế ${result.replacements?.length || 0} placeholders! Xem tab "Modified Text" để preview.`
-                );
-
-                // Switch to modified text tab if available
-                setActiveTab('modified');
-            }
-        } catch (error) {
-            console.error('Error updating preview:', error);
-            message.error('Không thể cập nhật preview: ' + error.message);
-        } finally {
-            setAnalyzing(false);
-        }
-    };
-
-    // Handle schema export
-    const handleExportSchema = (schema) => {
-        console.log('📤 Schema exported:', schema);
-    };
+    // Note: mapping and modified-text generation moved to TagsTab; preview only handles file display and placeholder detection
 
     const handleDownloadFile = () => {
         if (fileUrl && uploadedFile) {
@@ -363,270 +295,151 @@ const FileUploadPreview = ({
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <EyeOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
-                    <div>
-                        <Text strong style={{ display: 'block' }}>
-                            {uploadedFile?.name}
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: '12px' }}>
-                            {(uploadedFile?.size / 1024 / 1024).toFixed(2)} MB
-                            {placeholders.length > 0 && (
-                                <> • {placeholders.length} placeholders được phát hiện</>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                        <div style={{ minWidth: 0 }}>
+                            <Text
+                                strong
+                                style={{
+                                    display: 'block',
+                                    maxWidth: '48vw',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}
+                                title={uploadedFile?.name}
+                            >
+                                {uploadedFile?.name}
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                {uploadedFile ? `${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB` : ''}
+                                {placeholders.length > 0 && (
+                                    <> • {placeholders.length} placeholders được phát hiện</>
+                                )}
+                            </Text>
+                        </div>
+                    </div>
+
+                    <div style={{ marginLeft: 'auto' }}>
+                        <Space>
+                            {analyzing && (
+                                <Space>
+                                    <Spin size="small" />
+                                    <Text type="secondary">Đang phân tích...</Text>
+                                </Space>
                             )}
-                        </Text>
+
+                            <Tooltip title="Paste text từ PDF">
+                                <Button
+                                    type="default"
+                                    icon={<CopyOutlined />}
+                                    onClick={handleOpenPasteModal}
+                                    size="small"
+                                />
+                            </Tooltip>
+
+                            <Tooltip title="Toàn màn hình">
+                                <Button
+                                    icon={<EyeOutlined />}
+                                    onClick={handleFullscreenOpen}
+                                    size="small"
+                                />
+                            </Tooltip>
+
+                            <Tooltip title="Tải xuống">
+                                <Button
+                                    icon={<DownloadOutlined />}
+                                    onClick={handleDownloadFile}
+                                    size="small"
+                                />
+                            </Tooltip>
+
+                            <Tooltip title="Xóa file">
+                                <Button
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={handleRemoveFile}
+                                    size="small"
+                                />
+                            </Tooltip>
+                        </Space>
                     </div>
                 </div>
-
-                <Space wrap>
-                    {analyzing && (
-                        <Space>
-                            <Spin size="small" />
-                            <Text type="secondary">Đang phân tích...</Text>
-                        </Space>
-                    )}
-                    <Button
-                        type="primary"
-                        icon={<CopyOutlined />}
-                        onClick={handleOpenPasteModal}
-                    >
-                        Paste Text từ PDF
-                    </Button>
-                    {placeholders.length > 0 && (
-                        <Button
-                            type="primary"
-                            icon={<FileSearchOutlined />}
-                            onClick={() => setActiveTab('mapping')}
-                        >
-                            Xem Placeholders ({placeholders.length})
-                        </Button>
-                    )}
-                    <Button
-                        icon={<EyeOutlined />}
-                        onClick={handleFullscreenOpen}
-                    >
-                        Toàn màn hình
-                    </Button>
-                    <Button
-                        icon={<DownloadOutlined />}
-                        onClick={handleDownloadFile}
-                    >
-                        Tải xuống
-                    </Button>
-                    <Button
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={handleRemoveFile}
-                    >
-                        Xóa file
-                    </Button>
-                </Space>
             </div>
 
-            {/* Tabs: Preview & Mapping */}
-            <Tabs
-                activeKey={activeTab}
-                onChange={setActiveTab}
-                style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-                items={[
-                    {
-                        key: 'preview',
-                        label: 'PDF Preview',
-                        children: (
-                            <div style={{
-                                height: '100%',
-                                overflow: 'auto',
-                                background: '#f5f5f5',
-                                padding: '20px'
-                            }}>
-                                {fileUrl ? (
-                                    <div style={{
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        background: 'white',
-                                        border: '1px solid #d9d9d9',
-                                        borderRadius: '8px',
-                                        overflow: 'hidden',
-                                        minHeight: '600px'
-                                    }}>
-                                        {pdfError ? (
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                height: '400px',
-                                                color: '#ff4d4f',
-                                                textAlign: 'center',
-                                                background: 'white',
-                                                padding: '20px',
-                                                borderRadius: '8px'
-                                            }}>
-                                                <div>
-                                                    <Text type="danger" style={{ fontSize: '16px', display: 'block', marginBottom: '8px' }}>
-                                                        {pdfError}
-                                                    </Text>
-                                                    <Text type="secondary">
-                                                        Vui lòng thử tải lại file hoặc kiểm tra định dạng PDF
-                                                    </Text>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <iframe
-                                                src={fileUrl}
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    minHeight: '600px',
-                                                    border: 'none'
-                                                }}
-                                                title="PDF Preview"
-                                                onLoad={onPdfLoad}
-                                                onError={onPdfError}
-                                            />
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        height: '400px',
-                                        background: 'white',
-                                        border: '1px solid #d9d9d9',
-                                        borderRadius: '8px'
-                                    }}>
-                                        <Text type="secondary">Chưa có file PDF nào được tải lên</Text>
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    },
-                    {
-                        key: 'mapping',
-                        label: (
-                            <Space>
-                                <FileSearchOutlined />
-                                Placeholder Mapping
-                                {placeholders.length > 0 && (
-                                    <span style={{
-                                        background: '#1890ff',
-                                        color: 'white',
-                                        padding: '2px 8px',
-                                        borderRadius: '10px',
-                                        fontSize: '12px'
-                                    }}>
-                                        {placeholders.length}
-                                    </span>
-                                )}
-                            </Space>
-                        ),
-                        children: (
-                            <div style={{ padding: '20px', background: '#f5f5f5' }}>
-                                {analyzing ? (
-                                    <div style={{ textAlign: 'center', padding: '40px' }}>
-                                        <Spin size="large" />
-                                        <div style={{ marginTop: '16px' }}>
-                                            <Text>Đang phân tích PDF để tìm placeholders...</Text>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <PlaceholderMappingPanel
-                                        placeholders={placeholders}
-                                        tags={tagsData?.tags || []}
-                                        onMappingChange={handleMappingChange}
-                                        onExportSchema={handleExportSchema}
-                                    />
-                                )}
-                            </div>
-                        )
-                    },
-                    {
-                        key: 'modified',
-                        label: (
-                            <Space>
-                                <FileSearchOutlined />
-                                Modified Text
-                                {modifiedText && (
-                                    <span style={{
-                                        background: '#52c41a',
-                                        color: 'white',
-                                        padding: '2px 8px',
-                                        borderRadius: '10px',
-                                        fontSize: '12px'
-                                    }}>
-                                        ✓
-                                    </span>
-                                )}
-                            </Space>
-                        ),
-                        children: (
-                            <div style={{ padding: '20px', background: '#f5f5f5' }}>
-                                {modifiedText ? (
-                                    <div>
-                                        <Alert
-                                            message="Text đã được thay thế thành công!"
-                                            description="Placeholders đã được thay thế bằng {{tagKey}}. Download text này và gửi cho backend để generate PDF mới."
-                                            type="success"
-                                            showIcon
-                                            style={{ marginBottom: 16 }}
-                                            action={
-                                                <Button
-                                                    type="primary"
-                                                    icon={<DownloadOutlined />}
-                                                    onClick={() => {
-                                                        const a = document.createElement('a');
-                                                        a.href = modifiedTextUrl;
-                                                        a.download = uploadedFile.name.replace('.pdf', '_modified.txt');
-                                                        a.click();
-                                                    }}
-                                                >
-                                                    Download Text
-                                                </Button>
-                                            }
-                                        />
-                                        <div style={{
-                                            background: 'white',
-                                            border: '1px solid #d9d9d9',
-                                            borderRadius: '8px',
-                                            padding: '20px',
-                                            maxHeight: '600px',
-                                            overflow: 'auto',
-                                            fontFamily: 'monospace',
-                                            fontSize: '13px',
-                                            whiteSpace: 'pre-wrap',
-                                            wordBreak: 'break-word'
-                                        }}>
-                                            {modifiedText}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <Alert
-                                        message="Chưa có text được thay thế"
-                                        description="Map placeholders với tags trong tab 'Placeholder Mapping' để generate modified text."
-                                        type="info"
-                                        showIcon
-                                    />
-                                )}
-                            </div>
-                        )
-                    }
-                ]}
-            />
-
-            {/* Status Bar */}
+            {/* PDF Preview */}
             <div style={{
-                padding: '12px 24px',
-                borderTop: '1px solid #f0f0f0',
-                background: '#fafafa'
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%'
             }}>
-                <Alert
-                    message="File đã tải lên thành công"
-                    description={`File: ${uploadedFile?.name} (${(uploadedFile?.size / 1024 / 1024).toFixed(2)} MB)${placeholders.length > 0 ? ` • ${placeholders.length} placeholders được phát hiện` : ''}`}
-                    type="success"
-                    showIcon
-                    style={{ margin: 0 }}
-                />
+                <div style={{
+                    height: '100%',
+                    overflow: 'auto',
+                    background: '#f5f5f5',
+                    // padding: '20px'
+                }}>
+                    {fileUrl ? (
+                        <div style={{
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            background: 'white',
+                            border: '1px solid #d9d9d9',
+                            overflow: 'hidden',
+                            minHeight: '600px'
+                        }}>
+                            {pdfError ? (
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: '400px',
+                                    color: '#ff4d4f',
+                                    textAlign: 'center',
+                                    background: 'white',
+                                    padding: '20px',
+                                    borderRadius: '8px'
+                                }}>
+                                    <div>
+                                        <Text type="danger" style={{ fontSize: '16px', display: 'block', marginBottom: '8px' }}>
+                                            {pdfError}
+                                        </Text>
+                                        <Text type="secondary">
+                                            Vui lòng thử tải lại file hoặc kiểm tra định dạng PDF
+                                        </Text>
+                                    </div>
+                                </div>
+                            ) : (
+                                <iframe
+                                    src={fileUrl}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        minHeight: '600px',
+                                        border: 'none'
+                                    }}
+                                    title="PDF Preview"
+                                    onLoad={onPdfLoad}
+                                    onError={onPdfError}
+                                />
+                            )}
+                        </div>
+                    ) : (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '400px',
+                            background: 'white',
+                            border: '1px solid #d9d9d9',
+                            borderRadius: '8px'
+                        }}>
+                            <Text type="secondary">Chưa có file PDF nào được tải lên</Text>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -716,6 +529,6 @@ const FileUploadPreview = ({
             </Modal>
         </>
     );
-};
+});
 
 export default FileUploadPreview;

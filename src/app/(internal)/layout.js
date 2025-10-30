@@ -1,10 +1,45 @@
 "use client";
 import CustomHeader from "@/components/custom-header";
 import CustomSidebar from "@/components/custom-sidebar";
-import { useState } from "react";
+import { useAuthStore } from "@/stores/auth-store";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function InternalLayoutFlexbox({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Subscribe to the whole user object to avoid creating a new selector object each render
+  const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    // Prevent redirect loop when already on sign-in page
+    if (!pathname || pathname.startsWith("/sign-in")) return;
+
+    // Consider token from store OR persisted token in localStorage
+    const storedToken =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const hasToken = Boolean(user?.token) || Boolean(storedToken);
+    const hasRoles = Array.isArray(user?.roles) && user.roles.length > 0;
+
+    // If there's no token and no roles, treat as unauthenticated and redirect
+    const isAuthenticated = hasToken || hasRoles;
+
+    // Only redirect if we're not already on the sign-in page and not authenticated
+    if (!isAuthenticated && pathname && pathname !== "/sign-in") {
+      // Prevent trying to push the same route repeatedly
+      try {
+        router.push("/sign-in");
+      } catch (e) {
+        // swallow navigation errors to avoid breaking the app
+        // (some Next versions may throw when pushing the current route)
+        // eslint-disable-next-line no-console
+        console.warn("Navigation to /sign-in failed:", e);
+      }
+    }
+  }, [user, pathname, router]);
 
   return (
     <div className="flex h-screen overflow-hidden">

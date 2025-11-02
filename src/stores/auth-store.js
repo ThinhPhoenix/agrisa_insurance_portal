@@ -37,6 +37,12 @@ export const useAuthStore = create((set, get) => ({
   clearUser: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refresh_token");
+    // remove persisted /me payload
+    try {
+      localStorage.removeItem("me");
+    } catch (e) {
+      // ignore
+    }
     set({
       user: defaultUser,
       isLoading: false,

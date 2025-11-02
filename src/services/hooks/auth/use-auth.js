@@ -76,6 +76,76 @@ export const useSignIn = () => {
           };
 
           setUser(userData);
+
+          // After successful sign-in, attempt to fetch full profile (/me)
+          // only if profile info isn't already persisted in localStorage.
+          (async () => {
+            try {
+              const hasProfile =
+                localStorage.getItem("profile_id") ||
+                localStorage.getItem("user_id");
+
+              if (!hasProfile) {
+                const meRes = await axiosInstance.get(endpoints.auth.auth_me);
+                if (meRes?.data?.success) {
+                  const profile = meRes.data.data || {};
+
+                  const existingToken =
+                    localStorage.getItem("token") || userData.token || null;
+                  const existingRefresh =
+                    localStorage.getItem("refresh_token") || null;
+
+                  const merged = {
+                    ...userData,
+                    user_id: profile.user_id || userData.user_id,
+                    profile_id: profile.profile_id || null,
+                    roles: profile.role_id ? [profile.role_id] : userData.roles,
+                    token: existingToken,
+                    refresh_token: existingRefresh,
+                    profile,
+                    user: {
+                      id: profile.user_id || userData.user?.id || null,
+                      email: profile.email || userData.user?.email || null,
+                      full_name:
+                        profile.full_name || userData.user?.full_name || null,
+                      display_name:
+                        profile.display_name ||
+                        userData.user?.display_name ||
+                        null,
+                      primary_phone: profile.primary_phone || null,
+                      partner_id: profile.partner_id || null,
+                      role_id: profile.role_id || null,
+                    },
+                  };
+
+                  try {
+                    if (merged.token)
+                      localStorage.setItem("token", merged.token);
+                    if (merged.refresh_token)
+                      localStorage.setItem(
+                        "refresh_token",
+                        merged.refresh_token
+                      );
+
+                    // Persist the full /me payload under `me`
+                    localStorage.setItem("me", JSON.stringify(profile));
+                  } catch (e) {
+                    console.warn(
+                      "Could not persist profile to localStorage after sign-in:",
+                      e?.message
+                    );
+                  }
+
+                  // update store with merged data
+                  setUser(merged);
+                }
+              }
+            } catch (e) {
+              // Non-fatal: profile fetch failed — keep sign-in success
+              console.warn("Post-login /me fetch failed:", e?.message || e);
+            }
+          })();
+
           return {
             success: true,
             message: getSignInSuccess("LOGIN_SUCCESS"),
@@ -178,11 +248,60 @@ export const useAuthMe = () => {
       const response = await axiosInstance.get(endpoints.auth.auth_me);
 
       if (response.data.success) {
-        setUser(response.data.data);
+        // Response contains profile data. Map it into the expected user structure
+        const profile = response.data.data || {};
+
+        // Preserve any existing token/refresh_token from localStorage
+        const existingToken = localStorage.getItem("token") || null;
+        const existingRefresh = localStorage.getItem("refresh_token") || null;
+
+        const userData = {
+          // Primary identifiers
+          user_id: profile.user_id || null,
+          profile_id: profile.profile_id || null,
+          // Roles: map role_id into an array for compatibility
+          roles: profile.role_id ? [profile.role_id] : [],
+          // Tokens and session info (auth/me doesn't return token)
+          token: existingToken,
+          refresh_token: existingRefresh,
+          expires_at: null,
+          session_id: null,
+          // Keep the raw profile for downstream usage
+          profile,
+          // Provide a light 'user' object similar to sign-in mapping
+          user: {
+            id: profile.user_id || null,
+            email: profile.email || null,
+            full_name: profile.full_name || null,
+            display_name: profile.display_name || null,
+            primary_phone: profile.primary_phone || null,
+            partner_id: profile.partner_id || null,
+            role_id: profile.role_id || null,
+          },
+        };
+
+        // Persist the full profile JSON under the `me` key instead of individual fields
+        try {
+          if (userData.token) localStorage.setItem("token", userData.token);
+          if (userData.refresh_token)
+            localStorage.setItem("refresh_token", userData.refresh_token);
+
+          // Save the raw profile JSON under `me`
+          localStorage.setItem("me", JSON.stringify(profile));
+        } catch (e) {
+          // localStorage may be disabled in some environments; ignore safely
+          console.warn(
+            "Could not persist profile to localStorage:",
+            e?.message
+          );
+        }
+
+        setUser(userData);
+
         return {
           success: true,
           message: getSignInSuccess("AUTH_ME_SUCCESS"),
-          data: response.data.data,
+          data: userData,
         };
       } else {
         throw new Error(response.data.message || getSignInError("AUTH_FAILED"));

@@ -3,6 +3,8 @@ const prefix = "/api";
 export const endpoints = {
   auth: {
     sign_in: `/auth/public/login`,
+    // profile/me endpoint
+    auth_me: `/profile/protected/api/v1/me`,
     sign_out: `${prefix}/auth/sign-out`,
     sign_up: `${prefix}/auth/sign-up`,
   },

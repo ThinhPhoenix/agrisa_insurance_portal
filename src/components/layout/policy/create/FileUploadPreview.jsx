@@ -54,6 +54,14 @@ const FileUploadPreview = forwardRef(({
     const [modifiedTextUrl, setModifiedTextUrl] = useState(null);
     const fileInputRef = useRef(null);
 
+    // Helper: convert File to base64 data URL
+    const fileToBase64 = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+    });
+
     // Sync with parent-controlled uploaded file (preserve across unmounts)
     useEffect(() => {
         if (uploadedFileProp) {
@@ -105,6 +113,15 @@ const FileUploadPreview = forwardRef(({
                 const url = URL.createObjectURL(file);
                 setFileUrl(url);
                 setUploadedFile(file);
+
+                // Convert file to base64 and log the string (data URL)
+                try {
+                    const base64 = await fileToBase64(file);
+                    // Log only the base64/data URL string as requested
+                    console.log('Uploaded file base64:', base64);
+                } catch (convErr) {
+                    console.error('Error converting file to base64:', convErr);
+                }
 
                 setUploadProgress(100);
                 message.success(`${file.name} đã được tải lên thành công`);

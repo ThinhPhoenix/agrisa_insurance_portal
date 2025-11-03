@@ -17,6 +17,13 @@ const PLACEHOLDER_PATTERNS = [
         regex: /\((\d+)\)/g,
         description: 'Số trong ngoặc đơn: (1), (2), (3)...'
     },
+    // Support placeholders that are surrounded by dots or underscores like ...(1)... or ___(1)___
+    {
+        name: 'numbered_filled',
+        // matches patterns like .(1).  ..(2)..  ___(3)___  ._(4)_.
+        regex: /[._]+\s*\(\s*(\d+)\s*\)\s*[._]+/g,
+        description: 'Numbered with filler: ...(1)... or ___(1)___'
+    },
     {
         name: 'handlebars',
         regex: /\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g,
@@ -112,8 +119,9 @@ export const extractTextFromPDF = async (file) => {
                 const text = item.str;
                 allText += text + ' ';
 
-                // Check if this is a numbered placeholder: (1), (2), etc.
-                const numberedMatch = text.match(/^\((\d+)\)$/);
+                // Check if this is a numbered placeholder exactly like "(1)" OR
+                // a numbered placeholder with surrounding dots/underscores like "...(1)..." or "___(1)___".
+                const numberedMatch = text.match(/^[._]*\(\s*(\d+)\s*\)[._]*$/);
                 if (numberedMatch) {
                     const num = numberedMatch[1];
                     placeholders.push({
@@ -147,11 +155,11 @@ export const extractTextFromPDF = async (file) => {
         // FALLBACK: Detect placeholders from full text (handle spaced text)
         // Pattern: .(1). or ..(2).. or ...(3)... (MUST have dots on both sides to avoid year like (2021))
         console.log('🔍 FALLBACK: Scanning full text for placeholders...');
-        console.log('📏 Validation rule: Placeholder MUST have dots on both sides: .(number).');
+        console.log('📏 Validation rule: Placeholder MUST have dots or underscores on both sides: .(number). or _(number)_');
 
-        // Regex: Look for pattern with dots before and after: .{1,}(number).{1,}
-        // This avoids matching years like (2021) or standalone numbers
-        const placeholderRegex = /\.+\s*\(\s*(\d+)\s*\)\s*\.+/g;
+        // Regex: Look for pattern with dots or underscores before and after: .{1,}(number).{1,} or _{1,}(number)_{1,}
+        // This avoids matching years like (2021) or standalone numbers. We now accept underscores as filler too.
+        const placeholderRegex = /[._]+\s*\(\s*(\d+)\s*\)\s*[._]+/g;
         const textPlaceholderMatches = allText.match(placeholderRegex);
 
         if (textPlaceholderMatches && textPlaceholderMatches.length > 0) {
@@ -196,8 +204,8 @@ export const extractTextFromPDF = async (file) => {
             };
         }
 
-        console.log('⚠️ No valid placeholders found with pattern .(number).');
-        console.log('💡 Tip: Placeholders must have dots on both sides, e.g., ...(1)...');        // Test patterns
+        console.log('⚠️ No valid placeholders found with pattern .(number) or _(number)_ .');
+        console.log('💡 Tip: Placeholders should have dots or underscores on both sides, e.g., ...(1)... or ___(1)___');        // Test patterns
         console.log('🔍 Pattern Detection Tests:');
         console.log('  (1)  :', /\(\s*1\s*\)/.test(allText) ? '✅ FOUND' : '❌ NOT FOUND');
         console.log('  (2)  :', /\(\s*2\s*\)/.test(allText) ? '✅ FOUND' : '❌ NOT FOUND');
@@ -245,8 +253,8 @@ export const detectPlaceholders = (text) => {
                     id: `placeholder_${placeholders.length + 1}`,
                     original: fullMatch, // (1)
                     extractedKey: key, // 1
-                    type: pattern.name, // 'numbered', 'handlebars', 'brackets'
-                    suggestedTagKey: pattern.name === 'numbered' ? `field_${key}` : key,
+                    type: pattern.name, // 'numbered', 'numbered_filled', 'handlebars', 'brackets'
+                    suggestedTagKey: (pattern.name === 'numbered' || pattern.name === 'numbered_filled') ? `field_${key}` : key,
                     position: match.index,
                     mapped: false, // Chưa map với tag
                     tagId: null // ID của tag được map
@@ -321,3 +329,4 @@ export const analyzePDFForPlaceholders = async (file) => {
 };
 
 export { PLACEHOLDER_PATTERNS };
+

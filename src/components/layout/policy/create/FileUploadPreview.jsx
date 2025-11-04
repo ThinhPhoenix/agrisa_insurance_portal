@@ -55,7 +55,7 @@ const FileUploadPreview = forwardRef(({
                 const arrayBuffer = await uploadedFile.arrayBuffer();
 
                 // Dynamic import pdf-lib (code splitting)
-                const { replacePlaceholdersInPDF } = await import('../../../../utils/pdfEditor');
+                const { replacePlaceholdersInPDF } = await import('../../../../libs/pdf/pdfEditor');
 
                 // Apply replacements
                 const modifiedBytes = await replacePlaceholdersInPDF(arrayBuffer, replacements);

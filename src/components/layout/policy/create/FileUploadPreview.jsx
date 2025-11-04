@@ -37,12 +37,121 @@ const FileUploadPreview = forwardRef(({
 }, ref) => {
     useImperativeHandle(ref, () => ({
         openPasteModal: () => handleOpenPasteModal(),
-        openFullscreen: () => handleFullscreenOpen()
+        openFullscreen: () => handleFullscreenOpen(),
+
+        // ✅ Apply replacements - OVERWRITE uploadedFile (In-place Editing)
+        applyReplacements: async (replacements) => {
+            if (!uploadedFile) {
+                return { success: false, error: 'No file uploaded' };
+            }
+
+            try {
+                setAnalyzing(true);
+                message.loading('Đang áp dụng thay đổi vào PDF...', 0);
+
+                console.log('🚀 Applying', replacements.length, 'replacements...');
+
+                // Read current file
+                const arrayBuffer = await uploadedFile.arrayBuffer();
+
+                // Dynamic import pdf-lib (code splitting)
+                const { replacePlaceholdersInPDF } = await import('../../../../libs/pdf/pdfEditor');
+
+                // Apply replacements
+                const modifiedBytes = await replacePlaceholdersInPDF(arrayBuffer, replacements);
+
+                // ⭐ OVERWRITE: Convert bytes to File object
+                const newFile = new File(
+                    [modifiedBytes],
+                    uploadedFile.name,
+                    { type: 'application/pdf' }
+                );
+
+                // ⭐ OVERWRITE: Create new blob URL first (BEFORE setState)
+                const newUrl = URL.createObjectURL(newFile);
+                console.log('🔗 Created new blob URL:', newUrl);
+                console.log('🔗 Old blob URL:', fileUrl);
+
+                // ⭐ OVERWRITE: Update uploadedFile state
+                setUploadedFile(newFile);
+
+                // ⭐ OVERWRITE: Notify parent to update fileUrl
+                if (onFileUpload) {
+                    console.log('📤 Calling onFileUpload callback with newUrl:', newUrl);
+                    onFileUpload(newFile, newUrl);  // Pass newUrl, not null!
+                } else {
+                    console.warn('⚠️ onFileUpload callback not provided!');
+                }
+
+                // ⭐ OVERWRITE: Update LOCAL fileUrl state (will trigger iframe reload)
+                // Note: Parent will also update fileUrl via callback, which syncs back via useEffect
+                setFileUrl(newUrl);
+                console.log('✅ Updated LOCAL fileUrl state to:', newUrl);
+
+                // ⭐ Cleanup old blob URL after a delay (prevent race condition)
+                if (fileUrl) {
+                    setTimeout(() => {
+                        URL.revokeObjectURL(fileUrl);
+                        console.log('🧹 Revoked old blob URL:', fileUrl);
+                    }, 500);
+                }
+
+                // Store bytes for download/submit
+                setModifiedPdfBytes(modifiedBytes);
+
+                message.destroy();
+                message.success(`✅ Đã áp dụng ${replacements.length} thay đổi vào PDF!`);
+
+                console.log('✅ Overwritten uploadedFile with modified PDF');
+
+                return {
+                    success: true,
+                    url: newUrl,
+                    bytes: modifiedBytes,
+                    file: newFile
+                };
+            } catch (error) {
+                console.error('❌ Error applying replacements:', error);
+                message.destroy();
+                message.error('❌ Lỗi khi chỉnh sửa PDF: ' + error.message);
+
+                return {
+                    success: false,
+                    error: error.message
+                };
+            } finally {
+                setAnalyzing(false);
+            }
+        },
+
+        // ✅ Get current file (for backend submission)
+        getCurrentFile: () => {
+            if (!uploadedFile) {
+                return {
+                    success: false,
+                    error: 'No file available'
+                };
+            }
+
+            return {
+                success: true,
+                file: uploadedFile,
+                url: fileUrl
+            };
+        }
     }));
 
     const [uploadedFile, setUploadedFile] = useState(null);
     const [fileUrl, setFileUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    // ✅ Sync fileUrlProp from parent into local state
+    useEffect(() => {
+        if (fileUrlProp !== null && fileUrlProp !== fileUrl) {
+            console.log('🔄 Syncing fileUrl from parent prop:', fileUrlProp);
+            setFileUrl(fileUrlProp);
+        }
+    }, [fileUrlProp]);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [pdfError, setPdfError] = useState(null);
     const [fullscreenVisible, setFullscreenVisible] = useState(false);
@@ -53,6 +162,9 @@ const FileUploadPreview = forwardRef(({
     const [modifiedText, setModifiedText] = useState(null);
     const [modifiedTextUrl, setModifiedTextUrl] = useState(null);
     const fileInputRef = useRef(null);
+
+    // State for modified PDF bytes (for in-place editing)
+    const [modifiedPdfBytes, setModifiedPdfBytes] = useState(null);
 
     // Helper: convert File to base64 data URL
     const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -430,6 +542,7 @@ const FileUploadPreview = forwardRef(({
                                 </div>
                             ) : (
                                 <iframe
+                                    key={fileUrl}
                                     src={fileUrl}
                                     style={{
                                         width: '100%',
@@ -462,7 +575,10 @@ const FileUploadPreview = forwardRef(({
     );
 
     // Normal mode
-    console.log('🎨 Rendering FileUploadPreview, uploadedFile:', uploadedFile?.name || 'null');
+    console.log('🎨 Rendering FileUploadPreview');
+    console.log('   - uploadedFile:', uploadedFile?.name || 'null');
+    console.log('   - fileUrl:', fileUrl ? fileUrl.substring(0, 50) + '...' : 'null');
+    console.log('   - Will show iframe?', !!fileUrl);
 
     return (
         <>
@@ -493,6 +609,7 @@ const FileUploadPreview = forwardRef(({
                 destroyOnClose
             >
                 <iframe
+                    key={fileUrl}
                     src={fileUrl}
                     style={{
                         width: '100%',

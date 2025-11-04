@@ -42,7 +42,8 @@ const TagsTab = ({
     // New handlers from parent (page.js)
     onOpenPaste,
     onOpenFullscreen,
-    placeholders = []
+    placeholders = [],
+    filePreviewRef  // ✅ NEW - receive from parent to pass down to PlaceholderMappingPanel
 }) => {
     const [tagForm] = Form.useForm();
     const [selectedDataType, setSelectedDataType] = React.useState('string');
@@ -670,17 +671,28 @@ const TagsTab = ({
                 {/* Placeholder mapping panel replaces the tags table */}
 
                 {placeholders && placeholders.length > 0 ? (
-                    <PlaceholderMappingPanel
-                        placeholders={placeholders}
-                        tags={tagsData?.tags || []}
-                        tagDataTypes={mockData.tagDataTypes || []}
-                        onCreateTag={(tag) => onAddTag(tag)}
-                        onMappingChange={(mappings) => {
-                            // Store mappings into tagsData so parent can persist if needed
-                            onDataChange && onDataChange({ ...tagsData, mappings });
-                        }}
-                        onExportSchema={(schema) => console.log('Exported schema', schema)}
-                    />
+                    <>
+                        {/* 🔍 DEBUG: Log tagsData before passing to PlaceholderMappingPanel */}
+                        {console.log('🔍 TagsTab - tagsData:', tagsData)}
+                        {console.log('🔍 TagsTab - tagsData.tags:', tagsData?.tags)}
+                        {console.log('🔍 TagsTab - tags count:', tagsData?.tags?.length || 0)}
+                        <PlaceholderMappingPanel
+                            placeholders={placeholders}
+                            tags={tagsData?.tags || []}
+                            tagDataTypes={mockData.tagDataTypes || []}
+                            onCreateTag={(tag) => {
+                                console.log('🔍 TagsTab - onCreateTag called with:', tag);
+                                onAddTag(tag);
+                            }}
+                            onMappingChange={(mappings) => {
+                                console.log('🔍 TagsTab - onMappingChange called with:', mappings);
+                                // Store mappings into tagsData so parent can persist if needed
+                                onDataChange && onDataChange({ ...tagsData, mappings });
+                            }}
+                            onExportSchema={(schema) => console.log('Exported schema', schema)}
+                            filePreviewRef={filePreviewRef}  // ✅ Pass ref down to PlaceholderMappingPanel
+                        />
+                    </>
                 ) : (
                     <Alert
                         message="Chưa có placeholders"

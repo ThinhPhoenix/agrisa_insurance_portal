@@ -15,7 +15,7 @@ import {
     Tooltip,
     Typography
 } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -40,6 +40,16 @@ const BasicTab = ({
     const [dataSourceForm] = Form.useForm();
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedTier, setSelectedTier] = useState('');
+
+    useEffect(() => {
+        if (!basicData.product_description || !basicData.coverage_currency) {
+            onDataChange({
+                ...basicData,
+                product_description: basicData.product_description || "Bảo hiểm tham số theo chỉ số lượng mưa cho cây lúa mùa khô. Bồi thường tự động khi lượng mưa tích lũy thấp hơn ngưỡng 50mm trong 30 ngày liên tục, không cần kiểm tra thiệt hại tại hiện trường.",
+                coverage_currency: basicData.coverage_currency || "VND"
+            });
+        }
+    }, [basicData, onDataChange]);
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
@@ -202,12 +212,13 @@ const BasicTab = ({
                 <Row gutter={24}>
                     <Col span={12}>
                         <Form.Item
-                            name="insuranceProviderId"
-                            label="Đối tác Bảo hiểm"
-                            rules={[{ required: true, message: 'Vui lòng nhập mã đối tác' }]}
+                            name="product_description"
+                            label="Mô tả sản phẩm"
+                            rules={[{ required: true, message: 'Vui lòng nhập mô tả sản phẩm' }]}
                         >
-                            <Input
-                                placeholder="VD: PARTNER_001"
+                            <Input.TextArea
+                                placeholder="Nhập mô tả sản phẩm"
+                                rows={4}
                                 size="large"
                             />
                         </Form.Item>
@@ -234,6 +245,25 @@ const BasicTab = ({
                                         </div>
                                     </Option>
                                 ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row gutter={24}>
+                    <Col span={12}>
+                        <Form.Item
+                            name="coverage_currency"
+                            label="Đơn vị tiền tệ"
+                            rules={[{ required: true, message: 'Vui lòng chọn đơn vị tiền tệ' }]}
+                        >
+                            <Select
+                                placeholder="Chọn đơn vị tiền tệ"
+                                size="large"
+                            >
+                                <Option value="VND">VND</Option>
+                                <Option value="USD">USD</Option>
+                                <Option value="EUR">EUR</Option>
                             </Select>
                         </Form.Item>
                     </Col>

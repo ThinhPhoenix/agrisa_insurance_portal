@@ -300,6 +300,7 @@ const CreatePolicyPage = () => {
             filePreviewRef.current.openFullscreen()
           }
           placeholders={detectedPlaceholders}
+          filePreviewRef={filePreviewRef}
         />
       ),
     },

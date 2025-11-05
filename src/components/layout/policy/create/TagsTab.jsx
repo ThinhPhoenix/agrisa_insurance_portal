@@ -684,10 +684,21 @@ const TagsTab = ({
                                 console.log('🔍 TagsTab - onCreateTag called with:', tag);
                                 onAddTag(tag);
                             }}
-                            onMappingChange={(mappings) => {
-                                console.log('🔍 TagsTab - onMappingChange called with:', mappings);
-                                // Store mappings into tagsData so parent can persist if needed
-                                onDataChange && onDataChange({ ...tagsData, mappings });
+                            onMappingChange={(mappings, pdfData) => {
+                                console.log('🔍 TagsTab - onMappingChange called with:', { mappings, pdfData });
+
+                                // Update tagsData with mappings and PDF data
+                                const updatedTagsData = {
+                                    ...tagsData,
+                                    mappings,
+                                    ...(pdfData && {
+                                        documentTagsObject: pdfData.documentTagsObject,
+                                        modifiedPdfBytes: pdfData.modifiedPdfBytes,
+                                        uploadedFile: pdfData.uploadedFile
+                                    })
+                                };
+
+                                onDataChange && onDataChange(updatedTagsData);
                             }}
                             onExportSchema={(schema) => console.log('Exported schema', schema)}
                             filePreviewRef={filePreviewRef}  // ✅ Pass ref down to PlaceholderMappingPanel

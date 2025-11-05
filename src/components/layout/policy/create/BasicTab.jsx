@@ -1,16 +1,20 @@
+import { useAuthStore } from '@/stores/auth-store';
 import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import {
     Alert,
     Button,
     Card,
     Col,
+    DatePicker,
     Divider,
     Form,
     Input,
+    InputNumber,
     message,
     Popconfirm,
     Row,
     Select,
+    Switch,
     Table,
     Tooltip,
     Typography
@@ -40,16 +44,43 @@ const BasicTab = ({
     const [dataSourceForm] = Form.useForm();
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedTier, setSelectedTier] = useState('');
+    const { user } = useAuthStore();
 
     useEffect(() => {
-        if (!basicData.product_description || !basicData.coverage_currency) {
-            onDataChange({
-                ...basicData,
-                product_description: basicData.product_description || "Bảo hiểm tham số theo chỉ số lượng mưa cho cây lúa mùa khô. Bồi thường tự động khi lượng mưa tích lũy thấp hơn ngưỡng 50mm trong 30 ngày liên tục, không cần kiểm tra thiệt hại tại hiện trường.",
-                coverage_currency: basicData.coverage_currency || "VND"
+        // Auto-fill default values and insurance provider ID
+        const updates = {};
+
+        if (!basicData.product_description) {
+            updates.product_description = "Bảo hiểm tham số theo chỉ số lượng mưa cho cây lúa mùa khô. Bồi thường tự động khi lượng mưa tích lũy thấp hơn ngưỡng 50mm trong 30 ngày liên tục, không cần kiểm tra thiệt hại tại hiện trường.";
+        }
+
+        if (!basicData.coverage_currency) {
+            updates.coverage_currency = "VND";
+        }
+
+        // Auto-fill insurance provider ID from logged-in user (if available)
+        if (!basicData.insuranceProviderId && user?.user_id) {
+            // ⚠️ TODO: Check if user has partner_code/provider_code field
+            // BE spec expects string like "bao-minh-insurance", not UUID
+            updates.insuranceProviderId = user.user_id;
+            console.log("🔍 BasicTab - Set insuranceProviderId from user:", {
+                user_id: user.user_id,
+                full_user: user
             });
         }
-    }, [basicData, onDataChange]);
+
+        // Default status to 'draft'
+        if (!basicData.status) {
+            updates.status = 'draft';
+        }
+
+        if (Object.keys(updates).length > 0) {
+            onDataChange({
+                ...basicData,
+                ...updates
+            });
+        }
+    }, [basicData, onDataChange, user]);
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
@@ -74,10 +105,10 @@ const BasicTab = ({
         setSelectedTier(tier);
         dataSourceForm.setFieldsValue({ dataSource: undefined });
 
-        // Find the selected tier data to get its level/ID
+        // Find the selected tier data to get its ID
         const selectedTierData = tiers.find(t => t.value === tier);
         if (selectedTierData && fetchDataSourcesByTier) {
-            fetchDataSourcesByTier(selectedTierData.tier_level);
+            fetchDataSourcesByTier(selectedTierData.id);
         }
     };
 
@@ -96,12 +127,19 @@ const BasicTab = ({
                     return;
                 }
 
+                // Find category and tier to get multipliers
+                const selectedCategoryObj = categories.find(cat => cat.category_name === selectedCategory);
+                const selectedTierObj = tiers.find(t => t.value === selectedTier);
+
                 const dataSourceToAdd = {
                     ...selectedSource,
                     category: selectedCategory,
                     tier: selectedTier,
                     categoryLabel: selectedCategory, // Since selectedCategory is already the name
-                    tierLabel: tiers.find(t => t.value === selectedTier)?.label
+                    tierLabel: selectedTierObj?.label || selectedTier,
+                    // Add multipliers for condition calculation
+                    categoryMultiplier: selectedCategoryObj?.category_cost_multiplier || 1,
+                    tierMultiplier: selectedTierObj?.data_tier_multiplier || 1
                 };
 
                 onAddDataSource(dataSourceToAdd);
@@ -212,9 +250,9 @@ const BasicTab = ({
                 <Row gutter={24}>
                     <Col span={12}>
                         <Form.Item
-                            name="product_description"
+                            name="productDescription"
                             label="Mô tả sản phẩm"
-                            rules={[{ required: true, message: 'Vui lòng nhập mô tả sản phẩm' }]}
+                            tooltip="Mô tả chi tiết sản phẩm bảo hiểm (tuỳ chọn)"
                         >
                             <Input.TextArea
                                 placeholder="Nhập mô tả sản phẩm"
@@ -227,7 +265,7 @@ const BasicTab = ({
                         <Form.Item
                             name="cropType"
                             label="Loại Cây trồng"
-                            rules={[{ required: true, message: 'Vui lòng chọn loại cây trồng' }]}
+                            tooltip="Loại cây trồng áp dụng (tuỳ chọn)"
                         >
                             <Select
                                 placeholder="Chọn loại cây trồng"
@@ -251,9 +289,9 @@ const BasicTab = ({
                 </Row>
 
                 <Row gutter={24}>
-                    <Col span={12}>
+                    <Col span={8}>
                         <Form.Item
-                            name="coverage_currency"
+                            name="coverageCurrency"
                             label="Đơn vị tiền tệ"
                             rules={[{ required: true, message: 'Vui lòng chọn đơn vị tiền tệ' }]}
                         >
@@ -261,10 +299,385 @@ const BasicTab = ({
                                 placeholder="Chọn đơn vị tiền tệ"
                                 size="large"
                             >
-                                <Option value="VND">VND</Option>
-                                <Option value="USD">USD</Option>
-                                <Option value="EUR">EUR</Option>
+                                <Option value="VND">VND - Việt Nam Đồng</Option>
+                                <Option value="USD">USD - Đô la Mỹ</Option>
+                                <Option value="EUR">EUR - Euro</Option>
                             </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="coverageDurationDays"
+                            label="Thời hạn bảo hiểm (ngày)"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập thời hạn' },
+                                { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                            ]}
+                        >
+                            <InputNumber
+                                placeholder="120"
+                                min={1}
+                                size="large"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="isPerHectare"
+                            label="Tính theo diện tích"
+                            tooltip="Xác định premium/payout có tính theo hectare không (bắt buộc)"
+                            rules={[{ required: true, message: 'Vui lòng chọn cách tính' }]}
+                        >
+                            <Select size="large" placeholder="Chọn">
+                                <Option value={true}>Có (theo hectare)</Option>
+                                <Option value={false}>Không (cố định)</Option>
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row gutter={24}>
+                    <Col span={8}>
+                        <Form.Item
+                            name="premiumBaseRate"
+                            label="Tỷ lệ phí cơ bản"
+                            tooltip="Tỷ lệ phí bảo hiểm cơ bản (VND/ha hoặc multiplier)"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập tỷ lệ phí' },
+                                { type: 'number', min: 0, message: 'Phải >= 0' }
+                            ]}
+                        >
+                            <InputNumber
+                                placeholder="1.0"
+                                min={0}
+                                step={0.1}
+                                size="large"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="fixPremiumAmount"
+                            label="Phí cố định (VND)"
+                            tooltip="Nếu có, sẽ ưu tiên dùng số tiền này thay vì tính theo tỷ lệ"
+                        >
+                            <InputNumber
+                                placeholder="1,000,000"
+                                min={0}
+                                step={100000}
+                                size="large"
+                                style={{ width: '100%' }}
+                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="maxPremiumPaymentProlong"
+                            label="Gia hạn thanh toán (ngày)"
+                            tooltip="Số ngày tối đa được gia hạn thanh toán phí"
+                        >
+                            <InputNumber
+                                placeholder="7"
+                                min={0}
+                                size="large"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row gutter={24}>
+                    <Col span={24}>
+                        <Form.Item
+                            name="cancelPremiumRate"
+                            label="Tỷ lệ phí huỷ"
+                            tooltip="Tỷ lệ phí phải trả/được hoàn khi hủy hợp đồng (0.8 = 80%)"
+                            rules={[
+                                { type: 'number', min: 0, max: 1, message: 'Tỷ lệ từ 0 đến 1' }
+                            ]}
+                        >
+                            <InputNumber
+                                placeholder="0.8"
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                size="large"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Divider orientation="left">Cấu hình Chi trả (Payout)</Divider>
+
+                <Row gutter={24}>
+                    <Col span={8}>
+                        <Form.Item
+                            name="isPayoutPerHectare"
+                            label="Tính chi trả theo diện tích"
+                            tooltip="Xác định payout có tính theo hectare không (bắt buộc)"
+                            rules={[{ required: true, message: 'Vui lòng chọn cách tính chi trả' }]}
+                        >
+                            <Select size="large" placeholder="Chọn">
+                                <Option value={true}>Có (theo hectare)</Option>
+                                <Option value={false}>Không (cố định)</Option>
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="payoutBaseRate"
+                            label="Tỷ lệ chi trả cơ bản"
+                            tooltip="Tỷ lệ chi trả cơ bản (VND/ha hoặc multiplier) - BẮT BUỘC"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập tỷ lệ chi trả' },
+                                { type: 'number', min: 0, message: 'Phải >= 0' }
+                            ]}
+                        >
+                            <InputNumber
+                                placeholder="0.75"
+                                min={0}
+                                step={0.01}
+                                size="large"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="fixPayoutAmount"
+                            label="Số tiền chi trả cố định (VND)"
+                            tooltip="Nếu có, sẽ ưu tiên dùng số tiền này thay vì tính theo tỷ lệ"
+                        >
+                            <InputNumber
+                                placeholder="5,000,000"
+                                min={0}
+                                step={100000}
+                                size="large"
+                                style={{ width: '100%' }}
+                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row gutter={24}>
+                    <Col span={12}>
+                        <Form.Item
+                            name="payoutCap"
+                            label="Giới hạn chi trả tối đa (VND)"
+                            tooltip="Số tiền chi trả tối đa cho một claim (tuỳ chọn)"
+                        >
+                            <InputNumber
+                                placeholder="10,000,000"
+                                min={0}
+                                step={100000}
+                                size="large"
+                                style={{ width: '100%' }}
+                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            name="overThresholdMultiplier"
+                            label="Hệ số nhân vượt ngưỡng"
+                            tooltip="Hệ số nhân khi vượt ngưỡng trigger (1.0 = 100%)"
+                            rules={[
+                                { type: 'number', min: 0, message: 'Phải >= 0' }
+                            ]}
+                        >
+                            <InputNumber
+                                placeholder="1.0"
+                                min={0}
+                                step={0.1}
+                                size="large"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Divider orientation="left">Thời gian đăng ký & Hiệu lực</Divider>
+
+                <Row gutter={24}>
+                    <Col span={12}>
+                        <Form.Item
+                            name="enrollmentStartDay"
+                            label="Ngày bắt đầu đăng ký"
+                            tooltip="Thời điểm bắt đầu cho phép đăng ký tham gia (tuỳ chọn)"
+                        >
+                            <DatePicker
+                                placeholder="Chọn ngày bắt đầu đăng ký"
+                                size="large"
+                                style={{ width: '100%' }}
+                                format="DD/MM/YYYY"
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            name="enrollmentEndDay"
+                            label="Ngày kết thúc đăng ký"
+                            tooltip="Thời điểm kết thúc cho phép đăng ký tham gia (tuỳ chọn)"
+                            rules={[
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        const startDay = getFieldValue('enrollmentStartDay');
+                                        if (!value || !startDay || value.isAfter(startDay)) {
+                                            return Promise.resolve();
+                                        }
+                                        return Promise.reject(new Error('Ngày kết thúc phải sau ngày bắt đầu'));
+                                    }
+                                })
+                            ]}
+                        >
+                            <DatePicker
+                                placeholder="Chọn ngày kết thúc đăng ký"
+                                size="large"
+                                style={{ width: '100%' }}
+                                format="DD/MM/YYYY"
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row gutter={24}>
+                    <Col span={12}>
+                        <Form.Item
+                            name="insuranceValidFrom"
+                            label="Bảo hiểm có hiệu lực từ"
+                            tooltip="Ngày bắt đầu hiệu lực của bảo hiểm (REQUIRED theo BE spec)"
+                            rules={[
+                                { required: true, message: 'Vui lòng chọn ngày bắt đầu hiệu lực (bắt buộc)' }
+                            ]}
+                        >
+                            <DatePicker
+                                placeholder="Chọn ngày bắt đầu hiệu lực"
+                                size="large"
+                                style={{ width: '100%' }}
+                                format="DD/MM/YYYY"
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            name="insuranceValidTo"
+                            label="Bảo hiểm có hiệu lực đến"
+                            tooltip="Ngày kết thúc hiệu lực của bảo hiểm (REQUIRED theo BE spec)"
+                            rules={[
+                                { required: true, message: 'Vui lòng chọn ngày kết thúc hiệu lực (bắt buộc)' },
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        const validFrom = getFieldValue('insuranceValidFrom');
+                                        if (!value || !validFrom || value.isAfter(validFrom)) {
+                                            return Promise.resolve();
+                                        }
+                                        return Promise.reject(new Error('Ngày kết thúc phải sau ngày bắt đầu'));
+                                    }
+                                })
+                            ]}
+                        >
+                            <DatePicker
+                                placeholder="Chọn ngày kết thúc hiệu lực"
+                                size="large"
+                                style={{ width: '100%' }}
+                                format="DD/MM/YYYY"
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Divider orientation="left">Cài đặt gia hạn & Trạng thái</Divider>
+
+                <Row gutter={24}>
+                    <Col span={8}>
+                        <Form.Item
+                            name="autoRenewal"
+                            label="Tự động gia hạn"
+                            valuePropName="checked"
+                            tooltip="Tự động gia hạn hợp đồng khi hết hạn"
+                        >
+                            <Switch
+                                checkedChildren="Có"
+                                unCheckedChildren="Không"
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="renewalDiscountRate"
+                            label="Giảm giá khi gia hạn (%)"
+                            tooltip="Phần trăm giảm giá khi tự động gia hạn (10 = giảm 10%)"
+                            rules={[
+                                { type: 'number', min: 0, max: 100, message: 'Từ 0% đến 100%' }
+                            ]}
+                        >
+                            <InputNumber
+                                placeholder="10"
+                                min={0}
+                                max={100}
+                                step={0.1}
+                                size="large"
+                                style={{ width: '100%' }}
+                                formatter={value => `${value}%`}
+                                parser={value => value.replace('%', '')}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="basePolicyInvalidDate"
+                            label="Ngày vô hiệu hóa"
+                            tooltip="Ngày mà policy này sẽ bị vô hiệu hóa (tuỳ chọn)"
+                        >
+                            <DatePicker
+                                placeholder="Chọn ngày vô hiệu"
+                                size="large"
+                                style={{ width: '100%' }}
+                                format="DD/MM/YYYY"
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Divider orientation="left">Tài liệu & Thông tin bổ sung</Divider>
+
+                <Row gutter={24}>
+                    <Col span={24}>
+                        <Form.Item
+                            name="templateDocumentUrl"
+                            label="URL tài liệu mẫu"
+                            tooltip="Đường dẫn tới tài liệu mẫu policy (nếu có)"
+                        >
+                            <Input
+                                placeholder="https://example.com/template.pdf"
+                                size="large"
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row gutter={24}>
+                    <Col span={24}>
+                        <Form.Item
+                            name="importantAdditionalInformation"
+                            label="Thông tin bổ sung quan trọng"
+                            tooltip="Ghi chú, điều khoản đặc biệt hoặc thông tin quan trọng khác"
+                        >
+                            <Input.TextArea
+                                placeholder="Nhập thông tin bổ sung quan trọng..."
+                                rows={4}
+                                size="large"
+                                showCount
+                                maxLength={1000}
+                            />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -291,7 +704,6 @@ const BasicTab = ({
                             <Form.Item
                                 name="category"
                                 label="Mục dữ liệu"
-                                rules={[{ required: true, message: 'Chọn danh mục' }]}
                             >
                                 <Select
                                     placeholder="Chọn danh mục"
@@ -329,7 +741,6 @@ const BasicTab = ({
                             <Form.Item
                                 name="tier"
                                 label="Gói dịch vụ"
-                                rules={[{ required: true, message: 'Chọn gói' }]}
                             >
                                 <Select
                                     placeholder="Chọn gói"
@@ -371,7 +782,6 @@ const BasicTab = ({
                             <Form.Item
                                 name="dataSource"
                                 label="Nguồn dữ liệu"
-                                rules={[{ required: true, message: 'Chọn nguồn dữ liệu' }]}
                             >
                                 <Select
                                     placeholder="Chọn nguồn dữ liệu"

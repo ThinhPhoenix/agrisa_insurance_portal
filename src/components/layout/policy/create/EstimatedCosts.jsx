@@ -3,13 +3,19 @@ import { Card, Col, Divider, Progress, Row, Space, Statistic, Tag, Typography } 
 
 const { Title, Text } = Typography;
 
-const EstimatedCosts = ({ estimatedCosts, basicData }) => {
+const EstimatedCosts = ({ estimatedCosts, basicData, configurationData }) => {
     const {
         monthlyDataCost,
         dataComplexityScore,
         premiumBaseRate,
         totalEstimatedCost
     } = estimatedCosts;
+
+    // Calculate total condition cost
+    const totalConditionCost = (configurationData?.conditions || []).reduce(
+        (sum, condition) => sum + (condition.calculatedCost || 0),
+        0
+    );
 
     // Calculate complexity level
     const getComplexityLevel = (score) => {
@@ -113,42 +119,91 @@ const EstimatedCosts = ({ estimatedCosts, basicData }) => {
                 </Text>
             </div>
 
+            {/* Total Condition Cost */}
+            {configurationData?.conditions && configurationData.conditions.length > 0 && (
+                <>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <div className="cost-section" style={{ marginBottom: '12px' }}>
+                        <Statistic
+                            title="Tổng Chi phí Điều kiện"
+                            value={totalConditionCost}
+                            prefix={<DollarOutlined />}
+                            suffix="VND"
+                            precision={0}
+                            valueStyle={{
+                                color: '#fa8c16',
+                                fontSize: '14px',
+                                fontWeight: 'bold'
+                            }}
+                        />
+                        <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
+                            {configurationData.conditions.length} điều kiện được cấu hình
+                        </Text>
+                    </div>
+                </>
+            )}
+
             {/* Data Sources Breakdown */}
             {basicData.selectedDataSources.length > 0 && (
                 <>
                     <Divider style={{ margin: '8px 0' }} />
                     <div className="data-sources-breakdown">
                         <Text strong style={{ fontSize: '11px', marginBottom: '8px', display: 'block' }}>
-                            Chi tiết Nguồn dữ liệu
+                            Chi tiết Nguồn dữ liệu & Điều kiện
                         </Text>
-                        {basicData.selectedDataSources.map((source, index) => (
-                            <div key={source.id} className="data-source-item" style={{ marginBottom: '6px' }}>
-                                <Row justify="space-between" align="top">
-                                    <Col span={14}>
-                                        <Text strong style={{ fontSize: '10px' }}>
-                                            {source.label}
-                                        </Text>
-                                        <br />
-                                        <Text type="secondary" style={{ fontSize: '9px' }}>
-                                            {source.categoryLabel} • {source.tierLabel}
-                                        </Text>
-                                    </Col>
-                                    <Col span={10} style={{ textAlign: 'right' }}>
-                                        <Text style={{ fontSize: '10px' }}>
-                                            {(source.baseCost *
-                                                (source.category === 'weather' ? 1.0 :
-                                                    source.category === 'satellite' ? 1.5 : 2.0) *
-                                                (source.tier === 'basic' ? 1.0 :
-                                                    source.tier === 'premium' ? 1.8 : 3.0)
-                                            ).toLocaleString()} ₫
-                                        </Text>
-                                    </Col>
-                                </Row>
-                                {index < basicData.selectedDataSources.length - 1 && (
-                                    <Divider style={{ margin: '4px 0' }} />
-                                )}
-                            </div>
-                        ))}
+                        {basicData.selectedDataSources.map((source, index) => {
+                            // Find conditions for this data source
+                            const relatedConditions = (configurationData?.conditions || []).filter(
+                                condition => condition.dataSourceId === source.id
+                            );
+                            const sourceConditionCost = relatedConditions.reduce(
+                                (sum, cond) => sum + (cond.calculatedCost || 0),
+                                0
+                            );
+
+                            return (
+                                <div key={source.id} className="data-source-item" style={{ marginBottom: '6px' }}>
+                                    <Row justify="space-between" align="top">
+                                        <Col span={14}>
+                                            <Text strong style={{ fontSize: '10px' }}>
+                                                {source.label}
+                                            </Text>
+                                            <br />
+                                            <Text type="secondary" style={{ fontSize: '9px' }}>
+                                                {source.categoryLabel} • {source.tierLabel}
+                                            </Text>
+                                            {relatedConditions.length > 0 && (
+                                                <>
+                                                    <br />
+                                                    <Text type="success" style={{ fontSize: '9px' }}>
+                                                        {relatedConditions.length} điều kiện
+                                                    </Text>
+                                                </>
+                                            )}
+                                        </Col>
+                                        <Col span={10} style={{ textAlign: 'right' }}>
+                                            <Text style={{ fontSize: '10px' }}>
+                                                {(source.baseCost *
+                                                    (source.categoryMultiplier || 1) *
+                                                    (source.tierMultiplier || 1)
+                                                ).toLocaleString()} ₫
+                                            </Text>
+                                            {sourceConditionCost > 0 && (
+                                                <>
+                                                    <br />
+                                                    <Text type="success" style={{ fontSize: '9px' }}>
+                                                        Chi phí điều kiện: {sourceConditionCost.toLocaleString()} ₫
+                                                    </Text>
+                                                </>
+                                            )}
+                                        </Col>
+                                    </Row>
+                                    {index < basicData.selectedDataSources.length - 1 && (
+                                        <Divider style={{ margin: '4px 0' }} />
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </>
             )}

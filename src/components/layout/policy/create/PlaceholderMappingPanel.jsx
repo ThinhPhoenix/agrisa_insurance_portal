@@ -76,10 +76,84 @@ const PlaceholderMappingPanel = ({
 
         setMappings(newMappings);
 
-        // Notify parent
+        // ✅ Build and notify parent immediately when mapping changes
+        // This ensures documentTagsObject is always up-to-date in tagsData
         if (onMappingChange) {
-            onMappingChange(newMappings);
+            // Build documentTags from new mappings
+            const documentTags = {};
+            const sortedPlaceholders = [...placeholders].sort((a, b) => {
+                const aMatch = a.original.match(/\((\d+)\)/);
+                const bMatch = b.original.match(/\((\d+)\)/);
+                if (aMatch && bMatch) {
+                    return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+                }
+                return a.original.localeCompare(b.original);
+            });
+
+            sortedPlaceholders.forEach(placeholder => {
+                const mappedTagId = newMappings[placeholder.id];
+                console.log(`  🔍 Placeholder ${placeholder.id} (${placeholder.original}): tagId =`, mappedTagId);
+
+                if (!mappedTagId) {
+                    console.log(`    ⚠️ Skipped - No mapping`);
+                    return;
+                }
+
+                const tag = effectiveTags.find(t => t.id === mappedTagId);
+                console.log(`    🔍 Found tag:`, tag);
+
+                if (!tag) {
+                    console.log(`    ❌ Skipped - Tag not found in effectiveTags`);
+                    return;
+                }
+
+                documentTags[tag.key] = tag.dataType || 'string';
+                console.log(`    ✅ Added to documentTags: "${tag.key}" = "${tag.dataType}"`);
+            });
+
+            console.log('📋 Updated document_tags (realtime):', documentTags);
+            console.log('📊 Total tags in documentTags:', Object.keys(documentTags).length);
+
+            // Notify parent with mappings + documentTagsObject
+            onMappingChange(newMappings, {
+                documentTagsObject: documentTags
+            });
         }
+    };
+
+    // ✅ Build document_tags object for BE submission
+    const buildDocumentTags = () => {
+        const documentTags = {};
+
+        // Sort placeholders by original text to maintain order (1), (2), (3)...
+        const sortedPlaceholders = [...placeholders].sort((a, b) => {
+            // Extract number from placeholder like "(1)", "(2)"
+            const aMatch = a.original.match(/\((\d+)\)/);
+            const bMatch = b.original.match(/\((\d+)\)/);
+
+            if (aMatch && bMatch) {
+                return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+            }
+
+            // Fallback: alphabetical sort
+            return a.original.localeCompare(b.original);
+        });
+
+        // Build tags object in order
+        sortedPlaceholders.forEach(placeholder => {
+            const tagId = mappings[placeholder.id];
+            if (!tagId) return; // Skip unmapped
+
+            const tag = effectiveTags.find(t => t.id === tagId);
+            if (!tag) return;
+
+            // Add to document_tags with key from tag.key and data type from tag.dataType
+            // Format: { "họ và tên": "string", "tuổi": "int" }
+            documentTags[tag.key] = tag.dataType || 'string';
+        });
+
+        console.log('📋 Built document_tags:', documentTags);
+        return documentTags;
     };
 
     // ✅ Apply mapping to PDF - NEW
@@ -158,6 +232,16 @@ const PlaceholderMappingPanel = ({
                 content: `✅ Đã thay thế ${replacements.length} placeholders trong PDF!`,
                 duration: 5
             });
+
+            // ✅ Build and notify parent about document_tags and modified PDF
+            const documentTags = buildDocumentTags();
+            if (onMappingChange) {
+                onMappingChange(mappings, {
+                    documentTagsObject: documentTags,
+                    modifiedPdfBytes: result.bytes, // Pass modified PDF bytes from FileUploadPreview
+                    uploadedFile: result.file // Pass updated file object
+                });
+            }
         } else {
             message.error(`❌ Lỗi: ${result.error}`);
         }

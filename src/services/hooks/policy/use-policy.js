@@ -1,6 +1,7 @@
 import mockData from "@/app/(internal)/policy/mock..json";
 import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
+import { calculateConditionCost, usePolicyStore } from "@/stores/policy-store";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -17,23 +18,69 @@ const usePolicy = () => {
 
   // State cho form data của từng tab
   const [basicData, setBasicData] = useState({
+    // ✅ Product Info (REQUIRED)
     productName: "",
     productCode: "",
+    productDescription: "",
     insuranceProviderId: "",
     cropType: "",
+    coverageCurrency: "VND",
+    coverageDurationDays: 120,
+
+    // ✅ Premium Config (REQUIRED)
+    isPerHectare: true,
     premiumBaseRate: 0,
-    coverageDurationDays: 0,
+    fixPremiumAmount: null,
+    maxPremiumPaymentProlong: null,
+    cancelPremiumRate: null,
+
+    // ✅ Payout Config (moved from ConfigurationTab - per BE spec)
+    isPayoutPerHectare: true,
+    payoutBaseRate: 0.75,
+    fixPayoutAmount: null,
+    payoutCap: null,
+    overThresholdMultiplier: 1.0,
+
+    // ✅ Enrollment & Validity Dates
+    enrollmentStartDay: null,
+    enrollmentEndDay: null,
+    insuranceValidFrom: null,
+    insuranceValidTo: null,
+
+    // ✅ Renewal Config
+    autoRenewal: false,
+    renewalDiscountRate: 0,
+    basePolicyInvalidDate: null,
+
+    // ✅ Status & Document (auto fields)
+    status: "draft",
+    templateDocumentUrl: null,
+    documentValidationStatus: "pending",
+    importantAdditionalInformation: "",
+
+    // ✅ Data Sources Table
     selectedDataSources: [], // Array of selected data sources
   });
 
   const [configurationData, setConfigurationData] = useState({
+    // ✅ Trigger Config (REQUIRED)
     logicalOperator: "AND",
-    payoutPercentage: 100,
+    monitorInterval: 1,
+    monitorFrequencyUnit: "day",
+
+    // ✅ Optional Trigger Fields
+    growthStage: "",
+    blackoutPeriods: {}, // ✅ Object, not array - per BE spec
+
+    // ✅ Conditions Table (REQUIRED at least 1)
     conditions: [], // Array of trigger conditions
   });
 
   const [tagsData, setTagsData] = useState({
     tags: [], // Array of key-value pairs with data types
+    uploadedFile: null,
+    modifiedPdfBytes: null,
+    documentTagsObject: {},
   });
 
   // State cho validation
@@ -162,7 +209,7 @@ const usePolicy = () => {
       if (response.data.success) {
         // Transform API response to match expected format
         const transformedTiers = response.data.data.map((tier) => ({
-          id: tier.tier_level, // Use tier_level as id
+          id: tier.id, // Use the actual UUID id from API
           value: tier.tier_name.toLowerCase(), // Use tier_name lowercase as value
           label: tier.tier_name, // Display name
           description: `${tier.tier_name} Tier`,
@@ -213,7 +260,10 @@ const usePolicy = () => {
       if (response.data.success) {
         // Transform API response to match expected format
         const transformedDataSources = response.data.data.map((source) => ({
-          id: `${source.data_source}_${source.parameter_name}`, // Create unique ID
+          id:
+            source.id ||
+            source.data_source_id ||
+            `${source.data_source}_${source.parameter_name}`, // ✅ Use real UUID from API first
           label: source.display_name_vi || source.parameter_name, // Use Vietnamese name if available
           parameterName: source.parameter_name,
           unit: source.unit,
@@ -255,36 +305,94 @@ const usePolicy = () => {
     fetchCategories();
   }, [fetchCategories]);
 
-  // Validate basic tab
+  // ✅ AUTO-VALIDATE: Run validation whenever data changes
+  // This ensures validationStatus is always up-to-date
+
+  // Validate basic tab - Only check REQUIRED fields per BE spec
   const validateBasicTab = useCallback(() => {
-    const required = [
+    // ✅ REQUIRED fields per BE spec
+    const requiredFields = [
       "productName",
       "productCode",
-      "insuranceProviderId",
-      "cropType",
+      "coverageCurrency",
+      "coverageDurationDays",
+      "isPerHectare",
+      "premiumBaseRate", // REQUIRED if no fix_premium_amount
+      "isPayoutPerHectare",
+      "insuranceValidFrom",
+      "insuranceValidTo",
     ];
-    const isValid =
-      required.every((field) => basicData[field]) &&
-      basicData.premiumBaseRate > 0 &&
-      basicData.coverageDurationDays > 0 &&
-      basicData.selectedDataSources.length > 0;
+
+    // Check all REQUIRED fields are filled
+    const allRequiredFilled = requiredFields.every((field) => {
+      const value = basicData[field];
+      // For boolean fields, check explicitly (false is valid)
+      if (field === "isPerHectare" || field === "isPayoutPerHectare") {
+        return value !== undefined && value !== null;
+      }
+      // For other fields, check truthy value
+      return value !== undefined && value !== null && value !== "";
+    });
+
+    // ✅ Check table: selectedDataSources must have at least 1 item
+    const hasDataSources =
+      basicData.selectedDataSources && basicData.selectedDataSources.length > 0;
+
+    const isValid = allRequiredFilled && hasDataSources;
+
+    if (!isValid) {
+      console.warn("❌ BasicTab validation failed:", {
+        allRequiredFilled,
+        hasDataSources,
+        basicData,
+      });
+    }
 
     setValidationStatus((prev) => ({ ...prev, basic: isValid }));
     return isValid;
   }, [basicData]);
 
-  // Validate configuration tab
+  // Validate configuration tab - Only check REQUIRED fields per BE spec
   const validateConfigurationTab = useCallback(() => {
-    const isValid =
-      configurationData.conditions.length > 0 &&
+    // ✅ REQUIRED trigger fields per BE spec
+    const requiredTriggerFields = [
+      "logicalOperator",
+      "monitorInterval",
+      "monitorFrequencyUnit",
+    ];
+
+    const allTriggerFieldsFilled = requiredTriggerFields.every((field) => {
+      const value = configurationData[field];
+      return value !== undefined && value !== null && value !== "";
+    });
+
+    // ✅ Check table: conditions must have at least 1 item
+    const hasConditions =
+      configurationData.conditions && configurationData.conditions.length > 0;
+
+    // ✅ Each condition must have REQUIRED fields
+    const allConditionsValid =
+      hasConditions &&
       configurationData.conditions.every(
         (condition) =>
           condition.dataSourceId &&
-          condition.aggregationFunction &&
           condition.thresholdOperator &&
           condition.thresholdValue !== undefined &&
+          condition.aggregationFunction &&
           condition.aggregationWindowDays > 0
       );
+
+    const isValid =
+      allTriggerFieldsFilled && hasConditions && allConditionsValid;
+
+    if (!isValid) {
+      console.warn("❌ ConfigurationTab validation failed:", {
+        allTriggerFieldsFilled,
+        hasConditions,
+        allConditionsValid,
+        configurationData,
+      });
+    }
 
     setValidationStatus((prev) => ({ ...prev, configuration: isValid }));
     return isValid;
@@ -296,6 +404,21 @@ const usePolicy = () => {
     setValidationStatus((prev) => ({ ...prev, review: isValid }));
     return isValid;
   }, [validationStatus.basic, validationStatus.configuration]);
+
+  // 🔥 AUTO-VALIDATE: Validate BasicTab whenever basicData changes
+  useEffect(() => {
+    validateBasicTab();
+  }, [validateBasicTab]);
+
+  // 🔥 AUTO-VALIDATE: Validate ConfigurationTab whenever configurationData changes
+  useEffect(() => {
+    validateConfigurationTab();
+  }, [validateConfigurationTab]);
+
+  // 🔥 AUTO-VALIDATE: Validate ReviewTab whenever basic/configuration validation changes
+  useEffect(() => {
+    validateReviewTab();
+  }, [validateReviewTab]);
 
   // Handle tab change
   const handleTabChange = useCallback((tab) => {
@@ -337,9 +460,8 @@ const usePolicy = () => {
         ...prev.selectedDataSources,
         {
           ...dataSource,
-          id: `${dataSource.category}_${dataSource.tier}_${
-            dataSource.parameterName
-          }_${Date.now()}`,
+          // ✅ KEEP original UUID from API - DO NOT override!
+          // dataSource.id already contains the real UUID from backend
         },
       ],
     }));
@@ -362,6 +484,13 @@ const usePolicy = () => {
 
   // Handle add trigger condition
   const handleAddTriggerCondition = useCallback((condition) => {
+    // Calculate condition cost automatically
+    const calculatedCost = calculateConditionCost(
+      condition.baseCost,
+      condition.categoryMultiplier,
+      condition.tierMultiplier
+    );
+
     setConfigurationData((prev) => ({
       ...prev,
       conditions: [
@@ -369,6 +498,7 @@ const usePolicy = () => {
         {
           ...condition,
           id: `condition_${Date.now()}`,
+          calculatedCost,
         },
       ],
     }));
@@ -386,9 +516,27 @@ const usePolicy = () => {
   const handleUpdateTriggerCondition = useCallback((id, updates) => {
     setConfigurationData((prev) => ({
       ...prev,
-      conditions: prev.conditions.map((condition) =>
-        condition.id === id ? { ...condition, ...updates } : condition
-      ),
+      conditions: prev.conditions.map((condition) => {
+        if (condition.id === id) {
+          const updatedCondition = { ...condition, ...updates };
+
+          // Recalculate cost if any related field changed
+          if (
+            updates.baseCost !== undefined ||
+            updates.categoryMultiplier !== undefined ||
+            updates.tierMultiplier !== undefined
+          ) {
+            updatedCondition.calculatedCost = calculateConditionCost(
+              updatedCondition.baseCost,
+              updatedCondition.categoryMultiplier,
+              updatedCondition.tierMultiplier
+            );
+          }
+
+          return updatedCondition;
+        }
+        return condition;
+      }),
     }));
   }, []);
 
@@ -444,8 +592,86 @@ const usePolicy = () => {
       label: `${source.label} (${source.category}/${source.tier})`,
       parameterName: source.parameterName,
       unit: source.unit,
+      // Pass cost-related fields for condition calculation
+      baseCost: source.baseCost,
+      categoryMultiplier: source.categoryMultiplier || 1,
+      tierMultiplier: source.tierMultiplier || 1,
     }));
   }, [basicData.selectedDataSources]);
+
+  // Reset form
+  const handleReset = useCallback(() => {
+    setBasicData({
+      // ✅ Product Info (REQUIRED)
+      productName: "",
+      productCode: "",
+      productDescription: "",
+      insuranceProviderId: "",
+      cropType: "",
+      coverageCurrency: "VND",
+      coverageDurationDays: 120,
+
+      // ✅ Premium Config (REQUIRED)
+      isPerHectare: true,
+      premiumBaseRate: 0,
+      fixPremiumAmount: null,
+      maxPremiumPaymentProlong: null,
+      cancelPremiumRate: null,
+
+      // ✅ Payout Config (moved from ConfigurationTab - per BE spec)
+      isPayoutPerHectare: true,
+      payoutBaseRate: 0.75,
+      fixPayoutAmount: null,
+      payoutCap: null,
+      overThresholdMultiplier: 1.0,
+
+      // ✅ Enrollment & Validity Dates
+      enrollmentStartDay: null,
+      enrollmentEndDay: null,
+      insuranceValidFrom: null,
+      insuranceValidTo: null,
+
+      // ✅ Renewal Config
+      autoRenewal: false,
+      renewalDiscountRate: 0,
+      basePolicyInvalidDate: null,
+
+      // ✅ Status & Document (auto fields)
+      status: "draft",
+      templateDocumentUrl: null,
+      documentValidationStatus: "pending",
+      importantAdditionalInformation: "",
+
+      // ✅ Data Sources Table
+      selectedDataSources: [],
+    });
+    setConfigurationData({
+      // ✅ Trigger Config (REQUIRED)
+      logicalOperator: "AND",
+      monitorInterval: 1,
+      monitorFrequencyUnit: "day",
+
+      // ✅ Optional Trigger Fields
+      growthStage: "",
+      blackoutPeriods: [],
+
+      // ✅ Conditions Table (REQUIRED at least 1)
+      conditions: [],
+    });
+    setTagsData({
+      tags: [],
+      uploadedFile: null,
+      modifiedPdfBytes: null,
+      documentTagsObject: {},
+    });
+    setCurrentTab(TABS.BASIC);
+    setValidationStatus({
+      basic: false,
+      configuration: false,
+      tags: true,
+      review: false,
+    });
+  }, []);
 
   // Handle create policy
   const handleCreatePolicy = useCallback(async () => {
@@ -456,63 +682,112 @@ const usePolicy = () => {
 
     setLoading(true);
     try {
-      // Simulate API call
-      const policyData = {
+      // Get insurance provider ID from auth store or localStorage
+      let insuranceProviderId = basicData.insuranceProviderId;
+
+      if (!insuranceProviderId) {
+        // Try to get from localStorage /me response
+        try {
+          const meData = localStorage.getItem("me");
+          if (meData) {
+            const parsed = JSON.parse(meData);
+            insuranceProviderId =
+              parsed.partner_id || parsed.partnerId || "fallback_partner_id";
+          }
+        } catch (e) {
+          console.warn("Could not parse /me from localStorage:", e);
+        }
+
+        // Final fallback
+        if (!insuranceProviderId) {
+          insuranceProviderId = "fallback_partner_id";
+        }
+      }
+
+      // Update basicData with insurance provider ID
+      const updatedBasicData = {
         ...basicData,
-        ...configurationData,
-        ...tagsData,
-        estimatedCosts,
-        status: "draft",
-        createdAt: new Date().toISOString(),
+        insuranceProviderId,
       };
 
-      // Mock API delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Sync data to policy store for building payload
+      const policyStore = usePolicyStore.getState();
+      policyStore.setBasicData(updatedBasicData);
+      policyStore.setConfigurationData(configurationData);
+      policyStore.setTagsData(tagsData);
 
-      message.success("Policy đã được tạo thành công!");
-      console.log("Policy created:", policyData);
+      // Validate payload
+      const validation = policyStore.validatePayload();
+      if (!validation.isValid) {
+        message.error(`Validation failed: ${validation.errors.join(", ")}`);
+        console.error("Validation errors:", validation.errors);
+        return false;
+      }
 
-      return true;
+      // Build backend payload
+      const { payload, warnings } = await policyStore.buildBackendPayload();
+
+      // Show warnings to user
+      if (warnings && warnings.length > 0) {
+        warnings.forEach((warning) => {
+          message.warning(warning, 10); // Show for 10 seconds
+        });
+      }
+
+      console.log("📤 [DEBUG] Raw payload object:", payload);
+      console.log("📤 [DEBUG] payload.base_policy:", payload.base_policy);
+      console.log("📤 [DEBUG] payload.trigger:", payload.trigger);
+      console.log("📤 [DEBUG] payload.conditions:", payload.conditions);
+      console.log(
+        "📤 [DEBUG] payload.policy_document:",
+        payload.policy_document
+      );
+
+      // Call API with application/json Content-Type (matching Postman CURL)
+      const response = await axiosInstance.post(
+        endpoints.policy.base_policy.create_complete(24),
+        payload // ✅ Send object directly, axios will stringify and set Content-Type: application/json
+      );
+
+      console.log("📥 API Response:", response.data);
+
+      if (response.data.success) {
+        message.success("Base Policy đã được tạo thành công!");
+
+        // Reset form after success
+        handleReset();
+        policyStore.resetPolicyData();
+
+        return true;
+      } else {
+        throw new Error(response.data.message || "Failed to create policy");
+      }
     } catch (error) {
-      message.error("Có lỗi xảy ra khi tạo policy");
-      console.error("Error creating policy:", error);
+      console.error("❌ Error creating policy:", error);
+      console.error("❌ Error response:", error.response?.data);
+
+      // Parse error messages
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Có lỗi xảy ra khi tạo policy";
+
+      // Show field-level errors if available
+      if (error.response?.data?.errors) {
+        const fieldErrors = error.response.data.errors;
+        Object.keys(fieldErrors).forEach((field) => {
+          message.error(`${field}: ${fieldErrors[field]}`);
+        });
+      } else {
+        message.error(errorMessage);
+      }
+
       return false;
     } finally {
       setLoading(false);
     }
-  }, [
-    basicData,
-    configurationData,
-    tagsData,
-    estimatedCosts,
-    validateReviewTab,
-  ]);
-
-  // Reset form
-  const handleReset = useCallback(() => {
-    setBasicData({
-      productName: "",
-      productCode: "",
-      insuranceProviderId: "",
-      cropType: "",
-      premiumBaseRate: 0,
-      coverageDurationDays: 0,
-      selectedDataSources: [],
-    });
-    setConfigurationData({
-      logicalOperator: "AND",
-      payoutPercentage: 100,
-      conditions: [],
-    });
-    setTagsData({ tags: [] });
-    setCurrentTab(TABS.BASIC);
-    setValidationStatus({
-      basic: false,
-      configuration: false,
-      tags: true,
-      review: false,
-    });
-  }, []);
+  }, [basicData, configurationData, tagsData, validateReviewTab, handleReset]);
 
   return {
     // State

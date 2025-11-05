@@ -1,10 +1,10 @@
 import CustomForm from '@/components/custom-form';
 import CustomTable from '@/components/custom-table';
+import { calculateConditionCost } from '@/stores/policy-store';
 import {
     AlertOutlined,
     ClockCircleOutlined,
     DeleteOutlined,
-    DollarOutlined,
     EditOutlined,
     InfoCircleOutlined,
     PlusOutlined,
@@ -17,7 +17,6 @@ import {
     Col,
     Collapse,
     Form,
-    Input,
     InputNumber,
     Popconfirm,
     Row,
@@ -27,7 +26,7 @@ import {
     Tooltip,
     Typography
 } from 'antd';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
@@ -45,64 +44,12 @@ const ConfigurationTab = ({
     const [conditionForm] = Form.useForm();
     const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
-    const [notifications, setNotifications] = useState(Array.isArray(configurationData.importantNotifications) ? configurationData.importantNotifications : []);
-
-    // Update notifications when configurationData changes
-    useEffect(() => {
-        setNotifications(Array.isArray(configurationData.importantNotifications) ? configurationData.importantNotifications : []);
-    }, [configurationData.importantNotifications]);
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
-        const currentNotifications = Array.isArray(notifications) ? notifications : [];
-        onDataChange({
-            ...allValues,
-            importantNotifications: currentNotifications
-        });
-    };
-
-    // Handle add notification
-    const handleAddNotification = () => {
-        const currentNotifications = Array.isArray(notifications) ? notifications : [];
-        const newNotification = {
-            id: Date.now().toString(),
-            title: '',
-            description: ''
-        };
-        const updatedNotifications = [...currentNotifications, newNotification];
-        setNotifications(updatedNotifications);
-        onDataChange({
-            ...configurationData,
-            importantNotifications: updatedNotifications
-        });
-    };
-
-    // Handle remove notification
-    const handleRemoveNotification = (id) => {
-        const currentNotifications = Array.isArray(notifications) ? notifications : [];
-        const updatedNotifications = currentNotifications.filter(notification => notification.id !== id);
-        setNotifications(updatedNotifications);
-        onDataChange({
-            ...configurationData,
-            importantNotifications: updatedNotifications
-        });
-    };
-
-    // Handle update notification
-    const handleUpdateNotification = (id, field, value) => {
-        const currentNotifications = Array.isArray(notifications) ? notifications : [];
-        const updatedNotifications = currentNotifications.map(notification =>
-            notification.id === id
-                ? { ...notification, [field]: value }
-                : notification
-        );
-        setNotifications(updatedNotifications);
-        onDataChange({
-            ...configurationData,
-            importantNotifications: updatedNotifications
-        });
+        onDataChange(allValues);
     };
 
     // Handle add/update condition
@@ -110,15 +57,52 @@ const ConfigurationTab = ({
         conditionForm.validateFields().then(values => {
             const selectedDataSource = availableDataSources.find(ds => ds.value === values.dataSourceId);
 
+            // Get baseCost and multipliers from BasicTab's selected data sources
+            // The values.dataSourceId matches the 'id' field from basicData.selectedDataSources
+            // But we need to access it via the parent component (getAvailableDataSourcesForTrigger passes basicData.selectedDataSources)
+            // For now, we'll get it from the selectedDataSource if it has those properties
+            // If not, we'll use default values
+
+            // Note: availableDataSources structure needs baseCost, categoryMultiplier, tierMultiplier
+            // We need to pass these from parent through getAvailableDataSourcesForTrigger
+            const baseCost = selectedDataSource?.baseCost || 0;
+            const categoryMultiplier = selectedDataSource?.categoryMultiplier || 1;
+            const tierMultiplier = selectedDataSource?.tierMultiplier || 1;
+
+            // Calculate condition cost
+            const calculatedCost = calculateConditionCost(baseCost, categoryMultiplier, tierMultiplier);
+
             const condition = {
-                ...values,
+                // ✅ Core condition fields (from form)
+                dataSourceId: values.dataSourceId, // REQUIRED - UUID from API
+                thresholdOperator: values.thresholdOperator, // REQUIRED
+                thresholdValue: values.thresholdValue, // REQUIRED
+                earlyWarningThreshold: values.earlyWarningThreshold || null,
+                aggregationFunction: values.aggregationFunction, // REQUIRED
+                aggregationWindowDays: values.aggregationWindowDays, // REQUIRED
+                consecutiveRequired: values.consecutiveRequired ?? false,
+                includeComponent: values.includeComponent ?? false,
+                baselineWindowDays: values.baselineWindowDays || null,
+                baselineFunction: values.baselineFunction || null,
+                validationWindowDays: values.validationWindowDays || null,
+                conditionOrder: values.conditionOrder || null,
+
+                // ✅ Display labels (for UI table)
                 id: editingCondition?.id || Date.now().toString(),
                 dataSourceLabel: selectedDataSource?.label || '',
                 parameterName: selectedDataSource?.parameterName || '',
                 unit: selectedDataSource?.unit || '',
                 aggregationFunctionLabel: mockData.aggregationFunctions.find(af => af.value === values.aggregationFunction)?.label || '',
-                thresholdOperatorLabel: mockData.thresholdOperators.find(to => to.value === values.thresholdOperator)?.label || ''
+                thresholdOperatorLabel: mockData.thresholdOperators.find(to => to.value === values.thresholdOperator)?.label || '',
+
+                // ✅ Cost calculation fields (for payload)
+                baseCost,
+                categoryMultiplier,
+                tierMultiplier,
+                calculatedCost
             };
+
+            console.log("🔍 ConfigurationTab - Created condition:", condition);
 
             if (editingCondition) {
                 onUpdateTriggerCondition(editingCondition.id, condition);
@@ -189,160 +173,28 @@ const ConfigurationTab = ({
         );
     };
 
-    // Generate payout configuration fields
-    const getPayoutConfigFields = () => [
-        {
-            name: 'fixedPayoutAmount',
-            label: 'Chi cố định (VND)',
-            type: 'number',
-            required: true,
-            gridColumn: '1',
-            min: 0,
-            step: 100000,
-            size: 'middle',
-            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
-            parser: value => value.replace(/\s?₫|(,*)/g, ''),
-            rules: [
-                { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
-                { type: 'number', min: 0, message: 'Số tiền phải lớn hơn 0' }
-            ]
-        },
-        {
-            name: 'payoutMaxAmount',
-            label: 'Chi trả tối đa (VND)',
-            type: 'number',
-            required: true,
-            gridColumn: '2',
-            min: 0,
-            step: 100000,
-            size: 'middle',
-            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
-            parser: value => value.replace(/\s?₫|(,*)/g, ''),
-            rules: [
-                { required: true, message: 'Vui lòng nhập số tiền tối đa' },
-                { type: 'number', min: 0, message: 'Số tiền phải lớn hơn hoặc bằng 0' }
-            ]
-        },
-        {
-            name: 'exceedingThresholdRate',
-            label: 'Chi vượt ngưỡng (%)',
-            type: 'number',
-            required: true,
-            gridColumn: '3',
-            min: 0.01,
-            max: 1,
-            step: 0.01,
-            size: 'middle',
-            tooltip: 'Tỉ lệ chi trả được tính theo công thức bên phía bảo hiểm',
-            rules: [
-                { required: true, message: 'Vui lòng nhập tỉ lệ' },
-                { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
-            ]
-        },
-        {
-            name: 'basicPayoutRate',
-            label: 'Chi trả cơ bản',
-            type: 'number',
-            required: true,
-            gridColumn: '1',
-            min: 0.01,
-            max: 1,
-            step: 0.01,
-            size: 'middle',
-            tooltip: 'Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm',
-            rules: [
-                { required: true, message: 'Vui lòng nhập tỉ lệ' },
-                { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
-            ]
-        },
-        {
-            name: 'payoutDelayDays',
-            label: 'Chờ thanh toán (ngày)',
-            type: 'number',
-            gridColumn: '2',
-            min: 0,
-            max: 30,
-            placeholder: '3',
-            size: 'middle',
-            tooltip: 'Số ngày chờ đợi trước khi thanh toán'
-        },
-        {
-            name: 'basedOnHectare',
-            label: 'Lấy theo diện tích',
-            type: 'switch',
-            gridColumn: '3',
-            checkedChildren: 'Có',
-            unCheckedChildren: 'Không'
-        }
-    ];    // Generate insurance cost fields
-    const getInsuranceCostFields = () => [
-        {
-            name: 'insuranceFixedPayoutAmount',
-            label: 'Số tiền chi trả cố định (VND)',
-            type: 'number',
-            required: true,
-            gridColumn: '1',
-            min: 0,
-            step: 100000,
-            size: 'large',
-            formatter: value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫',
-            parser: value => value.replace(/\s?₫|(,*)/g, ''),
-            rules: [
-                { required: true, message: 'Vui lòng nhập số tiền chi trả cố định' },
-                { type: 'number', min: 0, message: 'Số tiền phải lớn hơn hoặc bằng 0' }
-            ]
-        },
-        {
-            name: 'insuranceBasicPayoutRate',
-            label: 'Tỉ lệ chi trả cơ bản',
-            type: 'number',
-            required: true,
-            gridColumn: '2',
-            min: 0.01,
-            max: 1,
-            step: 0.01,
-            size: 'large',
-            tooltip: 'Tỉ lệ chi trả được tính theo công thức của bên bảo hiểm',
-            rules: [
-                { required: true, message: 'Vui lòng nhập tỉ lệ' },
-                { type: 'number', min: 0.01, max: 1, message: 'Tỉ lệ từ 0.01 đến 1' }
-            ]
-        },
-        {
-            name: 'maxRenewalTime',
-            label: 'Thời gian gia hạn tối đa (ngày)',
-            type: 'number',
-            gridColumn: '2',
-            min: 1,
-            step: 1,
-            placeholder: '12',
-            size: 'large',
-            tooltip: 'Thời gian tối đa có thể gia hạn hợp đồng bảo hiểm',
-            rules: [
-                { required: true, message: 'Vui lòng nhập thời gian gia hạn tối đa' },
-                { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
-            ]
-        }
-    ];
+    // Note: Payout fields (fix_payout_amount, payout_cap, payout_base_rate, over_threshold_multiplier, is_payout_per_hectare) 
+    // are already in BasicTab, so we don't duplicate them here
 
     // Generate monitoring fields
     const getMonitoringFields = () => [
         {
-            name: 'monitoringFrequencyValue',
-            label: 'Số lần giám sát',
+            name: 'monitorInterval',
+            label: 'Khoảng thời gian giám sát',
             type: 'number',
             required: true,
             gridColumn: '1',
             min: 1,
             placeholder: '1',
             size: 'large',
+            tooltip: 'Số đơn vị thời gian giữa các lần giám sát (theo monitor_interval trong spec)',
             rules: [
-                { required: true, message: 'Vui lòng nhập số lần giám sát' },
-                { type: 'number', min: 1, message: 'Tối thiểu 1 lần' }
+                { required: true, message: 'Vui lòng nhập khoảng thời gian giám sát' },
+                { type: 'number', min: 1, message: 'Tối thiểu 1' }
             ]
         },
         {
-            name: 'monitoringFrequencyUnit',
+            name: 'monitorFrequencyUnit',
             label: 'Đơn vị thời gian',
             type: 'select',
             required: true,
@@ -351,295 +203,74 @@ const ConfigurationTab = ({
             size: 'large',
             optionLabelProp: 'label',
             dropdownStyle: { maxWidth: '300px' },
+            tooltip: 'Đơn vị thời gian cho monitor_interval (hour, day, week, month, year)',
             options: [
-                { value: 'hours', label: 'giờ', description: 'Giám sát theo giờ' },
-                { value: 'days', label: 'ngày', description: 'Giám sát theo ngày' },
-                { value: 'weeks', label: 'tuần', description: 'Giám sát theo tuần' },
-                { value: 'months', label: 'tháng', description: 'Giám sát theo tháng' },
-                { value: 'years', label: 'năm', description: 'Giám sát theo năm' }
+                { value: 'hour', label: 'giờ', description: 'Giám sát theo giờ' },
+                { value: 'day', label: 'ngày', description: 'Giám sát theo ngày' },
+                { value: 'week', label: 'tuần', description: 'Giám sát theo tuần' },
+                { value: 'month', label: 'tháng', description: 'Giám sát theo tháng' },
+                { value: 'year', label: 'năm', description: 'Giám sát theo năm' }
             ],
-            renderOption: (option) => renderOptionWithTooltip(option, null)
-        },
-        {
-            name: 'alertTypes',
-            label: 'Loại cảnh báo',
-            type: 'checkbox-group',
-            required: true,
-            gridColumn: '1 / -1',
-            direction: 'horizontal',
-            options: mockData.alertTypes?.map(type => ({
-                value: type.value,
-                label: type.label
-            })),
-            rules: [{ required: true, message: 'Vui lòng chọn ít nhất một loại cảnh báo' }]
-        }
-    ];
-
-    // Generate registration time fields
-    const getRegistrationTimeFields = () => [
-        {
-            name: 'insuranceEffectiveStartDate',
-            label: 'Thời gian hiệu lực bảo hiểm (bắt đầu quan sát)',
-            type: 'datepicker',
-            required: true,
-            gridColumn: '1',
-            placeholder: 'Chọn ngày bắt đầu',
-            size: 'large',
+            renderOption: (option) => renderOptionWithTooltip(option, null),
             rules: [
-                { required: true, message: 'Vui lòng chọn ngày bắt đầu' }
-            ]
-        },
-        {
-            name: 'insuranceEffectiveEndDate',
-            label: 'Thời gian kết thúc hiệu lực bảo hiểm (kết thúc quan sát)',
-            type: 'datepicker',
-            required: true,
-            gridColumn: '2',
-            placeholder: 'Chọn ngày kết thúc',
-            size: 'large',
-            rules: [
-                { required: true, message: 'Vui lòng chọn ngày kết thúc' }
+                { required: true, message: 'Vui lòng chọn đơn vị thời gian' }
             ]
         }
     ];
 
-    // Generate lifecycle fields
-    const getLifecycleFields = () => [
-        {
-            name: 'autoRenew',
-            label: 'Tự động làm mới (gia hạn) hợp đồng',
-            type: 'switch',
-            gridColumn: '1',
-            checkedChildren: 'Có',
-            unCheckedChildren: 'Không',
-            tooltip: 'Tự động gia hạn hợp đồng khi đến hạn'
-        },
-        {
-            name: 'renewalDiscount',
-            label: 'Gia hạn nhiều thì có giảm giá (%)',
-            type: 'number',
-            gridColumn: '2',
-            min: 0,
-            max: 100,
-            step: 0.1,
-            placeholder: '0.0',
-            size: 'large',
-            tooltip: 'Phần trăm giảm giá khi gia hạn nhiều lần',
-            formatter: value => `${value}%`,
-            parser: value => value.replace('%', ''),
-            rules: [
-                { type: 'number', min: 0, max: 100, message: 'Giảm giá từ 0% đến 100%' }
-            ]
-        },
-        {
-            name: 'originalInsuranceYears',
-            label: 'Năm',
-            type: 'number',
-            gridColumn: '1',
-            min: 0,
-            step: 1,
-            placeholder: '0',
-            size: 'large',
-            tooltip: 'Số năm tồn tại của bảo hiểm gốc',
-            rules: [
-                ({ getFieldValue }) => ({
-                    validator(_, value) {
-                        const months = getFieldValue('originalInsuranceMonths') || 0;
-                        const days = getFieldValue('originalInsuranceDays') || 0;
-                        if ((value || 0) === 0 && months === 0 && days === 0) {
-                            return Promise.reject(new Error('Vui lòng nhập ít nhất năm, tháng hoặc ngày'));
-                        }
-                        return Promise.resolve();
-                    }
-                })
-            ]
-        },
-        {
-            name: 'originalInsuranceMonths',
-            label: 'Tháng',
-            type: 'number',
-            gridColumn: '2',
-            min: 0,
-            max: 11,
-            step: 1,
-            placeholder: '0',
-            size: 'large',
-            tooltip: 'Số tháng tồn tại của bảo hiểm gốc (0-11)',
-            rules: [
-                ({ getFieldValue }) => ({
-                    validator(_, value) {
-                        const years = getFieldValue('originalInsuranceYears') || 0;
-                        const days = getFieldValue('originalInsuranceDays') || 0;
-                        if (years === 0 && (value || 0) === 0 && days === 0) {
-                            return Promise.reject(new Error('Vui lòng nhập ít nhất năm, tháng hoặc ngày'));
-                        }
-                        return Promise.resolve();
-                    }
-                })
-            ]
-        },
-        {
-            name: 'originalInsuranceDays',
-            label: 'Ngày',
-            type: 'number',
-            gridColumn: '3',
-            min: 0,
-            max: 30,
-            step: 1,
-            placeholder: '0',
-            size: 'large',
-            tooltip: 'Số ngày tồn tại của bảo hiểm gốc (0-30)',
-            rules: [
-                ({ getFieldValue }) => ({
-                    validator(_, value) {
-                        const years = getFieldValue('originalInsuranceYears') || 0;
-                        const months = getFieldValue('originalInsuranceMonths') || 0;
-                        if (years === 0 && months === 0 && (value || 0) === 0) {
-                            return Promise.reject(new Error('Vui lòng nhập ít nhất năm, tháng hoặc ngày'));
-                        }
-                        return Promise.resolve();
-                    }
-                })
-            ]
-        }
-    ];
 
-    // Generate additional settings fields  
-    const getAdditionalSettingsFields = () => [
+
+    // Generate trigger configuration fields
+    const getTriggerFields = () => [
         {
-            name: 'policyDescription',
-            label: 'Mô tả Policy',
+            name: 'logicalOperator',
+            label: 'Toán tử Logic',
+            type: 'select',
+            required: true,
+            gridColumn: '1',
+            placeholder: 'Chọn toán tử',
+            size: 'large',
+            tooltip: 'Cách kết hợp nhiều điều kiện: AND (tất cả phải đúng) hoặc OR (một trong các điều kiện đúng)',
+            options: [
+                { value: 'AND', label: 'AND - Tất cả điều kiện phải đúng' },
+                { value: 'OR', label: 'OR - Một trong các điều kiện đúng' }
+            ],
+            rules: [
+                { required: true, message: 'Vui lòng chọn toán tử logic' }
+            ]
+        },
+        {
+            name: 'growthStage',
+            label: 'Giai đoạn sinh trưởng',
             type: 'textarea',
-            rows: 4,
-            placeholder: 'Mô tả chi tiết về policy bảo hiểm này...',
-            showCount: true,
-            maxLength: 500,
-            rules: [{ max: 500, message: 'Tối đa 500 ký tự' }]
-        },
-        {
-            name: 'enableGracePeriod',
-            label: 'Thời gian ân hạn',
-            type: 'switch',
-            gridColumn: '1',
-            checkedChildren: 'Có',
-            unCheckedChildren: 'Không',
-            tooltip: 'Thời gian ân hạn trước khi policy có hiệu lực'
-        },
-        {
-            name: 'gracePeriodDays',
-            label: 'Thời gian ân hạn (ngày)',
-            type: 'number',
             gridColumn: '2',
-            min: 1,
-            max: 30,
-            placeholder: '7',
+            rows: 2,
+            placeholder: 'VD: Toàn chu kỳ sinh trưởng lúa (120 ngày)',
             size: 'large',
-            dependencies: ['enableGracePeriod'],
-            disabled: !formRef.current?.getFieldsValue()?.enableGracePeriod
+            tooltip: 'Mô tả giai đoạn sinh trưởng của cây trồng',
+            showCount: true,
+            maxLength: 500
         },
         {
-            name: 'enableAutoRenewal',
-            label: 'Tự động gia hạn',
-            type: 'switch',
-            gridColumn: '3',
-            checkedChildren: 'Có',
-            unCheckedChildren: 'Không'
-        },
-        {
-            name: 'enableStorage',
-            label: 'Lưu trữ',
-            type: 'switch',
-            gridColumn: '4',
-            checkedChildren: 'Có',
-            unCheckedChildren: 'Không',
-            tooltip: 'Cho phép lưu trữ dữ liệu policy'
+            name: 'blackoutPeriods',
+            label: 'Khoảng thời gian không giám sát (JSON)',
+            type: 'textarea',
+            gridColumn: '1 / -1',
+            rows: 3,
+            placeholder: '[{"start": 1762016400, "end": 1762102800}]',
+            size: 'large',
+            tooltip: 'Mảng JSON các khoảng thời gian không giám sát/không bồi thường (Unix timestamps)',
+            showCount: true,
+            maxLength: 2000
         }
     ];
 
-    // Memoized Notifications Manager Component
-    const NotificationsManager = useMemo(() => (
-        <div className="notifications-manager">
-            <div style={{ marginBottom: 16 }}>
-                <Button
-                    type="dashed"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddNotification}
-                    size="large"
-                >
-                    Thêm Thông báo
-                </Button>
-            </div>
-
-            {(!Array.isArray(notifications) || notifications.length === 0) ? (
-                <Alert
-                    message="Chưa có thông báo nào"
-                    description="Nhấp vào nút 'Thêm Thông báo' để thêm thông báo quan trọng"
-                    type="info"
-                    showIcon
-                />
-            ) : (
-                <div className="notifications-list">
-                    {notifications.map((notification, index) => (
-                        <Card
-                            key={notification.id}
-                            size="small"
-                            className="notification-item"
-                            style={{ marginBottom: 16 }}
-                            extra={
-                                <Button
-                                    type="text"
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    onClick={() => handleRemoveNotification(notification.id)}
-                                    size="small"
-                                />
-                            }
-                        >
-                            <div style={{ marginBottom: 12 }}>
-                                <Text strong style={{ color: '#1890ff' }}>
-                                    #{index + 1}
-                                </Text>
-                            </div>
-
-                            <Row gutter={16}>
-                                <Col span={8}>
-                                    <Form.Item
-                                        label="Tiêu đề"
-                                        required
-                                        style={{ marginBottom: 8 }}
-                                    >
-                                        <Input
-                                            placeholder="Ví dụ: Quy định ruộng"
-                                            value={notification.title}
-                                            onChange={(e) => handleUpdateNotification(notification.id, 'title', e.target.value)}
-                                            size="large"
-                                        />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={16}>
-                                    <Form.Item
-                                        label="Mô tả chi tiết"
-                                        required
-                                        style={{ marginBottom: 8 }}
-                                    >
-                                        <Input.TextArea
-                                            placeholder="Ví dụ: Không được tự ý phá ruộng chủ quan để đòi bồi thường"
-                                            value={notification.description}
-                                            onChange={(e) => handleUpdateNotification(notification.id, 'description', e.target.value)}
-                                            rows={2}
-                                            showCount
-                                            maxLength={300}
-                                            size="large"
-                                        />
-                                    </Form.Item>
-                                </Col>
-                            </Row>
-                        </Card>
-                    ))}
-                </div>
-            )}
-        </div>
-    ), [notifications, handleAddNotification, handleRemoveNotification, handleUpdateNotification]);
+    // Note: Additional settings fields removed - not in BE spec
+    // - policyDescription → already have product_description in BasicTab
+    // - enableGracePeriod/gracePeriodDays → not in spec
+    // - enableAutoRenewal → already have auto_renewal in BasicTab
+    // - enableStorage → not in spec
+    // - NotificationsManager → use important_additional_information in BasicTab
 
     // Generate condition form fields
     const getConditionFormFields = () => {
@@ -754,40 +385,104 @@ const ConfigurationTab = ({
                 size: 'large'
             },
             {
-                name: 'alertThreshold',
-                label: 'Ngưỡng cảnh báo sớm (%)',
+                name: 'earlyWarningThreshold',
+                label: 'Ngưỡng cảnh báo sớm',
                 type: 'number',
                 gridColumn: '3',
-                min: 50,
-                max: 95,
-                placeholder: '80',
+                min: 0,
+                placeholder: '60',
                 size: 'large',
-                tooltip: 'Cảnh báo khi gần đạt điều kiện kích hoạt cho nguồn dữ liệu này',
-                formatter: value => `${value}%`,
-                parser: value => value.replace('%', ''),
+                tooltip: 'Ngưỡng cảnh báo sớm trước khi đạt ngưỡng chính (early_warning_threshold)',
                 rules: [
-                    { type: 'number', min: 50, max: 95, message: 'Từ 50% đến 95%' }
+                    { type: 'number', min: 0, message: 'Phải >= 0' }
                 ]
-            }
-        ];
-
-        // Add baseline window field if aggregation function is 'change'
-        if (isChangeAggregation === 'change') {
-            fields.push({
+            },
+            {
+                name: 'consecutiveRequired',
+                label: 'Yêu cầu liên tiếp',
+                type: 'switch',
+                gridColumn: '1',
+                checkedChildren: 'Có',
+                unCheckedChildren: 'Không',
+                tooltip: 'Điều kiện phải thỏa liên tiếp qua các monitor windows mới kích hoạt'
+            },
+            {
+                name: 'includeComponent',
+                label: 'Bao gồm Component',
+                type: 'switch',
+                gridColumn: '2',
+                checkedChildren: 'Có',
+                unCheckedChildren: 'Không',
+                tooltip: 'Bao gồm các component cụ thể của dữ liệu (nếu có)'
+            },
+            {
+                name: 'validationWindowDays',
+                label: 'Cửa sổ kiểm tra (Ngày)',
+                type: 'number',
+                gridColumn: '3',
+                min: 1,
+                placeholder: '7',
+                size: 'large',
+                tooltip: 'Số ngày để kiểm tra dữ liệu có sẵn/hợp lệ trước khi kích hoạt',
+                rules: [
+                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                ]
+            },
+            {
+                name: 'conditionOrder',
+                label: 'Thứ tự điều kiện',
+                type: 'number',
+                gridColumn: '1',
+                min: 1,
+                placeholder: '1',
+                size: 'large',
+                tooltip: 'Thứ tự ưu tiên của điều kiện này (1 = cao nhất)',
+                rules: [
+                    { type: 'number', min: 1, message: 'Tối thiểu 1' }
+                ]
+            },
+            // ✅ Baseline fields - OPTIONAL for ALL aggregation functions (not just 'change')
+            {
                 name: 'baselineWindowDays',
                 label: 'Cửa sổ Baseline (Ngày)',
                 type: 'number',
-                required: true,
-                gridColumn: '1',
+                gridColumn: '2',
                 placeholder: '365',
                 min: 1,
                 size: 'large',
+                tooltip: 'Khoảng thời gian lịch sử để tính baseline và so sánh với giá trị hiện tại (OPTIONAL - để trống nếu không cần so sánh lịch sử). Thường dùng cho aggregation "change" hoặc so sánh xu hướng.',
                 rules: [
-                    { required: true, message: 'Nhập cửa sổ baseline' },
-                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày nếu nhập' }
                 ]
-            });
-        }
+            },
+            {
+                name: 'baselineFunction',
+                label: 'Hàm Baseline',
+                type: 'select',
+                gridColumn: '3',
+                placeholder: 'Chọn hàm (nếu có baseline)',
+                size: 'large',
+                tooltip: 'Hàm tính baseline từ dữ liệu lịch sử (OPTIONAL - chỉ cần nếu đã nhập baselineWindowDays)',
+                options: [
+                    { value: 'avg', label: 'Trung bình (Avg)' },
+                    { value: 'sum', label: 'Tổng (Sum)' },
+                    { value: 'min', label: 'Tối thiểu (Min)' },
+                    { value: 'max', label: 'Tối đa (Max)' }
+                ],
+                rules: [
+                    // ✅ Conditional validation: if baselineWindowDays exists, baselineFunction is required
+                    ({ getFieldValue }) => ({
+                        validator(_, value) {
+                            const baselineWindowDays = getFieldValue('baselineWindowDays');
+                            if (baselineWindowDays && !value) {
+                                return Promise.reject(new Error('Vui lòng chọn hàm baseline khi đã nhập cửa sổ baseline'));
+                            }
+                            return Promise.resolve();
+                        }
+                    })
+                ]
+            }
+        ];
 
         return fields;
     };
@@ -819,7 +514,10 @@ const ConfigurationTab = ({
                     <TypographyText type="secondary" style={{ fontSize: '12px' }}>
                         {record.aggregationWindowDays} ngày
                         {record.baselineWindowDays && (
-                            <> | Baseline: {record.baselineWindowDays} ngày</>
+                            <> | Baseline: {record.baselineWindowDays} ngày ({record.baselineFunction})</>
+                        )}
+                        {record.validationWindowDays && (
+                            <> | Kiểm tra: {record.validationWindowDays} ngày</>
                         )}
                     </TypographyText>
                 </div>
@@ -832,6 +530,28 @@ const ConfigurationTab = ({
                 <div>
                     <TypographyText>
                         {record.thresholdOperatorLabel} {record.thresholdValue} {record.unit}
+                    </TypographyText>
+                    <br />
+                    <TypographyText type="secondary" style={{ fontSize: '11px' }}>
+                        Thứ tự: {record.conditionOrder || 1}
+                        {record.consecutiveRequired && ' | Liên tiếp'}
+                        {record.includeComponent && ' | Bao gồm Component'}
+                    </TypographyText>
+                </div>
+            ),
+        },
+        {
+            title: 'Chi phí tính toán',
+            key: 'calculatedCost',
+            align: 'right',
+            render: (_, record) => (
+                <div>
+                    <TypographyText strong style={{ color: '#52c41a' }}>
+                        {(record.calculatedCost || 0).toLocaleString('vi-VN')} ₫
+                    </TypographyText>
+                    <br />
+                    <TypographyText type="secondary" style={{ fontSize: '11px' }}>
+                        {record.baseCost?.toLocaleString() || 0} × {record.categoryMultiplier || 1} × {record.tierMultiplier || 1}
                     </TypographyText>
                 </div>
             ),
@@ -875,47 +595,7 @@ const ConfigurationTab = ({
 
     return (
         <div className="configuration-tab">
-            <Collapse defaultActiveKey={['payout']} size="large">
-                {/* Payout Configuration */}
-                <Panel
-                    header={
-                        <Space>
-                            <DollarOutlined />
-                            <span>Cấu hình Thanh toán chi trả</span>
-                        </Space>
-                    }
-                    key="payout"
-                >
-                    <CustomForm
-                        ref={formRef}
-                        fields={getPayoutConfigFields()}
-                        initialValues={configurationData}
-                        onValuesChange={onDataChange}
-                        gridColumns="1fr 1fr 1fr"
-                        gap="10px"
-                    />
-                </Panel>
-
-                {/* Insurance Cost Configuration */}
-                <Panel
-                    header={
-                        <Space>
-                            <DollarOutlined />
-                            <span>Cấu hình chi phí bảo hiểm</span>
-                        </Space>
-                    }
-                    key="insurance-cost"
-                >
-                    <CustomForm
-                        ref={formRef}
-                        fields={getInsuranceCostFields()}
-                        initialValues={configurationData}
-                        onValuesChange={onDataChange}
-                        gridColumns="repeat(2, 1fr)"
-                        gap="16px"
-                    />
-                </Panel>
-
+            <Collapse defaultActiveKey={['monitoring']} size="large">
                 {/* Monitoring & Alerts */}
                 <Panel
                     header={
@@ -936,45 +616,25 @@ const ConfigurationTab = ({
                     />
                 </Panel>
 
-                {/* Lifecycle Configuration */}
+                {/* Trigger Configuration */}
                 <Panel
                     header={
                         <Space>
                             <SettingOutlined />
-                            <span>Cấu hình lifecycle (Chu kỳ sống của policy)</span>
+                            <span>Cấu hình Trigger</span>
                         </Space>
                     }
-                    key="lifecycle"
+                    key="trigger-config"
                 >
                     <div style={{ marginBottom: 16 }}>
-                        <Title level={5} style={{ marginBottom: 8 }}>Thời gian sống/tồn tại của bảo hiểm gốc</Title>
+                        <Title level={5} style={{ marginBottom: 8 }}>Cấu hình Trigger & Giai đoạn sinh trưởng</Title>
                         <TypographyText type="secondary">
-                            Nhập khoảng thời gian tồn tại của hợp đồng bảo hiểm gốc (ví dụ: 1 năm 2 tháng 13 ngày)
+                            Chọn toán tử logic để kết hợp các điều kiện, mô tả giai đoạn sinh trưởng, và cấu hình các khoảng thời gian không giám sát (blackout periods).
                         </TypographyText>
                     </div>
                     <CustomForm
                         ref={formRef}
-                        fields={getLifecycleFields()}
-                        initialValues={configurationData}
-                        onValuesChange={onDataChange}
-                        gridColumns="repeat(3, 1fr)"
-                        gap="24px"
-                    />
-                </Panel>
-
-                {/* Registration Time Configuration */}
-                <Panel
-                    header={
-                        <Space>
-                            <ClockCircleOutlined />
-                            <span>Cấu hình thời hạn bảo hiểm</span>
-                        </Space>
-                    }
-                    key="registration-time"
-                >
-                    <CustomForm
-                        ref={formRef}
-                        fields={getRegistrationTimeFields()}
+                        fields={getTriggerFields()}
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
                         gridColumns="repeat(2, 1fr)"
@@ -1193,40 +853,126 @@ const ConfigurationTab = ({
                                         </Col>
                                         <Col span={8}>
                                             <Form.Item
-                                                name="alertThreshold"
-                                                label="Ngưỡng cảnh báo sớm (%)"
-                                                rules={[{ type: 'number', min: 50, max: 95, message: 'Từ 50% đến 95%' }]}
+                                                name="earlyWarningThreshold"
+                                                label="Ngưỡng cảnh báo sớm"
+                                                tooltip="Ngưỡng cảnh báo sớm trước khi đạt ngưỡng chính (giá trị tuyệt đối, không phải %)"
+                                                rules={[{ type: 'number', min: 0, message: 'Phải >= 0' }]}
                                             >
                                                 <InputNumber
-                                                    placeholder="80"
-                                                    min={50}
-                                                    max={95}
+                                                    placeholder="60"
+                                                    min={0}
                                                     size="large"
                                                     style={{ width: '100%' }}
-                                                    formatter={value => `${value}%`}
-                                                    parser={value => value.replace('%', '')}
                                                 />
                                             </Form.Item>
                                         </Col>
-                                        {isChangeAggregation === 'change' && (
-                                            <Col span={8}>
-                                                <Form.Item
-                                                    name="baselineWindowDays"
-                                                    label="Cửa sổ Baseline (Ngày)"
-                                                    rules={[
-                                                        { required: true, message: 'Nhập cửa sổ baseline' },
-                                                        { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="consecutiveRequired"
+                                                label="Yêu cầu liên tiếp"
+                                                tooltip="Điều kiện phải thỏa liên tiếp qua các monitor windows mới kích hoạt"
+                                                valuePropName="checked"
+                                            >
+                                                <Select
+                                                    placeholder="Không"
+                                                    size="large"
+                                                    options={[
+                                                        { value: false, label: 'Không' },
+                                                        { value: true, label: 'Có' }
                                                     ]}
-                                                >
-                                                    <InputNumber
-                                                        placeholder="365"
-                                                        min={1}
-                                                        size="large"
-                                                        style={{ width: '100%' }}
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                        )}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="includeComponent"
+                                                label="Bao gồm Component"
+                                                tooltip="Bao gồm các component cụ thể của dữ liệu (nếu có)"
+                                            >
+                                                <Select
+                                                    placeholder="Không"
+                                                    size="large"
+                                                    options={[
+                                                        { value: false, label: 'Không' },
+                                                        { value: true, label: 'Có' }
+                                                    ]}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="validationWindowDays"
+                                                label="Cửa sổ kiểm tra (Ngày)"
+                                                tooltip="Số ngày để kiểm tra dữ liệu có sẵn/hợp lệ trước khi kích hoạt"
+                                                rules={[{ type: 'number', min: 1, message: 'Tối thiểu 1 ngày nếu nhập' }]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="7"
+                                                    min={1}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="conditionOrder"
+                                                label="Thứ tự điều kiện"
+                                                tooltip="Thứ tự ưu tiên của điều kiện này (1 = cao nhất)"
+                                                rules={[{ type: 'number', min: 1, message: 'Tối thiểu 1 nếu nhập' }]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="1"
+                                                    min={1}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="baselineWindowDays"
+                                                label="Cửa sổ Baseline (Ngày)"
+                                                tooltip="Khoảng thời gian lịch sử để tính baseline và so sánh (OPTIONAL - để trống nếu không cần)"
+                                                rules={[{ type: 'number', min: 1, message: 'Tối thiểu 1 ngày nếu nhập' }]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="365"
+                                                    min={1}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="baselineFunction"
+                                                label="Hàm Baseline"
+                                                tooltip="Hàm tính baseline từ dữ liệu lịch sử (chỉ cần nếu đã nhập baselineWindowDays)"
+                                                rules={[
+                                                    ({ getFieldValue }) => ({
+                                                        validator(_, value) {
+                                                            const baselineWindowDays = getFieldValue('baselineWindowDays');
+                                                            if (baselineWindowDays && !value) {
+                                                                return Promise.reject(new Error('Vui lòng chọn hàm baseline khi đã nhập cửa sổ baseline'));
+                                                            }
+                                                            return Promise.resolve();
+                                                        }
+                                                    })
+                                                ]}
+                                            >
+                                                <Select
+                                                    placeholder="Chọn hàm (nếu có baseline)"
+                                                    size="large"
+                                                    options={[
+                                                        { value: 'avg', label: 'Trung bình (Avg)' },
+                                                        { value: 'sum', label: 'Tổng (Sum)' },
+                                                        { value: 'min', label: 'Tối thiểu (Min)' },
+                                                        { value: 'max', label: 'Tối đa (Max)' }
+                                                    ]}
+                                                />
+                                            </Form.Item>
+                                        </Col>
                                     </Row>
                                 </Form>
                                 <div style={{ marginTop: 16 }}>
@@ -1332,31 +1078,12 @@ const ConfigurationTab = ({
                     )}
                 </Panel>
 
-                {/* Additional Settings */}
-                <Panel
-                    header={
-                        <Space>
-                            <SettingOutlined />
-                            <span>Cài đặt Bổ sung</span>
-                        </Space>
-                    }
-                    key="additional"
-                >
-                    <CustomForm
-                        ref={formRef}
-                        fields={getAdditionalSettingsFields()}
-                        initialValues={configurationData}
-                        onValuesChange={onDataChange}
-                        gridColumns="repeat(4, 1fr)"
-                        gap="88px"
-                    />
-
-                    {/* Notifications Manager */}
-                    <div style={{ marginTop: 24 }}>
-                        <Title level={5} style={{ marginBottom: 16 }}>Thông tin quan trọng cần thông báo</Title>
-                        {NotificationsManager}
-                    </div>
-                </Panel>
+                {/* Note: Additional Settings panel removed - fields not in BE spec */}
+                {/* - policyDescription → use product_description in BasicTab */}
+                {/* - enableGracePeriod/gracePeriodDays → not in spec */}
+                {/* - enableAutoRenewal → use auto_renewal in BasicTab */}
+                {/* - enableStorage → not in spec */}
+                {/* - importantNotifications → use important_additional_information in BasicTab */}
             </Collapse>
         </div>
     );

@@ -77,15 +77,60 @@ const ReviewTab = ({
             title: 'Nguồn dữ liệu',
             dataIndex: 'dataSourceLabel',
             key: 'dataSourceLabel',
+            width: 150,
         },
         {
             title: 'Điều kiện',
             key: 'condition',
+            width: 300,
             render: (_, record) => (
-                <Text>
-                    {record.aggregationFunctionLabel} trong {record.aggregationWindowDays} ngày{' '}
-                    {record.thresholdOperatorLabel} {record.thresholdValue} {record.unit}
-                </Text>
+                <Space direction="vertical" size={0}>
+                    <Text>
+                        {record.aggregationFunctionLabel} trong {record.aggregationWindowDays} ngày{' '}
+                        {record.thresholdOperatorLabel} {record.thresholdValue} {record.unit}
+                    </Text>
+                    {record.earlyWarningThreshold && (
+                        <Text type="warning" style={{ fontSize: 12 }}>
+                            Cảnh báo sớm: {record.earlyWarningThreshold}
+                        </Text>
+                    )}
+                    {record.consecutiveRequired && (
+                        <Tag color="orange" style={{ marginTop: 4 }}>Yêu cầu liên tiếp</Tag>
+                    )}
+                </Space>
+            ),
+        },
+        {
+            title: 'Baseline',
+            key: 'baseline',
+            width: 150,
+            render: (_, record) => (
+                record.baselineWindowDays ? (
+                    <Space direction="vertical" size={0}>
+                        <Text style={{ fontSize: 12 }}>{record.baselineWindowDays} ngày</Text>
+                        <Text type="secondary" style={{ fontSize: 11 }}>
+                            {record.baselineFunction || 'avg'}
+                        </Text>
+                    </Space>
+                ) : <Text type="secondary">-</Text>
+            ),
+        },
+        {
+            title: 'Chi phí',
+            key: 'cost',
+            width: 200,
+            render: (_, record) => (
+                <Space direction="vertical" size={0}>
+                    <Text style={{ fontSize: 12 }}>
+                        Base: {record.baseCost?.toLocaleString() || 0} VND
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                        Category: {record.categoryMultiplier}x | Tier: {record.tierMultiplier}x
+                    </Text>
+                    <Text strong style={{ fontSize: 12, color: '#52c41a' }}>
+                        = {record.calculatedCost?.toLocaleString() || 0} VND
+                    </Text>
+                </Space>
             ),
         },
     ];
@@ -176,12 +221,71 @@ const ReviewTab = ({
                                     </Tag>
                                 ) : 'Chưa chọn'}
                             </Descriptions.Item>
-                            <Descriptions.Item label="Tỷ lệ phí BH">
-                                {basicData.premiumBaseRate ? `${(basicData.premiumBaseRate * 100).toFixed(2)}%` : 'Chưa nhập'}
+                            <Descriptions.Item label="Đơn vị tiền tệ">
+                                {basicData.coverageCurrency || 'VND'}
                             </Descriptions.Item>
-                            <Descriptions.Item label="Thời hạn bảo hiểm" span={2}>
+                            <Descriptions.Item label="Thời hạn bảo hiểm">
                                 {basicData.coverageDurationDays ? `${basicData.coverageDurationDays} ngày` : 'Chưa nhập'}
                             </Descriptions.Item>
+                            <Descriptions.Item label="Tính theo diện tích">
+                                <Tag color={basicData.isPerHectare ? 'green' : 'default'}>
+                                    {basicData.isPerHectare ? 'Có (per hectare)' : 'Không'}
+                                </Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Phí BH cố định">
+                                {basicData.fixPremiumAmount ? `${basicData.fixPremiumAmount.toLocaleString()} VND` : 'Không có'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Tỷ lệ phí BH cơ sở">
+                                {basicData.premiumBaseRate ? `${(basicData.premiumBaseRate * 100).toFixed(2)}%` : 'Chưa nhập'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Gia hạn thanh toán">
+                                {basicData.maxPremiumPaymentProlong ? `${basicData.maxPremiumPaymentProlong} ngày` : 'Không cho phép'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Tỷ lệ hủy phí">
+                                {basicData.cancelPremiumRate ? `${(basicData.cancelPremiumRate * 100).toFixed(2)}%` : 'Không có'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Thời gian đăng ký" span={2}>
+                                {basicData.enrollmentStartDay && basicData.enrollmentEndDay ? (
+                                    <Space>
+                                        <Text>{new Date(basicData.enrollmentStartDay * 1000).toLocaleDateString('vi-VN')}</Text>
+                                        <Text>→</Text>
+                                        <Text>{new Date(basicData.enrollmentEndDay * 1000).toLocaleDateString('vi-VN')}</Text>
+                                    </Space>
+                                ) : 'Chưa thiết lập'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Thời gian hiệu lực" span={2}>
+                                {basicData.insuranceValidFrom && basicData.insuranceValidTo ? (
+                                    <Space>
+                                        <Text strong>{new Date(basicData.insuranceValidFrom * 1000).toLocaleDateString('vi-VN')}</Text>
+                                        <Text>→</Text>
+                                        <Text strong>{new Date(basicData.insuranceValidTo * 1000).toLocaleDateString('vi-VN')}</Text>
+                                    </Space>
+                                ) : 'Chưa thiết lập'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Tự động gia hạn">
+                                <Tag color={basicData.autoRenewal ? 'green' : 'default'}>
+                                    {basicData.autoRenewal ? 'Có' : 'Không'}
+                                </Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Giảm giá gia hạn">
+                                {basicData.renewalDiscountRate ? `${(basicData.renewalDiscountRate * 100).toFixed(2)}%` : '0%'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái">
+                                <Tag color={basicData.status === 'active' ? 'green' : 'orange'}>
+                                    {basicData.status === 'draft' ? 'Nháp' : basicData.status === 'active' ? 'Đang hoạt động' : 'Đã lưu trữ'}
+                                </Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái xác thực tài liệu">
+                                <Tag color={basicData.documentValidationStatus === 'passed' ? 'green' : 'orange'}>
+                                    {basicData.documentValidationStatus === 'pending' ? 'Đang chờ' :
+                                        basicData.documentValidationStatus === 'passed' ? 'Đã xác thực' : 'Cảnh báo'}
+                                </Tag>
+                            </Descriptions.Item>
+                            {basicData.importantAdditionalInformation && (
+                                <Descriptions.Item label="Thông tin bổ sung" span={2}>
+                                    <Text>{basicData.importantAdditionalInformation}</Text>
+                                </Descriptions.Item>
+                            )}
                         </Descriptions>
                     </Card>
 
@@ -214,20 +318,37 @@ const ReviewTab = ({
                         className="review-section"
                         style={{ marginTop: 16 }}
                     >
-                        <Row gutter={16} style={{ marginBottom: 16 }}>
-                            <Col span={12}>
-                                <Descriptions size="small" column={1} bordered>
-                                    <Descriptions.Item label="Toán tử logic">
-                                        <Tag color={configurationData.logicalOperator === 'AND' ? 'blue' : 'orange'}>
-                                            {configurationData.logicalOperator === 'AND' ? 'VÀ (AND)' : 'HOẶC (OR)'}
-                                        </Tag>
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Tỷ lệ thanh toán">
-                                        <Text strong>{configurationData.payoutPercentage}%</Text>
-                                    </Descriptions.Item>
-                                </Descriptions>
-                            </Col>
-                        </Row>
+                        <Descriptions size="small" column={2} bordered style={{ marginBottom: 16 }}>
+                            <Descriptions.Item label="Toán tử logic">
+                                <Tag color={configurationData.logicalOperator === 'AND' ? 'blue' : 'orange'}>
+                                    {configurationData.logicalOperator === 'AND' ? 'VÀ (AND)' : 'HOẶC (OR)'}
+                                </Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Giai đoạn sinh trưởng">
+                                {configurationData.growthStage || 'Chưa thiết lập'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Khoảng giám sát">
+                                {configurationData.monitorInterval} {configurationData.monitorFrequencyUnit === 'day' ? 'ngày' :
+                                    configurationData.monitorFrequencyUnit === 'hour' ? 'giờ' : 'tháng'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Thanh toán theo ha">
+                                <Tag color={configurationData.isPayoutPerHectare ? 'green' : 'default'}>
+                                    {configurationData.isPayoutPerHectare ? 'Có' : 'Không'}
+                                </Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Tỷ lệ thanh toán cơ sở">
+                                <Text strong>{(configurationData.payoutBaseRate * 100).toFixed(2)}%</Text>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Số tiền thanh toán cố định">
+                                {configurationData.fixPayoutAmount ? `${configurationData.fixPayoutAmount.toLocaleString()} VND` : 'Không có'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Hệ số vượt ngưỡng">
+                                {configurationData.overThresholdMultiplier}x
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Giới hạn thanh toán">
+                                {configurationData.payoutCap ? `${configurationData.payoutCap.toLocaleString()} VND` : 'Không giới hạn'}
+                            </Descriptions.Item>
+                        </Descriptions>
 
                         {configurationData.conditions.length === 0 ? (
                             <Alert
@@ -261,13 +382,78 @@ const ReviewTab = ({
                         )}
                     </Card>
 
-                    {/* Tags */}
-                    {tagsData.tags.length > 0 && (
+                    {/* Document Tags (for BE submission) */}
+                    {tagsData.documentTagsObject && Object.keys(tagsData.documentTagsObject).length > 0 && (
                         <Card
-                            title={`Tags & Metadata (${tagsData.tags.length})`}
+                            title={`Document Tags (${Object.keys(tagsData.documentTagsObject).length})`}
                             className="review-section"
                             style={{ marginTop: 16 }}
                         >
+                            <Alert
+                                message="Các trường này sẽ được ánh xạ vào tài liệu policy"
+                                type="info"
+                                showIcon
+                                style={{ marginBottom: 12 }}
+                            />
+                            <Descriptions column={2} bordered size="small">
+                                {Object.entries(tagsData.documentTagsObject).map(([key, dataType]) => (
+                                    <Descriptions.Item
+                                        key={key}
+                                        label={<Text strong>{key}</Text>}
+                                    >
+                                        <Tag color="blue">{dataType}</Tag>
+                                    </Descriptions.Item>
+                                ))}
+                            </Descriptions>
+                        </Card>
+                    )}
+
+                    {/* Policy Document */}
+                    {(tagsData.uploadedFile || tagsData.modifiedPdfBytes) && (
+                        <Card
+                            title="Tài liệu Policy"
+                            className="review-section"
+                            style={{ marginTop: 16 }}
+                        >
+                            <Descriptions column={2} bordered size="small">
+                                <Descriptions.Item label="Tên file">
+                                    <Text strong>{tagsData.uploadedFile?.name || 'policy_document.pdf'}</Text>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Kích thước">
+                                    {tagsData.uploadedFile?.size
+                                        ? `${(tagsData.uploadedFile.size / 1024 / 1024).toFixed(2)} MB`
+                                        : 'N/A'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Loại file">
+                                    <Tag color="red">PDF</Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Trạng thái">
+                                    <Tag color={tagsData.modifiedPdfBytes ? 'green' : 'blue'}>
+                                        {tagsData.modifiedPdfBytes ? 'Đã áp dụng mappings' : 'File gốc'}
+                                    </Tag>
+                                </Descriptions.Item>
+                                {tagsData.documentTagsObject && Object.keys(tagsData.documentTagsObject).length > 0 && (
+                                    <Descriptions.Item label="Số trường đã map" span={2}>
+                                        <Text strong>{Object.keys(tagsData.documentTagsObject).length} trường</Text>
+                                    </Descriptions.Item>
+                                )}
+                            </Descriptions>
+                        </Card>
+                    )}
+
+                    {/* Tags Table (for reference) */}
+                    {tagsData.tags.length > 0 && (
+                        <Card
+                            title={`Tags đã tạo (${tagsData.tags.length})`}
+                            className="review-section"
+                            style={{ marginTop: 16 }}
+                        >
+                            <Alert
+                                message="Danh sách tags đã tạo (chỉ tham khảo)"
+                                type="info"
+                                showIcon
+                                style={{ marginBottom: 12 }}
+                            />
                             <Table
                                 columns={tagColumns}
                                 dataSource={tagsData.tags}

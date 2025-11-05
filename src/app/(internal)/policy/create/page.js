@@ -102,6 +102,12 @@ const CreatePolicyPage = () => {
   const handleFileUpload = (file, url) => {
     setUploadedFile(file);
     setFileUrl(url);
+
+    // ✅ Update tagsData with uploaded file
+    handleTagsDataChange({
+      uploadedFile: file,
+      // Note: modifiedPdfBytes will be set later by TagsTab when tags are applied
+    });
   };
 
   // Handle file remove
@@ -112,6 +118,12 @@ const CreatePolicyPage = () => {
 
     // Clear detected placeholders
     setDetectedPlaceholders([]);
+
+    // ✅ Clear file data from tagsData
+    handleTagsDataChange({
+      uploadedFile: null,
+      modifiedPdfBytes: null,
+    });
 
     // Remove all tags when PDF is deleted to avoid stale mappings
     try {
@@ -398,6 +410,7 @@ const CreatePolicyPage = () => {
               <EstimatedCosts
                 estimatedCosts={estimatedCosts}
                 basicData={basicData}
+                configurationData={configurationData}
               />
             )}
           </div>

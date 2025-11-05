@@ -2,7 +2,9 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
-  timeout: process.env.NEXT_PUBLIC_API_TIMEOUT || 10000,
+  timeout: process.env.NEXT_PUBLIC_API_TIMEOUT || 180000, // ✅ 3 minutes for large PDF files (16 pages ~20MB base64)
+  maxContentLength: 100 * 1024 * 1024, // ✅ 100MB max request body size (safe for 16-page PDFs)
+  maxBodyLength: 100 * 1024 * 1024, // ✅ 100MB max request body size
   headers: {
     "Content-Type": "application/json",
   },

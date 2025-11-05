@@ -514,7 +514,10 @@ const ConfigurationTab = ({
                     <TypographyText type="secondary" style={{ fontSize: '12px' }}>
                         {record.aggregationWindowDays} ngày
                         {record.baselineWindowDays && (
-                            <> | Baseline: {record.baselineWindowDays} ngày</>
+                            <> | Baseline: {record.baselineWindowDays} ngày ({record.baselineFunction})</>
+                        )}
+                        {record.validationWindowDays && (
+                            <> | Kiểm tra: {record.validationWindowDays} ngày</>
                         )}
                     </TypographyText>
                 </div>
@@ -527,6 +530,12 @@ const ConfigurationTab = ({
                 <div>
                     <TypographyText>
                         {record.thresholdOperatorLabel} {record.thresholdValue} {record.unit}
+                    </TypographyText>
+                    <br />
+                    <TypographyText type="secondary" style={{ fontSize: '11px' }}>
+                        Thứ tự: {record.conditionOrder || 1}
+                        {record.consecutiveRequired && ' | Liên tiếp'}
+                        {record.includeComponent && ' | Bao gồm Component'}
                     </TypographyText>
                 </div>
             ),
@@ -844,40 +853,126 @@ const ConfigurationTab = ({
                                         </Col>
                                         <Col span={8}>
                                             <Form.Item
-                                                name="alertThreshold"
-                                                label="Ngưỡng cảnh báo sớm (%)"
-                                                rules={[{ type: 'number', min: 50, max: 95, message: 'Từ 50% đến 95%' }]}
+                                                name="earlyWarningThreshold"
+                                                label="Ngưỡng cảnh báo sớm"
+                                                tooltip="Ngưỡng cảnh báo sớm trước khi đạt ngưỡng chính (giá trị tuyệt đối, không phải %)"
+                                                rules={[{ type: 'number', min: 0, message: 'Phải >= 0' }]}
                                             >
                                                 <InputNumber
-                                                    placeholder="80"
-                                                    min={50}
-                                                    max={95}
+                                                    placeholder="60"
+                                                    min={0}
                                                     size="large"
                                                     style={{ width: '100%' }}
-                                                    formatter={value => `${value}%`}
-                                                    parser={value => value.replace('%', '')}
                                                 />
                                             </Form.Item>
                                         </Col>
-                                        {isChangeAggregation === 'change' && (
-                                            <Col span={8}>
-                                                <Form.Item
-                                                    name="baselineWindowDays"
-                                                    label="Cửa sổ Baseline (Ngày)"
-                                                    rules={[
-                                                        { required: true, message: 'Nhập cửa sổ baseline' },
-                                                        { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="consecutiveRequired"
+                                                label="Yêu cầu liên tiếp"
+                                                tooltip="Điều kiện phải thỏa liên tiếp qua các monitor windows mới kích hoạt"
+                                                valuePropName="checked"
+                                            >
+                                                <Select
+                                                    placeholder="Không"
+                                                    size="large"
+                                                    options={[
+                                                        { value: false, label: 'Không' },
+                                                        { value: true, label: 'Có' }
                                                     ]}
-                                                >
-                                                    <InputNumber
-                                                        placeholder="365"
-                                                        min={1}
-                                                        size="large"
-                                                        style={{ width: '100%' }}
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                        )}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="includeComponent"
+                                                label="Bao gồm Component"
+                                                tooltip="Bao gồm các component cụ thể của dữ liệu (nếu có)"
+                                            >
+                                                <Select
+                                                    placeholder="Không"
+                                                    size="large"
+                                                    options={[
+                                                        { value: false, label: 'Không' },
+                                                        { value: true, label: 'Có' }
+                                                    ]}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="validationWindowDays"
+                                                label="Cửa sổ kiểm tra (Ngày)"
+                                                tooltip="Số ngày để kiểm tra dữ liệu có sẵn/hợp lệ trước khi kích hoạt"
+                                                rules={[{ type: 'number', min: 1, message: 'Tối thiểu 1 ngày nếu nhập' }]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="7"
+                                                    min={1}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="conditionOrder"
+                                                label="Thứ tự điều kiện"
+                                                tooltip="Thứ tự ưu tiên của điều kiện này (1 = cao nhất)"
+                                                rules={[{ type: 'number', min: 1, message: 'Tối thiểu 1 nếu nhập' }]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="1"
+                                                    min={1}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="baselineWindowDays"
+                                                label="Cửa sổ Baseline (Ngày)"
+                                                tooltip="Khoảng thời gian lịch sử để tính baseline và so sánh (OPTIONAL - để trống nếu không cần)"
+                                                rules={[{ type: 'number', min: 1, message: 'Tối thiểu 1 ngày nếu nhập' }]}
+                                            >
+                                                <InputNumber
+                                                    placeholder="365"
+                                                    min={1}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                name="baselineFunction"
+                                                label="Hàm Baseline"
+                                                tooltip="Hàm tính baseline từ dữ liệu lịch sử (chỉ cần nếu đã nhập baselineWindowDays)"
+                                                rules={[
+                                                    ({ getFieldValue }) => ({
+                                                        validator(_, value) {
+                                                            const baselineWindowDays = getFieldValue('baselineWindowDays');
+                                                            if (baselineWindowDays && !value) {
+                                                                return Promise.reject(new Error('Vui lòng chọn hàm baseline khi đã nhập cửa sổ baseline'));
+                                                            }
+                                                            return Promise.resolve();
+                                                        }
+                                                    })
+                                                ]}
+                                            >
+                                                <Select
+                                                    placeholder="Chọn hàm (nếu có baseline)"
+                                                    size="large"
+                                                    options={[
+                                                        { value: 'avg', label: 'Trung bình (Avg)' },
+                                                        { value: 'sum', label: 'Tổng (Sum)' },
+                                                        { value: 'min', label: 'Tối thiểu (Min)' },
+                                                        { value: 'max', label: 'Tối đa (Max)' }
+                                                    ]}
+                                                />
+                                            </Form.Item>
+                                        </Col>
                                     </Row>
                                 </Form>
                                 <div style={{ marginTop: 16 }}>

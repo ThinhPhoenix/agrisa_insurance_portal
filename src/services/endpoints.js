@@ -31,7 +31,7 @@ export const endpoints = {
     },
     base_policy: {
       create_complete: (expiration_hours = 24) =>
-        `/policy/protected/api/v1/base-policies/complete?expiration_hours=${expiration_hours}`,
+        `/policy/protected/api/v2/base-policies/complete?expiration_hours=${expiration_hours}`, // ✅ Changed from v1 to v2
     },
   },
 };

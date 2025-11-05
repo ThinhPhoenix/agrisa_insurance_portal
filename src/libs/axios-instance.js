@@ -7,8 +7,10 @@ const axiosInstance = axios.create({
   maxBodyLength: 100 * 1024 * 1024, // ✅ 100MB max request body size
   headers: {
     "Content-Type": "application/json",
+    "Accept-Encoding": "gzip, deflate, br", // ✅ Enable response compression
   },
   withCredentials: false,
+  decompress: true, // ✅ Auto decompress response
 });
 
 axiosInstance.interceptors.request.use(
@@ -17,6 +19,32 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // ✅ Log request size for debugging 413 errors
+    if (config.data) {
+      const dataStr =
+        typeof config.data === "string"
+          ? config.data
+          : JSON.stringify(config.data);
+      const sizeBytes = new Blob([dataStr]).size;
+      const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(2);
+
+      console.log(`📤 Request to ${config.url}:`);
+      console.log(
+        `   Size: ${sizeMB} MB (${sizeBytes.toLocaleString()} bytes)`
+      );
+      console.log(`   Method: ${config.method?.toUpperCase()}`);
+      console.log(`   Content-Type: ${config.headers["Content-Type"]}`);
+
+      // ⚠️ Warn if > 10MB
+      if (sizeBytes > 10 * 1024 * 1024) {
+        console.warn(`⚠️ Large request: ${sizeMB} MB - may cause 413 error!`);
+        console.warn(
+          `💡 Using Content-Type: ${config.headers["Content-Type"]} to match Postman`
+        );
+      }
+    }
+
     return config;
   },
   (error) => {

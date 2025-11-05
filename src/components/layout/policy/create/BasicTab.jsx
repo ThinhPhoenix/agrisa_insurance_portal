@@ -250,7 +250,7 @@ const BasicTab = ({
                 <Row gutter={24}>
                     <Col span={12}>
                         <Form.Item
-                            name="product_description"
+                            name="productDescription"
                             label="Mô tả sản phẩm"
                             tooltip="Mô tả chi tiết sản phẩm bảo hiểm (tuỳ chọn)"
                         >

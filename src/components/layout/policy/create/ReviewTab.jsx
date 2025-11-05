@@ -82,7 +82,7 @@ const ReviewTab = ({
         {
             title: 'Điều kiện',
             key: 'condition',
-            width: 300,
+            width: 350,
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
                     <Text>
@@ -94,9 +94,16 @@ const ReviewTab = ({
                             Cảnh báo sớm: {record.earlyWarningThreshold}
                         </Text>
                     )}
-                    {record.consecutiveRequired && (
-                        <Tag color="orange" style={{ marginTop: 4 }}>Yêu cầu liên tiếp</Tag>
-                    )}
+                    <Space size={4} wrap>
+                        {record.consecutiveRequired && (
+                            <Tag color="orange" size="small">Liên tiếp</Tag>
+                        )}
+                        {record.includeComponent && (
+                            <Tag color="purple" size="small">Bao gồm Component</Tag>
+                        )}
+                        <Tag color="blue" size="small">Thứ tự: {record.conditionOrder || 1}</Tag>
+                        <Tag color="green" size="small">Kiểm tra: {record.validationWindowDays || 3} ngày</Tag>
+                    </Space>
                 </Space>
             ),
         },

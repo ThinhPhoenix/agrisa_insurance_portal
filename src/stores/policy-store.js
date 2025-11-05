@@ -209,9 +209,12 @@ export const usePolicyStore = create((set, get) => ({
   /**
    * Chuyển đổi frontend state sang BE payload format
    * Theo spec: BE_create_base_policy_json_spec_vi.md
+   *
+   * @returns {Promise<{payload: Object, warnings: string[]}>} - Payload và warnings
    */
   buildBackendPayload: async () => {
     const { basicData, configurationData, tagsData } = get();
+    const warnings = []; // Collect warnings to show user
 
     // Build document_tags object (will be included in base_policy)
     const document_tags = tagsData.documentTagsObject || {};
@@ -251,9 +254,9 @@ export const usePolicyStore = create((set, get) => ({
       // ✅ Renewal Config
       auto_renewal: basicData.autoRenewal,
       renewal_discount_rate: basicData.renewalDiscountRate,
-      base_policy_invalid_date: dateToEpochSeconds(
-        basicData.basePolicyInvalidDate
-      ),
+      base_policy_invalid_date: basicData.basePolicyInvalidDate
+        ? dateToEpochSeconds(basicData.basePolicyInvalidDate)
+        : null, // ✅ Return null if empty (matching Postman)
 
       // ✅ Insurance Validity Dates (REQUIRED)
       insurance_valid_from_day: dateToEpochSeconds(
@@ -279,18 +282,20 @@ export const usePolicyStore = create((set, get) => ({
         configurationData.monitorFrequencyUnit
       ),
       // ✅ Parse blackout_periods if it's a string, otherwise use as-is
+      // ⚠️ Return {} instead of null when empty (backend may reject empty object)
       blackout_periods: (() => {
         const bp = configurationData.blackoutPeriods;
-        if (!bp) return {};
+        if (!bp) return {}; // ✅ Changed from null to {}
         if (typeof bp === "string") {
           try {
-            return JSON.parse(bp) || {};
+            const parsed = JSON.parse(bp);
+            return parsed && Object.keys(parsed).length > 0 ? parsed : null; // ✅ Return null if empty
           } catch (e) {
             console.warn("❌ Invalid blackout_periods JSON:", bp);
-            return {};
+            return null; // ✅ Changed from {} to null
           }
         }
-        return bp;
+        return Object.keys(bp).length > 0 ? bp : null; // ✅ Return null if empty object
       })(),
     };
 
@@ -305,23 +310,27 @@ export const usePolicyStore = create((set, get) => ({
           condition.tierMultiplier
         );
 
+      // ✅ Build condition object, include REQUIRED and OPTIONAL fields with defaults
       const mappedCondition = {
+        // REQUIRED fields
         data_source_id: condition.dataSourceId,
         threshold_operator: condition.thresholdOperator,
         threshold_value: condition.thresholdValue,
-        early_warning_threshold: condition.earlyWarningThreshold || null,
         aggregation_function: condition.aggregationFunction,
         aggregation_window_days: condition.aggregationWindowDays,
         consecutive_required: condition.consecutiveRequired ?? false,
         include_component: condition.includeComponent ?? false,
-        baseline_window_days: condition.baselineWindowDays || null,
-        baseline_function: condition.baselineFunction || null,
-        validation_window_days: condition.validationWindowDays || null,
-        condition_order: condition.conditionOrder || null,
         base_cost: condition.baseCost || 0,
         category_multiplier: condition.categoryMultiplier || 1,
         tier_multiplier: condition.tierMultiplier || 1,
         calculated_cost: calculatedCost,
+
+        // OPTIONAL fields with defaults to match standard JSON
+        early_warning_threshold: condition.earlyWarningThreshold || 60.0,
+        baseline_window_days: condition.baselineWindowDays || 365,
+        baseline_function: condition.baselineFunction || "avg",
+        validation_window_days: condition.validationWindowDays || 3,
+        condition_order: condition.conditionOrder || 1,
       };
 
       console.log("🔍 Mapped condition:", mappedCondition);
@@ -329,7 +338,7 @@ export const usePolicyStore = create((set, get) => ({
     });
 
     // Build policy_document object (convert file to base64)
-    let policy_document = null;
+    let policy_document;
     if (tagsData.modifiedPdfBytes || tagsData.uploadedFile) {
       const fileToConvert = tagsData.modifiedPdfBytes || tagsData.uploadedFile;
 
@@ -338,18 +347,31 @@ export const usePolicyStore = create((set, get) => ({
       const fileSizeMB = (fileSizeBytes / (1024 * 1024)).toFixed(2);
       console.log(`📄 Policy document size: ${fileSizeMB} MB`);
 
-      if (fileSizeBytes > 5 * 1024 * 1024) {
-        console.warn(
-          `⚠️ File size ${fileSizeMB} MB exceeds 5MB! May cause 413 error.`
-        );
-      }
-
       const base64Data = await bytesToBase64(fileToConvert);
+
+      // ✅ Check base64 string size
+      const base64SizeBytes = base64Data ? base64Data.length : 0;
+      const base64SizeMB = (base64SizeBytes / (1024 * 1024)).toFixed(2);
+      console.log(
+        `📄 Base64 string size: ${base64SizeMB} MB (${base64SizeBytes.toLocaleString()} chars)`
+      );
+
+      // ⚠️ Check file size - warn if large but always send to meet BE requirements
+      // Base64 increases size by ~33%, so 10MB base64 = ~7.5MB original
+      const RECOMMENDED_BASE64_SIZE_MB = 10;
+
       const fileName =
         tagsData.uploadedFile?.name ||
         tagsData.modifiedPdfBytes?.name ||
         "policy_document.pdf";
 
+      if (base64SizeBytes > RECOMMENDED_BASE64_SIZE_MB * 1024 * 1024) {
+        const warningMsg = `PDF file lớn (${base64SizeMB} MB base64). Có thể gây lỗi 413 nếu server limit thấp. Hãy compress PDF trước khi upload để giảm size.`;
+        console.warn(`⚠️ ${warningMsg}`);
+        warnings.push(warningMsg);
+      }
+
+      // ✅ Always send policy_document as required by BE
       policy_document = {
         name: fileName,
         data: base64Data,
@@ -357,20 +379,41 @@ export const usePolicyStore = create((set, get) => ({
     }
 
     // Final payload (document_tags đã được add vào base_policy ở trên)
+    // ✅ Only include policy_document if file was uploaded
     const payload = {
       base_policy,
       trigger,
       conditions,
-      policy_document,
+      ...(policy_document && { policy_document }), // Include only if defined
       is_archive: false,
     };
 
-    console.log("📦 Final Backend Payload:", JSON.stringify(payload, null, 2));
-    console.log("📄 Policy Document:", policy_document);
+    // ✅ Check total payload size
+    const payloadStr = JSON.stringify(payload);
+    const payloadSizeBytes = new Blob([payloadStr]).size;
+    const payloadSizeMB = (payloadSizeBytes / (1024 * 1024)).toFixed(2);
+
+    console.log("📦 Final Backend Payload size:", payloadSizeMB, "MB");
+    if (policy_document) {
+      const isMock =
+        policy_document.data === "PLACEHOLDER_PDF_WILL_UPLOAD_LATER";
+      console.log(
+        "📄 Policy Document:",
+        `${policy_document.name} ${
+          isMock ? "(MOCK DATA - upload sau)" : "(included)"
+        }`
+      );
+    } else {
+      console.log("📄 Policy Document: null");
+    }
     console.log("🏷️ Document Tags:", document_tags);
     console.log("📋 Conditions count:", conditions.length);
 
-    return payload;
+    if (warnings.length > 0) {
+      console.warn("⚠️ Warnings:", warnings);
+    }
+
+    return { payload, warnings };
   },
 
   // ====================== VALIDATION ======================

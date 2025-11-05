@@ -725,14 +725,28 @@ const usePolicy = () => {
       }
 
       // Build backend payload
-      const payload = await policyStore.buildBackendPayload();
+      const { payload, warnings } = await policyStore.buildBackendPayload();
 
-      console.log("📤 Sending payload to BE:", payload);
+      // Show warnings to user
+      if (warnings && warnings.length > 0) {
+        warnings.forEach((warning) => {
+          message.warning(warning, 10); // Show for 10 seconds
+        });
+      }
 
-      // Call API
+      console.log("📤 [DEBUG] Raw payload object:", payload);
+      console.log("📤 [DEBUG] payload.base_policy:", payload.base_policy);
+      console.log("📤 [DEBUG] payload.trigger:", payload.trigger);
+      console.log("📤 [DEBUG] payload.conditions:", payload.conditions);
+      console.log(
+        "📤 [DEBUG] payload.policy_document:",
+        payload.policy_document
+      );
+
+      // Call API with application/json Content-Type (matching Postman CURL)
       const response = await axiosInstance.post(
         endpoints.policy.base_policy.create_complete(24),
-        payload
+        payload // ✅ Send object directly, axios will stringify and set Content-Type: application/json
       );
 
       console.log("📥 API Response:", response.data);

@@ -203,6 +203,10 @@ const PlaceholderMappingPanel = ({
                 return;
             }
 
+            // Calculate appropriate font size (80% of original, 8-10pt range)
+            const originalFontSize = placeholder.fontSize || 12;
+            const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
+
             // Build replacement instruction
             replacements.push({
                 page: placeholder.page || 1,
@@ -210,11 +214,13 @@ const PlaceholderMappingPanel = ({
                 y: placeholder.y,
                 width: placeholder.width,
                 height: placeholder.height,
-                oldText: placeholder.original,      // e.g., "____(1)____"
-                newText: `____${tag.key}____`,     // e.g., "____Họ và tên____"
-                fontSize: 12
+                backgroundX: placeholder.backgroundX,        // ✅ Background position (only cover underscores)
+                backgroundWidth: placeholder.backgroundWidth, // ✅ Background width (not label)
+                oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
+                newText: tag.key,                   // ✅ Just tag key (no underscores)
+                fontSize: adjustedFontSize          // ✅ 8-10pt range
             });
-            console.log(`    ✅ Added replacement: "${placeholder.original}" → "____${tag.key}____"`);
+            console.log(`    ✅ Added replacement: "${placeholder.fullText || placeholder.original}" → "${tag.key}" (${adjustedFontSize.toFixed(1)}pt)`);
         });
 
         console.log('📊 Total replacements built:', replacements.length);
@@ -295,16 +301,24 @@ const PlaceholderMappingPanel = ({
 
         console.log('🚀 Auto-replacing single placeholder:', placeholder.original, '→', tag.key);
 
+        // Calculate appropriate font size (80% of original for better fit)
+        const originalFontSize = placeholder.fontSize || 12;
+        const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
+
         const replacement = {
             page: placeholder.page || 1,
             x: placeholder.x,
             y: placeholder.y,
             width: placeholder.width,
             height: placeholder.height,
-            oldText: placeholder.original,
+            backgroundX: placeholder.backgroundX,        // ✅ Background position (only cover underscores)
+            backgroundWidth: placeholder.backgroundWidth, // ✅ Background width (not label)
+            oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
             newText: tag.key, // ✅ Use tag.key directly (match PDF format)
-            fontSize: 12
+            fontSize: adjustedFontSize  // ✅ 8-10pt range
         };
+
+        console.log(`📏 Font size: original=${originalFontSize}pt, adjusted=${adjustedFontSize.toFixed(1)}pt`);
 
         const result = await filePreviewRef.current.applyReplacements([replacement]);
 

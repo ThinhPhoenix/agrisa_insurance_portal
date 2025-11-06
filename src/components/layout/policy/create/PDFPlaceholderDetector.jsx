@@ -205,7 +205,7 @@ export const extractTextFromPDF = async (file) => {
                     // ✅ CRITICAL: pdf.js coordinate system
                     // transform[4] = X coordinate (distance from LEFT edge)
                     // transform[5] = Y coordinate (distance from BOTTOM edge - already in pdf-lib coordinate!)
-                    // 
+                    //
                     // IMPORTANT: pdf.js transform[5] is NOT top-left, it's BASELINE!
                     // This means it's already in bottom-left coordinate system like pdf-lib!
 
@@ -217,28 +217,136 @@ export const extractTextFromPDF = async (file) => {
                     const fontSize = Math.abs(item.transform[0]) || 12;
                     let height = fontSize * 1.2; // Text height ≈ fontSize * 1.2
 
-                    // If previous item is dots, include it in width calculation
-                    if (prevItem && /^[._]+$/.test(prevText)) {
-                        x = prevItem.transform[4]; // Use prev x
-                        width += (prevItem.width || 0);
+                    // ✨ IMPROVED: Scan backwards to find ALL underscores/dots (skip spaces)
+                    // We need TWO values:
+                    // 1. firstUnderscoreX - for white background (closest to number)
+                    // 2. startX - for full width calculation (farthest from number)
+                    let startIdx = i;
+                    let startX = x;
+                    let firstUnderscoreX = x; // Track first underscore found (closest to number)
+                    let foundFirstUnderscore = false;
+
+                    console.log(`   🔍 Starting backward scan from item ${i}: "${text}"`);
+
+                    for (let scanIdx = i - 1; scanIdx >= 0; scanIdx--) {
+                        const scanItem = items[scanIdx];
+                        const scanText = scanItem?.str || '';
+
+                        console.log(`   👀 Scanning item ${scanIdx}: "${scanText}" (length=${scanText.length})`);
+
+                        // Skip whitespace items
+                        if (/^\s*$/.test(scanText)) {
+                            console.log(`      ⏭️ → Whitespace, continuing...`);
+                            continue;
+                        }
+
+                        // If this is ONLY dots/underscores (pure separator), include it
+                        if (/^[._]+$/.test(scanText)) {
+                            const scanX = scanItem.transform[4];
+
+                            console.log(`      ✅ → Pure separator, including it`);
+
+                            // First underscore found (closest to number) - use for background
+                            if (!foundFirstUnderscore) {
+                                firstUnderscoreX = scanX;
+                                foundFirstUnderscore = true;
+                                console.log(`      🎯 First underscore at x=${firstUnderscoreX.toFixed(2)} (for background)`);
+                            }
+
+                            // Keep updating startX for full width
+                            startX = scanX;
+                            startIdx = scanIdx;
+                            console.log(`      📍 Updated startX to ${startX.toFixed(2)}`);
+                        } else {
+                            // Hit ANY other text (label, mixed content, etc.) → STOP
+                            console.log(`      🛑 → Non-separator text: "${scanText}", STOPPING scan`);
+                            console.log(`      📊 Final startX = ${startX.toFixed(2)}, startIdx = ${startIdx}`);
+                            break;
+                        }
                     }
 
-                    // If next item is dots, include it in width calculation
-                    if (nextItem && /^[._]+$/.test(nextText)) {
-                        width += (nextItem.width || 0);
+                    // ✨ IMPROVED: Scan forwards to find ALL underscores/dots (skip spaces)
+                    let endIdx = i;
+                    let endX = x + width;
+                    let lastUnderscoreEndX = x + width; // Track last underscore found (closest to number)
+                    let foundLastUnderscore = false;
+
+                    console.log(`   🔍 Starting forward scan from item ${i}: "${text}"`);
+
+                    for (let scanIdx = i + 1; scanIdx < items.length; scanIdx++) {
+                        const scanItem = items[scanIdx];
+                        const scanText = scanItem?.str || '';
+
+                        console.log(`   👀 Scanning item ${scanIdx}: "${scanText}" (length=${scanText.length})`);
+
+                        // Skip whitespace items
+                        if (/^\s*$/.test(scanText)) {
+                            console.log(`      ⏭️ → Whitespace, continuing...`);
+                            continue;
+                        }
+
+                        // If this is ONLY dots/underscores (pure separator), include it
+                        if (/^[._]+$/.test(scanText)) {
+                            const scanWidth = scanItem.width || 0;
+                            const scanEndX = scanItem.transform[4] + scanWidth;
+
+                            console.log(`      ✅ → Pure separator, including it`);
+
+                            // First underscore found after number (closest to number) - use for background
+                            if (!foundLastUnderscore) {
+                                lastUnderscoreEndX = scanEndX;
+                                foundLastUnderscore = true;
+                                console.log(`      🎯 Last underscore ends at x=${lastUnderscoreEndX.toFixed(2)} (for background)`);
+                            }
+
+                            // Keep updating endX for full width
+                            endX = scanEndX;
+                            endIdx = scanIdx;
+                            console.log(`      📍 Updated endX to ${endX.toFixed(2)}`);
+                        } else {
+                            // Hit non-separator, non-space text → stop
+                            console.log(`      🛑 → Non-separator text: "${scanText}", STOPPING scan`);
+                            console.log(`      📊 Final endX = ${endX.toFixed(2)}, endIdx = ${endIdx}`);
+                            break;
+                        }
                     }
+
+                    // ✨ Calculate full width from all scanned items
+                    const fullWidth = endX - startX;
+                    console.log(`   📐 Full width: ${fullWidth.toFixed(2)}px (from x=${startX.toFixed(2)} to x=${endX.toFixed(2)})`);
+
+                    // ✨ Background must cover ALL underscores (full width)
+                    // Use startX and endX directly (they already exclude label due to break on non-separator)
+                    const backgroundX = startX;
+                    const backgroundWidth = fullWidth;
+                    console.log(`   🎨 Background: x=${backgroundX.toFixed(2)}, width=${backgroundWidth.toFixed(2)}px`);
+                    console.log(`   💡 This covers ALL underscores from first to last`);
+
+                    // ✨ Build fullText from all scanned items (for underscore preservation)
+                    let fullText = '';
+                    for (let idx = startIdx; idx <= endIdx; idx++) {
+                        const itemText = items[idx]?.str || '';
+                        // Skip pure whitespace when building fullText
+                        if (!/^\s*$/.test(itemText)) {
+                            fullText += itemText;
+                        }
+                    }
+                    console.log(`   📝 Full text: "${fullText}"`);
 
                     placeholders.push({
                         id: `placeholder_${placeholders.length + 1}`,
-                        original: `(${num})`, // ✅ Show only "(1)", "(2)" not full text
+                        original: `(${num})`, // ✅ Show only "(1)", "(2)" in UI
+                        fullText: fullText,   // ✅ Store complete text like "______(1)______" for replacement
                         extractedKey: num,
                         type: 'numbered',
                         page: pageNum,
-                        x: x,
-                        y: y, // ✅ BASELINE Y (bottom-left coordinate system)
-                        width: width,
+                        x: startX,            // ✅ Full width start (for width calculation)
+                        y: y,                 // ✅ BASELINE Y (bottom-left coordinate system)
+                        width: fullWidth,     // ✅ Full width including all underscores
+                        backgroundX: backgroundX,        // ✅ Background start (only underscores, not label)
+                        backgroundWidth: backgroundWidth, // ✅ Background width (only underscores + number)
                         height: height,
-                        fontSize: fontSize, // ✅ Store fontSize for later use
+                        fontSize: fontSize,   // ✅ Store fontSize for later use
                         position: allText.length,
                         mapped: false,
                         tagId: null,

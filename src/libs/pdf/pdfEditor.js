@@ -335,6 +335,8 @@ export const replacePlaceholdersInPDF = async (
           y,
           width,
           height: textHeight,
+          backgroundX,
+          backgroundWidth,
           oldText,
           newText,
           fontSize = 12,
@@ -379,13 +381,42 @@ export const replacePlaceholdersInPDF = async (
             console.log(`        Detected width: ${width.toFixed(2)}px (from detector)`);
             console.log(`        Using this width as-is (no oldText calculation)`);
 
+            // ✨ UNDERSCORE PRESERVATION:
+            // If oldText has underscores/dots, preserve them around newText
+            // e.g., "______(1)______" + "Họ và tên" → "__Họ và tên__"
+            let displayText = newText;
+
+            // Count leading underscores/dots
+            const leadingMatch = oldText.match(/^[._]+/);
+            const leadingChars = leadingMatch ? leadingMatch[0] : '';
+
+            // Count trailing underscores/dots
+            const trailingMatch = oldText.match(/[._]+$/);
+            const trailingChars = trailingMatch ? trailingMatch[0] : '';
+
+            if (leadingChars || trailingChars) {
+              // Use 2 underscores/dots on each side (balanced, not too long)
+              const leadingChar = leadingChars[0] || '_';
+              const trailingChar = trailingChars[0] || '_';
+              const leadingCount = Math.min(2, leadingChars.length);
+              const trailingCount = Math.min(2, trailingChars.length);
+
+              displayText = leadingChar.repeat(leadingCount) + newText + trailingChar.repeat(trailingCount);
+
+              console.log(`     🎨 Underscore preservation:`);
+              console.log(`        Original: "${oldText}"`);
+              console.log(`        Leading: "${leadingChars}" (${leadingChars.length} chars) → using ${leadingCount}`);
+              console.log(`        Trailing: "${trailingChars}" (${trailingChars.length} chars) → using ${trailingCount}`);
+              console.log(`        Display text: "${displayText}"`);
+            }
+
             // Step 1: Calculate if text fits at current font size
-            let finalText = newText;
+            let finalText = displayText;
             let finalFontSize = fontSize;
-            let textWidth = font.widthOfTextAtSize(newText, fontSize);
+            let textWidth = font.widthOfTextAtSize(displayText, fontSize);
 
             console.log(`     📏 Text measurement:`);
-            console.log(`        Text: "${newText}"`);
+            console.log(`        Text: "${displayText}"`);
             console.log(`        Width at ${fontSize}pt: ${textWidth.toFixed(2)}px`);
             console.log(`        Available width: ${width.toFixed(2)}px`);
 
@@ -393,19 +424,42 @@ export const replacePlaceholdersInPDF = async (
             if (textWidth > width) {
               const scaleFactor = Math.max(0.7, width / textWidth);
               finalFontSize = Math.max(8, fontSize * scaleFactor);
-              textWidth = font.widthOfTextAtSize(newText, finalFontSize);
+              textWidth = font.widthOfTextAtSize(displayText, finalFontSize);
 
               console.log(`     ⚠️ Text too wide, scaling down:`);
               console.log(`        Scale factor: ${(scaleFactor * 100).toFixed(0)}%`);
               console.log(`        New font size: ${finalFontSize.toFixed(1)}pt`);
               console.log(`        New width: ${textWidth.toFixed(2)}px`);
 
+              // Step 3: If still too wide after scaling, truncate with ellipsis
               if (textWidth > width) {
+                console.log(`     ✂️ Still too wide, truncating...`);
+
+                // Binary search for max characters that fit
+                let maxChars = displayText.length;
+                const ellipsis = "...";
+                const ellipsisWidth = font.widthOfTextAtSize(ellipsis, finalFontSize);
+
+                for (let len = displayText.length - 1; len > 0; len--) {
+                  const truncated = displayText.substring(0, len) + ellipsis;
+                  const truncatedWidth = font.widthOfTextAtSize(truncated, finalFontSize);
+
+                  if (truncatedWidth <= width) {
+                    finalText = truncated;
+                    textWidth = truncatedWidth;
+                    maxChars = len;
+                    break;
+                  }
+                }
+
+                console.log(`     ✂️ Truncated to ${maxChars} chars: "${finalText}"`);
+                console.log(`     📏 Truncated width: ${textWidth.toFixed(2)}px`);
+
                 warnings.push({
-                  field: newText,
+                  field: displayText,
                   original: oldText,
-                  warning: "Text may overflow placeholder boundaries",
-                  strategy: "scale_font"
+                  warning: `Text truncated to fit (showing ${maxChars}/${displayText.length} characters)`,
+                  strategy: "truncate"
                 });
               }
             } else {
@@ -437,11 +491,20 @@ export const replacePlaceholdersInPDF = async (
               `     🎯 Placeholder center X: ${placeholderCenterX.toFixed(2)}`
             );
 
-            // Step 4: Draw WHITE rectangle to cover ENTIRE placeholder
-            const rectX = x;
-            const rectWidth = width;
-            const rectY = baselineY - finalFontSize * 0.2;
-            const rectHeight = finalFontSize * 1.3;
+            // Step 4: Draw WHITE rectangle to cover ONLY underscores + number (NOT label)
+            // Use backgroundX and backgroundWidth if available, otherwise fallback to x and width
+            const rectX = backgroundX !== undefined ? backgroundX : x;
+            const rectWidth = backgroundWidth !== undefined ? backgroundWidth : width;
+
+            // ✨ CRITICAL: Rectangle height must be PRECISE to avoid covering surrounding content
+            // Use smaller multipliers to stay within the line
+            const rectY = baselineY - finalFontSize * 0.15;  // Slightly below baseline
+            const rectHeight = finalFontSize * 1.0;          // Exactly 1x font size (not 1.3x)
+
+            console.log(`     🎨 Background positioning:`);
+            console.log(`        Full placeholder: x=${x.toFixed(2)}, width=${width.toFixed(2)}`);
+            console.log(`        Background only: x=${rectX.toFixed(2)}, width=${rectWidth.toFixed(2)}`);
+            console.log(`        💡 This covers ONLY underscores+number, NOT the label`);
 
             page.drawRectangle({
               x: rectX,
@@ -452,7 +515,7 @@ export const replacePlaceholdersInPDF = async (
               opacity: 1,
             });
             console.log(
-              `     🟦 WHITE rectangle: x=${rectX.toFixed(
+              `     🟦 WHITE rectangle drawn: x=${rectX.toFixed(
                 2
               )}, y=${rectY.toFixed(2)}, w=${rectWidth.toFixed(
                 2

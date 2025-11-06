@@ -335,8 +335,6 @@ export const replacePlaceholdersInPDF = async (
           y,
           width,
           height: textHeight,
-          backgroundX,
-          backgroundWidth,
           oldText,
           newText,
           fontSize = 12,
@@ -491,20 +489,26 @@ export const replacePlaceholdersInPDF = async (
               `     🎯 Placeholder center X: ${placeholderCenterX.toFixed(2)}`
             );
 
-            // Step 4: Draw WHITE rectangle to cover ONLY underscores + number (NOT label)
-            // Use backgroundX and backgroundWidth if available, otherwise fallback to x and width
-            const rectX = backgroundX !== undefined ? backgroundX : x;
-            const rectWidth = backgroundWidth !== undefined ? backgroundWidth : width;
+            // Step 4: Calculate centered text position
+            const textX = placeholderCenterX - textWidth / 2;
+            console.log(`     📐 Text positioning:`);
+            console.log(`        Center X: ${placeholderCenterX.toFixed(2)}`);
+            console.log(`        Text X: ${textX.toFixed(2)}`);
+
+            // Step 5: Draw WHITE rectangle based on FINAL TEXT width
+            // Background must ONLY cover the new text (e.g., "__họ tên__"), not old underscores
+            const rectX = textX - 2;  // Add small padding on left
+            const rectWidth = textWidth + 4;  // Add small padding on both sides
 
             // ✨ CRITICAL: Rectangle height must be PRECISE to avoid covering surrounding content
-            // Use smaller multipliers to stay within the line
             const rectY = baselineY - finalFontSize * 0.15;  // Slightly below baseline
-            const rectHeight = finalFontSize * 1.0;          // Exactly 1x font size (not 1.3x)
+            const rectHeight = finalFontSize * 1.0;          // Exactly 1x font size
 
-            console.log(`     🎨 Background positioning:`);
-            console.log(`        Full placeholder: x=${x.toFixed(2)}, width=${width.toFixed(2)}`);
-            console.log(`        Background only: x=${rectX.toFixed(2)}, width=${rectWidth.toFixed(2)}`);
-            console.log(`        💡 This covers ONLY underscores+number, NOT the label`);
+            console.log(`     🎨 Background positioning (based on FINAL TEXT):`);
+            console.log(`        Original placeholder: x=${x.toFixed(2)}, width=${width.toFixed(2)}`);
+            console.log(`        Final text width: ${textWidth.toFixed(2)}px`);
+            console.log(`        Background: x=${rectX.toFixed(2)}, width=${rectWidth.toFixed(2)}px`);
+            console.log(`        💡 Background sized to cover ONLY the replacement text`);
 
             page.drawRectangle({
               x: rectX,
@@ -521,13 +525,6 @@ export const replacePlaceholdersInPDF = async (
                 2
               )}, h=${rectHeight.toFixed(2)}`
             );
-
-            // Step 5: Calculate centered text position
-            const textX = placeholderCenterX - textWidth / 2;
-
-            console.log(`     📐 Text positioning:`);
-            console.log(`        Center X: ${placeholderCenterX.toFixed(2)}`);
-            console.log(`        Text X: ${textX.toFixed(2)}`);
 
             // Step 6: Draw optimized text
             try {

@@ -214,8 +214,6 @@ const PlaceholderMappingPanel = ({
                 y: placeholder.y,
                 width: placeholder.width,
                 height: placeholder.height,
-                backgroundX: placeholder.backgroundX,        // ✅ Background position (only cover underscores)
-                backgroundWidth: placeholder.backgroundWidth, // ✅ Background width (not label)
                 oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
                 newText: tag.key,                   // ✅ Just tag key (no underscores)
                 fontSize: adjustedFontSize          // ✅ 8-10pt range
@@ -311,8 +309,6 @@ const PlaceholderMappingPanel = ({
             y: placeholder.y,
             width: placeholder.width,
             height: placeholder.height,
-            backgroundX: placeholder.backgroundX,        // ✅ Background position (only cover underscores)
-            backgroundWidth: placeholder.backgroundWidth, // ✅ Background width (not label)
             oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
             newText: tag.key, // ✅ Use tag.key directly (match PDF format)
             fontSize: adjustedFontSize  // ✅ 8-10pt range

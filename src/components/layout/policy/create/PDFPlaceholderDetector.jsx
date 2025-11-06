@@ -315,12 +315,13 @@ export const extractTextFromPDF = async (file) => {
                     const fullWidth = endX - startX;
                     console.log(`   📐 Full width: ${fullWidth.toFixed(2)}px (from x=${startX.toFixed(2)} to x=${endX.toFixed(2)})`);
 
-                    // ✨ Background must cover ALL underscores (full width)
-                    // Use startX and endX directly (they already exclude label due to break on non-separator)
-                    const backgroundX = startX;
-                    const backgroundWidth = fullWidth;
-                    console.log(`   🎨 Background: x=${backgroundX.toFixed(2)}, width=${backgroundWidth.toFixed(2)}px`);
-                    console.log(`   💡 This covers ALL underscores from first to last`);
+                    // ✨ CRITICAL: Background must ONLY cover the original item (not scan result)
+                    // Using fullWidth causes background to cover content outside field boundaries
+                    // Solution: Use ONLY the original item's x and width
+                    const backgroundX = x;      // Original item X
+                    const backgroundWidth = width; // Original item width
+                    console.log(`   🎨 Background (ITEM ONLY): x=${backgroundX.toFixed(2)}, width=${backgroundWidth.toFixed(2)}px`);
+                    console.log(`   💡 Using original item dimensions to avoid covering surrounding content`);
 
                     // ✨ Build fullText from all scanned items (for underscore preservation)
                     let fullText = '';

@@ -61,13 +61,18 @@ const calculateOptimalReplacement = (
   const availableForText = placeholderWidth - originalUnderscoreSpace;
 
   console.log(`💡 Strategy Analysis:`);
-  console.log(`   - Space for underscores (${underscoresPerSide}*2): ${originalUnderscoreSpace.toFixed(2)}px`);
+  console.log(
+    `   - Space for underscores (${underscoresPerSide}*2): ${originalUnderscoreSpace.toFixed(
+      2
+    )}px`
+  );
   console.log(`   - Available for text: ${availableForText.toFixed(2)}px`);
   console.log(`   - Text needs: ${textWidth.toFixed(2)}px`);
 
   if (textWidth <= availableForText) {
     // ✅ CASE 1: Text fits perfectly with original underscores
-    const pattern = "_".repeat(underscoresPerSide) + newText + "_".repeat(underscoresPerSide);
+    const pattern =
+      "_".repeat(underscoresPerSide) + newText + "_".repeat(underscoresPerSide);
     console.log(`✅ SOLUTION: Keep original underscores`);
     console.log(`   Pattern: "${pattern}"`);
     console.log(`   Font size: ${fontSize}pt (no scaling)`);
@@ -93,7 +98,11 @@ const calculateOptimalReplacement = (
       console.log(`✅ SOLUTION: Reduce underscores to ${u} per side`);
       console.log(`   Pattern: "${pattern}"`);
       console.log(`   Font size: ${fontSize}pt (no scaling)`);
-      console.log(`   Space saved: ${(originalUnderscoreSpace - underscoreSpace).toFixed(2)}px`);
+      console.log(
+        `   Space saved: ${(originalUnderscoreSpace - underscoreSpace).toFixed(
+          2
+        )}px`
+      );
       console.log("═══════════════════════════════════════════════════════\n");
 
       return {
@@ -112,7 +121,11 @@ const calculateOptimalReplacement = (
   const maxAvailable = placeholderWidth - minUnderscoreSpace;
 
   console.log(`⚠️ Text too long even with minimal underscores`);
-  console.log(`   Max available width (with 1 underscore each): ${maxAvailable.toFixed(2)}px`);
+  console.log(
+    `   Max available width (with 1 underscore each): ${maxAvailable.toFixed(
+      2
+    )}px`
+  );
   console.log(`   Text needs: ${textWidth.toFixed(2)}px`);
 
   // Calculate required scaling
@@ -125,29 +138,41 @@ const calculateOptimalReplacement = (
 
   console.log(`🔽 Font Scaling Calculation:`);
   console.log(`   - Scale factor needed: ${(scaleFactor * 100).toFixed(1)}%`);
-  console.log(`   - Effective scale factor: ${(effectiveScaleFactor * 100).toFixed(1)}%`);
-  console.log(`   - New font size: ${newFontSize.toFixed(1)}pt (min: ${minFontSize}pt)`);
+  console.log(
+    `   - Effective scale factor: ${(effectiveScaleFactor * 100).toFixed(1)}%`
+  );
+  console.log(
+    `   - New font size: ${newFontSize.toFixed(1)}pt (min: ${minFontSize}pt)`
+  );
 
   // Recalculate widths with new font size
   const scaledTextWidth = font.widthOfTextAtSize(newText, newFontSize);
   const scaledUnderscoreWidth = font.widthOfTextAtSize("_", newFontSize);
-  const scaledTotalWidth = scaledTextWidth + (minUnderscores * 2 * scaledUnderscoreWidth);
+  const scaledTotalWidth =
+    scaledTextWidth + minUnderscores * 2 * scaledUnderscoreWidth;
 
   console.log(`📐 Scaled measurements:`);
   console.log(`   - Scaled text width: ${scaledTextWidth.toFixed(2)}px`);
-  console.log(`   - Scaled underscore width: ${scaledUnderscoreWidth.toFixed(2)}px`);
+  console.log(
+    `   - Scaled underscore width: ${scaledUnderscoreWidth.toFixed(2)}px`
+  );
   console.log(`   - Total width: ${scaledTotalWidth.toFixed(2)}px`);
   console.log(`   - Placeholder width: ${placeholderWidth.toFixed(2)}px`);
-  console.log(`   - Fit: ${scaledTotalWidth <= placeholderWidth ? "✅ YES" : "⚠️ NO (will overflow)"}`);
+  console.log(
+    `   - Fit: ${
+      scaledTotalWidth <= placeholderWidth ? "✅ YES" : "⚠️ NO (will overflow)"
+    }`
+  );
 
   const pattern = "_" + newText + "_";
 
   // Check if scaling is sufficient
-  const warning = scaledTotalWidth > placeholderWidth
-    ? "Text will overflow placeholder boundaries"
-    : newFontSize < 10
-    ? "Font size reduced - may be harder to read"
-    : null;
+  const warning =
+    scaledTotalWidth > placeholderWidth
+      ? "Text will overflow placeholder boundaries"
+      : newFontSize < 10
+      ? "Font size reduced - may be harder to read"
+      : null;
 
   if (warning) {
     console.log(`⚠️ WARNING: ${warning}`);
@@ -155,7 +180,9 @@ const calculateOptimalReplacement = (
 
   console.log(`✅ SOLUTION: Minimal underscores + font scaling`);
   console.log(`   Pattern: "${pattern}"`);
-  console.log(`   Font size: ${newFontSize.toFixed(1)}pt (scaled from ${fontSize}pt)`);
+  console.log(
+    `   Font size: ${newFontSize.toFixed(1)}pt (scaled from ${fontSize}pt)`
+  );
   console.log("═══════════════════════════════════════════════════════\n");
 
   return {
@@ -187,18 +214,27 @@ const embedVietnameseFont = async (pdfDoc) => {
     } else {
       // Use CDN with FULL Vietnamese charset (not subset)
       // Noto Sans has complete Vietnamese Unicode support
-      const fontUrl = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf";
+      const fontUrl =
+        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf";
 
       console.log("🌐 Fetching font from:", fontUrl);
       const fontResponse = await fetch(fontUrl);
 
       if (!fontResponse.ok) {
-        throw new Error(`Font fetch failed: ${fontResponse.status} ${fontResponse.statusText}`);
+        throw new Error(
+          `Font fetch failed: ${fontResponse.status} ${fontResponse.statusText}`
+        );
       }
 
       cachedFontBytes = await fontResponse.arrayBuffer();
-      console.log(`✅ Font downloaded & cached: ${(cachedFontBytes.byteLength / 1024).toFixed(2)} KB`);
-      console.log(`✅ Using Noto Sans (full charset with all Vietnamese characters)`);
+      console.log(
+        `✅ Font downloaded & cached: ${(
+          cachedFontBytes.byteLength / 1024
+        ).toFixed(2)} KB`
+      );
+      console.log(
+        `✅ Using Noto Sans (full charset with all Vietnamese characters)`
+      );
     }
 
     // ✅ CRITICAL: pdf-lib can embed .ttf directly without fontkit for basic fonts
@@ -210,7 +246,9 @@ const embedVietnameseFont = async (pdfDoc) => {
     try {
       // Dynamic import fontkit (if installed) - cache module
       if (!cachedFontkitModule) {
-        cachedFontkitModule = await import('@pdf-lib/fontkit').then(m => m.default || m);
+        cachedFontkitModule = await import("@pdf-lib/fontkit").then(
+          (m) => m.default || m
+        );
         console.log("✅ Fontkit module loaded & cached");
       }
 
@@ -225,11 +263,13 @@ const embedVietnameseFont = async (pdfDoc) => {
       // Fallback: Use .ttf version instead of .woff2 (works without fontkit)
       // Check if we have cached TTF font
       if (!cachedFontBytes || cachedFontBytes.byteLength < 100000) {
-        const ttfFontUrl = "https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Regular.ttf";
+        const ttfFontUrl =
+          "https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Regular.ttf";
         console.log("📦 Loading TTF font from:", ttfFontUrl);
 
         const ttfResponse = await fetch(ttfFontUrl);
-        if (!ttfResponse.ok) throw new Error(`TTF font fetch failed: ${ttfResponse.status}`);
+        if (!ttfResponse.ok)
+          throw new Error(`TTF font fetch failed: ${ttfResponse.status}`);
 
         cachedFontBytes = await ttfResponse.arrayBuffer();
         console.log("✅ TTF font downloaded & cached");
@@ -256,14 +296,15 @@ const embedVietnameseFont = async (pdfDoc) => {
     }
 
     return customFont;
-
   } catch (error) {
     console.error("❌ Failed to load custom font:", error);
     console.log("🔄 Falling back to Helvetica (built-in)...");
 
     // Fallback: Use built-in Helvetica
     const builtInFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    console.log("✅ Helvetica embedded (fallback - Vietnamese may not display correctly)");
+    console.log(
+      "✅ Helvetica embedded (fallback - Vietnamese may not display correctly)"
+    );
 
     return builtInFont;
   }
@@ -376,8 +417,12 @@ export const replacePlaceholdersInPDF = async (
             // 4. Draw white rectangle to cover original
 
             console.log(`     📐 Placeholder analysis:`);
-            console.log(`        Detected width: ${width.toFixed(2)}px (from detector)`);
-            console.log(`        Using this width as-is (no oldText calculation)`);
+            console.log(
+              `        Detected width: ${width.toFixed(2)}px (from detector)`
+            );
+            console.log(
+              `        Using this width as-is (no oldText calculation)`
+            );
 
             // ✨ UNDERSCORE PRESERVATION:
             // If oldText has underscores/dots, preserve them around newText
@@ -386,25 +431,32 @@ export const replacePlaceholdersInPDF = async (
 
             // Count leading underscores/dots
             const leadingMatch = oldText.match(/^[._]+/);
-            const leadingChars = leadingMatch ? leadingMatch[0] : '';
+            const leadingChars = leadingMatch ? leadingMatch[0] : "";
 
             // Count trailing underscores/dots
             const trailingMatch = oldText.match(/[._]+$/);
-            const trailingChars = trailingMatch ? trailingMatch[0] : '';
+            const trailingChars = trailingMatch ? trailingMatch[0] : "";
 
             if (leadingChars || trailingChars) {
               // Use 2 underscores/dots on each side (balanced, not too long)
-              const leadingChar = leadingChars[0] || '_';
-              const trailingChar = trailingChars[0] || '_';
+              const leadingChar = leadingChars[0] || "_";
+              const trailingChar = trailingChars[0] || "_";
               const leadingCount = Math.min(2, leadingChars.length);
               const trailingCount = Math.min(2, trailingChars.length);
 
-              displayText = leadingChar.repeat(leadingCount) + newText + trailingChar.repeat(trailingCount);
+              displayText =
+                leadingChar.repeat(leadingCount) +
+                newText +
+                trailingChar.repeat(trailingCount);
 
               console.log(`     🎨 Underscore preservation:`);
               console.log(`        Original: "${oldText}"`);
-              console.log(`        Leading: "${leadingChars}" (${leadingChars.length} chars) → using ${leadingCount}`);
-              console.log(`        Trailing: "${trailingChars}" (${trailingChars.length} chars) → using ${trailingCount}`);
+              console.log(
+                `        Leading: "${leadingChars}" (${leadingChars.length} chars) → using ${leadingCount}`
+              );
+              console.log(
+                `        Trailing: "${trailingChars}" (${trailingChars.length} chars) → using ${trailingCount}`
+              );
               console.log(`        Display text: "${displayText}"`);
             }
 
@@ -415,7 +467,9 @@ export const replacePlaceholdersInPDF = async (
 
             console.log(`     📏 Text measurement:`);
             console.log(`        Text: "${displayText}"`);
-            console.log(`        Width at ${fontSize}pt: ${textWidth.toFixed(2)}px`);
+            console.log(
+              `        Width at ${fontSize}pt: ${textWidth.toFixed(2)}px`
+            );
             console.log(`        Available width: ${width.toFixed(2)}px`);
 
             // Step 2: Scale down if text doesn't fit
@@ -425,8 +479,12 @@ export const replacePlaceholdersInPDF = async (
               textWidth = font.widthOfTextAtSize(displayText, finalFontSize);
 
               console.log(`     ⚠️ Text too wide, scaling down:`);
-              console.log(`        Scale factor: ${(scaleFactor * 100).toFixed(0)}%`);
-              console.log(`        New font size: ${finalFontSize.toFixed(1)}pt`);
+              console.log(
+                `        Scale factor: ${(scaleFactor * 100).toFixed(0)}%`
+              );
+              console.log(
+                `        New font size: ${finalFontSize.toFixed(1)}pt`
+              );
               console.log(`        New width: ${textWidth.toFixed(2)}px`);
 
               // Step 3: If still too wide after scaling, truncate with ellipsis
@@ -436,11 +494,17 @@ export const replacePlaceholdersInPDF = async (
                 // Binary search for max characters that fit
                 let maxChars = displayText.length;
                 const ellipsis = "...";
-                const ellipsisWidth = font.widthOfTextAtSize(ellipsis, finalFontSize);
+                const ellipsisWidth = font.widthOfTextAtSize(
+                  ellipsis,
+                  finalFontSize
+                );
 
                 for (let len = displayText.length - 1; len > 0; len--) {
                   const truncated = displayText.substring(0, len) + ellipsis;
-                  const truncatedWidth = font.widthOfTextAtSize(truncated, finalFontSize);
+                  const truncatedWidth = font.widthOfTextAtSize(
+                    truncated,
+                    finalFontSize
+                  );
 
                   if (truncatedWidth <= width) {
                     finalText = truncated;
@@ -450,14 +514,18 @@ export const replacePlaceholdersInPDF = async (
                   }
                 }
 
-                console.log(`     ✂️ Truncated to ${maxChars} chars: "${finalText}"`);
-                console.log(`     📏 Truncated width: ${textWidth.toFixed(2)}px`);
+                console.log(
+                  `     ✂️ Truncated to ${maxChars} chars: "${finalText}"`
+                );
+                console.log(
+                  `     📏 Truncated width: ${textWidth.toFixed(2)}px`
+                );
 
                 warnings.push({
                   field: displayText,
                   original: oldText,
                   warning: `Text truncated to fit (showing ${maxChars}/${displayText.length} characters)`,
-                  strategy: "truncate"
+                  strategy: "truncate",
                 });
               }
             } else {
@@ -467,7 +535,7 @@ export const replacePlaceholdersInPDF = async (
             const optimal = {
               pattern: finalText,
               fontSize: finalFontSize,
-              strategy: textWidth > width ? "scale_font" : "keep_original"
+              strategy: textWidth > width ? "scale_font" : "keep_original",
             };
 
             console.log(`     ✨ Smart Replacement Result:`);
@@ -497,18 +565,30 @@ export const replacePlaceholdersInPDF = async (
 
             // Step 5: Draw WHITE rectangle based on FINAL TEXT width
             // Background must ONLY cover the new text (e.g., "__họ tên__"), not old underscores
-            const rectX = textX - 2;  // Add small padding on left
-            const rectWidth = textWidth + 4;  // Add small padding on both sides
+            const rectX = textX - 2; // Add small padding on left
+            const rectWidth = textWidth + 4; // Add small padding on both sides
 
             // ✨ CRITICAL: Rectangle height must be PRECISE to avoid covering surrounding content
-            const rectY = baselineY - finalFontSize * 0.15;  // Slightly below baseline
-            const rectHeight = finalFontSize * 1.0;          // Exactly 1x font size
+            const rectY = baselineY - finalFontSize * 0.3; // Start higher to cover more
+            const rectHeight = finalFontSize * 1.3; // Increased to 1.3x font size to fully cover (number)
 
-            console.log(`     🎨 Background positioning (based on FINAL TEXT):`);
-            console.log(`        Original placeholder: x=${x.toFixed(2)}, width=${width.toFixed(2)}`);
+            console.log(
+              `     🎨 Background positioning (based on FINAL TEXT):`
+            );
+            console.log(
+              `        Original placeholder: x=${x.toFixed(
+                2
+              )}, width=${width.toFixed(2)}`
+            );
             console.log(`        Final text width: ${textWidth.toFixed(2)}px`);
-            console.log(`        Background: x=${rectX.toFixed(2)}, width=${rectWidth.toFixed(2)}px`);
-            console.log(`        💡 Background sized to cover ONLY the replacement text`);
+            console.log(
+              `        Background: x=${rectX.toFixed(
+                2
+              )}, width=${rectWidth.toFixed(2)}px`
+            );
+            console.log(
+              `        💡 Background sized to cover ONLY the replacement text`
+            );
 
             page.drawRectangle({
               x: rectX,
@@ -536,13 +616,11 @@ export const replacePlaceholdersInPDF = async (
                 color: rgb(0, 0, 0),
               });
 
+              console.log(`     ✏️ Text drawn: "${finalText}"`);
               console.log(
-                `     ✏️ Text drawn: "${finalText}"`
-              );
-              console.log(
-                `     🎯 Position: x=${textX.toFixed(
+                `     🎯 Position: x=${textX.toFixed(2)}, y=${baselineY.toFixed(
                   2
-                )}, y=${baselineY.toFixed(2)}`
+                )}`
               );
               console.log(
                 `     🎯 Text range: ${textX.toFixed(2)} → ${(
@@ -561,7 +639,10 @@ export const replacePlaceholdersInPDF = async (
               } else {
                 const overflow = textWidth - width;
                 console.log(
-                  `     ↔️ Text overflows by ${overflow.toFixed(2)}px (${((overflow / width) * 100).toFixed(1)}%)`
+                  `     ↔️ Text overflows by ${overflow.toFixed(2)}px (${(
+                    (overflow / width) *
+                    100
+                  ).toFixed(1)}%)`
                 );
               }
 
@@ -595,7 +676,9 @@ export const replacePlaceholdersInPDF = async (
 
     // Log warnings summary
     if (warnings.length > 0) {
-      console.log("\n⚠️ ═══════════════════════════════════════════════════════");
+      console.log(
+        "\n⚠️ ═══════════════════════════════════════════════════════"
+      );
       console.log(`⚠️ WARNINGS: ${warnings.length} field(s) with issues`);
       warnings.forEach((w, i) => {
         console.log(`   ${i + 1}. "${w.field}"`);

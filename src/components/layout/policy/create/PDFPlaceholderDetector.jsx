@@ -158,60 +158,17 @@ export const extractTextFromPDF = async (file) => {
                         continue;
                     }
 
-                    // ✅ FLEXIBLE RULE: Allow spaces between separators and (number)
-                    //    Valid: "______(1)_" or "_____ (13)______" (space before/after OK)
-                    //    Strategy: Scan backward/forward to find separator (. or _)
-                    //    Stop at: letter or start/end of text
+                    // ✅ RELAXED RULE: Accept if separators found in adjacent items (via scan)
+                    // No need to check within current item text, since scan already validates separators around
 
-                    const matchStart = numberedMatch.index;
-                    const matchEnd = matchStart + numberedMatch[0].length;
-
-                    // Scan backward to find a separator (. or _)
-                    let foundBefore = false;
-                    for (let j = matchStart - 1; j >= 0; j--) {
-                        const char = text[j];
-                        if (char === '.' || char === '_') {
-                            foundBefore = true;
-                            break;
-                        }
-                        // Stop if we hit a letter (not a separator)
-                        if (/[a-zA-ZÀ-ỹ]/.test(char)) {
-                            break;
-                        }
-                    }
-
-                    // Scan forward to find a separator (. or _)
-                    let foundAfter = false;
-                    for (let j = matchEnd; j < text.length; j++) {
-                        const char = text[j];
-                        if (char === '.' || char === '_') {
-                            foundAfter = true;
-                            break;
-                        }
-                        // Stop if we hit a letter (not a separator)
-                        if (/[a-zA-ZÀ-ỹ]/.test(char)) {
-                            break;
-                        }
-                    }
-
-                    if (!foundBefore || !foundAfter) {
-                        console.log(`⏭️ Skipping (${num}) - no separator found before/after`);
-                        console.log(`   foundBefore: ${foundBefore}, foundAfter: ${foundAfter}`);
-                        console.log(`   text: "${text}"`);
-                        continue;
-                    }
-
-                    // ✅ Valid! Extract placeholder coordinates
-                    // ✅ CRITICAL: pdf.js coordinate system
-                    // transform[4] = X coordinate (distance from LEFT edge)
-                    // transform[5] = Y coordinate (distance from BOTTOM edge - already in pdf-lib coordinate!)
-                    //
-                    // IMPORTANT: pdf.js transform[5] is NOT top-left, it's BASELINE!
-                    // This means it's already in bottom-left coordinate system like pdf-lib!
-
+                    // Initialize scan variables
                     let x = item.transform[4];
                     let y = item.transform[5]; // ✅ This is BASELINE Y in bottom-left coordinates
                     let width = item.width || 0;
+                    let startIdx = i;
+                    let startX = x;
+                    let endIdx = i;
+                    let endX = x + width;
 
                     // Get font size from text item
                     const fontSize = Math.abs(item.transform[0]) || 12;
@@ -221,9 +178,7 @@ export const extractTextFromPDF = async (file) => {
                     // We need TWO values:
                     // 1. firstUnderscoreX - for white background (closest to number)
                     // 2. startX - for full width calculation (farthest from number)
-                    let startIdx = i;
-                    let startX = x;
-                    let firstUnderscoreX = x; // Track first underscore found (closest to number)
+                    let firstUnderscoreX = item.transform[4]; // Track first underscore found (closest to number)
                     let foundFirstUnderscore = false;
 
                     console.log(`   🔍 Starting backward scan from item ${i}: "${text}"`);
@@ -240,17 +195,17 @@ export const extractTextFromPDF = async (file) => {
                             continue;
                         }
 
-                        // If this is ONLY dots/underscores (pure separator), include it
-                        if (/^[._]+$/.test(scanText)) {
+                        // If this is ONLY dots/underscores with optional spaces (separator), include it
+                        if (/^\s*[._]+\s*$/.test(scanText)) {
                             const scanX = scanItem.transform[4];
 
-                            console.log(`      ✅ → Pure separator, including it`);
+                            console.log(`      ✅ → Separator with spaces, including it`);
 
                             // First underscore found (closest to number) - use for background
                             if (!foundFirstUnderscore) {
                                 firstUnderscoreX = scanX;
                                 foundFirstUnderscore = true;
-                                console.log(`      🎯 First underscore at x=${firstUnderscoreX.toFixed(2)} (for background)`);
+                                console.log(`      🎯 First separator at x=${firstUnderscoreX.toFixed(2)} (for background)`);
                             }
 
                             // Keep updating startX for full width
@@ -265,10 +220,14 @@ export const extractTextFromPDF = async (file) => {
                         }
                     }
 
+                    // Skip if no separators found in backward scan
+                    if (startIdx === i) {
+                        console.log(`⏭️ Skipping (${num}) - no separators found before`);
+                        continue;
+                    }
+
                     // ✨ IMPROVED: Scan forwards to find ALL underscores/dots (skip spaces)
-                    let endIdx = i;
-                    let endX = x + width;
-                    let lastUnderscoreEndX = x + width; // Track last underscore found (closest to number)
+                    let lastUnderscoreEndX = item.transform[4] + (item.width || 0); // Track last underscore found (closest to number)
                     let foundLastUnderscore = false;
 
                     console.log(`   🔍 Starting forward scan from item ${i}: "${text}"`);
@@ -285,18 +244,18 @@ export const extractTextFromPDF = async (file) => {
                             continue;
                         }
 
-                        // If this is ONLY dots/underscores (pure separator), include it
-                        if (/^[._]+$/.test(scanText)) {
+                        // If this is ONLY dots/underscores with optional spaces (separator), include it
+                        if (/^\s*[._]+\s*$/.test(scanText)) {
                             const scanWidth = scanItem.width || 0;
                             const scanEndX = scanItem.transform[4] + scanWidth;
 
-                            console.log(`      ✅ → Pure separator, including it`);
+                            console.log(`      ✅ → Separator with spaces, including it`);
 
                             // First underscore found after number (closest to number) - use for background
                             if (!foundLastUnderscore) {
                                 lastUnderscoreEndX = scanEndX;
                                 foundLastUnderscore = true;
-                                console.log(`      🎯 Last underscore ends at x=${lastUnderscoreEndX.toFixed(2)} (for background)`);
+                                console.log(`      🎯 Last separator ends at x=${lastUnderscoreEndX.toFixed(2)} (for background)`);
                             }
 
                             // Keep updating endX for full width
@@ -309,6 +268,12 @@ export const extractTextFromPDF = async (file) => {
                             console.log(`      📊 Final endX = ${endX.toFixed(2)}, endIdx = ${endIdx}`);
                             break;
                         }
+                    }
+
+                    // Skip if no separators found in forward scan
+                    if (endIdx === i) {
+                        console.log(`⏭️ Skipping (${num}) - no separators found after`);
+                        continue;
                     }
 
                     // ✨ Calculate full width from all scanned items
@@ -360,7 +325,7 @@ export const extractTextFromPDF = async (file) => {
                     console.log(`   📍 Coordinates: x=${x.toFixed(2)}, y=${y.toFixed(2)} (BASELINE in bottom-left system)`);
                     console.log(`   📏 Dimensions: width=${width.toFixed(2)}, height=${height.toFixed(2)}, fontSize=${fontSize.toFixed(2)}`);
                     console.log(`   📄 Page: ${pageNum}`);
-                    console.log(`   ✅ Validation: foundBefore=${foundBefore}, foundAfter=${foundAfter}`);
+                    console.log(`   ✅ Validation: separators found in adjacent items (startIdx=${startIdx}, endIdx=${endIdx})`);
                 } // End of matches loop
             }
         }

@@ -178,15 +178,16 @@ const embedVietnameseFont = async (pdfDoc) => {
   console.log("📦 Font embedding started...");
 
   try {
-    // ✅ PRODUCTION: Load Roboto font that supports Vietnamese characters
-    console.log("📦 Loading Vietnamese font (Roboto Regular)...");
+    // ✅ PRODUCTION: Load full Vietnamese font (TTF for complete charset)
+    console.log("📦 Loading Vietnamese font (Noto Sans - Full charset)...");
 
     // ✅ Check cache first
     if (cachedFontBytes) {
       console.log("⚡ Using cached font bytes (no download needed)");
     } else {
-      // Use Google Fonts CDN - Roboto Regular supports full Vietnamese charset
-      const fontUrl = "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2";
+      // Use CDN with FULL Vietnamese charset (not subset)
+      // Noto Sans has complete Vietnamese Unicode support
+      const fontUrl = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf";
 
       console.log("🌐 Fetching font from:", fontUrl);
       const fontResponse = await fetch(fontUrl);
@@ -197,6 +198,7 @@ const embedVietnameseFont = async (pdfDoc) => {
 
       cachedFontBytes = await fontResponse.arrayBuffer();
       console.log(`✅ Font downloaded & cached: ${(cachedFontBytes.byteLength / 1024).toFixed(2)} KB`);
+      console.log(`✅ Using Noto Sans (full charset with all Vietnamese characters)`);
     }
 
     // ✅ CRITICAL: pdf-lib can embed .ttf directly without fontkit for basic fonts
@@ -234,15 +236,21 @@ const embedVietnameseFont = async (pdfDoc) => {
       }
 
       customFont = await pdfDoc.embedFont(cachedFontBytes);
-      console.log("✅ Roboto TTF font embedded successfully (no fontkit needed)");
+      console.log("✅ Noto Sans TTF embedded successfully");
     }
 
-    // Test font with Vietnamese characters
+    // Test font with ALL Vietnamese characters (including problematic ones)
     try {
-      const testText = "Họ và tên: Nguyễn Văn A";
+      const testText = "ăắằẳẵặ êếềểễệ ôốồổỗộ ơớờởỡợ ưứừửữự đĐ";
       const testWidth = customFont.widthOfTextAtSize(testText, 12);
-      console.log(`✅ Font test (Vietnamese): "${testText}"`);
+      console.log(`✅ Font test (Vietnamese - all diacritics): "${testText}"`);
       console.log(`   Width: ${testWidth.toFixed(2)}px at 12pt`);
+
+      // Test specific problem case
+      const problemText = "chữ khác";
+      const problemWidth = customFont.widthOfTextAtSize(problemText, 12);
+      console.log(`✅ Font test (problem case): "${problemText}"`);
+      console.log(`   Width: ${problemWidth.toFixed(2)}px at 12pt`);
     } catch (err) {
       console.error("❌ Font test failed:", err.message);
     }
@@ -361,20 +369,54 @@ export const replacePlaceholdersInPDF = async (
               )} (no transformation needed)`
             );
 
-            // ✨ SMART REPLACEMENT STRATEGY (v3):
-            // 1. Dynamic underscores: Adjust underscore count based on text length
-            // 2. Adaptive font scaling: Scale font if text too long
-            // 3. Centered alignment: Always center text on placeholder
-            // 4. White background: Cover entire original placeholder
+            // ✨ SMART REPLACEMENT STRATEGY (v3 - simplified):
+            // 1. Use placeholder width from detector (CORRECT width)
+            // 2. Scale text to fit if needed
+            // 3. Center text in placeholder
+            // 4. Draw white rectangle to cover original
 
-            // Step 1: Use smart algorithm to calculate optimal replacement
-            const optimal = calculateOptimalReplacement(
-              oldText,
-              newText,
-              width,
-              font,
-              fontSize
-            );
+            console.log(`     📐 Placeholder analysis:`);
+            console.log(`        Detected width: ${width.toFixed(2)}px (from detector)`);
+            console.log(`        Using this width as-is (no oldText calculation)`);
+
+            // Step 1: Calculate if text fits at current font size
+            let finalText = newText;
+            let finalFontSize = fontSize;
+            let textWidth = font.widthOfTextAtSize(newText, fontSize);
+
+            console.log(`     📏 Text measurement:`);
+            console.log(`        Text: "${newText}"`);
+            console.log(`        Width at ${fontSize}pt: ${textWidth.toFixed(2)}px`);
+            console.log(`        Available width: ${width.toFixed(2)}px`);
+
+            // Step 2: Scale down if text doesn't fit
+            if (textWidth > width) {
+              const scaleFactor = Math.max(0.7, width / textWidth);
+              finalFontSize = Math.max(8, fontSize * scaleFactor);
+              textWidth = font.widthOfTextAtSize(newText, finalFontSize);
+
+              console.log(`     ⚠️ Text too wide, scaling down:`);
+              console.log(`        Scale factor: ${(scaleFactor * 100).toFixed(0)}%`);
+              console.log(`        New font size: ${finalFontSize.toFixed(1)}pt`);
+              console.log(`        New width: ${textWidth.toFixed(2)}px`);
+
+              if (textWidth > width) {
+                warnings.push({
+                  field: newText,
+                  original: oldText,
+                  warning: "Text may overflow placeholder boundaries",
+                  strategy: "scale_font"
+                });
+              }
+            } else {
+              console.log(`     ✅ Text fits at original font size`);
+            }
+
+            const optimal = {
+              pattern: finalText,
+              fontSize: finalFontSize,
+              strategy: textWidth > width ? "scale_font" : "keep_original"
+            };
 
             console.log(`     ✨ Smart Replacement Result:`);
             console.log(`        Strategy: ${optimal.strategy}`);
@@ -382,23 +424,11 @@ export const replacePlaceholdersInPDF = async (
             console.log(`        Font size: ${optimal.fontSize.toFixed(1)}pt`);
             if (optimal.warning) {
               console.log(`        ⚠️ Warning: ${optimal.warning}`);
-              // Collect warning for user feedback
-              warnings.push({
-                field: newText,
-                original: oldText,
-                warning: optimal.warning,
-                strategy: optimal.strategy,
-              });
             }
-
-            // Step 2: Calculate dimensions for the optimized pattern
-            const finalText = optimal.pattern;
-            const finalFontSize = optimal.fontSize;
-            const finalTextWidth = font.widthOfTextAtSize(finalText, finalFontSize);
 
             console.log(`     📏 Final measurements:`);
             console.log(`        Text: "${finalText}"`);
-            console.log(`        Width: ${finalTextWidth.toFixed(2)}px`);
+            console.log(`        Width: ${textWidth.toFixed(2)}px`);
             console.log(`        Font size: ${finalFontSize.toFixed(1)}pt`);
 
             // Step 3: Calculate center of placeholder
@@ -430,7 +460,7 @@ export const replacePlaceholdersInPDF = async (
             );
 
             // Step 5: Calculate centered text position
-            const textX = placeholderCenterX - finalTextWidth / 2;
+            const textX = placeholderCenterX - textWidth / 2;
 
             console.log(`     📐 Text positioning:`);
             console.log(`        Center X: ${placeholderCenterX.toFixed(2)}`);
@@ -456,7 +486,7 @@ export const replacePlaceholdersInPDF = async (
               );
               console.log(
                 `     🎯 Text range: ${textX.toFixed(2)} → ${(
-                  textX + finalTextWidth
+                  textX + textWidth
                 ).toFixed(2)}`
               );
               console.log(
@@ -466,10 +496,10 @@ export const replacePlaceholdersInPDF = async (
               );
 
               // Check fit
-              if (finalTextWidth <= width) {
+              if (textWidth <= width) {
                 console.log(`     ✅ Text fits perfectly within placeholder!`);
               } else {
-                const overflow = finalTextWidth - width;
+                const overflow = textWidth - width;
                 console.log(
                   `     ↔️ Text overflows by ${overflow.toFixed(2)}px (${((overflow / width) * 100).toFixed(1)}%)`
                 );

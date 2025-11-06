@@ -144,8 +144,8 @@ export const extractTextFromPDF = async (file) => {
                 // 🔍 DEBUG: Log ALL items containing "1", "2", "(", ")", or "tên" on page 1
                 if (pageNum === 1) {
                     const hasTarget = text.includes('1') || text.includes('2') ||
-                                     text.includes('(') || text.includes(')') ||
-                                     text.includes('tên') || text.includes('…');
+                        text.includes('(') || text.includes(')') ||
+                        text.includes('tên') || text.includes('…');
 
                     if (hasTarget) {
                         const y = item.transform[5].toFixed(1);

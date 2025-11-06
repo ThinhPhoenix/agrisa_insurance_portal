@@ -123,209 +123,116 @@ export const extractTextFromPDF = async (file) => {
                 const text = item.str;
                 allText += text + ' ';
 
-                // Check if this is a numbered placeholder: (1), (2), etc.
-                // Accept formats:
-                // - Standalone: (1)
-                // - With dots: .(1). or ..(1).. or ...(1)...
-                // - With underscores: _(1)_ or ___(1)___
-                // - Mixed: ._(1)_. or _.(1)._
-
-                // ✅ Find ALL (number) patterns in this item using matchAll
-                // Example: "i: ______(11)_____ Email: _____(12)______" → finds both (11) and (12)
+                // ✅ SIMPLE & ROBUST: Find (number) with at least 3 separators on same Y coordinate
+                // Support spaces inside: ( 1), (2 ), ( 3 )
                 const regex = /\(\s*(\d+)\s*\)/g;
                 const matches = [...text.matchAll(regex)];
 
-                // Check context items (for logging)
-                const prevItem = i > 0 ? items[i - 1] : null;
-                const nextItem = i < items.length - 1 ? items[i + 1] : null;
-                const prevText = prevItem?.str || '';
-                const nextText = nextItem?.str || '';
-
-                // Process each (number) found in this item
                 for (const numberedMatch of matches) {
                     const num = numberedMatch[1];
                     const numValue = parseInt(num);
 
-                    // ✅ CRITICAL: Skip if we've already seen this number
+                    // Skip duplicates
                     if (seenNumbers.has(numValue)) {
-                        console.log(`⏭️ Skipping (${num}) - already added to placeholders`);
+                        console.log(`⏭️ Skip (${num}) - duplicate`);
                         continue;
                     }
 
-                    // Validate: Only accept numbers <= 100 (avoid years like 2021)
+                    // Skip large numbers (years)
                     if (numValue > 100) {
-                        console.log(`⏭️ Skipping (${num}) - looks like a year`);
+                        console.log(`⏭️ Skip (${num}) - too large`);
                         continue;
                     }
 
-                    // ✅ RELAXED RULE: Accept if separators found in adjacent items (via scan)
-                    // No need to check within current item text, since scan already validates separators around
+                    // Get current item position
+                    const x = item.transform[4];
+                    const y = item.transform[5];
+                    const width = item.width || 0;
+                    const fontSize = Math.abs(item.transform[0]) || 12;
+                    const height = fontSize * 1.2;
 
-                    // Initialize scan variables
-                    let x = item.transform[4];
-                    let y = item.transform[5]; // ✅ This is BASELINE Y in bottom-left coordinates
-                    let width = item.width || 0;
-                    let startIdx = i;
+                    // ✅ EXPANDED SEARCH: Look for separators in wider X range (not just Y)
+                    // This handles cases where `( 1)` is in separate item from dots/underscores
+                    const Y_TOLERANCE = 5; // Same line tolerance (increased to 5 to handle Y variations)
+                    const X_RANGE = 150; // Look 150px before and after
+
+                    const nearbyItems = [];
+                    for (let j = 0; j < items.length; j++) {
+                        const checkItem = items[j];
+                        const checkX = checkItem.transform[4];
+                        const checkY = checkItem.transform[5];
+
+                        // Include items on same line (Y) AND within X range
+                        const sameY = Math.abs(checkY - y) <= Y_TOLERANCE;
+                        const nearX = checkX >= (x - X_RANGE) && checkX <= (x + width + X_RANGE);
+
+                        if (sameY && nearX) {
+                            nearbyItems.push(checkItem);
+                        }
+                    }
+
+                    // Sort by X position to maintain order
+                    nearbyItems.sort((a, b) => a.transform[4] - b.transform[4]);
+
+                    // Build combined text and calculate bounds
+                    let combinedText = '';
                     let startX = x;
-                    let endIdx = i;
                     let endX = x + width;
 
-                    // Get font size from text item
-                    const fontSize = Math.abs(item.transform[0]) || 12;
-                    let height = fontSize * 1.2; // Text height ≈ fontSize * 1.2
+                    for (const nearItem of nearbyItems) {
+                        const nearText = nearItem.str || '';
+                        combinedText += nearText;
 
-                    // ✨ IMPROVED: Scan backwards to find ALL underscores/dots (skip spaces)
-                    // We need TWO values:
-                    // 1. firstUnderscoreX - for white background (closest to number)
-                    // 2. startX - for full width calculation (farthest from number)
-                    let firstUnderscoreX = item.transform[4]; // Track first underscore found (closest to number)
-                    let foundFirstUnderscore = false;
+                        const itemX = nearItem.transform[4];
+                        const itemWidth = nearItem.width || 0;
 
-                    console.log(`   🔍 Starting backward scan from item ${i}: "${text}"`);
-
-                    for (let scanIdx = i - 1; scanIdx >= 0; scanIdx--) {
-                        const scanItem = items[scanIdx];
-                        const scanText = scanItem?.str || '';
-
-                        console.log(`   👀 Scanning item ${scanIdx}: "${scanText}" (length=${scanText.length})`);
-
-                        // Skip whitespace items
-                        if (/^\s*$/.test(scanText)) {
-                            console.log(`      ⏭️ → Whitespace, continuing...`);
-                            continue;
-                        }
-
-                        // If this is ONLY dots/underscores with optional spaces (separator), include it
-                        if (/^\s*[._]+\s*$/.test(scanText)) {
-                            const scanX = scanItem.transform[4];
-
-                            console.log(`      ✅ → Separator with spaces, including it`);
-
-                            // First underscore found (closest to number) - use for background
-                            if (!foundFirstUnderscore) {
-                                firstUnderscoreX = scanX;
-                                foundFirstUnderscore = true;
-                                console.log(`      🎯 First separator at x=${firstUnderscoreX.toFixed(2)} (for background)`);
-                            }
-
-                            // Keep updating startX for full width
-                            startX = scanX;
-                            startIdx = scanIdx;
-                            console.log(`      📍 Updated startX to ${startX.toFixed(2)}`);
-                        } else {
-                            // Hit ANY other text (label, mixed content, etc.) → STOP
-                            console.log(`      🛑 → Non-separator text: "${scanText}", STOPPING scan`);
-                            console.log(`      📊 Final startX = ${startX.toFixed(2)}, startIdx = ${startIdx}`);
-                            break;
-                        }
+                        if (itemX < startX) startX = itemX;
+                        if (itemX + itemWidth > endX) endX = itemX + itemWidth;
                     }
 
-                    // Skip if no separators found in backward scan
-                    if (startIdx === i) {
-                        console.log(`⏭️ Skipping (${num}) - no separators found before`);
+                    // Count separators (. or _) in combined text
+                    const separatorMatches = combinedText.match(/[._]/g);
+                    const separatorCount = separatorMatches ? separatorMatches.length : 0;
+
+                    console.log(`🔍 (${num}): text="${combinedText.substring(0, 120)}", seps=${separatorCount}`);
+                    console.log(`   📍 Position: x=${x.toFixed(2)}, y=${y.toFixed(2)}, page=${pageNum}`);
+                    console.log(`   📦 Found ${nearbyItems.length} nearby items within X±${X_RANGE}, Y±${Y_TOLERANCE}`);
+
+                    // ✅ FLEXIBLE VALIDATION: Accept if:
+                    // 1. >= 3 separators total, OR
+                    // 2. Has pattern of 2+ consecutive separators before/after
+                    const hasPattern = /[._]{2,}/.test(combinedText);
+                    const isValid = separatorCount >= 3 || hasPattern;
+
+                    if (!isValid) {
+                        console.log(`   ⏭️ Skip - seps=${separatorCount}, hasPattern=${hasPattern}`);
                         continue;
                     }
 
-                    // ✨ IMPROVED: Scan forwards to find ALL underscores/dots (skip spaces)
-                    let lastUnderscoreEndX = item.transform[4] + (item.width || 0); // Track last underscore found (closest to number)
-                    let foundLastUnderscore = false;
-
-                    console.log(`   🔍 Starting forward scan from item ${i}: "${text}"`);
-
-                    for (let scanIdx = i + 1; scanIdx < items.length; scanIdx++) {
-                        const scanItem = items[scanIdx];
-                        const scanText = scanItem?.str || '';
-
-                        console.log(`   👀 Scanning item ${scanIdx}: "${scanText}" (length=${scanText.length})`);
-
-                        // Skip whitespace items
-                        if (/^\s*$/.test(scanText)) {
-                            console.log(`      ⏭️ → Whitespace, continuing...`);
-                            continue;
-                        }
-
-                        // If this is ONLY dots/underscores with optional spaces (separator), include it
-                        if (/^\s*[._]+\s*$/.test(scanText)) {
-                            const scanWidth = scanItem.width || 0;
-                            const scanEndX = scanItem.transform[4] + scanWidth;
-
-                            console.log(`      ✅ → Separator with spaces, including it`);
-
-                            // First underscore found after number (closest to number) - use for background
-                            if (!foundLastUnderscore) {
-                                lastUnderscoreEndX = scanEndX;
-                                foundLastUnderscore = true;
-                                console.log(`      🎯 Last separator ends at x=${lastUnderscoreEndX.toFixed(2)} (for background)`);
-                            }
-
-                            // Keep updating endX for full width
-                            endX = scanEndX;
-                            endIdx = scanIdx;
-                            console.log(`      📍 Updated endX to ${endX.toFixed(2)}`);
-                        } else {
-                            // Hit non-separator, non-space text → stop
-                            console.log(`      🛑 → Non-separator text: "${scanText}", STOPPING scan`);
-                            console.log(`      📊 Final endX = ${endX.toFixed(2)}, endIdx = ${endIdx}`);
-                            break;
-                        }
-                    }
-
-                    // Skip if no separators found in forward scan
-                    if (endIdx === i) {
-                        console.log(`⏭️ Skipping (${num}) - no separators found after`);
-                        continue;
-                    }
-
-                    // ✨ Calculate full width from all scanned items
+                    // Calculate full width
                     const fullWidth = endX - startX;
-                    console.log(`   📐 Full width: ${fullWidth.toFixed(2)}px (from x=${startX.toFixed(2)} to x=${endX.toFixed(2)})`);
-
-                    // ✨ CRITICAL: Background must ONLY cover the original item (not scan result)
-                    // Using fullWidth causes background to cover content outside field boundaries
-                    // Solution: Use ONLY the original item's x and width
-                    const backgroundX = x;      // Original item X
-                    const backgroundWidth = width; // Original item width
-                    console.log(`   🎨 Background (ITEM ONLY): x=${backgroundX.toFixed(2)}, width=${backgroundWidth.toFixed(2)}px`);
-                    console.log(`   💡 Using original item dimensions to avoid covering surrounding content`);
-
-                    // ✨ Build fullText from all scanned items (for underscore preservation)
-                    let fullText = '';
-                    for (let idx = startIdx; idx <= endIdx; idx++) {
-                        const itemText = items[idx]?.str || '';
-                        // Skip pure whitespace when building fullText
-                        if (!/^\s*$/.test(itemText)) {
-                            fullText += itemText;
-                        }
-                    }
-                    console.log(`   📝 Full text: "${fullText}"`);
 
                     placeholders.push({
                         id: `placeholder_${placeholders.length + 1}`,
-                        original: `(${num})`, // ✅ Show only "(1)", "(2)" in UI
-                        fullText: fullText,   // ✅ Store complete text like "______(1)______" for replacement
+                        original: `(${num})`,
+                        fullText: combinedText.trim(),
                         extractedKey: num,
                         type: 'numbered',
                         page: pageNum,
-                        x: startX,            // ✅ Full width start (for width calculation)
-                        y: y,                 // ✅ BASELINE Y (bottom-left coordinate system)
-                        width: fullWidth,     // ✅ Full width including all underscores
-                        backgroundX: backgroundX,        // ✅ Background start (only underscores, not label)
-                        backgroundWidth: backgroundWidth, // ✅ Background width (only underscores + number)
+                        x: startX,
+                        y: y,
+                        width: fullWidth,
+                        backgroundX: x,
+                        backgroundWidth: width,
                         height: height,
-                        fontSize: fontSize,   // ✅ Store fontSize for later use
+                        fontSize: fontSize,
                         position: allText.length,
                         mapped: false,
                         tagId: null,
                     });
 
-                    // ✅ Mark this number as seen
                     seenNumbers.add(numValue);
-
-                    console.log(`🎯 Found placeholder (${num}) in item: "${text.substring(0, 50)}..."`);
-                    console.log(`   📍 Coordinates: x=${x.toFixed(2)}, y=${y.toFixed(2)} (BASELINE in bottom-left system)`);
-                    console.log(`   📏 Dimensions: width=${width.toFixed(2)}, height=${height.toFixed(2)}, fontSize=${fontSize.toFixed(2)}`);
-                    console.log(`   📄 Page: ${pageNum}`);
-                    console.log(`   ✅ Validation: separators found in adjacent items (startIdx=${startIdx}, endIdx=${endIdx})`);
+                    console.log(`   ✅ ACCEPTED (${num}) [seps=${separatorCount}]`);
                 } // End of matches loop
             }
         }
@@ -337,15 +244,85 @@ export const extractTextFromPDF = async (file) => {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log(`📊 Total length: ${allText.length} characters`);
         console.log(`🎯 Placeholders from coordinate scan: ${placeholders.length}`);
-        console.log('✅ Using placeholders from coordinate scan (NO FALLBACK)');
-        console.log('💡 Fallback disabled to ensure coordinates are available');
+
+        // ✅ SMART FALLBACK: Find missing numbers in extracted text
+        console.log('\n🔍 Checking for missing placeholders...');
+        const foundNumbers = new Set(placeholders.map(p => parseInt(p.extractedKey)));
+        const missingNumbers = [];
+
+        // Find all (number) in text to determine expected range
+        const allNumberMatches = allText.matchAll(/\(\s*(\d+)\s*\)/g);
+        let maxNumber = 0;
+        for (const match of allNumberMatches) {
+            const num = parseInt(match[1]);
+            if (num > maxNumber && num <= 100) maxNumber = num;
+        }
+
+        // Check which numbers are missing
+        for (let i = 1; i <= maxNumber; i++) {
+            if (!foundNumbers.has(i)) {
+                missingNumbers.push(i);
+            }
+        }
+
+        console.log(`📊 Found: ${foundNumbers.size}, Expected: ${maxNumber}, Missing: [${missingNumbers.join(', ')}]`);
+
+        // ✅ FALLBACK for missing numbers: Find in text with relaxed validation
+        if (missingNumbers.length > 0) {
+            console.log(`\n🔧 FALLBACK: Searching for missing placeholders in text...`);
+
+            for (const missingNum of missingNumbers) {
+                const pattern = new RegExp(`[._ ]{2,}\\(\\s*${missingNum}\\s*\\)[._ ]{2,}`, 'g');
+                const match = pattern.exec(allText);
+
+                if (match) {
+                    console.log(`   ✅ Found (${missingNum}) in text at position ${match.index}`);
+
+                    // Estimate coordinates from nearby placeholders on same page
+                    let estimatedPage = 1;
+                    let estimatedX = 100;
+                    let estimatedY = 700;
+                    let estimatedFontSize = 10;
+
+                    // Try to find a nearby placeholder to copy coordinates from
+                    const nearbyPlaceholder = placeholders.find(p =>
+                        Math.abs(parseInt(p.extractedKey) - missingNum) <= 3
+                    );
+
+                    if (nearbyPlaceholder) {
+                        estimatedPage = nearbyPlaceholder.page;
+                        estimatedX = nearbyPlaceholder.x;
+                        estimatedY = nearbyPlaceholder.y + (missingNum - parseInt(nearbyPlaceholder.extractedKey)) * 20;
+                        estimatedFontSize = nearbyPlaceholder.fontSize;
+                        console.log(`   📍 Using nearby (${nearbyPlaceholder.extractedKey}) as reference`);
+                    }
+
+                    placeholders.push({
+                        id: `placeholder_${placeholders.length + 1}`,
+                        original: `(${missingNum})`,
+                        fullText: match[0].trim(),
+                        extractedKey: missingNum.toString(),
+                        type: 'numbered',
+                        page: estimatedPage,
+                        x: estimatedX,
+                        y: estimatedY,
+                        width: match[0].length * estimatedFontSize * 0.6,
+                        backgroundX: estimatedX,
+                        backgroundWidth: match[0].length * estimatedFontSize * 0.6,
+                        height: estimatedFontSize * 1.2,
+                        fontSize: estimatedFontSize,
+                        position: match.index,
+                        mapped: false,
+                        tagId: null,
+                        fallback: true, // Mark as fallback
+                    });
+
+                    console.log(`   ✅ Added (${missingNum}) via FALLBACK with estimated coordinates`);
+                }
+            }
+        }
 
         console.log('═══════════════════════════════════════════════════════\n');
-
-        // ❌ FALLBACK DISABLED: Tạo placeholders từ text sẽ KHÔNG có coordinates!
-        // Chỉ dùng placeholders từ coordinate scan ở trên
-        console.log('⚠️ FALLBACK disabled - only using coordinate-based detection');
-        console.log('💡 Reason: Fallback creates placeholders WITHOUT coordinates (x, y = null)');
 
         // If no placeholders found from coordinate scan, show warning
         if (placeholders.length === 0) {

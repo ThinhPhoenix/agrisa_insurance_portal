@@ -54,18 +54,40 @@ const FileUploadPreview = forwardRef(({
                 // Read current file
                 const arrayBuffer = await uploadedFile.arrayBuffer();
 
+                console.log('📊 ArrayBuffer size:', arrayBuffer.byteLength, 'bytes');
+                console.log('📊 ArrayBuffer type:', arrayBuffer.constructor.name);
+
+                // Validate arrayBuffer
+                if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+                    throw new Error('Invalid PDF file: ArrayBuffer is empty');
+                }
+
                 // Dynamic import pdf-lib (code splitting)
                 const { replacePlaceholdersInPDF } = await import('../../../../libs/pdf/pdfEditor');
 
                 // Apply replacements
-                const modifiedBytes = await replacePlaceholdersInPDF(arrayBuffer, replacements);
+                const result = await replacePlaceholdersInPDF(arrayBuffer, replacements);
+
+                // ✅ Extract pdfBytes from result object
+                const modifiedBytes = result.pdfBytes || result; // Backward compatibility
+                const warnings = result.warnings || [];
+
+                console.log('📊 Modified bytes size:', modifiedBytes.byteLength, 'bytes');
+                console.log('📊 Warnings:', warnings.length);
+
+                // Validate modifiedBytes
+                if (!modifiedBytes || modifiedBytes.byteLength === 0) {
+                    throw new Error('Invalid modified PDF: Bytes are empty');
+                }
 
                 // ⭐ OVERWRITE: Convert bytes to File object
                 const newFile = new File(
-                    [modifiedBytes],
+                    [modifiedBytes],  // ✅ Now correctly contains Uint8Array
                     uploadedFile.name,
                     { type: 'application/pdf' }
                 );
+
+                console.log('📄 New file size:', (newFile.size / 1024).toFixed(2), 'KB');
 
                 // ⭐ OVERWRITE: Create new blob URL first (BEFORE setState)
                 const newUrl = URL.createObjectURL(newFile);
@@ -542,8 +564,8 @@ const FileUploadPreview = forwardRef(({
                                 </div>
                             ) : (
                                 <iframe
-                                    key={fileUrl}
-                                    src={fileUrl}
+                                    key={`${fileUrl}-${Date.now()}`}
+                                    src={`${fileUrl}#toolbar=0`}
                                     style={{
                                         width: '100%',
                                         height: '100%',

@@ -118,12 +118,144 @@ export const extractTextFromPDF = async (file) => {
             // Process each text item
             const items = textContent.items;
 
+            // 🔍 DEBUG: Log all items on page 1 to find where (1) is
+            if (pageNum === 1) {
+                console.log(`\n🔍 ═══ DEBUGGING PAGE 1 - FIRST 60 ITEMS ═══`);
+                for (let debugIdx = 0; debugIdx < Math.min(items.length, 60); debugIdx++) {
+                    const debugItem = items[debugIdx];
+                    const debugText = debugItem?.str || '';
+                    const debugX = debugItem.transform[4];
+                    const debugY = debugItem.transform[5];
+
+                    // Highlight items containing "(" or "1" or ")" or "tên" or dots
+                    if (debugText.includes('(') || debugText.includes('1') || debugText.includes(')') ||
+                        debugText.includes('tên') || /[._]{3,}/.test(debugText)) {
+                        console.log(`   🎯 [${debugIdx}]: "${debugText}" @ x=${debugX.toFixed(1)}, y=${debugY.toFixed(1)}`);
+                    }
+                }
+                console.log(`🔍 ═══════════════════════════════════════════\n`);
+            }
+
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const text = item.str;
                 allText += text + ' ';
 
-                // ✅ SIMPLE & ROBUST: Find (number) with at least 3 separators on same Y coordinate
+                // 🔍 DEBUG: Log ALL items containing "1", "2", "(", ")", or "tên" on page 1
+                if (pageNum === 1) {
+                    const hasTarget = text.includes('1') || text.includes('2') ||
+                                     text.includes('(') || text.includes(')') ||
+                                     text.includes('tên') || text.includes('…');
+
+                    if (hasTarget) {
+                        const y = item.transform[5].toFixed(1);
+                        console.log(`📌 [${i}] "${text}" @ x=${item.transform[4].toFixed(1)}, y=${y}, w=${(item.width || 0).toFixed(1)}`);
+                    }
+                }
+
+                // ✅ NEW: Handle SPLIT items like "(" + "1" + ")" in 3 separate items
+                // PDF.js sometimes splits (1) into 3 items: "(", "1", ")"
+                const isSingleDigit = /^\d+$/.test(text.trim());
+                if (isSingleDigit && text.trim().length <= 2) {
+                    const prevItem = i > 0 ? items[i - 1] : null;
+                    const nextItem = i < items.length - 1 ? items[i + 1] : null;
+
+                    if (prevItem && nextItem) {
+                        const prevText = prevItem.str || '';
+                        const nextText = nextItem.str || '';
+
+                        // Check if prev="(" and next=")"
+                        if (prevText.trim() === '(' && nextText.trim() === ')') {
+                            const numValue = parseInt(text.trim());
+
+                            console.log(`\n🎯 FOUND SPLIT (${numValue}): ["${prevText}", "${text}", "${nextText}"]`);
+
+                            // Skip if already processed
+                            if (seenNumbers.has(numValue)) {
+                                console.log(`⏭️ Skip (${numValue}) - duplicate`);
+                                continue;
+                            }
+
+                            if (numValue > 100) {
+                                console.log(`⏭️ Skip (${numValue}) - too large`);
+                                continue;
+                            }
+
+                            // Calculate position: from "(" to ")"
+                            const x = prevItem.transform[4];
+                            const y = item.transform[5];
+                            const endX = nextItem.transform[4] + (nextItem.width || 0);
+                            const width = endX - x;
+                            const fontSize = Math.abs(item.transform[0]) || 12;
+                            const height = fontSize * 1.2;
+
+                            // Scan for nearby separators
+                            const Y_TOLERANCE = 10;
+                            const X_RANGE = 300;
+
+                            const nearbyItems = [];
+                            for (let j = 0; j < items.length; j++) {
+                                const checkItem = items[j];
+                                const checkX = checkItem.transform[4];
+                                const checkY = checkItem.transform[5];
+                                const sameY = Math.abs(checkY - y) <= Y_TOLERANCE;
+                                const nearX = checkX >= (x - X_RANGE) && checkX <= (x + width + X_RANGE);
+                                if (sameY && nearX) nearbyItems.push(checkItem);
+                            }
+
+                            nearbyItems.sort((a, b) => a.transform[4] - b.transform[4]);
+
+                            // Build combined text
+                            let combinedText = '';
+                            let startX = x;
+                            let endX2 = endX;
+
+                            for (const nearItem of nearbyItems) {
+                                combinedText += nearItem.str || '';
+                                const itemX = nearItem.transform[4];
+                                const itemWidth = nearItem.width || 0;
+                                if (itemX < startX) startX = itemX;
+                                if (itemX + itemWidth > endX2) endX2 = itemX + itemWidth;
+                            }
+
+                            // Validate separators
+                            const separatorCount = (combinedText.match(/[._…]/g) || []).length;
+                            const normalizedText = combinedText.replace(/\s+/g, '').replace(/…/g, '...');
+                            const hasPattern = /[._]{2,}/.test(normalizedText);
+                            const isValid = separatorCount >= 2 || hasPattern;
+
+                            console.log(`🔍 (${numValue}): text="${combinedText.substring(0, 120)}", seps=${separatorCount}`);
+                            console.log(`   📍 Position: x=${x.toFixed(2)}, y=${y.toFixed(2)}, page=${pageNum}`);
+                            console.log(`   📦 Found ${nearbyItems.length} nearby items, isValid=${isValid}`);
+
+                            if (!isValid) {
+                                console.log(`   ⏭️ Skip - not enough separators`);
+                                continue;
+                            }
+
+                            const fullWidth = endX2 - startX;
+
+                            placeholders.push({
+                                id: `placeholder_${placeholders.length + 1}`,
+                                original: `(${numValue})`,
+                                fullText: combinedText.trim(),
+                                extractedKey: numValue.toString(),
+                                page: pageNum,
+                                x: startX,
+                                y: y,
+                                width: fullWidth,
+                                height: height,
+                                fontSize: fontSize
+                            });
+
+                            seenNumbers.add(numValue);
+                            console.log(`   ✅ ACCEPTED SPLIT (${numValue}) [seps=${separatorCount}]`);
+                            continue;
+                        }
+                    }
+                }
+
+                // ✅ ORIGINAL: Find (number) in single text item
                 // Support spaces inside: ( 1), (2 ), ( 3 )
                 const regex = /\(\s*(\d+)\s*\)/g;
                 const matches = [...text.matchAll(regex)];
@@ -131,6 +263,13 @@ export const extractTextFromPDF = async (file) => {
                 for (const numberedMatch of matches) {
                     const num = numberedMatch[1];
                     const numValue = parseInt(num);
+
+                    // ⚠️ DEBUG: Log when finding (1) or (2) specifically
+                    if (numValue === 1 || numValue === 2) {
+                        console.log(`\n🎯 FOUND (${num}) in item text: "${text}"`);
+                        console.log(`   📍 Item position: x=${item.transform[4].toFixed(2)}, y=${item.transform[5].toFixed(2)}`);
+                        console.log(`   📝 Full item text: "${text}" (has space in number: ${/\(\s+\d+\s+\)/.test(text)})`);
+                    }
 
                     // Skip duplicates
                     if (seenNumbers.has(numValue)) {
@@ -153,8 +292,8 @@ export const extractTextFromPDF = async (file) => {
 
                     // ✅ EXPANDED SEARCH: Look for separators in wider X range (not just Y)
                     // This handles cases where `( 1)` is in separate item from dots/underscores
-                    const Y_TOLERANCE = 5; // Same line tolerance (increased to 5 to handle Y variations)
-                    const X_RANGE = 150; // Look 150px before and after
+                    const Y_TOLERANCE = 10; // Same line tolerance (increased to 10 to handle more Y variations)
+                    const X_RANGE = 300; // Look 300px before and after (increased from 200 to cover more area)
 
                     const nearbyItems = [];
                     for (let j = 0; j < items.length; j++) {
@@ -190,22 +329,35 @@ export const extractTextFromPDF = async (file) => {
                         if (itemX + itemWidth > endX) endX = itemX + itemWidth;
                     }
 
-                    // Count separators (. or _) in combined text
-                    const separatorMatches = combinedText.match(/[._]/g);
+                    // Count separators: dots (. or … ellipsis Unicode U+2026), underscores (_)
+                    // Handle both regular dots and ellipsis characters commonly used in PDFs
+                    const separatorMatches = combinedText.match(/[._…]/g);
                     const separatorCount = separatorMatches ? separatorMatches.length : 0;
 
                     console.log(`🔍 (${num}): text="${combinedText.substring(0, 120)}", seps=${separatorCount}`);
                     console.log(`   📍 Position: x=${x.toFixed(2)}, y=${y.toFixed(2)}, page=${pageNum}`);
                     console.log(`   📦 Found ${nearbyItems.length} nearby items within X±${X_RANGE}, Y±${Y_TOLERANCE}`);
 
+                    // ✅ NORMALIZE: Remove spaces before validation to handle cases like ".... ..... (1) .... ....."
+                    // Spaces between separators break the pattern detection
+                    // Also normalize ellipsis to dots for consistent pattern matching
+                    const normalizedText = combinedText.replace(/\s+/g, '').replace(/…/g, '...');
+
                     // ✅ FLEXIBLE VALIDATION: Accept if:
-                    // 1. >= 3 separators total, OR
-                    // 2. Has pattern of 2+ consecutive separators before/after
-                    const hasPattern = /[._]{2,}/.test(combinedText);
-                    const isValid = separatorCount >= 3 || hasPattern;
+                    // 1. >= 2 separators total (reduced from 3), OR
+                    // 2. Has pattern of 2+ consecutive separators before/after (in normalized text)
+                    const hasPattern = /[._]{2,}/.test(normalizedText);
+                    const isValid = separatorCount >= 2 || hasPattern;
+
+                    // ⚠️ DEBUG: Extra logging for (1) and (2)
+                    if (numValue === 1 || numValue === 2) {
+                        console.log(`   🔍 DEBUG (${num}): separatorCount=${separatorCount}, hasPattern=${hasPattern}, isValid=${isValid}`);
+                        console.log(`   🔍 DEBUG (${num}): normalized="${normalizedText.substring(0, 100)}"`);
+                        console.log(`   🔍 DEBUG (${num}): combinedText length=${combinedText.length}, nearbyItems=${nearbyItems.length}`);
+                    }
 
                     if (!isValid) {
-                        console.log(`   ⏭️ Skip - seps=${separatorCount}, hasPattern=${hasPattern}`);
+                        console.log(`   ⏭️ Skip - seps=${separatorCount}, hasPattern=${hasPattern}, normalized="${normalizedText.substring(0, 80)}"`);
                         continue;
                     }
 
@@ -244,83 +396,6 @@ export const extractTextFromPDF = async (file) => {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log(`📊 Total length: ${allText.length} characters`);
         console.log(`🎯 Placeholders from coordinate scan: ${placeholders.length}`);
-
-        // ✅ SMART FALLBACK: Find missing numbers in extracted text
-        console.log('\n🔍 Checking for missing placeholders...');
-        const foundNumbers = new Set(placeholders.map(p => parseInt(p.extractedKey)));
-        const missingNumbers = [];
-
-        // Find all (number) in text to determine expected range
-        const allNumberMatches = allText.matchAll(/\(\s*(\d+)\s*\)/g);
-        let maxNumber = 0;
-        for (const match of allNumberMatches) {
-            const num = parseInt(match[1]);
-            if (num > maxNumber && num <= 100) maxNumber = num;
-        }
-
-        // Check which numbers are missing
-        for (let i = 1; i <= maxNumber; i++) {
-            if (!foundNumbers.has(i)) {
-                missingNumbers.push(i);
-            }
-        }
-
-        console.log(`📊 Found: ${foundNumbers.size}, Expected: ${maxNumber}, Missing: [${missingNumbers.join(', ')}]`);
-
-        // ✅ FALLBACK for missing numbers: Find in text with relaxed validation
-        if (missingNumbers.length > 0) {
-            console.log(`\n🔧 FALLBACK: Searching for missing placeholders in text...`);
-
-            for (const missingNum of missingNumbers) {
-                const pattern = new RegExp(`[._ ]{2,}\\(\\s*${missingNum}\\s*\\)[._ ]{2,}`, 'g');
-                const match = pattern.exec(allText);
-
-                if (match) {
-                    console.log(`   ✅ Found (${missingNum}) in text at position ${match.index}`);
-
-                    // Estimate coordinates from nearby placeholders on same page
-                    let estimatedPage = 1;
-                    let estimatedX = 100;
-                    let estimatedY = 700;
-                    let estimatedFontSize = 10;
-
-                    // Try to find a nearby placeholder to copy coordinates from
-                    const nearbyPlaceholder = placeholders.find(p =>
-                        Math.abs(parseInt(p.extractedKey) - missingNum) <= 3
-                    );
-
-                    if (nearbyPlaceholder) {
-                        estimatedPage = nearbyPlaceholder.page;
-                        estimatedX = nearbyPlaceholder.x;
-                        estimatedY = nearbyPlaceholder.y + (missingNum - parseInt(nearbyPlaceholder.extractedKey)) * 20;
-                        estimatedFontSize = nearbyPlaceholder.fontSize;
-                        console.log(`   📍 Using nearby (${nearbyPlaceholder.extractedKey}) as reference`);
-                    }
-
-                    placeholders.push({
-                        id: `placeholder_${placeholders.length + 1}`,
-                        original: `(${missingNum})`,
-                        fullText: match[0].trim(),
-                        extractedKey: missingNum.toString(),
-                        type: 'numbered',
-                        page: estimatedPage,
-                        x: estimatedX,
-                        y: estimatedY,
-                        width: match[0].length * estimatedFontSize * 0.6,
-                        backgroundX: estimatedX,
-                        backgroundWidth: match[0].length * estimatedFontSize * 0.6,
-                        height: estimatedFontSize * 1.2,
-                        fontSize: estimatedFontSize,
-                        position: match.index,
-                        mapped: false,
-                        tagId: null,
-                        fallback: true, // Mark as fallback
-                    });
-
-                    console.log(`   ✅ Added (${missingNum}) via FALLBACK with estimated coordinates`);
-                }
-            }
-        }
 
         console.log('═══════════════════════════════════════════════════════\n');
 

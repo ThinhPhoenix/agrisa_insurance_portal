@@ -52,8 +52,10 @@ const PlaceholderMappingPanel = ({
         }
     }, [tags]);
 
-    // Combined tags: Use localTags as fallback if parent tags empty
-    const effectiveTags = tags.length > 0 ? tags : localTags;
+    // Combined tags: Merge parent tags with local tags (local takes precedence for newly created ones)
+    const effectiveTags = [...(tags || []), ...localTags].filter((tag, index, arr) =>
+        arr.findIndex(t => t.id === tag.id) === index // Remove duplicates by id
+    );
 
     // Update stats khi mappings thay đổi
     useEffect(() => {
@@ -152,8 +154,12 @@ const PlaceholderMappingPanel = ({
             documentTags[tag.key] = tag.dataType || 'string';
         });
 
-        console.log('📋 Built document_tags:', documentTags);
-        return documentTags;
+        console.log('📋 Building document_tags:');
+        console.log('  - Total placeholders:', sortedPlaceholders.length);
+        console.log('  - Sorted placeholders:', sortedPlaceholders.map(p => p.original));
+        console.log('  - EffectiveTags count:', effectiveTags.length);
+        console.log('  - EffectiveTags:', effectiveTags.map(t => ({ id: t.id, key: t.key })));
+        console.log('  - Mappings:', mappings);
     };
 
     // ✅ Apply mapping to PDF - NEW
@@ -228,6 +234,17 @@ const PlaceholderMappingPanel = ({
         const result = await filePreviewRef.current.applyReplacements(replacements);
 
         if (result.success) {
+            // ✅ Check modified PDF size
+            const modifiedSizeMB = result.bytes ? (result.bytes.byteLength / (1024 * 1024)).toFixed(2) : 0;
+            console.log(`📄 Modified PDF size: ${modifiedSizeMB} MB`);
+
+            if (result.bytes && result.bytes.byteLength > 50 * 1024 * 1024) { // 50MB limit
+                message.warning({
+                    content: `⚠️ PDF sau chỉnh sửa có kích thước lớn (${modifiedSizeMB} MB). Có thể gây lỗi khi gửi. Hãy thử compress PDF gốc trước khi upload.`,
+                    duration: 8
+                });
+            }
+
             message.success({
                 content: `✅ Đã thay thế ${replacements.length} placeholders trong PDF!`,
                 duration: 5

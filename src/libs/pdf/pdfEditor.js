@@ -9,6 +9,166 @@
 
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
+// ✅ Global font cache to avoid re-downloading font on every PDF modification
+let cachedFontBytes = null;
+let cachedFontkitModule = null;
+
+/**
+ * ✨ SMART REPLACEMENT ALGORITHM
+ * Calculate optimal replacement pattern with dynamic underscores and adaptive font scaling
+ *
+ * @param {string} originalText - Original placeholder text (e.g., "____(1)____")
+ * @param {string} newText - New text to replace (e.g., "họ và tên")
+ * @param {number} placeholderWidth - Width of placeholder in PDF units
+ * @param {PDFFont} font - Font object from pdf-lib
+ * @param {number} fontSize - Original font size
+ * @returns {Object} - Optimal replacement configuration
+ */
+const calculateOptimalReplacement = (
+  originalText,
+  newText,
+  placeholderWidth,
+  font,
+  fontSize
+) => {
+  console.log("\n🧮 ═══════════════════════════════════════════════════════");
+  console.log("🧮 SMART REPLACEMENT CALCULATION");
+  console.log("📊 Input:");
+  console.log(`   - Original: "${originalText}"`);
+  console.log(`   - New text: "${newText}"`);
+  console.log(`   - Placeholder width: ${placeholderWidth.toFixed(2)}px`);
+  console.log(`   - Font size: ${fontSize}pt`);
+
+  // Step 1: Count underscores in original placeholder
+  const underscoreMatch = originalText.match(/^(_+)/);
+  const leadingUnderscores = underscoreMatch ? underscoreMatch[1].length : 0;
+
+  // Assume symmetric underscores (e.g., ____(1)____ has 4 on each side)
+  const underscoresPerSide = leadingUnderscores;
+
+  console.log(`   - Underscores per side: ${underscoresPerSide}`);
+
+  // Step 2: Measure widths
+  const underscoreWidth = font.widthOfTextAtSize("_", fontSize);
+  const textWidth = font.widthOfTextAtSize(newText, fontSize);
+
+  console.log(`📏 Measurements (at ${fontSize}pt):`);
+  console.log(`   - Underscore width: ${underscoreWidth.toFixed(2)}px`);
+  console.log(`   - Text width: ${textWidth.toFixed(2)}px`);
+
+  // Step 3: Try to fit with original underscores
+  const originalUnderscoreSpace = underscoresPerSide * 2 * underscoreWidth;
+  const availableForText = placeholderWidth - originalUnderscoreSpace;
+
+  console.log(`💡 Strategy Analysis:`);
+  console.log(`   - Space for underscores (${underscoresPerSide}*2): ${originalUnderscoreSpace.toFixed(2)}px`);
+  console.log(`   - Available for text: ${availableForText.toFixed(2)}px`);
+  console.log(`   - Text needs: ${textWidth.toFixed(2)}px`);
+
+  if (textWidth <= availableForText) {
+    // ✅ CASE 1: Text fits perfectly with original underscores
+    const pattern = "_".repeat(underscoresPerSide) + newText + "_".repeat(underscoresPerSide);
+    console.log(`✅ SOLUTION: Keep original underscores`);
+    console.log(`   Pattern: "${pattern}"`);
+    console.log(`   Font size: ${fontSize}pt (no scaling)`);
+    console.log("═══════════════════════════════════════════════════════\n");
+
+    return {
+      pattern,
+      fontSize,
+      needsScaling: false,
+      underscoresPerSide,
+      strategy: "keep_original",
+    };
+  }
+
+  // Step 4: Try reducing underscores progressively
+  for (let u = underscoresPerSide - 1; u >= 1; u--) {
+    const underscoreSpace = u * 2 * underscoreWidth;
+    const available = placeholderWidth - underscoreSpace;
+
+    if (textWidth <= available) {
+      // ✅ CASE 2: Text fits with reduced underscores
+      const pattern = "_".repeat(u) + newText + "_".repeat(u);
+      console.log(`✅ SOLUTION: Reduce underscores to ${u} per side`);
+      console.log(`   Pattern: "${pattern}"`);
+      console.log(`   Font size: ${fontSize}pt (no scaling)`);
+      console.log(`   Space saved: ${(originalUnderscoreSpace - underscoreSpace).toFixed(2)}px`);
+      console.log("═══════════════════════════════════════════════════════\n");
+
+      return {
+        pattern,
+        fontSize,
+        needsScaling: false,
+        underscoresPerSide: u,
+        strategy: "reduce_underscores",
+      };
+    }
+  }
+
+  // Step 5: Use minimal underscores (1 per side) and scale font if needed
+  const minUnderscores = 1;
+  const minUnderscoreSpace = minUnderscores * 2 * underscoreWidth;
+  const maxAvailable = placeholderWidth - minUnderscoreSpace;
+
+  console.log(`⚠️ Text too long even with minimal underscores`);
+  console.log(`   Max available width (with 1 underscore each): ${maxAvailable.toFixed(2)}px`);
+  console.log(`   Text needs: ${textWidth.toFixed(2)}px`);
+
+  // Calculate required scaling
+  const scaleFactor = maxAvailable / textWidth;
+  const minFontSize = 8; // Absolute minimum for readability
+  const maxScaleFactor = 0.65; // Don't scale below 65% of original
+
+  const effectiveScaleFactor = Math.max(maxScaleFactor, scaleFactor);
+  const newFontSize = Math.max(minFontSize, fontSize * effectiveScaleFactor);
+
+  console.log(`🔽 Font Scaling Calculation:`);
+  console.log(`   - Scale factor needed: ${(scaleFactor * 100).toFixed(1)}%`);
+  console.log(`   - Effective scale factor: ${(effectiveScaleFactor * 100).toFixed(1)}%`);
+  console.log(`   - New font size: ${newFontSize.toFixed(1)}pt (min: ${minFontSize}pt)`);
+
+  // Recalculate widths with new font size
+  const scaledTextWidth = font.widthOfTextAtSize(newText, newFontSize);
+  const scaledUnderscoreWidth = font.widthOfTextAtSize("_", newFontSize);
+  const scaledTotalWidth = scaledTextWidth + (minUnderscores * 2 * scaledUnderscoreWidth);
+
+  console.log(`📐 Scaled measurements:`);
+  console.log(`   - Scaled text width: ${scaledTextWidth.toFixed(2)}px`);
+  console.log(`   - Scaled underscore width: ${scaledUnderscoreWidth.toFixed(2)}px`);
+  console.log(`   - Total width: ${scaledTotalWidth.toFixed(2)}px`);
+  console.log(`   - Placeholder width: ${placeholderWidth.toFixed(2)}px`);
+  console.log(`   - Fit: ${scaledTotalWidth <= placeholderWidth ? "✅ YES" : "⚠️ NO (will overflow)"}`);
+
+  const pattern = "_" + newText + "_";
+
+  // Check if scaling is sufficient
+  const warning = scaledTotalWidth > placeholderWidth
+    ? "Text will overflow placeholder boundaries"
+    : newFontSize < 10
+    ? "Font size reduced - may be harder to read"
+    : null;
+
+  if (warning) {
+    console.log(`⚠️ WARNING: ${warning}`);
+  }
+
+  console.log(`✅ SOLUTION: Minimal underscores + font scaling`);
+  console.log(`   Pattern: "${pattern}"`);
+  console.log(`   Font size: ${newFontSize.toFixed(1)}pt (scaled from ${fontSize}pt)`);
+  console.log("═══════════════════════════════════════════════════════\n");
+
+  return {
+    pattern,
+    fontSize: newFontSize,
+    needsScaling: true,
+    underscoresPerSide: minUnderscores,
+    strategy: "scale_font",
+    warning,
+    scaleFactor: effectiveScaleFactor,
+  };
+};
+
 /**
  * Load and embed Roboto font from Google Fonts (supports Vietnamese)
  * @param {PDFDocument} pdfDoc - PDF document
@@ -17,43 +177,88 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 const embedVietnameseFont = async (pdfDoc) => {
   console.log("📦 Font embedding started...");
 
-  // ✅ TEMPORARY FIX: Use built-in Helvetica first to test if text drawing works
-  // Once text drawing works, we can add custom Vietnamese font support
-  console.log("⚠️ Using Helvetica (built-in) for testing...");
-  console.log("⚠️ Vietnamese characters may not display correctly!");
-
-  const builtInFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  console.log("✅ Helvetica embedded (built-in font)");
-
-  // Test font
   try {
-    const testWidth = builtInFont.widthOfTextAtSize("Test ABC 123", 12);
-    console.log(`✅ Font test: width = ${testWidth.toFixed(2)}px at 12pt`);
-  } catch (err) {
-    console.error("❌ Font test failed:", err.message);
-  }
+    // ✅ PRODUCTION: Load Roboto font that supports Vietnamese characters
+    console.log("📦 Loading Vietnamese font (Roboto Regular)...");
 
-  return builtInFont;
+    // ✅ Check cache first
+    if (cachedFontBytes) {
+      console.log("⚡ Using cached font bytes (no download needed)");
+    } else {
+      // Use Google Fonts CDN - Roboto Regular supports full Vietnamese charset
+      const fontUrl = "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2";
 
-  /* TODO: Add Vietnamese font support later
-  try {
-    console.log("📦 Loading Vietnamese font (Roboto)...");
-    pdfDoc.registerFontkit(fontkit);
-    
-    const fontUrl = "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2";
-    const fontBytes = await fetch(fontUrl).then((res) => {
-      if (!res.ok) throw new Error(`Font fetch failed: ${res.status}`);
-      return res.arrayBuffer();
-    });
-    
-    const customFont = await pdfDoc.embedFont(fontBytes);
-    console.log("✅ Roboto font embedded successfully");
+      console.log("🌐 Fetching font from:", fontUrl);
+      const fontResponse = await fetch(fontUrl);
+
+      if (!fontResponse.ok) {
+        throw new Error(`Font fetch failed: ${fontResponse.status} ${fontResponse.statusText}`);
+      }
+
+      cachedFontBytes = await fontResponse.arrayBuffer();
+      console.log(`✅ Font downloaded & cached: ${(cachedFontBytes.byteLength / 1024).toFixed(2)} KB`);
+    }
+
+    // ✅ CRITICAL: pdf-lib can embed .ttf directly without fontkit for basic fonts
+    // For .woff2, we need to use fontkit (require installation: npm install @pdf-lib/fontkit)
+    // Let's try direct embedding first (works for .ttf)
+
+    // Try using fontkit if available
+    let customFont;
+    try {
+      // Dynamic import fontkit (if installed) - cache module
+      if (!cachedFontkitModule) {
+        cachedFontkitModule = await import('@pdf-lib/fontkit').then(m => m.default || m);
+        console.log("✅ Fontkit module loaded & cached");
+      }
+
+      pdfDoc.registerFontkit(cachedFontkitModule);
+      console.log("✅ Fontkit registered");
+
+      customFont = await pdfDoc.embedFont(cachedFontBytes);
+      console.log("✅ Roboto font embedded successfully with fontkit");
+    } catch (fontkitError) {
+      console.warn("⚠️ Fontkit not available, trying alternative font...");
+
+      // Fallback: Use .ttf version instead of .woff2 (works without fontkit)
+      // Check if we have cached TTF font
+      if (!cachedFontBytes || cachedFontBytes.byteLength < 100000) {
+        const ttfFontUrl = "https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Regular.ttf";
+        console.log("📦 Loading TTF font from:", ttfFontUrl);
+
+        const ttfResponse = await fetch(ttfFontUrl);
+        if (!ttfResponse.ok) throw new Error(`TTF font fetch failed: ${ttfResponse.status}`);
+
+        cachedFontBytes = await ttfResponse.arrayBuffer();
+        console.log("✅ TTF font downloaded & cached");
+      }
+
+      customFont = await pdfDoc.embedFont(cachedFontBytes);
+      console.log("✅ Roboto TTF font embedded successfully (no fontkit needed)");
+    }
+
+    // Test font with Vietnamese characters
+    try {
+      const testText = "Họ và tên: Nguyễn Văn A";
+      const testWidth = customFont.widthOfTextAtSize(testText, 12);
+      console.log(`✅ Font test (Vietnamese): "${testText}"`);
+      console.log(`   Width: ${testWidth.toFixed(2)}px at 12pt`);
+    } catch (err) {
+      console.error("❌ Font test failed:", err.message);
+    }
+
     return customFont;
+
   } catch (error) {
     console.error("❌ Failed to load custom font:", error);
-    return builtInFont; // Fallback to Helvetica
+    console.log("🔄 Falling back to Helvetica (built-in)...");
+
+    // Fallback: Use built-in Helvetica
+    const builtInFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    console.log("✅ Helvetica embedded (fallback - Vietnamese may not display correctly)");
+
+    return builtInFont;
   }
-  */
 };
 
 /**
@@ -102,6 +307,9 @@ export const replacePlaceholdersInPDF = async (
     });
 
     console.log("📄 Pages to modify:", Object.keys(byPage).join(", "));
+
+    // ✅ Collect warnings for user feedback
+    const warnings = [];
 
     // Apply replacements page by page
     for (const [pageNum, items] of Object.entries(byPage)) {
@@ -153,52 +361,57 @@ export const replacePlaceholdersInPDF = async (
               )} (no transformation needed)`
             );
 
-            // ✅ FINAL STRATEGY:
-            // 1. Che placeholder (1), (2), etc. bằng rectangle nhỏ
-            // 2. Text CENTERED: Tâm của text đè lên vị trí placeholder center
-            // 3. Text tràn 2 bên tự nhiên
-            // 4. Rectangle cao hơn một chút để thấy gạch chân ___
+            // ✨ SMART REPLACEMENT STRATEGY (v3):
+            // 1. Dynamic underscores: Adjust underscore count based on text length
+            // 2. Adaptive font scaling: Scale font if text too long
+            // 3. Centered alignment: Always center text on placeholder
+            // 4. White background: Cover entire original placeholder
 
-            // Step 1: Calculate text width
-            let textWidth;
-            try {
-              textWidth = font.widthOfTextAtSize(newText, fontSize);
-              console.log(
-                `     📏 Text width: ${textWidth.toFixed(2)}px (${
-                  newText.length
-                } chars)`
-              );
-            } catch (err) {
-              console.warn(
-                `     ⚠️ Failed to calculate text width:`,
-                err.message
-              );
-              textWidth = newText.length * fontSize * 0.6; // Fallback
-              console.log(
-                `     📏 Estimated text width: ${textWidth.toFixed(2)}px`
-              );
+            // Step 1: Use smart algorithm to calculate optimal replacement
+            const optimal = calculateOptimalReplacement(
+              oldText,
+              newText,
+              width,
+              font,
+              fontSize
+            );
+
+            console.log(`     ✨ Smart Replacement Result:`);
+            console.log(`        Strategy: ${optimal.strategy}`);
+            console.log(`        Pattern: "${optimal.pattern}"`);
+            console.log(`        Font size: ${optimal.fontSize.toFixed(1)}pt`);
+            if (optimal.warning) {
+              console.log(`        ⚠️ Warning: ${optimal.warning}`);
+              // Collect warning for user feedback
+              warnings.push({
+                field: newText,
+                original: oldText,
+                warning: optimal.warning,
+                strategy: optimal.strategy,
+              });
             }
 
-            console.log(`     📏 Placeholder width: ${width.toFixed(2)}px`);
+            // Step 2: Calculate dimensions for the optimized pattern
+            const finalText = optimal.pattern;
+            const finalFontSize = optimal.fontSize;
+            const finalTextWidth = font.widthOfTextAtSize(finalText, finalFontSize);
 
-            // Step 2: Calculate center of placeholder
+            console.log(`     📏 Final measurements:`);
+            console.log(`        Text: "${finalText}"`);
+            console.log(`        Width: ${finalTextWidth.toFixed(2)}px`);
+            console.log(`        Font size: ${finalFontSize.toFixed(1)}pt`);
+
+            // Step 3: Calculate center of placeholder
             const placeholderCenterX = x + width / 2;
             console.log(
               `     🎯 Placeholder center X: ${placeholderCenterX.toFixed(2)}`
             );
 
-            // Step 3: Draw MINIMAL rectangle - CHỈ CHE SỐ (1), (2), etc.
-            // ✅ CRITICAL: Rectangle NHỎ - chỉ che số, KHÔNG che gạch dưới ____
-            // Estimate: (1) = ~3 chars, (10) = ~4 chars
-            const numberWidth = Math.min(fontSize * 2.5, width * 0.3); // Max 30% của placeholder
-            const rectWidth = numberWidth;
-
-            // Rectangle centered on placeholder center
-            const rectX = placeholderCenterX - rectWidth / 2;
-
-            // Rectangle position - CAO HƠN để thấy gạch chân
-            const rectY = baselineY - fontSize * 0.05; // Cao hơn baseline
-            const rectHeight = fontSize * 1.0; // Vừa đủ che số
+            // Step 4: Draw WHITE rectangle to cover ENTIRE placeholder
+            const rectX = x;
+            const rectWidth = width;
+            const rectY = baselineY - finalFontSize * 0.2;
+            const rectHeight = finalFontSize * 1.3;
 
             page.drawRectangle({
               x: rectX,
@@ -209,51 +422,41 @@ export const replacePlaceholdersInPDF = async (
               opacity: 1,
             });
             console.log(
-              `     🟦 SMALL rectangle (chỉ che số): x=${rectX.toFixed(
+              `     🟦 WHITE rectangle: x=${rectX.toFixed(
                 2
               )}, y=${rectY.toFixed(2)}, w=${rectWidth.toFixed(
                 2
               )}, h=${rectHeight.toFixed(2)}`
             );
-            console.log(
-              `     🟦 Rectangle centered at placeholder center (${placeholderCenterX.toFixed(
-                2
-              )})`
-            );
 
-            // Step 4: Calculate text X position (CENTER text on placeholder center)
-            // Text center = placeholderCenterX
-            // Text start X = placeholderCenterX - (textWidth / 2)
-            const textX = placeholderCenterX - textWidth / 2;
+            // Step 5: Calculate centered text position
+            const textX = placeholderCenterX - finalTextWidth / 2;
 
-            console.log(`     📐 Text center aligns with placeholder center`);
-            console.log(
-              `     📐 Text X: ${textX.toFixed(
-                2
-              )} (centered, may overflow both sides)`
-            );
+            console.log(`     📐 Text positioning:`);
+            console.log(`        Center X: ${placeholderCenterX.toFixed(2)}`);
+            console.log(`        Text X: ${textX.toFixed(2)}`);
 
-            // Step 5: Draw text CENTERED on placeholder
+            // Step 6: Draw optimized text
             try {
-              page.drawText(newText, {
-                x: textX, // ✅ CENTERED - tâm text trùng tâm placeholder
-                y: baselineY, // ✅ Same baseline (cao hơn rectangle)
-                size: fontSize,
+              page.drawText(finalText, {
+                x: textX,
+                y: baselineY,
+                size: finalFontSize,
                 font: font,
                 color: rgb(0, 0, 0),
               });
 
               console.log(
-                `     ✏️ Text: "${newText}" (width: ${textWidth.toFixed(2)}px)`
+                `     ✏️ Text drawn: "${finalText}"`
               );
               console.log(
-                `     🎯 Text position: x=${textX.toFixed(
+                `     🎯 Position: x=${textX.toFixed(
                   2
                 )}, y=${baselineY.toFixed(2)}`
               );
               console.log(
                 `     🎯 Text range: ${textX.toFixed(2)} → ${(
-                  textX + textWidth
+                  textX + finalTextWidth
                 ).toFixed(2)}`
               );
               console.log(
@@ -262,25 +465,20 @@ export const replacePlaceholdersInPDF = async (
                 ).toFixed(2)}`
               );
 
-              // Check overflow
-              const leftOverflow = Math.max(0, x - textX);
-              const rightOverflow = Math.max(
-                0,
-                textX + textWidth - (x + width)
-              );
-
-              if (leftOverflow > 0 || rightOverflow > 0) {
+              // Check fit
+              if (finalTextWidth <= width) {
+                console.log(`     ✅ Text fits perfectly within placeholder!`);
+              } else {
+                const overflow = finalTextWidth - width;
                 console.log(
-                  `     ↔️ Text overflows: left=${leftOverflow.toFixed(
-                    2
-                  )}px, right=${rightOverflow.toFixed(2)}px (OK)`
+                  `     ↔️ Text overflows by ${overflow.toFixed(2)}px (${((overflow / width) * 100).toFixed(1)}%)`
                 );
               }
 
-              console.log(`     ✅ Replacement complete!\n`);
+              console.log(`     ✅ Smart replacement complete!\n`);
             } catch (textError) {
               console.error(`     ❌ Failed to draw text:`, textError.message);
-              console.error(`     ❌ Text: "${newText}"`);
+              console.error(`     ❌ Text: "${finalText}"`);
               throw textError;
             }
           } catch (error) {
@@ -304,9 +502,24 @@ export const replacePlaceholdersInPDF = async (
       (modifiedPdfBytes.length / 1024).toFixed(2),
       "KB"
     );
-    console.log("═══════════════════════════════════════════════════════\n");
 
-    return modifiedPdfBytes;
+    // Log warnings summary
+    if (warnings.length > 0) {
+      console.log("\n⚠️ ═══════════════════════════════════════════════════════");
+      console.log(`⚠️ WARNINGS: ${warnings.length} field(s) with issues`);
+      warnings.forEach((w, i) => {
+        console.log(`   ${i + 1}. "${w.field}"`);
+        console.log(`      - Original: "${w.original}"`);
+        console.log(`      - Strategy: ${w.strategy}`);
+        console.log(`      - Issue: ${w.warning}`);
+      });
+      console.log("═══════════════════════════════════════════════════════\n");
+    } else {
+      console.log("✅ No warnings - all text fit perfectly!");
+      console.log("═══════════════════════════════════════════════════════\n");
+    }
+
+    return { pdfBytes: modifiedPdfBytes, warnings };
   } catch (error) {
     console.error("❌ Error modifying PDF:", error);
     console.error("❌ Stack:", error.stack);

@@ -50,15 +50,12 @@ const PDFViewerWithSelection = ({
                 const pdfDoc = await loadingTask.promise;
 
                 setNumPages(pdfDoc.numPages);
-                console.log('📄 PDF loaded:', pdfDoc.numPages, 'pages');
 
                 // Calculate display scale to match iframe
                 const firstPage = await pdfDoc.getPage(1);
                 const baseViewport = firstPage.getViewport({ scale: 1.0 });
                 const containerWidth = containerRef.current?.parentElement?.clientWidth || 800;
                 const cssScale = Math.min(1.0, containerWidth / baseViewport.width);
-
-                console.log('📏 Display scale:', { containerWidth, pdfWidth: baseViewport.width, cssScale });
 
                 // Render all pages with scale 1.0 but store cssScale
                 const pages = [];
@@ -98,7 +95,6 @@ const PDFViewerWithSelection = ({
                 }, 100);
 
             } catch (error) {
-                console.error('Error loading PDF:', error);
                 message.error('Lỗi khi tải PDF');
             }
         };
@@ -118,17 +114,6 @@ const PDFViewerWithSelection = ({
         const containerRect = containerRef.current.getBoundingClientRect();
         const clickX = e.clientX - containerRect.left + scrollX;
         const clickY = e.clientY - containerRect.top + scrollY;
-
-        console.log('🖱️ Click info:', {
-            clientX: e.clientX,
-            clientY: e.clientY,
-            containerLeft: containerRect.left,
-            containerTop: containerRect.top,
-            scrollX,
-            scrollY,
-            clickX,
-            clickY
-        });
 
         // Calculate which page was clicked and position relative to that page
         let clickedPage = 1;
@@ -175,17 +160,6 @@ const PDFViewerWithSelection = ({
         const canvasClickX = e.clientX - canvasRect.left;
         const canvasClickY = e.clientY - canvasRect.top;
 
-        console.log('🔧 Canvas-relative click:', {
-            canvasLeft: canvasRect.left,
-            canvasTop: canvasRect.top,
-            clientX: e.clientX,
-            clientY: e.clientY,
-            canvasClickX,
-            canvasClickY,
-            canvasWidth: canvasRect.width,
-            canvasHeight: canvasRect.height
-        });
-
         // Convert canvas click position to PDF coordinates
         // Canvas is displayed with CSS scaling, so divide by cssScale to get PDF coords
         let pdfX = canvasClickX / pageData.cssScale;
@@ -199,26 +173,6 @@ const PDFViewerWithSelection = ({
         // Adjust X to match auto-detect behavior
         pdfX = pdfX - 50; // Move 50px to the left to match auto-detect
         pdfY = pdfY - 4;  // Small Y adjustment
-
-        console.log('🔬 Final PDF coordinates:', {
-            canvasClickX,
-            canvasClickY,
-            cssScale: pageData.cssScale,
-            pdfX,
-            pdfY,
-            pdfYFromTop,
-            viewportHeight: pageData.viewport.height,
-            expected: { x: 163.94, y: 620.02 }
-        });
-
-        console.log('📍 Manual placement click:', {
-            screen: { x: clickX, y: clickY },
-            display: { x: displayX, y: pageRelativeY },
-            pdf: { x: pdfX, y: pdfY, page: clickedPage },
-            pageHeight: pageData.height,
-            viewportHeight: pageData.viewport.height
-        });
-        console.log('⚠️ COMPARE: Click vào vị trí (1) trong PDF và so sánh tọa độ này với auto-detected placeholder (1)');
 
         // Set clicked position with marker
         // Store absolute position within container (including scroll)
@@ -269,14 +223,6 @@ const PDFViewerWithSelection = ({
             fontSize: 10,
             isManual: true // Mark as manual for different color
         };
-
-        console.log('📍 Created manual placeholder:', {
-            id: newPlaceholder.id,
-            position: `(${posNum})`,
-            page: newPlaceholder.page,
-            x: newPlaceholder.x,
-            y: newPlaceholder.y
-        });
 
         // Call parent callback to add to PlaceholderMappingPanel
         if (onCreatePlaceholder) {

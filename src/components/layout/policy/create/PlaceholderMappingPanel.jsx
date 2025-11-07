@@ -32,7 +32,7 @@ const PlaceholderMappingPanel = ({
     onCreateTag,
     onMappingChange,
     onExportSchema,
-    filePreviewRef  // ✅ NEW - to call applyReplacements
+    filePreviewRef  //  NEW - to call applyReplacements
 }) => {
     const [mappings, setMappings] = useState({});
     const [stats, setStats] = useState({
@@ -41,14 +41,13 @@ const PlaceholderMappingPanel = ({
         unmapped: 0
     });
 
-    // ✅ Local tags cache - Fix Tags count = 0 issue
+    //  Local tags cache - Fix Tags count = 0 issue
     const [localTags, setLocalTags] = useState([]);
 
     // Sync localTags với tags prop
     useEffect(() => {
         if (tags && tags.length > 0) {
             setLocalTags(tags);
-            console.log('🔄 Synced localTags with tags prop:', tags.length);
         }
     }, [tags]);
 
@@ -88,7 +87,7 @@ const PlaceholderMappingPanel = ({
 
         setMappings(newMappings);
 
-        // ✅ Build and notify parent immediately when mapping changes
+        //  Build and notify parent immediately when mapping changes
         // This ensures documentTagsObject is always up-to-date in tagsData
         if (onMappingChange) {
             // Build documentTags from new mappings
@@ -104,27 +103,19 @@ const PlaceholderMappingPanel = ({
 
             sortedPlaceholders.forEach(placeholder => {
                 const mappedTagId = newMappings[placeholder.id];
-                console.log(`  🔍 Placeholder ${placeholder.id} (${placeholder.original}): tagId =`, mappedTagId);
 
                 if (!mappedTagId) {
-                    console.log(`    ⚠️ Skipped - No mapping`);
                     return;
                 }
 
                 const tag = effectiveTags.find(t => t.id === mappedTagId);
-                console.log(`    🔍 Found tag:`, tag);
 
                 if (!tag) {
-                    console.log(`    ❌ Skipped - Tag not found in effectiveTags`);
                     return;
                 }
 
                 documentTags[tag.key] = tag.dataType || 'string';
-                console.log(`    ✅ Added to documentTags: "${tag.key}" = "${tag.dataType}"`);
             });
-
-            console.log('📋 Updated document_tags (realtime):', documentTags);
-            console.log('📊 Total tags in documentTags:', Object.keys(documentTags).length);
 
             // Notify parent with mappings + documentTagsObject
             onMappingChange(newMappings, {
@@ -133,7 +124,7 @@ const PlaceholderMappingPanel = ({
         }
     };
 
-    // ✅ Build document_tags object for BE submission
+    //  Build document_tags object for BE submission
     const buildDocumentTags = () => {
         const documentTags = {};
 
@@ -164,52 +155,29 @@ const PlaceholderMappingPanel = ({
             documentTags[tag.key] = tag.dataType || 'string';
         });
 
-        console.log('📋 Building document_tags:');
-        console.log('  - Total placeholders:', sortedPlaceholders.length);
-        console.log('  - Sorted placeholders:', sortedPlaceholders.map(p => p.original));
-        console.log('  - EffectiveTags count:', effectiveTags.length);
-        console.log('  - EffectiveTags:', effectiveTags.map(t => ({ id: t.id, key: t.key })));
-        console.log('  - Mappings:', mappings);
     };
 
-    // ✅ Apply mapping to PDF - NEW
+    //  Apply mapping to PDF - NEW
     const applyMappingToPDF = async () => {
         if (!filePreviewRef?.current?.applyReplacements) {
             message.warning('Chức năng chỉnh sửa PDF chưa sẵn sàng');
             return;
         }
 
-        // 🔍 DEBUG: Log state before building replacements
-        console.log('🔍 DEBUG - Apply Mapping to PDF:');
-        console.log('  - Placeholders count:', placeholders.length);
-        console.log('  - Placeholders:', placeholders);
-        console.log('  - Tags (prop) count:', tags.length);
-        console.log('  - Tags (prop):', tags);
-        console.log('  - LocalTags count:', localTags.length);
-        console.log('  - LocalTags:', localTags);
-        console.log('  - EffectiveTags count:', effectiveTags.length);
-        console.log('  - EffectiveTags:', effectiveTags);
-        console.log('  - Mappings:', mappings);
-        console.log('  - Stats:', stats);
-
         // Build replacement instructions from current mappings
         const replacements = [];
 
         placeholders.forEach(placeholder => {
             const tagId = mappings[placeholder.id];
-            console.log(`  - Checking placeholder ${placeholder.id}: tagId =`, tagId);
 
             if (!tagId) {
-                console.log(`    ⚠️ No tagId for placeholder ${placeholder.id}`);
                 return; // Skip unmapped placeholders
             }
 
-            // ✅ Use effectiveTags (fallback to localTags if parent tags empty)
+            //  Use effectiveTags (fallback to localTags if parent tags empty)
             const tag = effectiveTags.find(t => t.id === tagId);
-            console.log(`    - Found tag (from effectiveTags):`, tag);
 
             if (!tag) {
-                console.log(`    ⚠️ No tag found for tagId ${tagId} in effectiveTags`);
                 return;
             }
 
@@ -224,35 +192,28 @@ const PlaceholderMappingPanel = ({
                 y: placeholder.y,
                 width: placeholder.width,
                 height: placeholder.height,
-                backgroundX: placeholder.backgroundX,  // ✅ NEW: Exact position of (number) for accurate centering
-                backgroundWidth: placeholder.backgroundWidth,  // ✅ NEW: Exact width of (number) for accurate centering
-                oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
-                newText: tag.key,                   // ✅ Just tag key (no underscores)
-                fontSize: adjustedFontSize          // ✅ 8-10pt range
+                backgroundX: placeholder.backgroundX,  //  NEW: Exact position of (number) for accurate centering
+                backgroundWidth: placeholder.backgroundWidth,  //  NEW: Exact width of (number) for accurate centering
+                oldText: placeholder.fullText || placeholder.original,  //  Use fullText like "______(1)______"
+                newText: tag.key,                   //  Just tag key (no underscores)
+                fontSize: adjustedFontSize          //  8-10pt range
             });
-            console.log(`    ✅ Added replacement: "${placeholder.fullText || placeholder.original}" → "${tag.key}" (${adjustedFontSize.toFixed(1)}pt)`);
         });
-
-        console.log('📊 Total replacements built:', replacements.length);
-        console.log('📤 Replacements array:', replacements);
 
         if (replacements.length === 0) {
             message.error({
-                content: '❌ Chưa có mapping nào để áp dụng. Vui lòng map placeholders với tags trước!',
+                content: ' Chưa có mapping nào để áp dụng. Vui lòng map placeholders với tags trước!',
                 duration: 5
             });
             return;
         }
 
-        console.log('📤 Sending replacements to PDF editor...');
-
         // Apply to PDF via ref
         const result = await filePreviewRef.current.applyReplacements(replacements);
 
         if (result.success) {
-            // ✅ Check modified PDF size
+            //  Check modified PDF size
             const modifiedSizeMB = result.bytes ? (result.bytes.byteLength / (1024 * 1024)).toFixed(2) : 0;
-            console.log(`📄 Modified PDF size: ${modifiedSizeMB} MB`);
 
             if (result.bytes && result.bytes.byteLength > 50 * 1024 * 1024) { // 50MB limit
                 message.warning({
@@ -262,11 +223,11 @@ const PlaceholderMappingPanel = ({
             }
 
             message.success({
-                content: `✅ Đã thay thế ${replacements.length} placeholders trong PDF!`,
+                content: ` Đã thay thế ${replacements.length} placeholders trong PDF!`,
                 duration: 5
             });
 
-            // ✅ Build and notify parent about document_tags and modified PDF
+            //  Build and notify parent about document_tags and modified PDF
             const documentTags = buildDocumentTags();
             if (onMappingChange) {
                 onMappingChange(mappings, {
@@ -276,7 +237,7 @@ const PlaceholderMappingPanel = ({
                 });
             }
         } else {
-            message.error(`❌ Lỗi: ${result.error}`);
+            message.error(`Lỗi: ${result.error}`);
         }
     };
 
@@ -286,16 +247,14 @@ const PlaceholderMappingPanel = ({
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
 
-    // ✅ NEW: Apply single placeholder replacement (for inline creation)
+    //  NEW: Apply single placeholder replacement (for inline creation)
     const applySingleReplacement = async (placeholderId, tagIdOrTag) => {
         if (!filePreviewRef?.current?.applyReplacements) {
-            console.warn('⚠️ applyReplacements not available');
             return;
         }
 
         const placeholder = placeholders.find(p => p.id === placeholderId);
         if (!placeholder) {
-            console.error('❌ Placeholder not found:', placeholderId);
             return;
         }
 
@@ -305,11 +264,8 @@ const PlaceholderMappingPanel = ({
             : tagIdOrTag;
 
         if (!tag) {
-            console.error('❌ Tag not found:', tagIdOrTag);
             return;
         }
-
-        console.log('🚀 Auto-replacing single placeholder:', placeholder.original, '→', tag.key);
 
         // Calculate appropriate font size (80% of original for better fit)
         const originalFontSize = placeholder.fontSize || 12;
@@ -321,21 +277,19 @@ const PlaceholderMappingPanel = ({
             y: placeholder.y,
             width: placeholder.width,
             height: placeholder.height,
-            backgroundX: placeholder.backgroundX,  // ✅ NEW: Exact position of (number) for accurate centering
-            backgroundWidth: placeholder.backgroundWidth,  // ✅ NEW: Exact width of (number) for accurate centering
-            oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
-            newText: tag.key, // ✅ Use tag.key directly (match PDF format)
-            fontSize: adjustedFontSize  // ✅ 8-10pt range
+            backgroundX: placeholder.backgroundX,  //  NEW: Exact position of (number) for accurate centering
+            backgroundWidth: placeholder.backgroundWidth,  //  NEW: Exact width of (number) for accurate centering
+            oldText: placeholder.fullText || placeholder.original,  //  Use fullText like "______(1)______"
+            newText: tag.key, //  Use tag.key directly (match PDF format)
+            fontSize: adjustedFontSize  //  8-10pt range
         };
-
-        console.log(`📏 Font size: original=${originalFontSize}pt, adjusted=${adjustedFontSize.toFixed(1)}pt`);
 
         const result = await filePreviewRef.current.applyReplacements([replacement]);
 
         if (result.success) {
-            message.success(`✅ Đã thay thế "${placeholder.original}" thành "${tag.key}"!`);
+            message.success(`Đã thay thế "${placeholder.original}" thành "${tag.key}"!`);
         } else {
-            message.error(`❌ Lỗi: ${result.error}`);
+            message.error(`Lỗi: ${result.error}`);
         }
     };
 
@@ -413,28 +367,24 @@ const PlaceholderMappingPanel = ({
                                             index: effectiveTags.length + 1
                                         };
 
-                                        console.log('🆕 Creating inline tag:', newTag);
-
-                                        // ✅ 1. Save to localTags (immediate)
+                                        // 1. Save to localTags (immediate)
                                         setLocalTags(prev => {
                                             const updated = [...prev, newTag];
-                                            console.log('💾 Saved to localTags, total:', updated.length);
                                             return updated;
                                         });
 
-                                        // ✅ 2. Notify parent (may not update immediately)
+                                        // 2. Notify parent (may not update immediately)
                                         if (onCreateTag) {
                                             onCreateTag(newTag);
                                         }
 
-                                        // ✅ 3. Map placeholder with tag
+                                        //  3. Map placeholder with tag
                                         handleMapPlaceholder(record.id, newId);
 
-                                        // ✅ 4. Auto-replace on PDF (realtime!) - Pass tag object directly
-                                        console.log('🔄 Triggering auto-replace for', record.id);
+                                        //  4. Auto-replace on PDF (realtime!) - Pass tag object directly
                                         await applySingleReplacement(record.id, newTag);
 
-                                        // ✅ 5. Clear temp input
+                                        //  5. Clear temp input
                                         setTempInput(record.id, { key: '', dataType: tagDataTypes?.[0]?.value || 'string' });
                                     }}
                                 >

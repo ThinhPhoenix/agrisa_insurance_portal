@@ -57,17 +57,27 @@ const PlaceholderMappingPanel = ({
         arr.findIndex(t => t.id === tag.id) === index // Remove duplicates by id
     );
 
+    // Sort placeholders by position (1), (2), (3)...
+    const sortedPlaceholders = [...placeholders].sort((a, b) => {
+        const aMatch = a.original.match(/\((\d+)\)/);
+        const bMatch = b.original.match(/\((\d+)\)/);
+        if (aMatch && bMatch) {
+            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+        }
+        return a.original.localeCompare(b.original);
+    });
+
     // Update stats khi mappings thay đổi
     useEffect(() => {
         const mapped = Object.values(mappings).filter(Boolean).length;
-        const total = placeholders.length;
+        const total = sortedPlaceholders.length;
 
         setStats({
             total,
             mapped,
             unmapped: total - mapped
         });
-    }, [mappings, placeholders]);
+    }, [mappings, sortedPlaceholders]);
 
     // Handle mapping change
     const handleMapPlaceholder = (placeholderId, tagId) => {
@@ -363,10 +373,6 @@ const PlaceholderMappingPanel = ({
                                     <Text strong style={{ display: 'block' }}>{selectedTag.key}</Text>
                                     <Text type="secondary" style={{ fontSize: 12 }}>{selectedTag.dataTypeLabel}</Text>
                                 </div>
-
-                                <div style={{ flex: '0 0 auto' }}>
-                                    <Button size="small" onClick={() => handleMapPlaceholder(record.id, null)} danger>Unmap</Button>
-                                </div>
                             </div>
                         ) : (
                             <>
@@ -527,7 +533,7 @@ const PlaceholderMappingPanel = ({
             {/* Mapping Table (custom for horizontal overflow and fixed status column) */}
             <CustomTable
                 columns={columns}
-                dataSource={placeholders}
+                dataSource={sortedPlaceholders}
                 rowKey="id"
                 pagination={false}
                 scroll={{ x: tableX, y: 400 }}

@@ -379,6 +379,8 @@ export const replacePlaceholdersInPDF = async (
           oldText,
           newText,
           fontSize = 12,
+          backgroundX, // NEW: exact position of (number) only
+          backgroundWidth, // NEW: exact width of (number) only
         }) => {
           try {
             console.log(`\n  🔄 Replacing "${oldText}" → "${newText}"`);
@@ -392,6 +394,11 @@ export const replacePlaceholdersInPDF = async (
                 2
               )}, height=${textHeight.toFixed(2)}, fontSize=${fontSize}`
             );
+            if (backgroundX !== undefined && backgroundWidth !== undefined) {
+              console.log(
+                `     🎯 Background (number only): x=${backgroundX.toFixed(2)}, width=${backgroundWidth.toFixed(2)}`
+              );
+            }
             console.log(`     📄 Page height: ${pageHeight.toFixed(2)}`);
 
             // ✅ CRITICAL UNDERSTANDING:
@@ -552,25 +559,34 @@ export const replacePlaceholdersInPDF = async (
             console.log(`        Font size: ${finalFontSize.toFixed(1)}pt`);
 
             // Step 3: Calculate center of placeholder
-            const placeholderCenterX = x + width / 2;
-            console.log(
-              `     🎯 Placeholder center X: ${placeholderCenterX.toFixed(2)}`
-            );
+            // ✨ CRITICAL FIX: Use backgroundX/backgroundWidth if available
+            // - backgroundX/backgroundWidth = exact position of (number) only
+            // - x/width = full placeholder including dots/underscores
+            // For accurate centering, use (number) position, not full placeholder
+            const numberX = backgroundX !== undefined ? backgroundX : x;
+            const numberWidth = backgroundWidth !== undefined ? backgroundWidth : width;
+            const placeholderCenterX = numberX + numberWidth / 2;
+
+            console.log(`     🎯 Centering calculation:`);
+            console.log(`        Full placeholder: x=${x.toFixed(2)}, width=${width.toFixed(2)}`);
+            console.log(`        Number position: x=${numberX.toFixed(2)}, width=${numberWidth.toFixed(2)}`);
+            console.log(`        Center X: ${placeholderCenterX.toFixed(2)}`);
 
             // Step 4: Calculate centered text position
             const textX = placeholderCenterX - textWidth / 2;
             console.log(`     📐 Text positioning:`);
-            console.log(`        Center X: ${placeholderCenterX.toFixed(2)}`);
-            console.log(`        Text X: ${textX.toFixed(2)}`);
+            console.log(`        Text will be centered at: ${placeholderCenterX.toFixed(2)}`);
+            console.log(`        Text X (left edge): ${textX.toFixed(2)}`);
 
             // Step 5: Draw WHITE rectangle based on FINAL TEXT width
             // Background must ONLY cover the new text (e.g., "__họ tên__"), not old underscores
             const rectX = textX - 2; // Add small padding on left
             const rectWidth = textWidth + 4; // Add small padding on both sides
 
-            // ✨ CRITICAL: Rectangle height must be PRECISE to avoid covering surrounding content
-            const rectY = baselineY - finalFontSize * 0.3; // Start higher to cover more
-            const rectHeight = finalFontSize * 1.3; // Increased to 1.3x font size to fully cover (number)
+            // ✨ CRITICAL: Rectangle height must be increased to fully cover (number)
+            // Standard: 1.3x was not enough, increase to 1.5x
+            const rectY = baselineY - finalFontSize * 0.35; // Start slightly lower (was 0.3)
+            const rectHeight = finalFontSize * 1.5; // Increased to 1.5x (was 1.3x) to fully cover (number)
 
             console.log(
               `     🎨 Background positioning (based on FINAL TEXT):`

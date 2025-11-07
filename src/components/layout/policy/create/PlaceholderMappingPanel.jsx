@@ -214,6 +214,8 @@ const PlaceholderMappingPanel = ({
                 y: placeholder.y,
                 width: placeholder.width,
                 height: placeholder.height,
+                backgroundX: placeholder.backgroundX,  // ✅ NEW: Exact position of (number) for accurate centering
+                backgroundWidth: placeholder.backgroundWidth,  // ✅ NEW: Exact width of (number) for accurate centering
                 oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
                 newText: tag.key,                   // ✅ Just tag key (no underscores)
                 fontSize: adjustedFontSize          // ✅ 8-10pt range
@@ -309,6 +311,8 @@ const PlaceholderMappingPanel = ({
             y: placeholder.y,
             width: placeholder.width,
             height: placeholder.height,
+            backgroundX: placeholder.backgroundX,  // ✅ NEW: Exact position of (number) for accurate centering
+            backgroundWidth: placeholder.backgroundWidth,  // ✅ NEW: Exact width of (number) for accurate centering
             oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
             newText: tag.key, // ✅ Use tag.key directly (match PDF format)
             fontSize: adjustedFontSize  // ✅ 8-10pt range

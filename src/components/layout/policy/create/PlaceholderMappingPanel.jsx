@@ -334,7 +334,7 @@ const PlaceholderMappingPanel = ({
             width: 30,
             render: (text, record) => (
                 <Space direction="vertical" size={0}>
-                    <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+                    <Tag color={record.isManual ? "orange" : "blue"} style={{ fontFamily: 'monospace', fontSize: '13px' }}>
                         {text}
                     </Tag>
                 </Space>

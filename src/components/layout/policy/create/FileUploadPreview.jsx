@@ -5,13 +5,11 @@ import {
     DownloadOutlined,
     EyeOutlined,
     FileSearchOutlined,
-    LinkOutlined,
     UploadOutlined
 } from '@ant-design/icons';
 import {
     Alert,
     Button,
-    Divider,
     Input,
     message,
     Modal,
@@ -34,7 +32,7 @@ const FileUploadPreview = forwardRef(({
     onFileUpload,
     onFileRemove,
     onPlaceholdersDetected,
-    onCreatePlaceholder, // ✅ NEW: Callback for manual placeholder creation
+    onCreatePlaceholder, // ✅ NEW: Callback for placeholder creation (placement mode)
     compactButtons = false,
     tags = [], // ✅ NEW: Tags for manual placement
     // allow parent to control/persist uploaded file across unmounts
@@ -44,7 +42,6 @@ const FileUploadPreview = forwardRef(({
     useImperativeHandle(ref, () => ({
         openPasteModal: () => handleOpenPasteModal(),
         openFullscreen: () => handleFullscreenOpen(),
-        openManualTagModal: () => handleOpenManualTagModal(),
 
         // ✅ Apply replacements - OVERWRITE uploadedFile (In-place Editing)
         applyReplacements: async (replacements) => {
@@ -184,15 +181,6 @@ const FileUploadPreview = forwardRef(({
     const [uploadProgress, setUploadProgress] = useState(0);
     const [pdfError, setPdfError] = useState(null);
     const [fullscreenVisible, setFullscreenVisible] = useState(false);
-    const [manualTagModalVisible, setManualTagModalVisible] = useState(false);
-    const [manualTagForm, setManualTagForm] = useState({
-        position: '',
-        page: 1,
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 20
-    });
     const [analyzing, setAnalyzing] = useState(false);
     const [placeholders, setPlaceholders] = useState([]);
     const [pasteTextModalVisible, setPasteTextModalVisible] = useState(false);
@@ -421,62 +409,6 @@ const FileUploadPreview = forwardRef(({
         setFullscreenVisible(false);
     };
 
-    // Manual tag handlers
-    const handleOpenManualTagModal = () => {
-        setManualTagForm({
-            position: '',
-            page: 1,
-            x: 0,
-            y: 0,
-            width: 100,
-            height: 20
-        });
-        setManualTagModalVisible(true);
-    };
-
-    const handleManualTagFormChange = (field, value) => {
-        setManualTagForm(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleAddManualTag = () => {
-        const { position, page, x, y, width, height } = manualTagForm;
-
-        if (!position || position.trim() === '') {
-            message.error('Vui lòng nhập vị trí placeholder');
-            return;
-        }
-
-        // Create new placeholder
-        const newPlaceholder = {
-            id: `placeholder_manual_${Date.now()}`,
-            original: `(${position})`,
-            fullText: `Manual placeholder at position ${position}`,
-            extractedKey: position.toString(),
-            page: parseInt(page) || 1,
-            x: parseFloat(x) || 0,
-            y: parseFloat(y) || 0,
-            width: parseFloat(width) || 100,
-            height: parseFloat(height) || 20,
-            fontSize: 12,
-            isManual: true
-        };
-
-        // Add to placeholders state
-        const updatedPlaceholders = [...placeholders, newPlaceholder];
-        setPlaceholders(updatedPlaceholders);
-
-        // Notify parent
-        if (onPlaceholdersDetected) {
-            onPlaceholdersDetected(updatedPlaceholders);
-        }
-
-        message.success(`Đã thêm placeholder thủ công tại vị trí (${position})`);
-        setManualTagModalVisible(false);
-    };
-
     // ✅ NEW: Placement mode handlers
     const handleEnterPlacementMode = () => {
         setIsPlacementMode(true);
@@ -618,16 +550,6 @@ const FileUploadPreview = forwardRef(({
                                 />
                             </Tooltip>
 
-                            <Tooltip title="Thêm placeholder thủ công">
-                                <Button
-                                    type="default"
-                                    icon={<LinkOutlined />}
-                                    onClick={handleOpenManualTagModal}
-                                    size="small"
-                                    style={{ color: '#52c41a', borderColor: '#52c41a' }}
-                                />
-                            </Tooltip>
-
                             <Tooltip title={isPlacementMode ? "Thoát chế độ đặt tag" : "Đặt tag thủ công (Click vào PDF)"}>
                                 <Button
                                     type={isPlacementMode ? "primary" : "default"}
@@ -719,6 +641,7 @@ const FileUploadPreview = forwardRef(({
                                     isPlacementMode={isPlacementMode}
                                     onExitPlacementMode={handleExitPlacementMode}
                                     onCreatePlaceholder={onCreatePlaceholder}
+                                    placeholders={placeholders}
                                 />
                             ) : (
                                 <iframe
@@ -842,109 +765,6 @@ const FileUploadPreview = forwardRef(({
                 </div>
             </Modal>
 
-            {/* Manual Tag Modal */}
-            <Modal
-                title={
-                    <Space>
-                        <LinkOutlined style={{ color: '#52c41a' }} />
-                        <span>Thêm Placeholder Thủ Công</span>
-                    </Space>
-                }
-                open={manualTagModalVisible}
-                onCancel={() => setManualTagModalVisible(false)}
-                onOk={handleAddManualTag}
-                okText="Thêm Placeholder"
-                cancelText="Hủy"
-                width={600}
-            >
-                <div style={{ padding: '20px 0' }}>
-                    <Space direction="vertical" style={{ width: '100%' }} size="large">
-                        <div>
-                            <Text strong>Vị trí Placeholder *</Text>
-                            <Input
-                                placeholder="Nhập số thứ tự (VD: 1, 2, 32, ...)"
-                                value={manualTagForm.position}
-                                onChange={(e) => handleManualTagFormChange('position', e.target.value)}
-                                style={{ marginTop: '8px' }}
-                                size="large"
-                            />
-                            <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '4px' }}>
-                                Số thứ tự này sẽ hiển thị dưới dạng (1), (2), (32), ...
-                            </Text>
-                        </div>
-
-                        <Divider style={{ margin: '12px 0' }}>Tọa độ PDF (Optional)</Divider>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                            <div>
-                                <Text strong>Trang (Page)</Text>
-                                <Input
-                                    type="number"
-                                    placeholder="1"
-                                    value={manualTagForm.page}
-                                    onChange={(e) => handleManualTagFormChange('page', e.target.value)}
-                                    style={{ marginTop: '8px' }}
-                                    min={1}
-                                />
-                            </div>
-                            <div>
-                                <Text strong>X (từ trái)</Text>
-                                <Input
-                                    type="number"
-                                    placeholder="0"
-                                    value={manualTagForm.x}
-                                    onChange={(e) => handleManualTagFormChange('x', e.target.value)}
-                                    style={{ marginTop: '8px' }}
-                                />
-                            </div>
-                            <div>
-                                <Text strong>Y (từ dưới)</Text>
-                                <Input
-                                    type="number"
-                                    placeholder="0"
-                                    value={manualTagForm.y}
-                                    onChange={(e) => handleManualTagFormChange('y', e.target.value)}
-                                    style={{ marginTop: '8px' }}
-                                />
-                            </div>
-                            <div>
-                                <Text strong>Width (rộng)</Text>
-                                <Input
-                                    type="number"
-                                    placeholder="100"
-                                    value={manualTagForm.width}
-                                    onChange={(e) => handleManualTagFormChange('width', e.target.value)}
-                                    style={{ marginTop: '8px' }}
-                                />
-                            </div>
-                            <div>
-                                <Text strong>Height (cao)</Text>
-                                <Input
-                                    type="number"
-                                    placeholder="20"
-                                    value={manualTagForm.height}
-                                    onChange={(e) => handleManualTagFormChange('height', e.target.value)}
-                                    style={{ marginTop: '8px' }}
-                                />
-                            </div>
-                        </div>
-
-                        <Alert
-                            message="Hướng dẫn"
-                            description={
-                                <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                                    <li>Tọa độ PDF sử dụng hệ tọa độ từ <strong>dưới lên trên</strong></li>
-                                    <li>X: Khoảng cách từ cạnh trái của trang (pixels)</li>
-                                    <li>Y: Khoảng cách từ cạnh dưới của trang (pixels)</li>
-                                    <li>Nếu không chắc chắn, để giá trị mặc định và chỉnh sau</li>
-                                </ul>
-                            }
-                            type="info"
-                            showIcon
-                        />
-                    </Space>
-                </div>
-            </Modal>
         </>
     );
 });

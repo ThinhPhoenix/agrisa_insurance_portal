@@ -1,6 +1,6 @@
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Button, message, Space } from 'antd';
-import { useState, useRef, useEffect } from 'react';
+import { Button, Input, message, Modal, Space } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * PDF Viewer with click-to-place tag functionality using PDF.js directly
@@ -12,12 +12,15 @@ const PDFViewerWithSelection = ({
     onTagPlaced,
     isPlacementMode = false,
     onExitPlacementMode,
-    onCreatePlaceholder // NEW: callback to create placeholder in mapping panel
+    onCreatePlaceholder, // NEW: callback to create placeholder in mapping panel
+    placeholders = [] // NEW: to check for duplicate positions
 }) => {
     const [numPages, setNumPages] = useState(null);
     const [clickedPosition, setClickedPosition] = useState(null);
     const [renderedPages, setRenderedPages] = useState([]);
     const [nextPlaceholderNum, setNextPlaceholderNum] = useState(1); // Auto-increment placeholder number
+    const [positionModalVisible, setPositionModalVisible] = useState(false);
+    const [positionValue, setPositionValue] = useState('');
     const containerRef = useRef(null);
     const canvasRefs = useRef({});
 
@@ -232,8 +235,27 @@ const PDFViewerWithSelection = ({
     const handleConfirmPosition = () => {
         if (!clickedPosition) return;
 
-        // Auto-create placeholder with next number
-        const posNum = nextPlaceholderNum;
+        // Open modal to input position
+        setPositionModalVisible(true);
+    };
+
+    const handlePositionSubmit = () => {
+        const posNum = parseInt(positionValue);
+        if (!posNum || posNum <= 0) {
+            message.error('Vui lòng nhập vị trí hợp lệ (> 0)');
+            return;
+        }
+
+        // Check for duplicate positions
+        const existingPositions = placeholders.map(p => {
+            const match = p.original.match(/\((\d+)\)/);
+            return match ? parseInt(match[1]) : null;
+        }).filter(Boolean);
+
+        if (existingPositions.includes(posNum)) {
+            message.error(`Vị trí (${posNum}) đã tồn tại. Vui lòng chọn vị trí khác.`);
+            return;
+        }
 
         const newPlaceholder = {
             id: `manual-${Date.now()}`,
@@ -244,7 +266,8 @@ const PDFViewerWithSelection = ({
             y: clickedPosition.pdfY,
             width: 100,
             height: 10,
-            fontSize: 10
+            fontSize: 10,
+            isManual: true // Mark as manual for different color
         };
 
         console.log('📍 Created manual placeholder:', {
@@ -262,10 +285,9 @@ const PDFViewerWithSelection = ({
 
         message.success(`Đã tạo placeholder (${posNum}) tại trang ${clickedPosition.page}`);
 
-        // Increment for next placeholder
-        setNextPlaceholderNum(posNum + 1);
-
         // Reset state
+        setPositionModalVisible(false);
+        setPositionValue('');
         setClickedPosition(null);
 
         // Exit placement mode after successful placement
@@ -401,6 +423,32 @@ const PDFViewerWithSelection = ({
                     }
                 }
             `}</style>
+
+            {/* Position Input Modal */}
+            <Modal
+                title="Nhập vị trí placeholder"
+                open={positionModalVisible}
+                onOk={handlePositionSubmit}
+                onCancel={() => {
+                    setPositionModalVisible(false);
+                    setPositionValue('');
+                }}
+                okText="Tạo"
+                cancelText="Hủy"
+            >
+                <div style={{ padding: '20px 0' }}>
+                    <p>Vị trí phải là số nguyên dương (&gt; 0) và không trùng với các vị trí hiện có.</p>
+                    <Input
+                        type="number"
+                        placeholder="Nhập vị trí (VD: 1, 2, 3...)"
+                        value={positionValue}
+                        onChange={(e) => setPositionValue(e.target.value)}
+                        min={1}
+                        style={{ marginTop: '8px' }}
+                        onPressEnter={handlePositionSubmit}
+                    />
+                </div>
+            </Modal>
         </div>
     );
 };

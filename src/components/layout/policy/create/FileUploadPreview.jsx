@@ -1,4 +1,5 @@
 import {
+    AimOutlined,
     CopyOutlined,
     DeleteOutlined,
     DownloadOutlined,
@@ -23,6 +24,7 @@ import {
 } from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { analyzePDFForPlaceholders } from './PDFPlaceholderDetector';
+import PDFViewerWithSelection from './PDFViewerWithSelection';
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
@@ -32,7 +34,9 @@ const FileUploadPreview = forwardRef(({
     onFileUpload,
     onFileRemove,
     onPlaceholdersDetected,
+    onCreatePlaceholder, // ✅ NEW: Callback for manual placeholder creation
     compactButtons = false,
+    tags = [], // ✅ NEW: Tags for manual placement
     // allow parent to control/persist uploaded file across unmounts
     uploadedFile: uploadedFileProp = null,
     fileUrl: fileUrlProp = null
@@ -193,6 +197,7 @@ const FileUploadPreview = forwardRef(({
     const [placeholders, setPlaceholders] = useState([]);
     const [pasteTextModalVisible, setPasteTextModalVisible] = useState(false);
     const [pastedText, setPastedText] = useState('');
+    const [isPlacementMode, setIsPlacementMode] = useState(false);
     const [modifiedText, setModifiedText] = useState(null);
     const [modifiedTextUrl, setModifiedTextUrl] = useState(null);
     const fileInputRef = useRef(null);
@@ -472,6 +477,62 @@ const FileUploadPreview = forwardRef(({
         setManualTagModalVisible(false);
     };
 
+    // ✅ NEW: Placement mode handlers
+    const handleEnterPlacementMode = () => {
+        setIsPlacementMode(true);
+        message.info('Chế độ đặt tag: Click vào vị trí trong PDF để đặt tag');
+    };
+
+    const handleExitPlacementMode = () => {
+        setIsPlacementMode(false);
+    };
+
+    const handleTagPlaced = async ({ tag, coordinates }) => {
+        try {
+            message.loading('Đang ghi tag vào PDF...', 0);
+
+            // Apply tag to PDF using existing replacement logic
+            const replacement = {
+                page: coordinates.page,
+                x: coordinates.x,
+                y: coordinates.y,
+                width: coordinates.width,
+                height: coordinates.height,
+                oldText: '', // No old text to replace
+                newText: tag.key,
+                fontSize: coordinates.height || 10
+            };
+
+            // Get current PDF bytes
+            const arrayBuffer = await uploadedFile.arrayBuffer();
+
+            // Apply replacement
+            const modifiedBytes = await applyPDFReplacements(arrayBuffer, [replacement]);
+
+            // Create new File object
+            const modifiedBlob = new Blob([modifiedBytes], { type: 'application/pdf' });
+            const modifiedFile = new File([modifiedBlob], uploadedFile.name, { type: 'application/pdf' });
+
+            // Update state
+            setUploadedFile(modifiedFile);
+            setModifiedPdfBytes(modifiedBytes);
+
+            // Create new URL for modified file
+            if (fileUrl) {
+                URL.revokeObjectURL(fileUrl);
+            }
+            const newUrl = URL.createObjectURL(modifiedFile);
+            setFileUrl(newUrl);
+
+            message.destroy();
+            message.success(`Đã ghi tag "${tag.key}" vào PDF tại trang ${coordinates.page}`);
+        } catch (error) {
+            message.destroy();
+            console.error('Error placing tag:', error);
+            message.error(`Lỗi khi ghi tag: ${error.message}`);
+        }
+    };
+
     const renderUploadArea = () => (
         <div style={{ padding: '20px' }}>
             <Dragger {...uploadProps} disabled={loading}>
@@ -567,6 +628,16 @@ const FileUploadPreview = forwardRef(({
                                 />
                             </Tooltip>
 
+                            <Tooltip title={isPlacementMode ? "Thoát chế độ đặt tag" : "Đặt tag thủ công (Click vào PDF)"}>
+                                <Button
+                                    type={isPlacementMode ? "primary" : "default"}
+                                    icon={<AimOutlined />}
+                                    onClick={isPlacementMode ? handleExitPlacementMode : handleEnterPlacementMode}
+                                    size="small"
+                                    danger={isPlacementMode}
+                                />
+                            </Tooltip>
+
                             <Tooltip title="Toàn màn hình">
                                 <Button
                                     icon={<EyeOutlined />}
@@ -640,6 +711,15 @@ const FileUploadPreview = forwardRef(({
                                         </Text>
                                     </div>
                                 </div>
+                            ) : isPlacementMode ? (
+                                <PDFViewerWithSelection
+                                    pdfUrl={fileUrl}
+                                    tags={tags}
+                                    onTagPlaced={handleTagPlaced}
+                                    isPlacementMode={isPlacementMode}
+                                    onExitPlacementMode={handleExitPlacementMode}
+                                    onCreatePlaceholder={onCreatePlaceholder}
+                                />
                             ) : (
                                 <iframe
                                     key={`${fileUrl}-${Date.now()}`}

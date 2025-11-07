@@ -1,4 +1,5 @@
 import {
+    AimOutlined,
     CopyOutlined,
     DeleteOutlined,
     DownloadOutlined,
@@ -21,6 +22,7 @@ import {
 } from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { analyzePDFForPlaceholders } from './PDFPlaceholderDetector';
+import PDFViewerWithSelection from './PDFViewerWithSelection';
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
@@ -30,7 +32,9 @@ const FileUploadPreview = forwardRef(({
     onFileUpload,
     onFileRemove,
     onPlaceholdersDetected,
+    onCreatePlaceholder, // ✅ NEW: Callback for placeholder creation (placement mode)
     compactButtons = false,
+    tags = [], // ✅ NEW: Tags for manual placement
     // allow parent to control/persist uploaded file across unmounts
     uploadedFile: uploadedFileProp = null,
     fileUrl: fileUrlProp = null
@@ -54,18 +58,40 @@ const FileUploadPreview = forwardRef(({
                 // Read current file
                 const arrayBuffer = await uploadedFile.arrayBuffer();
 
+                console.log('📊 ArrayBuffer size:', arrayBuffer.byteLength, 'bytes');
+                console.log('📊 ArrayBuffer type:', arrayBuffer.constructor.name);
+
+                // Validate arrayBuffer
+                if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+                    throw new Error('Invalid PDF file: ArrayBuffer is empty');
+                }
+
                 // Dynamic import pdf-lib (code splitting)
                 const { replacePlaceholdersInPDF } = await import('../../../../libs/pdf/pdfEditor');
 
                 // Apply replacements
-                const modifiedBytes = await replacePlaceholdersInPDF(arrayBuffer, replacements);
+                const result = await replacePlaceholdersInPDF(arrayBuffer, replacements);
+
+                // ✅ Extract pdfBytes from result object
+                const modifiedBytes = result.pdfBytes || result; // Backward compatibility
+                const warnings = result.warnings || [];
+
+                console.log('📊 Modified bytes size:', modifiedBytes.byteLength, 'bytes');
+                console.log('📊 Warnings:', warnings.length);
+
+                // Validate modifiedBytes
+                if (!modifiedBytes || modifiedBytes.byteLength === 0) {
+                    throw new Error('Invalid modified PDF: Bytes are empty');
+                }
 
                 // ⭐ OVERWRITE: Convert bytes to File object
                 const newFile = new File(
-                    [modifiedBytes],
+                    [modifiedBytes],  // ✅ Now correctly contains Uint8Array
                     uploadedFile.name,
                     { type: 'application/pdf' }
                 );
+
+                console.log('📄 New file size:', (newFile.size / 1024).toFixed(2), 'KB');
 
                 // ⭐ OVERWRITE: Create new blob URL first (BEFORE setState)
                 const newUrl = URL.createObjectURL(newFile);
@@ -159,6 +185,7 @@ const FileUploadPreview = forwardRef(({
     const [placeholders, setPlaceholders] = useState([]);
     const [pasteTextModalVisible, setPasteTextModalVisible] = useState(false);
     const [pastedText, setPastedText] = useState('');
+    const [isPlacementMode, setIsPlacementMode] = useState(false);
     const [modifiedText, setModifiedText] = useState(null);
     const [modifiedTextUrl, setModifiedTextUrl] = useState(null);
     const fileInputRef = useRef(null);
@@ -382,6 +409,62 @@ const FileUploadPreview = forwardRef(({
         setFullscreenVisible(false);
     };
 
+    // ✅ NEW: Placement mode handlers
+    const handleEnterPlacementMode = () => {
+        setIsPlacementMode(true);
+        message.info('Chế độ đặt tag: Click vào vị trí trong PDF để đặt tag');
+    };
+
+    const handleExitPlacementMode = () => {
+        setIsPlacementMode(false);
+    };
+
+    const handleTagPlaced = async ({ tag, coordinates }) => {
+        try {
+            message.loading('Đang ghi tag vào PDF...', 0);
+
+            // Apply tag to PDF using existing replacement logic
+            const replacement = {
+                page: coordinates.page,
+                x: coordinates.x,
+                y: coordinates.y,
+                width: coordinates.width,
+                height: coordinates.height,
+                oldText: '', // No old text to replace
+                newText: tag.key,
+                fontSize: coordinates.height || 10
+            };
+
+            // Get current PDF bytes
+            const arrayBuffer = await uploadedFile.arrayBuffer();
+
+            // Apply replacement
+            const modifiedBytes = await applyPDFReplacements(arrayBuffer, [replacement]);
+
+            // Create new File object
+            const modifiedBlob = new Blob([modifiedBytes], { type: 'application/pdf' });
+            const modifiedFile = new File([modifiedBlob], uploadedFile.name, { type: 'application/pdf' });
+
+            // Update state
+            setUploadedFile(modifiedFile);
+            setModifiedPdfBytes(modifiedBytes);
+
+            // Create new URL for modified file
+            if (fileUrl) {
+                URL.revokeObjectURL(fileUrl);
+            }
+            const newUrl = URL.createObjectURL(modifiedFile);
+            setFileUrl(newUrl);
+
+            message.destroy();
+            message.success(`Đã ghi tag "${tag.key}" vào PDF tại trang ${coordinates.page}`);
+        } catch (error) {
+            message.destroy();
+            console.error('Error placing tag:', error);
+            message.error(`Lỗi khi ghi tag: ${error.message}`);
+        }
+    };
+
     const renderUploadArea = () => (
         <div style={{ padding: '20px' }}>
             <Dragger {...uploadProps} disabled={loading}>
@@ -467,6 +550,16 @@ const FileUploadPreview = forwardRef(({
                                 />
                             </Tooltip>
 
+                            <Tooltip title={isPlacementMode ? "Thoát chế độ đặt tag" : "Đặt tag thủ công (Click vào PDF)"}>
+                                <Button
+                                    type={isPlacementMode ? "primary" : "default"}
+                                    icon={<AimOutlined />}
+                                    onClick={isPlacementMode ? handleExitPlacementMode : handleEnterPlacementMode}
+                                    size="small"
+                                    danger={isPlacementMode}
+                                />
+                            </Tooltip>
+
                             <Tooltip title="Toàn màn hình">
                                 <Button
                                     icon={<EyeOutlined />}
@@ -540,10 +633,20 @@ const FileUploadPreview = forwardRef(({
                                         </Text>
                                     </div>
                                 </div>
+                            ) : isPlacementMode ? (
+                                <PDFViewerWithSelection
+                                    pdfUrl={fileUrl}
+                                    tags={tags}
+                                    onTagPlaced={handleTagPlaced}
+                                    isPlacementMode={isPlacementMode}
+                                    onExitPlacementMode={handleExitPlacementMode}
+                                    onCreatePlaceholder={onCreatePlaceholder}
+                                    placeholders={placeholders}
+                                />
                             ) : (
                                 <iframe
-                                    key={fileUrl}
-                                    src={fileUrl}
+                                    key={`${fileUrl}-${Date.now()}`}
+                                    src={`${fileUrl}#toolbar=0`}
                                     style={{
                                         width: '100%',
                                         height: '100%',
@@ -661,6 +764,7 @@ const FileUploadPreview = forwardRef(({
                     💡 Tip: Placeholders phải có format đúng: <code>(1)</code>, <code>(2)</code>... hoặc <code>{'{{name}}'}</code>
                 </div>
             </Modal>
+
         </>
     );
 });

@@ -118,140 +118,273 @@ export const extractTextFromPDF = async (file) => {
             // Process each text item
             const items = textContent.items;
 
+            // 🔍 DEBUG: Log all items on page 1 to find where (1) is
+            if (pageNum === 1) {
+                console.log(`\n🔍 ═══ DEBUGGING PAGE 1 - FIRST 60 ITEMS ═══`);
+                for (let debugIdx = 0; debugIdx < Math.min(items.length, 60); debugIdx++) {
+                    const debugItem = items[debugIdx];
+                    const debugText = debugItem?.str || '';
+                    const debugX = debugItem.transform[4];
+                    const debugY = debugItem.transform[5];
+
+                    // Highlight items containing "(" or "1" or ")" or "tên" or dots
+                    if (debugText.includes('(') || debugText.includes('1') || debugText.includes(')') ||
+                        debugText.includes('tên') || /[._]{3,}/.test(debugText)) {
+                        console.log(`   🎯 [${debugIdx}]: "${debugText}" @ x=${debugX.toFixed(1)}, y=${debugY.toFixed(1)}`);
+                    }
+                }
+                console.log(`🔍 ═══════════════════════════════════════════\n`);
+            }
+
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const text = item.str;
                 allText += text + ' ';
 
-                // Check if this is a numbered placeholder: (1), (2), etc.
-                // Accept formats:
-                // - Standalone: (1)
-                // - With dots: .(1). or ..(1).. or ...(1)...
-                // - With underscores: _(1)_ or ___(1)___
-                // - Mixed: ._(1)_. or _.(1)._
+                // 🔍 DEBUG: Log ALL items containing "1", "2", "(", ")", or "tên" on page 1
+                if (pageNum === 1) {
+                    const hasTarget = text.includes('1') || text.includes('2') ||
+                        text.includes('(') || text.includes(')') ||
+                        text.includes('tên') || text.includes('…');
 
-                // ✅ Find ALL (number) patterns in this item using matchAll
-                // Example: "i: ______(11)_____ Email: _____(12)______" → finds both (11) and (12)
+                    if (hasTarget) {
+                        const y = item.transform[5].toFixed(1);
+                        console.log(`📌 [${i}] "${text}" @ x=${item.transform[4].toFixed(1)}, y=${y}, w=${(item.width || 0).toFixed(1)}`);
+                    }
+                }
+
+                // ✅ NEW: Handle SPLIT items like "(" + "1" + ")" in 3 separate items
+                // PDF.js sometimes splits (1) into 3 items: "(", "1", ")"
+                const isSingleDigit = /^\d+$/.test(text.trim());
+                if (isSingleDigit && text.trim().length <= 2) {
+                    const prevItem = i > 0 ? items[i - 1] : null;
+                    const nextItem = i < items.length - 1 ? items[i + 1] : null;
+
+                    if (prevItem && nextItem) {
+                        const prevText = prevItem.str || '';
+                        const nextText = nextItem.str || '';
+
+                        // Check if prev="(" and next=")"
+                        if (prevText.trim() === '(' && nextText.trim() === ')') {
+                            const numValue = parseInt(text.trim());
+
+                            console.log(`\n🎯 FOUND SPLIT (${numValue}): ["${prevText}", "${text}", "${nextText}"]`);
+
+                            // Skip if already processed
+                            if (seenNumbers.has(numValue)) {
+                                console.log(`⏭️ Skip (${numValue}) - duplicate`);
+                                continue;
+                            }
+
+                            if (numValue > 100) {
+                                console.log(`⏭️ Skip (${numValue}) - too large`);
+                                continue;
+                            }
+
+                            // Calculate position: from "(" to ")"
+                            const x = prevItem.transform[4];
+                            const y = item.transform[5];
+                            const endX = nextItem.transform[4] + (nextItem.width || 0);
+                            const width = endX - x;
+                            const fontSize = Math.abs(item.transform[0]) || 12;
+                            const height = fontSize * 1.2;
+
+                            // Scan for nearby separators
+                            const Y_TOLERANCE = 10;
+                            const X_RANGE = 300;
+
+                            const nearbyItems = [];
+                            for (let j = 0; j < items.length; j++) {
+                                const checkItem = items[j];
+                                const checkX = checkItem.transform[4];
+                                const checkY = checkItem.transform[5];
+                                const sameY = Math.abs(checkY - y) <= Y_TOLERANCE;
+                                const nearX = checkX >= (x - X_RANGE) && checkX <= (x + width + X_RANGE);
+                                if (sameY && nearX) nearbyItems.push(checkItem);
+                            }
+
+                            nearbyItems.sort((a, b) => a.transform[4] - b.transform[4]);
+
+                            // Build combined text
+                            let combinedText = '';
+                            let startX = x;
+                            let endX2 = endX;
+
+                            for (const nearItem of nearbyItems) {
+                                combinedText += nearItem.str || '';
+                                const itemX = nearItem.transform[4];
+                                const itemWidth = nearItem.width || 0;
+                                if (itemX < startX) startX = itemX;
+                                if (itemX + itemWidth > endX2) endX2 = itemX + itemWidth;
+                            }
+
+                            // Validate separators
+                            const separatorCount = (combinedText.match(/[._…]/g) || []).length;
+                            const normalizedText = combinedText.replace(/\s+/g, '').replace(/…/g, '...');
+                            const hasPattern = /[._]{2,}/.test(normalizedText);
+                            const isValid = separatorCount >= 2 || hasPattern;
+
+                            console.log(`🔍 (${numValue}): text="${combinedText.substring(0, 120)}", seps=${separatorCount}`);
+                            console.log(`   📍 Position: x=${x.toFixed(2)}, y=${y.toFixed(2)}, page=${pageNum}`);
+                            console.log(`   📦 Found ${nearbyItems.length} nearby items, isValid=${isValid}`);
+
+                            if (!isValid) {
+                                console.log(`   ⏭️ Skip - not enough separators`);
+                                continue;
+                            }
+
+                            const fullWidth = endX2 - startX;
+
+                            placeholders.push({
+                                id: `placeholder_${placeholders.length + 1}`,
+                                original: `(${numValue})`,
+                                fullText: combinedText.trim(),
+                                extractedKey: numValue.toString(),
+                                page: pageNum,
+                                x: startX,
+                                y: y,
+                                width: fullWidth,
+                                height: height,
+                                fontSize: fontSize
+                            });
+
+                            seenNumbers.add(numValue);
+                            console.log(`   ✅ ACCEPTED SPLIT (${numValue}) [seps=${separatorCount}]`);
+                            continue;
+                        }
+                    }
+                }
+
+                // ✅ ORIGINAL: Find (number) in single text item
+                // Support spaces inside: ( 1), (2 ), ( 3 )
                 const regex = /\(\s*(\d+)\s*\)/g;
                 const matches = [...text.matchAll(regex)];
 
-                // Check context items (for logging)
-                const prevItem = i > 0 ? items[i - 1] : null;
-                const nextItem = i < items.length - 1 ? items[i + 1] : null;
-                const prevText = prevItem?.str || '';
-                const nextText = nextItem?.str || '';
-
-                // Process each (number) found in this item
                 for (const numberedMatch of matches) {
                     const num = numberedMatch[1];
                     const numValue = parseInt(num);
 
-                    // ✅ CRITICAL: Skip if we've already seen this number
+                    // ⚠️ DEBUG: Log when finding (1) or (2) specifically
+                    if (numValue === 1 || numValue === 2) {
+                        console.log(`\n🎯 FOUND (${num}) in item text: "${text}"`);
+                        console.log(`   📍 Item position: x=${item.transform[4].toFixed(2)}, y=${item.transform[5].toFixed(2)}`);
+                        console.log(`   📝 Full item text: "${text}" (has space in number: ${/\(\s+\d+\s+\)/.test(text)})`);
+                    }
+
+                    // Skip duplicates
                     if (seenNumbers.has(numValue)) {
-                        console.log(`⏭️ Skipping (${num}) - already added to placeholders`);
+                        console.log(`⏭️ Skip (${num}) - duplicate`);
                         continue;
                     }
 
-                    // Validate: Only accept numbers <= 100 (avoid years like 2021)
+                    // Skip large numbers (years)
                     if (numValue > 100) {
-                        console.log(`⏭️ Skipping (${num}) - looks like a year`);
+                        console.log(`⏭️ Skip (${num}) - too large`);
                         continue;
                     }
 
-                    // ✅ FLEXIBLE RULE: Allow spaces between separators and (number)
-                    //    Valid: "______(1)_" or "_____ (13)______" (space before/after OK)
-                    //    Strategy: Scan backward/forward to find separator (. or _)
-                    //    Stop at: letter or start/end of text
-
-                    const matchStart = numberedMatch.index;
-                    const matchEnd = matchStart + numberedMatch[0].length;
-
-                    // Scan backward to find a separator (. or _)
-                    let foundBefore = false;
-                    for (let j = matchStart - 1; j >= 0; j--) {
-                        const char = text[j];
-                        if (char === '.' || char === '_') {
-                            foundBefore = true;
-                            break;
-                        }
-                        // Stop if we hit a letter (not a separator)
-                        if (/[a-zA-ZÀ-ỹ]/.test(char)) {
-                            break;
-                        }
-                    }
-
-                    // Scan forward to find a separator (. or _)
-                    let foundAfter = false;
-                    for (let j = matchEnd; j < text.length; j++) {
-                        const char = text[j];
-                        if (char === '.' || char === '_') {
-                            foundAfter = true;
-                            break;
-                        }
-                        // Stop if we hit a letter (not a separator)
-                        if (/[a-zA-ZÀ-ỹ]/.test(char)) {
-                            break;
-                        }
-                    }
-
-                    if (!foundBefore || !foundAfter) {
-                        console.log(`⏭️ Skipping (${num}) - no separator found before/after`);
-                        console.log(`   foundBefore: ${foundBefore}, foundAfter: ${foundAfter}`);
-                        console.log(`   text: "${text}"`);
-                        continue;
-                    }
-
-                    // ✅ Valid! Extract placeholder coordinates
-                    // ✅ CRITICAL: pdf.js coordinate system
-                    // transform[4] = X coordinate (distance from LEFT edge)
-                    // transform[5] = Y coordinate (distance from BOTTOM edge - already in pdf-lib coordinate!)
-                    // 
-                    // IMPORTANT: pdf.js transform[5] is NOT top-left, it's BASELINE!
-                    // This means it's already in bottom-left coordinate system like pdf-lib!
-
-                    let x = item.transform[4];
-                    let y = item.transform[5]; // ✅ This is BASELINE Y in bottom-left coordinates
-                    let width = item.width || 0;
-
-                    // Get font size from text item
+                    // Get current item position
+                    const x = item.transform[4];
+                    const y = item.transform[5];
+                    const width = item.width || 0;
                     const fontSize = Math.abs(item.transform[0]) || 12;
-                    let height = fontSize * 1.2; // Text height ≈ fontSize * 1.2
+                    const height = fontSize * 1.2;
 
-                    // If previous item is dots, include it in width calculation
-                    if (prevItem && /^[._]+$/.test(prevText)) {
-                        x = prevItem.transform[4]; // Use prev x
-                        width += (prevItem.width || 0);
+                    // ✅ EXPANDED SEARCH: Look for separators in wider X range (not just Y)
+                    // This handles cases where `( 1)` is in separate item from dots/underscores
+                    const Y_TOLERANCE = 10; // Same line tolerance (increased to 10 to handle more Y variations)
+                    const X_RANGE = 300; // Look 300px before and after (increased from 200 to cover more area)
+
+                    const nearbyItems = [];
+                    for (let j = 0; j < items.length; j++) {
+                        const checkItem = items[j];
+                        const checkX = checkItem.transform[4];
+                        const checkY = checkItem.transform[5];
+
+                        // Include items on same line (Y) AND within X range
+                        const sameY = Math.abs(checkY - y) <= Y_TOLERANCE;
+                        const nearX = checkX >= (x - X_RANGE) && checkX <= (x + width + X_RANGE);
+
+                        if (sameY && nearX) {
+                            nearbyItems.push(checkItem);
+                        }
                     }
 
-                    // If next item is dots, include it in width calculation
-                    if (nextItem && /^[._]+$/.test(nextText)) {
-                        width += (nextItem.width || 0);
+                    // Sort by X position to maintain order
+                    nearbyItems.sort((a, b) => a.transform[4] - b.transform[4]);
+
+                    // Build combined text and calculate bounds
+                    let combinedText = '';
+                    let startX = x;
+                    let endX = x + width;
+
+                    for (const nearItem of nearbyItems) {
+                        const nearText = nearItem.str || '';
+                        combinedText += nearText;
+
+                        const itemX = nearItem.transform[4];
+                        const itemWidth = nearItem.width || 0;
+
+                        if (itemX < startX) startX = itemX;
+                        if (itemX + itemWidth > endX) endX = itemX + itemWidth;
                     }
+
+                    // Count separators: dots (. or … ellipsis Unicode U+2026), underscores (_)
+                    // Handle both regular dots and ellipsis characters commonly used in PDFs
+                    const separatorMatches = combinedText.match(/[._…]/g);
+                    const separatorCount = separatorMatches ? separatorMatches.length : 0;
+
+                    console.log(`🔍 (${num}): text="${combinedText.substring(0, 120)}", seps=${separatorCount}`);
+                    console.log(`   📍 Position: x=${x.toFixed(2)}, y=${y.toFixed(2)}, page=${pageNum}`);
+                    console.log(`   📦 Found ${nearbyItems.length} nearby items within X±${X_RANGE}, Y±${Y_TOLERANCE}`);
+
+                    // ✅ NORMALIZE: Remove spaces before validation to handle cases like ".... ..... (1) .... ....."
+                    // Spaces between separators break the pattern detection
+                    // Also normalize ellipsis to dots for consistent pattern matching
+                    const normalizedText = combinedText.replace(/\s+/g, '').replace(/…/g, '...');
+
+                    // ✅ FLEXIBLE VALIDATION: Accept if:
+                    // 1. >= 2 separators total (reduced from 3), OR
+                    // 2. Has pattern of 2+ consecutive separators before/after (in normalized text)
+                    const hasPattern = /[._]{2,}/.test(normalizedText);
+                    const isValid = separatorCount >= 2 || hasPattern;
+
+                    // ⚠️ DEBUG: Extra logging for (1) and (2)
+                    if (numValue === 1 || numValue === 2) {
+                        console.log(`   🔍 DEBUG (${num}): separatorCount=${separatorCount}, hasPattern=${hasPattern}, isValid=${isValid}`);
+                        console.log(`   🔍 DEBUG (${num}): normalized="${normalizedText.substring(0, 100)}"`);
+                        console.log(`   🔍 DEBUG (${num}): combinedText length=${combinedText.length}, nearbyItems=${nearbyItems.length}`);
+                    }
+
+                    if (!isValid) {
+                        console.log(`   ⏭️ Skip - seps=${separatorCount}, hasPattern=${hasPattern}, normalized="${normalizedText.substring(0, 80)}"`);
+                        continue;
+                    }
+
+                    // Calculate full width
+                    const fullWidth = endX - startX;
 
                     placeholders.push({
                         id: `placeholder_${placeholders.length + 1}`,
-                        original: `(${num})`, // ✅ Show only "(1)", "(2)" not full text
+                        original: `(${num})`,
+                        fullText: combinedText.trim(),
                         extractedKey: num,
                         type: 'numbered',
                         page: pageNum,
-                        x: x,
-                        y: y, // ✅ BASELINE Y (bottom-left coordinate system)
-                        width: width,
+                        x: startX,
+                        y: y,
+                        width: fullWidth,
+                        backgroundX: x,
+                        backgroundWidth: width,
                         height: height,
-                        fontSize: fontSize, // ✅ Store fontSize for later use
+                        fontSize: fontSize,
                         position: allText.length,
                         mapped: false,
                         tagId: null,
                     });
 
-                    // ✅ Mark this number as seen
                     seenNumbers.add(numValue);
-
-                    console.log(`🎯 Found placeholder (${num}) in item: "${text.substring(0, 50)}..."`);
-                    console.log(`   📍 Coordinates: x=${x.toFixed(2)}, y=${y.toFixed(2)} (BASELINE in bottom-left system)`);
-                    console.log(`   📏 Dimensions: width=${width.toFixed(2)}, height=${height.toFixed(2)}, fontSize=${fontSize.toFixed(2)}`);
-                    console.log(`   📄 Page: ${pageNum}`);
-                    console.log(`   ✅ Validation: foundBefore=${foundBefore}, foundAfter=${foundAfter}`);
+                    console.log(`   ✅ ACCEPTED (${num}) [seps=${separatorCount}]`);
                 } // End of matches loop
             }
         }
@@ -263,15 +396,8 @@ export const extractTextFromPDF = async (file) => {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log(`📊 Total length: ${allText.length} characters`);
         console.log(`🎯 Placeholders from coordinate scan: ${placeholders.length}`);
-        console.log('✅ Using placeholders from coordinate scan (NO FALLBACK)');
-        console.log('💡 Fallback disabled to ensure coordinates are available');
 
         console.log('═══════════════════════════════════════════════════════\n');
-
-        // ❌ FALLBACK DISABLED: Tạo placeholders từ text sẽ KHÔNG có coordinates!
-        // Chỉ dùng placeholders từ coordinate scan ở trên
-        console.log('⚠️ FALLBACK disabled - only using coordinate-based detection');
-        console.log('💡 Reason: Fallback creates placeholders WITHOUT coordinates (x, y = null)');
 
         // If no placeholders found from coordinate scan, show warning
         if (placeholders.length === 0) {

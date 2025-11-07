@@ -152,6 +152,12 @@ const CreatePolicyPage = () => {
     setDetectedPlaceholders(placeholders || []);
   };
 
+  // ✅ NEW: Handle manual placeholder creation from click-to-place
+  const handleCreatePlaceholder = (newPlaceholder) => {
+    console.log('📍 Adding manual placeholder to list:', newPlaceholder);
+    setDetectedPlaceholders(prev => [...prev, newPlaceholder]);
+  };
+
   // Get current step index
   const getCurrentStepIndex = () => {
     const tabs = Object.values(TABS);
@@ -404,6 +410,7 @@ const CreatePolicyPage = () => {
                 uploadedFile={uploadedFile}
                 fileUrl={fileUrl}
                 onPlaceholdersDetected={handlePlaceholdersDetected}
+                onCreatePlaceholder={handleCreatePlaceholder}
                 compactButtons={true}
               />
             ) : (

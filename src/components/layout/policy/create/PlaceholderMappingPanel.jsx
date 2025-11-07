@@ -52,20 +52,32 @@ const PlaceholderMappingPanel = ({
         }
     }, [tags]);
 
-    // Combined tags: Use localTags as fallback if parent tags empty
-    const effectiveTags = tags.length > 0 ? tags : localTags;
+    // Combined tags: Merge parent tags with local tags (local takes precedence for newly created ones)
+    const effectiveTags = [...(tags || []), ...localTags].filter((tag, index, arr) =>
+        arr.findIndex(t => t.id === tag.id) === index // Remove duplicates by id
+    );
+
+    // Sort placeholders by position (1), (2), (3)...
+    const sortedPlaceholders = [...placeholders].sort((a, b) => {
+        const aMatch = a.original.match(/\((\d+)\)/);
+        const bMatch = b.original.match(/\((\d+)\)/);
+        if (aMatch && bMatch) {
+            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+        }
+        return a.original.localeCompare(b.original);
+    });
 
     // Update stats khi mappings thay đổi
     useEffect(() => {
         const mapped = Object.values(mappings).filter(Boolean).length;
-        const total = placeholders.length;
+        const total = sortedPlaceholders.length;
 
         setStats({
             total,
             mapped,
             unmapped: total - mapped
         });
-    }, [mappings, placeholders]);
+    }, [mappings, sortedPlaceholders]);
 
     // Handle mapping change
     const handleMapPlaceholder = (placeholderId, tagId) => {
@@ -152,8 +164,12 @@ const PlaceholderMappingPanel = ({
             documentTags[tag.key] = tag.dataType || 'string';
         });
 
-        console.log('📋 Built document_tags:', documentTags);
-        return documentTags;
+        console.log('📋 Building document_tags:');
+        console.log('  - Total placeholders:', sortedPlaceholders.length);
+        console.log('  - Sorted placeholders:', sortedPlaceholders.map(p => p.original));
+        console.log('  - EffectiveTags count:', effectiveTags.length);
+        console.log('  - EffectiveTags:', effectiveTags.map(t => ({ id: t.id, key: t.key })));
+        console.log('  - Mappings:', mappings);
     };
 
     // ✅ Apply mapping to PDF - NEW
@@ -197,6 +213,10 @@ const PlaceholderMappingPanel = ({
                 return;
             }
 
+            // Calculate appropriate font size (80% of original, 8-10pt range)
+            const originalFontSize = placeholder.fontSize || 12;
+            const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
+
             // Build replacement instruction
             replacements.push({
                 page: placeholder.page || 1,
@@ -204,11 +224,13 @@ const PlaceholderMappingPanel = ({
                 y: placeholder.y,
                 width: placeholder.width,
                 height: placeholder.height,
-                oldText: placeholder.original,      // e.g., "____(1)____"
-                newText: `____${tag.key}____`,     // e.g., "____Họ và tên____"
-                fontSize: 12
+                backgroundX: placeholder.backgroundX,  // ✅ NEW: Exact position of (number) for accurate centering
+                backgroundWidth: placeholder.backgroundWidth,  // ✅ NEW: Exact width of (number) for accurate centering
+                oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
+                newText: tag.key,                   // ✅ Just tag key (no underscores)
+                fontSize: adjustedFontSize          // ✅ 8-10pt range
             });
-            console.log(`    ✅ Added replacement: "${placeholder.original}" → "____${tag.key}____"`);
+            console.log(`    ✅ Added replacement: "${placeholder.fullText || placeholder.original}" → "${tag.key}" (${adjustedFontSize.toFixed(1)}pt)`);
         });
 
         console.log('📊 Total replacements built:', replacements.length);
@@ -228,6 +250,17 @@ const PlaceholderMappingPanel = ({
         const result = await filePreviewRef.current.applyReplacements(replacements);
 
         if (result.success) {
+            // ✅ Check modified PDF size
+            const modifiedSizeMB = result.bytes ? (result.bytes.byteLength / (1024 * 1024)).toFixed(2) : 0;
+            console.log(`📄 Modified PDF size: ${modifiedSizeMB} MB`);
+
+            if (result.bytes && result.bytes.byteLength > 50 * 1024 * 1024) { // 50MB limit
+                message.warning({
+                    content: `⚠️ PDF sau chỉnh sửa có kích thước lớn (${modifiedSizeMB} MB). Có thể gây lỗi khi gửi. Hãy thử compress PDF gốc trước khi upload.`,
+                    duration: 8
+                });
+            }
+
             message.success({
                 content: `✅ Đã thay thế ${replacements.length} placeholders trong PDF!`,
                 duration: 5
@@ -278,16 +311,24 @@ const PlaceholderMappingPanel = ({
 
         console.log('🚀 Auto-replacing single placeholder:', placeholder.original, '→', tag.key);
 
+        // Calculate appropriate font size (80% of original for better fit)
+        const originalFontSize = placeholder.fontSize || 12;
+        const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
+
         const replacement = {
             page: placeholder.page || 1,
             x: placeholder.x,
             y: placeholder.y,
             width: placeholder.width,
             height: placeholder.height,
-            oldText: placeholder.original,
+            backgroundX: placeholder.backgroundX,  // ✅ NEW: Exact position of (number) for accurate centering
+            backgroundWidth: placeholder.backgroundWidth,  // ✅ NEW: Exact width of (number) for accurate centering
+            oldText: placeholder.fullText || placeholder.original,  // ✅ Use fullText like "______(1)______"
             newText: tag.key, // ✅ Use tag.key directly (match PDF format)
-            fontSize: 12
+            fontSize: adjustedFontSize  // ✅ 8-10pt range
         };
+
+        console.log(`📏 Font size: original=${originalFontSize}pt, adjusted=${adjustedFontSize.toFixed(1)}pt`);
 
         const result = await filePreviewRef.current.applyReplacements([replacement]);
 
@@ -307,7 +348,7 @@ const PlaceholderMappingPanel = ({
             width: 30,
             render: (text, record) => (
                 <Space direction="vertical" size={0}>
-                    <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+                    <Tag color={record.isManual ? "orange" : "blue"} style={{ fontFamily: 'monospace', fontSize: '13px' }}>
                         {text}
                     </Tag>
                 </Space>
@@ -331,10 +372,6 @@ const PlaceholderMappingPanel = ({
                                 <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     <Text strong style={{ display: 'block' }}>{selectedTag.key}</Text>
                                     <Text type="secondary" style={{ fontSize: 12 }}>{selectedTag.dataTypeLabel}</Text>
-                                </div>
-
-                                <div style={{ flex: '0 0 auto' }}>
-                                    <Button size="small" onClick={() => handleMapPlaceholder(record.id, null)} danger>Unmap</Button>
                                 </div>
                             </div>
                         ) : (
@@ -496,7 +533,7 @@ const PlaceholderMappingPanel = ({
             {/* Mapping Table (custom for horizontal overflow and fixed status column) */}
             <CustomTable
                 columns={columns}
-                dataSource={placeholders}
+                dataSource={sortedPlaceholders}
                 rowKey="id"
                 pagination={false}
                 scroll={{ x: tableX, y: 400 }}

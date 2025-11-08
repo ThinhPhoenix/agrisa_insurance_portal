@@ -304,11 +304,16 @@ export const replacePlaceholdersInPDF = async (
             let centerX;
             if (backgroundX !== undefined && backgroundWidth !== undefined) {
               // Tâm của digit
-              centerX = backgroundX + (backgroundWidth / 2);
+              const digitCenter = backgroundX + (backgroundWidth / 2);
+              // Offset adjustment để căn chính xác hơn (fix systematic left-alignment)
+              const offsetAdjustment = 8;
+              centerX = digitCenter + offsetAdjustment;
 
               console.log(`📍 Center "${newText}":`, {
                 backgroundX: backgroundX.toFixed(2),
                 backgroundWidth: backgroundWidth.toFixed(2),
+                digitCenter: digitCenter.toFixed(2),
+                offsetAdjustment,
                 centerX: centerX.toFixed(2),
                 textWidth: textWidth.toFixed(2),
                 oldText

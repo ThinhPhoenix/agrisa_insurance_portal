@@ -294,6 +294,36 @@ export const extractTextFromPDF = async (file) => {
           // Calculate full width
           const fullWidth = endX - startX;
 
+          // 🎯 CRITICAL: Extract ONLY digit position (ignore parentheses and dots)
+          // Example: "...(2)..." - we only want position of "2"
+          const itemText = item.str || "";
+          const digitOnly = num;
+          const digitIndex = itemText.indexOf(digitOnly);
+
+          let exactNumberX = x;
+          let exactNumberWidth = width;
+
+          if (digitIndex !== -1) {
+            // Calculate approximate character width
+            const charWidth = width / itemText.length;
+            // Calculate position of digit within the text
+            const textBeforeWidth = charWidth * digitIndex;
+            const digitWidth = charWidth * digitOnly.length;
+
+            exactNumberX = x + textBeforeWidth;
+            exactNumberWidth = digitWidth;
+
+            console.log(`🔍 Single item - digit "${digitOnly}" in "${itemText}":`, {
+              x: x.toFixed(2),
+              width: width.toFixed(2),
+              digitIndex,
+              charWidth: charWidth.toFixed(2),
+              exactNumberX: exactNumberX.toFixed(2),
+              exactNumberWidth: exactNumberWidth.toFixed(2),
+              fullWidth: fullWidth.toFixed(2)
+            });
+          }
+
           placeholders.push({
             id: `placeholder_${placeholders.length + 1}`,
             original: `(${num})`,
@@ -304,8 +334,8 @@ export const extractTextFromPDF = async (file) => {
             x: startX,
             y: y,
             width: fullWidth,
-            backgroundX: x,
-            backgroundWidth: width,
+            backgroundX: exactNumberX,      // ✅ Only digit X
+            backgroundWidth: exactNumberWidth, // ✅ Only digit width
             height: height,
             fontSize: fontSize,
             position: allText.length,

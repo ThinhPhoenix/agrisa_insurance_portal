@@ -34,6 +34,19 @@ const PlaceholderMappingPanel = ({
     onExportSchema,
     filePreviewRef  //  NEW - to call applyReplacements
 }) => {
+    // Định nghĩa rõ các loại dữ liệu theo quy định
+    const defaultTagDataTypes = [
+        { label: 'Chuỗi/Text', value: 'string' },
+        { label: 'Văn bản dài', value: 'long_string' },
+        { label: 'Ngày tháng', value: 'date' },
+        { label: 'Ngày giờ', value: 'datetime' },
+        { label: 'Giờ phút', value: 'time' },
+        { label: 'Số nguyên', value: 'integer' },
+        { label: 'Số thực', value: 'float' },
+    ];
+
+    // Sử dụng tagDataTypes từ prop nếu có, ngược lại dùng default
+    const effectiveTagDataTypes = tagDataTypes.length > 0 ? tagDataTypes : defaultTagDataTypes;
     const [mappings, setMappings] = useState({});
     const [stats, setStats] = useState({
         total: 0,
@@ -316,7 +329,7 @@ const PlaceholderMappingPanel = ({
                 const selectedTagId = mappings[record.id];
                 const selectedTag = effectiveTags.find(t => t.id === selectedTagId);
 
-                const local = tempInputs[record.id] || { key: '', dataType: tagDataTypes?.[0]?.value || 'string' };
+                const local = tempInputs[record.id] || { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' };
 
                 // Use flex layout so controls scale and the row remains aligned regardless of text length
                 return (
@@ -333,7 +346,7 @@ const PlaceholderMappingPanel = ({
                                 <Input
                                     placeholder="Tên trường (key)"
                                     value={local.key}
-                                    onChange={(e) => setTempInput(record.id, { ...local, key: e.target.value })}
+                                    onChange={(e) => setTempInput(record.id, { ...local, key: e.target.value.toLowerCase() })}
                                     // make input occupy ~1/3 of the Map cell so it's not overly wide
                                     style={{ flex: '0 0 28%', minWidth: 100 }}
                                     size="middle"
@@ -344,7 +357,7 @@ const PlaceholderMappingPanel = ({
                                     onChange={(val) => setTempInput(record.id, { ...local, dataType: val })}
                                     style={{ flex: '0 0 20%', minWidth: 100 }}
                                     size="middle"
-                                    options={(tagDataTypes || []).map(dt => ({ label: dt.label, value: dt.value }))}
+                                    options={effectiveTagDataTypes.map(dt => ({ label: dt.label, value: dt.value }))}
                                 />
 
                                 <Button
@@ -357,7 +370,7 @@ const PlaceholderMappingPanel = ({
                                         }
 
                                         const newId = `local-${Date.now()}`;
-                                        const dataTypeLabel = tagDataTypes.find(t => t.value === local.dataType)?.label || local.dataType;
+                                        const dataTypeLabel = effectiveTagDataTypes.find(t => t.value === local.dataType)?.label || local.dataType;
                                         const newTag = {
                                             id: newId,
                                             key: local.key,
@@ -385,7 +398,7 @@ const PlaceholderMappingPanel = ({
                                         await applySingleReplacement(record.id, newTag);
 
                                         //  5. Clear temp input
-                                        setTempInput(record.id, { key: '', dataType: tagDataTypes?.[0]?.value || 'string' });
+                                        setTempInput(record.id, { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' });
                                     }}
                                 >
                                     Áp dụng

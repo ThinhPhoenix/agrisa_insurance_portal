@@ -531,34 +531,8 @@ export const usePolicyStore = create((set, get) => ({
         );
     });
 
-    // Tags validation (optional but if provided must be valid)
-    const { tagsData } = get();
-
-    // If document_tags exists, validate format
-    if (
-      tagsData.documentTagsObject &&
-      Object.keys(tagsData.documentTagsObject).length > 0
-    ) {
-      // Check if all values are valid data types
-      const validDataTypes = [
-        "string",
-        "int",
-        "float",
-        "date",
-        "boolean",
-        "textarea",
-        "select",
-      ];
-      Object.entries(tagsData.documentTagsObject).forEach(([key, dataType]) => {
-        if (!validDataTypes.includes(dataType)) {
-          errors.push(
-            `Invalid data type "${dataType}" for tag "${key}". Must be one of: ${validDataTypes.join(
-              ", "
-            )}`
-          );
-        }
-      });
-    }
+    // Tags validation (optional - no validation needed as data types are selected from fixed enum)
+    // Removed validation since data types are chosen from predefined select options
 
     // If uploadedFile exists, should have either modifiedPdfBytes or valid file
     if (tagsData.uploadedFile && !tagsData.modifiedPdfBytes) {

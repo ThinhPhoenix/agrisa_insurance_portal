@@ -21,7 +21,7 @@ import {
     Upload
 } from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { analyzePDFForPlaceholders } from './PDFPlaceholderDetector';
+import { analyzePDFForPlaceholders } from '../../../../libs/pdf/PDFPlaceholderDetector';
 import PDFViewerWithSelection from './PDFViewerWithSelection';
 
 const { Title, Text } = Typography;
@@ -53,13 +53,8 @@ const FileUploadPreview = forwardRef(({
                 setAnalyzing(true);
                 message.loading('Đang áp dụng thay đổi vào PDF...', 0);
 
-                console.log('🚀 Applying', replacements.length, 'replacements...');
-
                 // Read current file
                 const arrayBuffer = await uploadedFile.arrayBuffer();
-
-                console.log('📊 ArrayBuffer size:', arrayBuffer.byteLength, 'bytes');
-                console.log('📊 ArrayBuffer type:', arrayBuffer.constructor.name);
 
                 // Validate arrayBuffer
                 if (!arrayBuffer || arrayBuffer.byteLength === 0) {
@@ -76,9 +71,6 @@ const FileUploadPreview = forwardRef(({
                 const modifiedBytes = result.pdfBytes || result; // Backward compatibility
                 const warnings = result.warnings || [];
 
-                console.log('📊 Modified bytes size:', modifiedBytes.byteLength, 'bytes');
-                console.log('📊 Warnings:', warnings.length);
-
                 // Validate modifiedBytes
                 if (!modifiedBytes || modifiedBytes.byteLength === 0) {
                     throw new Error('Invalid modified PDF: Bytes are empty');
@@ -91,34 +83,25 @@ const FileUploadPreview = forwardRef(({
                     { type: 'application/pdf' }
                 );
 
-                console.log('📄 New file size:', (newFile.size / 1024).toFixed(2), 'KB');
-
                 // ⭐ OVERWRITE: Create new blob URL first (BEFORE setState)
                 const newUrl = URL.createObjectURL(newFile);
-                console.log('🔗 Created new blob URL:', newUrl);
-                console.log('🔗 Old blob URL:', fileUrl);
 
                 // ⭐ OVERWRITE: Update uploadedFile state
                 setUploadedFile(newFile);
 
                 // ⭐ OVERWRITE: Notify parent to update fileUrl
                 if (onFileUpload) {
-                    console.log('📤 Calling onFileUpload callback with newUrl:', newUrl);
                     onFileUpload(newFile, newUrl);  // Pass newUrl, not null!
-                } else {
-                    console.warn('⚠️ onFileUpload callback not provided!');
                 }
 
                 // ⭐ OVERWRITE: Update LOCAL fileUrl state (will trigger iframe reload)
                 // Note: Parent will also update fileUrl via callback, which syncs back via useEffect
                 setFileUrl(newUrl);
-                console.log('✅ Updated LOCAL fileUrl state to:', newUrl);
 
                 // ⭐ Cleanup old blob URL after a delay (prevent race condition)
                 if (fileUrl) {
                     setTimeout(() => {
                         URL.revokeObjectURL(fileUrl);
-                        console.log('🧹 Revoked old blob URL:', fileUrl);
                     }, 500);
                 }
 
@@ -128,8 +111,6 @@ const FileUploadPreview = forwardRef(({
                 message.destroy();
                 message.success(`✅ Đã áp dụng ${replacements.length} thay đổi vào PDF!`);
 
-                console.log('✅ Overwritten uploadedFile with modified PDF');
-
                 return {
                     success: true,
                     url: newUrl,
@@ -137,9 +118,8 @@ const FileUploadPreview = forwardRef(({
                     file: newFile
                 };
             } catch (error) {
-                console.error('❌ Error applying replacements:', error);
                 message.destroy();
-                message.error('❌ Lỗi khi chỉnh sửa PDF: ' + error.message);
+                message.error(' Lỗi khi chỉnh sửa PDF: ' + error.message);
 
                 return {
                     success: false,
@@ -174,7 +154,6 @@ const FileUploadPreview = forwardRef(({
     // ✅ Sync fileUrlProp from parent into local state
     useEffect(() => {
         if (fileUrlProp !== null && fileUrlProp !== fileUrl) {
-            console.log('🔄 Syncing fileUrl from parent prop:', fileUrlProp);
             setFileUrl(fileUrlProp);
         }
     }, [fileUrlProp]);
@@ -257,9 +236,7 @@ const FileUploadPreview = forwardRef(({
                 try {
                     const base64 = await fileToBase64(file);
                     // Log only the base64/data URL string as requested
-                    console.log('Uploaded file base64:', base64);
                 } catch (convErr) {
-                    console.error('Error converting file to base64:', convErr);
                 }
 
                 setUploadProgress(100);
@@ -270,7 +247,6 @@ const FileUploadPreview = forwardRef(({
                 // Auto analyze PDF for placeholders
                 analyzePDF(file);
             } catch (error) {
-                console.error('File processing error:', error);
                 message.error('Có lỗi xảy ra khi xử lý file: ' + (error?.message || error));
             } finally {
                 setLoading(false);
@@ -328,7 +304,6 @@ const FileUploadPreview = forwardRef(({
                 }
             }
         } catch (error) {
-            console.error('Error analyzing PDF:', error);
             message.error('Không thể phân tích PDF: ' + error.message);
         } finally {
             setAnalyzing(false);
@@ -352,7 +327,7 @@ const FileUploadPreview = forwardRef(({
 
         try {
             // Detect placeholders from pasted text
-            const { detectPlaceholders } = require('./PDFPlaceholderDetector');
+            const { detectPlaceholders } = require('../../../../libs/pdf/PDFPlaceholderDetector');
             const detectedPlaceholders = detectPlaceholders(pastedText);
 
             setPlaceholders(detectedPlaceholders);
@@ -368,7 +343,6 @@ const FileUploadPreview = forwardRef(({
                 message.warning('Không tìm thấy placeholder nào. Vui lòng kiểm tra format: (1), (2)...');
             }
         } catch (error) {
-            console.error('Error detecting placeholders:', error);
             message.error('Lỗi khi phân tích text: ' + error.message);
         } finally {
             setAnalyzing(false);
@@ -390,12 +364,10 @@ const FileUploadPreview = forwardRef(({
 
     // PDF callbacks - Not needed with iframe
     const onPdfLoad = () => {
-        console.log('📄 PDF loaded successfully in iframe');
         setPdfError(null);
     };
 
     const onPdfError = () => {
-        console.error('❌ PDF load error in iframe');
         setPdfError('Không thể tải PDF. File có thể bị hỏng hoặc không hợp lệ.');
         message.error('Không thể tải PDF. Vui lòng kiểm tra file.');
     };
@@ -460,7 +432,6 @@ const FileUploadPreview = forwardRef(({
             message.success(`Đã ghi tag "${tag.key}" vào PDF tại trang ${coordinates.page}`);
         } catch (error) {
             message.destroy();
-            console.error('Error placing tag:', error);
             message.error(`Lỗi khi ghi tag: ${error.message}`);
         }
     };
@@ -678,11 +649,6 @@ const FileUploadPreview = forwardRef(({
     );
 
     // Normal mode
-    console.log('🎨 Rendering FileUploadPreview');
-    console.log('   - uploadedFile:', uploadedFile?.name || 'null');
-    console.log('   - fileUrl:', fileUrl ? fileUrl.substring(0, 50) + '...' : 'null');
-    console.log('   - Will show iframe?', !!fileUrl);
-
     return (
         <>
             <div style={{

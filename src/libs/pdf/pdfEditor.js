@@ -280,95 +280,46 @@ export const replacePlaceholdersInPDF = async (
             // 3. Center text in placeholder
             // 4. Draw white rectangle to cover original
 
-            // ✨ UNDERSCORE PRESERVATION:
-            // If oldText has underscores/dots, preserve them around newText
-            // e.g., "______(1)______" + "Họ và tên" → "__Họ và tên__"
-            let displayText = newText;
-
-            // Count leading underscores/dots
-            const leadingMatch = oldText.match(/^[._]+/);
-            const leadingChars = leadingMatch ? leadingMatch[0] : "";
-
-            // Count trailing underscores/dots
-            const trailingMatch = oldText.match(/[._]+$/);
-            const trailingChars = trailingMatch ? trailingMatch[0] : "";
-
-            if (leadingChars || trailingChars) {
-              // Use 2 underscores/dots on each side (balanced, not too long)
-              const leadingChar = leadingChars[0] || "_";
-              const trailingChar = trailingChars[0] || "_";
-              const leadingCount = Math.min(2, leadingChars.length);
-              const trailingCount = Math.min(2, trailingChars.length);
-
-              displayText =
-                leadingChar.repeat(leadingCount) +
-                newText +
-                trailingChar.repeat(trailingCount);
-            }
-
-            // Step 1: Calculate if text fits at current font size
-            let finalText = displayText;
+            // ✅ SIMPLE: No underscore preservation, no truncate
+            // Just write the text as-is and center it on the digit
+            let finalText = newText;
             let finalFontSize = fontSize;
-            let textWidth = font.widthOfTextAtSize(displayText, fontSize);
+            let textWidth = font.widthOfTextAtSize(newText, fontSize);
 
-            // Step 2: Scale down if text doesn't fit
+            // Check if text will overflow (for warning only, don't truncate)
             if (textWidth > width) {
-              const scaleFactor = Math.max(0.7, width / textWidth);
-              finalFontSize = Math.max(8, fontSize * scaleFactor);
-              textWidth = font.widthOfTextAtSize(displayText, finalFontSize);
-
-              // Step 3: If still too wide after scaling, truncate with ellipsis
-              if (textWidth > width) {
-                // Binary search for max characters that fit
-                let maxChars = displayText.length;
-                const ellipsis = "...";
-                const ellipsisWidth = font.widthOfTextAtSize(
-                  ellipsis,
-                  finalFontSize
-                );
-
-                for (let len = displayText.length - 1; len > 0; len--) {
-                  const truncated = displayText.substring(0, len) + ellipsis;
-                  const truncatedWidth = font.widthOfTextAtSize(
-                    truncated,
-                    finalFontSize
-                  );
-
-                  if (truncatedWidth <= width) {
-                    finalText = truncated;
-                    textWidth = truncatedWidth;
-                    maxChars = len;
-                    break;
-                  }
-                }
-
-                warnings.push({
-                  field: displayText,
-                  original: oldText,
-                  warning: `Text truncated to fit (showing ${maxChars}/${displayText.length} characters)`,
-                  strategy: "truncate",
-                });
-              }
+              warnings.push({
+                field: newText,
+                original: oldText,
+                textWidth: textWidth.toFixed(2),
+                fieldWidth: width.toFixed(2),
+                overflow: (textWidth - width).toFixed(2),
+                warning: `Text may overflow field boundaries`,
+              });
             }
 
-            const optimal = {
-              pattern: finalText,
-              fontSize: finalFontSize,
-              strategy: textWidth > width ? "scale_font" : "keep_original",
-            };
+            // Step 3: Tính tâm của background (số)
+            // backgroundX + backgroundWidth/2 = tâm chính xác của số (1)
+            // Text sẽ căn giữa xung quanh tâm này
+            let centerX;
+            if (backgroundX !== undefined && backgroundWidth !== undefined) {
+              // Tâm của digit
+              centerX = backgroundX + (backgroundWidth / 2);
 
-            // Step 3: Calculate center of placeholder
-            // ✨ CRITICAL FIX: Use backgroundX/backgroundWidth if available
-            // - backgroundX/backgroundWidth = exact position of (number) only
-            // - x/width = full placeholder including dots/underscores
-            // For accurate centering, use (number) position, not full placeholder
-            const numberX = backgroundX !== undefined ? backgroundX : x;
-            const numberWidth =
-              backgroundWidth !== undefined ? backgroundWidth : width;
-            const placeholderCenterX = numberX + numberWidth / 2;
+              console.log(`📍 Center "${newText}":`, {
+                backgroundX: backgroundX.toFixed(2),
+                backgroundWidth: backgroundWidth.toFixed(2),
+                centerX: centerX.toFixed(2),
+                textWidth: textWidth.toFixed(2),
+                oldText
+              });
+            } else {
+              // Fallback
+              centerX = x + (width / 2);
+            }
 
-            // Step 4: Calculate centered text position
-            const textX = placeholderCenterX - textWidth / 2;
+            // Step 4: Căn giữa text
+            const textX = centerX - (textWidth / 2);
 
             // Step 5: Draw WHITE rectangle based on FINAL TEXT width
             // Background must ONLY cover the new text (e.g., "__họ tên__"), not old underscores

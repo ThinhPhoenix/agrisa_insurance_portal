@@ -1,7 +1,8 @@
 import {
     CheckCircleOutlined,
     ExclamationCircleOutlined,
-    LinkOutlined
+    LinkOutlined,
+    WarningOutlined
 } from '@ant-design/icons';
 import {
     Alert,
@@ -11,6 +12,7 @@ import {
     Divider,
     Empty,
     Input,
+    Modal,
     Select,
     Space,
     Tag,
@@ -257,8 +259,26 @@ const PlaceholderMappingPanel = ({
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
 
+    // ✅ NEW: Check if text will overflow field (conservative check)
+    const checkTextOverflow = (text, fieldWidth, fontSize = 10) => {
+        // Approximate: 1 character ≈ 0.7 * fontSize
+        const estimatedTextWidth = text.length * fontSize * 0.7;
+
+        // Very conservative: warn if text > 40% of fieldWidth
+        // This accounts for dots/underscores taking up space
+        const safeFieldWidth = fieldWidth * 0.4;
+
+        return {
+            willOverflow: estimatedTextWidth > safeFieldWidth,
+            estimatedTextWidth,
+            fieldWidth,
+            safeFieldWidth,
+            overflow: Math.max(0, estimatedTextWidth - safeFieldWidth)
+        };
+    };
+
     //  NEW: Apply single placeholder replacement (for inline creation)
-    const applySingleReplacement = async (placeholderId, tagIdOrTag) => {
+    const applySingleReplacement = async (placeholderId, tagIdOrTag, skipWarning = false) => {
         if (!filePreviewRef?.current?.applyReplacements) {
             return;
         }
@@ -277,9 +297,76 @@ const PlaceholderMappingPanel = ({
             return;
         }
 
-        // Calculate appropriate font size (80% of original for better fit)
+        // Calculate appropriate font size
         const originalFontSize = placeholder.fontSize || 12;
         const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
+
+        // ✅ Check if text will overflow
+        const overflowCheck = checkTextOverflow(tag.key, placeholder.width, adjustedFontSize);
+
+        console.log(`🔍 Overflow check for "${tag.key}":`, {
+            textLength: tag.key.length,
+            fieldWidth: placeholder.width,
+            fontSize: adjustedFontSize,
+            ...overflowCheck
+        });
+
+        if (!skipWarning && overflowCheck.willOverflow) {
+            console.log(`⚠️ Showing overflow warning modal for "${tag.key}"`);
+
+            // Show warning modal
+            Modal.confirm({
+                title: 'Text có thể vượt quá kích thước field',
+                icon: <WarningOutlined style={{ color: '#faad14' }} />,
+                content: (
+                    <div>
+                        <p>Văn bản <strong>"{tag.key}"</strong> có thể vượt quá kích thước field <strong>{placeholder.original}</strong></p>
+                        <ul>
+                            <li>Độ rộng văn bản (ước tính): ~{overflowCheck.estimatedTextWidth.toFixed(0)}px</li>
+                            <li>Độ rộng field an toàn: ~{overflowCheck.safeFieldWidth.toFixed(0)}px</li>
+                            <li>Vượt quá: ~{overflowCheck.overflow.toFixed(0)}px</li>
+                        </ul>
+                        <Alert
+                            message="Bạn có muốn tiếp tục áp dụng? Text có thể làm vỡ layout PDF."
+                            type="warning"
+                            showIcon
+                        />
+                    </div>
+                ),
+                okText: 'Chấp nhận và áp dụng',
+                cancelText: 'Hủy và điều chỉnh lại',
+                onOk: () => {
+                    // Retry with skipWarning = true
+                    applySingleReplacement(placeholderId, tagIdOrTag, true);
+                },
+                onCancel: () => {
+                    // ✅ Unmapping to allow re-input
+                    console.log(`🔙 User cancelled - unmapping placeholder ${placeholderId}`);
+
+                    // Remove mapping
+                    const newMappings = { ...mappings };
+                    delete newMappings[placeholderId];
+                    setMappings(newMappings);
+
+                    // Remove tag from parent
+                    if (onMappingChange) {
+                        const documentTags = buildDocumentTags();
+                        // Remove this tag from documentTags
+                        delete documentTags[tag.key];
+
+                        onMappingChange(newMappings, {
+                            documentTagsObject: documentTags
+                        });
+                    }
+
+                    // Clear temp input
+                    setTempInput(placeholderId, { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' });
+
+                    message.info('Đã hủy mapping. Vui lòng nhập lại.');
+                }
+            });
+            return;
+        }
 
         const replacement = {
             page: placeholder.page || 1,

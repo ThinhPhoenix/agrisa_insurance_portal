@@ -671,39 +671,43 @@ const TagsTab = ({
                 {/* Placeholder mapping panel replaces the tags table */}
 
                 {placeholders && placeholders.length > 0 ? (
-                    <>
-                        {/* 🔍 DEBUG: Log tagsData before passing to PlaceholderMappingPanel */}
-                        {console.log('🔍 TagsTab - tagsData:', tagsData)}
-                        {console.log('🔍 TagsTab - tagsData.tags:', tagsData?.tags)}
-                        {console.log('🔍 TagsTab - tags count:', tagsData?.tags?.length || 0)}
-                        <PlaceholderMappingPanel
-                            placeholders={placeholders}
-                            tags={tagsData?.tags || []}
-                            tagDataTypes={mockData.tagDataTypes || []}
-                            onCreateTag={(tag) => {
-                                console.log('🔍 TagsTab - onCreateTag called with:', tag);
-                                onAddTag(tag);
-                            }}
-                            onMappingChange={(mappings, pdfData) => {
-                                console.log('🔍 TagsTab - onMappingChange called with:', { mappings, pdfData });
+                    <PlaceholderMappingPanel
+                        placeholders={placeholders}
+                        tags={tagsData?.tags || []}
+                        tagDataTypes={mockData.tagDataTypes || []}
+                        onCreateTag={(tag) => {
+                            console.log('🔍 TagsTab - onCreateTag called with:', tag);
+                            console.log('🔍 TagsTab - calling onAddTag...');
+                            onAddTag(tag);
+                            console.log('🔍 TagsTab - onAddTag called, current tagsData.tags:', tagsData.tags);
+                        }}
+                        onMappingChange={(mappings, pdfData) => {
+                            console.log('🔍 TagsTab - onMappingChange called with:', { mappings, pdfData });
 
-                                // Update tagsData with mappings and PDF data
-                                const updatedTagsData = {
-                                    ...tagsData,
-                                    mappings,
-                                    ...(pdfData && {
-                                        documentTagsObject: pdfData.documentTagsObject,
-                                        modifiedPdfBytes: pdfData.modifiedPdfBytes,
-                                        uploadedFile: pdfData.uploadedFile
-                                    })
-                                };
+                            // ✅ FIX: Use handleTagsDataChange (prev => ...) instead of spreading tagsData
+                            // to avoid race condition where tags haven't been added yet
+                            onDataChange && onDataChange((prev) => {
+                                const updates = { ...prev, mappings };
 
-                                onDataChange && onDataChange(updatedTagsData);
-                            }}
-                            onExportSchema={(schema) => console.log('Exported schema', schema)}
-                            filePreviewRef={filePreviewRef}  // ✅ Pass ref down to PlaceholderMappingPanel
-                        />
-                    </>
+                                // Only update fields that exist in pdfData (avoid overwriting with undefined)
+                                if (pdfData) {
+                                    if (pdfData.documentTagsObject !== undefined) {
+                                        updates.documentTagsObject = pdfData.documentTagsObject;
+                                    }
+                                    if (pdfData.modifiedPdfBytes !== undefined) {
+                                        updates.modifiedPdfBytes = pdfData.modifiedPdfBytes;
+                                    }
+                                    if (pdfData.uploadedFile !== undefined) {
+                                        updates.uploadedFile = pdfData.uploadedFile;
+                                    }
+                                }
+
+                                return updates;
+                            });
+                        }}
+                        onExportSchema={(schema) => console.log('Exported schema', schema)}
+                        filePreviewRef={filePreviewRef}  // ✅ Pass ref down to PlaceholderMappingPanel
+                    />
                 ) : (
                     <Alert
                         message="Chưa có placeholders"

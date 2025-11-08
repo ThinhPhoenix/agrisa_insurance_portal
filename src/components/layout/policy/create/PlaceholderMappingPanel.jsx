@@ -54,20 +54,9 @@ const PlaceholderMappingPanel = ({
         unmapped: 0
     });
 
-    //  Local tags cache - Fix Tags count = 0 issue
-    const [localTags, setLocalTags] = useState([]);
-
-    // Sync localTags với tags prop
-    useEffect(() => {
-        if (tags && tags.length > 0) {
-            setLocalTags(tags);
-        }
-    }, [tags]);
-
-    // Combined tags: Merge parent tags with local tags (local takes precedence for newly created ones)
-    const effectiveTags = [...(tags || []), ...localTags].filter((tag, index, arr) =>
-        arr.findIndex(t => t.id === tag.id) === index // Remove duplicates by id
-    );
+    // ✅ Use tags directly from parent - no need for local cache
+    // Parent state (use-policy.js) is the single source of truth
+    const effectiveTags = tags || [];
 
     // Sort placeholders by position (1), (2), (3)...
     const sortedPlaceholders = [...placeholders].sort((a, b) => {
@@ -92,7 +81,8 @@ const PlaceholderMappingPanel = ({
     }, [mappings, sortedPlaceholders]);
 
     // Handle mapping change
-    const handleMapPlaceholder = (placeholderId, tagId) => {
+    // ✅ NEW: Accept optional newTag parameter for immediate mapping
+    const handleMapPlaceholder = (placeholderId, tagId, newTag = null) => {
         const newMappings = {
             ...mappings,
             [placeholderId]: tagId
@@ -103,6 +93,9 @@ const PlaceholderMappingPanel = ({
         //  Build and notify parent immediately when mapping changes
         // This ensures documentTagsObject is always up-to-date in tagsData
         if (onMappingChange) {
+            // ✅ Build temporary tags array including the new tag if provided
+            const tagsToUse = newTag ? [...effectiveTags, newTag] : effectiveTags;
+
             // Build documentTags from new mappings
             const documentTags = {};
             const sortedPlaceholders = [...placeholders].sort((a, b) => {
@@ -121,14 +114,17 @@ const PlaceholderMappingPanel = ({
                     return;
                 }
 
-                const tag = effectiveTags.find(t => t.id === mappedTagId);
+                const tag = tagsToUse.find(t => t.id === mappedTagId);
 
                 if (!tag) {
+                    console.warn(`⚠️ Tag not found for id: ${mappedTagId}`);
                     return;
                 }
 
                 documentTags[tag.key] = tag.dataType || 'string';
             });
+
+            console.log('🔍 handleMapPlaceholder - documentTags:', documentTags);
 
             // Notify parent with mappings + documentTagsObject
             onMappingChange(newMappings, {
@@ -168,6 +164,7 @@ const PlaceholderMappingPanel = ({
             documentTags[tag.key] = tag.dataType || 'string';
         });
 
+        return documentTags;
     };
 
     //  Apply mapping to PDF - NEW
@@ -380,24 +377,18 @@ const PlaceholderMappingPanel = ({
                                             index: effectiveTags.length + 1
                                         };
 
-                                        // 1. Save to localTags (immediate)
-                                        setLocalTags(prev => {
-                                            const updated = [...prev, newTag];
-                                            return updated;
-                                        });
-
-                                        // 2. Notify parent (may not update immediately)
+                                        // 1. Notify parent FIRST to add tag with proper ID
                                         if (onCreateTag) {
                                             onCreateTag(newTag);
                                         }
 
-                                        //  3. Map placeholder with tag
-                                        handleMapPlaceholder(record.id, newId);
+                                        //  2. Map placeholder with tag - ✅ Pass newTag to avoid race condition
+                                        handleMapPlaceholder(record.id, newId, newTag);
 
-                                        //  4. Auto-replace on PDF (realtime!) - Pass tag object directly
+                                        //  3. Auto-replace on PDF (realtime!) - Pass tag object directly
                                         await applySingleReplacement(record.id, newTag);
 
-                                        //  5. Clear temp input
+                                        //  4. Clear temp input
                                         setTempInput(record.id, { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' });
                                     }}
                                 >

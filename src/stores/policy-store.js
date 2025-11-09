@@ -421,7 +421,7 @@ export const usePolicyStore = create((set, get) => ({
    * Validate payload before sending to BE - Only check REQUIRED fields per BE spec
    */
   validatePayload: () => {
-    const { basicData, configurationData } = get();
+    const { basicData, configurationData, tagsData } = get();
     const errors = [];
 
     // ✅ REQUIRED BasicTab fields per BE spec

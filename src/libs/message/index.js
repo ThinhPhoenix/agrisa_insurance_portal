@@ -32,10 +32,36 @@ export {
   getWarningMessage,
   splitMessage,
 } from "./common-message.js";
+export {
+  POLICY_MESSAGES,
+  getBasePolicyError,
+  getBasePolicyInfo,
+  getBasePolicyMessage,
+  getBasePolicySuccess,
+  getBasePolicyValidation,
+  getBasePolicyWarning,
+  getConditionError,
+  getConditionInfo,
+  getConditionMessage,
+  getConditionSuccess,
+  getConditionValidation,
+  getConditionWarning,
+  getGeneralError,
+  getGeneralInfo,
+  getGeneralMessage,
+  getGeneralSuccess,
+  getGeneralWarning,
+  getTriggerError,
+  getTriggerInfo,
+  getTriggerMessage,
+  getTriggerSuccess,
+  getTriggerValidation,
+} from "./policy-message.js";
 
 // Re-export with clearer names for easier usage
 export { SIGNIN_MESSAGES as SignInMessages } from "./auth-message.js";
 export { COMMON_MESSAGES as GeneralMessages } from "./common-message.js";
+export { POLICY_MESSAGES as PolicyMessages } from "./policy-message.js";
 
 // Helper functions để dễ sử dụng hơn
 export const Messages = {
@@ -64,6 +90,36 @@ export const Messages = {
     validation: (key, params) => getSignInValidation(key, params),
     info: (key, params) => getSignInInfo(key, params),
     warning: (key, params) => getSignInWarning(key, params),
+  },
+
+  // Policy specific messages
+  policy: {
+    basePolicy: {
+      success: (key, params) => getBasePolicySuccess(key, params),
+      error: (key, params) => getBasePolicyError(key, params),
+      validation: (key, params) => getBasePolicyValidation(key, params),
+      info: (key, params) => getBasePolicyInfo(key, params),
+      warning: (key, params) => getBasePolicyWarning(key, params),
+    },
+    trigger: {
+      success: (key, params) => getTriggerSuccess(key, params),
+      error: (key, params) => getTriggerError(key, params),
+      validation: (key, params) => getTriggerValidation(key, params),
+      info: (key, params) => getTriggerInfo(key, params),
+    },
+    condition: {
+      success: (key, params) => getConditionSuccess(key, params),
+      error: (key, params) => getConditionError(key, params),
+      validation: (key, params) => getConditionValidation(key, params),
+      info: (key, params) => getConditionInfo(key, params),
+      warning: (key, params) => getConditionWarning(key, params),
+    },
+    general: {
+      success: (key, params) => getGeneralSuccess(key, params),
+      error: (key, params) => getGeneralError(key, params),
+      info: (key, params) => getGeneralInfo(key, params),
+      warning: (key, params) => getGeneralWarning(key, params),
+    },
   },
 
   // Utility functions

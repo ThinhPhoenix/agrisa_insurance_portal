@@ -43,7 +43,7 @@ const TagsTab = ({
     onOpenPaste,
     onOpenFullscreen,
     placeholders = [],
-    filePreviewRef  // ✅ NEW - receive from parent to pass down to PlaceholderMappingPanel
+    filePreviewRef  //  NEW - receive from parent to pass down to PlaceholderMappingPanel
 }) => {
     const [tagForm] = Form.useForm();
     const [selectedDataType, setSelectedDataType] = React.useState('string');
@@ -684,7 +684,7 @@ const TagsTab = ({
                         onMappingChange={(mappings, pdfData) => {
                             console.log('🔍 TagsTab - onMappingChange called with:', { mappings, pdfData });
 
-                            // ✅ FIX: Use handleTagsDataChange (prev => ...) instead of spreading tagsData
+                            //  FIX: Use handleTagsDataChange (prev => ...) instead of spreading tagsData
                             // to avoid race condition where tags haven't been added yet
                             onDataChange && onDataChange((prev) => {
                                 const updates = { ...prev, mappings };
@@ -706,7 +706,7 @@ const TagsTab = ({
                             });
                         }}
                         onExportSchema={(schema) => console.log('Exported schema', schema)}
-                        filePreviewRef={filePreviewRef}  // ✅ Pass ref down to PlaceholderMappingPanel
+                        filePreviewRef={filePreviewRef}  //  Pass ref down to PlaceholderMappingPanel
                     />
                 ) : (
                     <Alert

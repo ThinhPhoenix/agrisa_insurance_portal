@@ -542,21 +542,21 @@ const usePolicy = () => {
 
   // Handle tags data change
   const handleTagsDataChange = useCallback((newData) => {
-    console.log('🔥 handleTagsDataChange called with:', newData);
+    console.log("🔥 handleTagsDataChange called with:", newData);
     // ✅ Support both object and function updater
-    if (typeof newData === 'function') {
+    if (typeof newData === "function") {
       setTagsData((prev) => {
-        console.log('🔥 handleTagsDataChange - prev:', prev);
+        console.log("🔥 handleTagsDataChange - prev:", prev);
         const result = newData(prev);
-        console.log('🔥 handleTagsDataChange - result:', result);
+        console.log("🔥 handleTagsDataChange - result:", result);
         return result;
       });
     } else {
       setTagsData((prev) => {
-        console.log('🔥 handleTagsDataChange - prev:', prev);
-        console.log('🔥 handleTagsDataChange - newData:', newData);
+        console.log("🔥 handleTagsDataChange - prev:", prev);
+        console.log("🔥 handleTagsDataChange - newData:", newData);
         const result = { ...prev, ...newData };
-        console.log('🔥 handleTagsDataChange - result:', result);
+        console.log("🔥 handleTagsDataChange - result:", result);
         return result;
       });
     }
@@ -564,9 +564,9 @@ const usePolicy = () => {
 
   // Handle add tag
   const handleAddTag = useCallback((tag) => {
-    console.log('🔥 handleAddTag called with:', tag);
+    console.log("🔥 handleAddTag called with:", tag);
     setTagsData((prev) => {
-      console.log('🔥 handleAddTag - prev.tags:', prev.tags);
+      console.log("🔥 handleAddTag - prev.tags:", prev.tags);
       const newTags = [
         ...prev.tags,
         {
@@ -576,7 +576,7 @@ const usePolicy = () => {
           id: tag.id || `tag_${Date.now()}`,
         },
       ];
-      console.log('🔥 handleAddTag - newTags:', newTags);
+      console.log("🔥 handleAddTag - newTags:", newTags);
       return {
         ...prev,
         tags: newTags,

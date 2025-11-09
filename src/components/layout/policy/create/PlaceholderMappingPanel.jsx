@@ -56,7 +56,7 @@ const PlaceholderMappingPanel = ({
         unmapped: 0
     });
 
-    // ✅ Use tags directly from parent - no need for local cache
+    //  Use tags directly from parent - no need for local cache
     // Parent state (use-policy.js) is the single source of truth
     const effectiveTags = tags || [];
 
@@ -83,7 +83,7 @@ const PlaceholderMappingPanel = ({
     }, [mappings, sortedPlaceholders]);
 
     // Handle mapping change
-    // ✅ NEW: Accept optional newTag parameter for immediate mapping
+    //  NEW: Accept optional newTag parameter for immediate mapping
     const handleMapPlaceholder = (placeholderId, tagId, newTag = null) => {
         const newMappings = {
             ...mappings,
@@ -95,7 +95,7 @@ const PlaceholderMappingPanel = ({
         //  Build and notify parent immediately when mapping changes
         // This ensures documentTagsObject is always up-to-date in tagsData
         if (onMappingChange) {
-            // ✅ Build temporary tags array including the new tag if provided
+            //  Build temporary tags array including the new tag if provided
             const tagsToUse = newTag ? [...effectiveTags, newTag] : effectiveTags;
 
             // Build documentTags from new mappings
@@ -259,7 +259,7 @@ const PlaceholderMappingPanel = ({
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
 
-    // ✅ NEW: Check if text will overflow field (conservative check)
+    //  NEW: Check if text will overflow field (conservative check)
     const checkTextOverflow = (text, fieldWidth, fontSize = 10) => {
         // Approximate: 1 character ≈ 0.7 * fontSize
         const estimatedTextWidth = text.length * fontSize * 0.7;
@@ -301,7 +301,7 @@ const PlaceholderMappingPanel = ({
         const originalFontSize = placeholder.fontSize || 12;
         const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
 
-        // ✅ Check if text will overflow
+        //  Check if text will overflow
         const overflowCheck = checkTextOverflow(tag.key, placeholder.width, adjustedFontSize);
 
         console.log(`🔍 Overflow check for "${tag.key}":`, {
@@ -340,7 +340,7 @@ const PlaceholderMappingPanel = ({
                     applySingleReplacement(placeholderId, tagIdOrTag, true);
                 },
                 onCancel: () => {
-                    // ✅ Unmapping to allow re-input
+                    //  Unmapping to allow re-input
                     console.log(`🔙 User cancelled - unmapping placeholder ${placeholderId}`);
 
                     // Remove mapping
@@ -469,7 +469,7 @@ const PlaceholderMappingPanel = ({
                                             onCreateTag(newTag);
                                         }
 
-                                        //  2. Map placeholder with tag - ✅ Pass newTag to avoid race condition
+                                        //  2. Map placeholder with tag -  Pass newTag to avoid race condition
                                         handleMapPlaceholder(record.id, newId, newTag);
 
                                         //  3. Auto-replace on PDF (realtime!) - Pass tag object directly

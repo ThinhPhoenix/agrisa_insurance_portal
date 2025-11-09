@@ -1,5 +1,5 @@
+import { getBasePolicyError, getBasePolicyValidation } from '@/libs/message';
 import { useAuthStore } from '@/stores/auth-store';
-import { getBasePolicyValidation, getBasePolicyError } from '@/libs/message';
 import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import {
     Alert,
@@ -336,8 +336,8 @@ const BasicTab = ({
                     <Col span={8}>
                         <Form.Item
                             name="isPerHectare"
-                            label="Tính theo diện tích"
-                            tooltip="Xác định phí bảo hiểm (premium) có tính theo hectare không. Nếu chọn 'Có', khi đăng ký phải cung cấp diện tích (hectare)"
+                            label="Tính phí theo Hecta"
+                            tooltip="Tính phí theo Hecta (Is Per Hectare): Nếu bật, phí bảo hiểm sẽ được tính bằng cách nhân đơn giá với tổng diện tích (hecta) mà người dùng đăng ký"
                             rules={[{ required: true, message: getBasePolicyValidation('IS_PER_HECTARE_REQUIRED') }]}
                         >
                             <Select size="large" placeholder="Chọn">
@@ -371,8 +371,8 @@ const BasicTab = ({
                     <Col span={8}>
                         <Form.Item
                             name="fixPremiumAmount"
-                            label="Phí cố định (VND)"
-                            tooltip="Nếu cung cấp, đây là số tiền phí bảo hiểm (premium) cố định (tổng) cho hợp đồng. Nếu có, sẽ ưu tiên dùng số tiền này thay vì tính theo tỷ lệ"
+                            label="Phí bảo hiểm cố định"
+                            tooltip="Phí bảo hiểm cố định (Fixed Premium Amount): Một số tiền phí bảo hiểm được ấn định trước cho hợp đồng, không cần qua các bước tính toán động"
                             rules={[
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_NEGATIVE') }
                             ]}
@@ -411,8 +411,8 @@ const BasicTab = ({
                     <Col span={24}>
                         <Form.Item
                             name="cancelPremiumRate"
-                            label="Tỷ lệ phí huỷ"
-                            tooltip="Tỷ lệ phí phải trả/được hoàn khi hủy hợp đồng. Giá trị từ 0 đến 1 (ví dụ: 0.8 = 80%). Khuyến nghị xác nhận với team: đây là tỷ lệ phí được hoàn trả (refund) hay phí phải giữ lại"
+                            label="Tỷ lệ phí khi hủy hợp đồng"
+                            tooltip="Tỷ lệ phí khi hủy hợp đồng (Cancel Premium Rate): Quy định tỷ lệ phí bảo hiểm được áp dụng khi hợp đồng bị hủy trước hạn. Tỷ lệ này có thể là phần trăm phí được hoàn lại cho người dùng hoặc phần trăm phí bị giữ lại, tùy theo quy định của sản phẩm. Giá trị từ 0 đến 1 (ví dụ: 0.8 = 80%)"
                             rules={[
                                 { type: 'number', min: 0, max: 1, message: getBasePolicyError('CANCEL_PREMIUM_RATE_INVALID') }
                             ]}
@@ -435,8 +435,8 @@ const BasicTab = ({
                     <Col span={8}>
                         <Form.Item
                             name="isPayoutPerHectare"
-                            label="Tính chi trả theo diện tích"
-                            tooltip="Xác định số tiền chi trả (payout) có tính theo hectare không. Nếu chọn 'Có', số tiền chi trả sẽ nhân với diện tích (hectare)"
+                            label="Bồi thường theo Hecta"
+                            tooltip="Bồi thường theo Hecta (Is Payout Per Hectare?): Nếu bật, số tiền bồi thường sẽ được tính bằng cách nhân mức bồi thường cơ bản với tổng diện tích (hecta) đã đăng ký"
                             rules={[{ required: true, message: getBasePolicyValidation('IS_PAYOUT_PER_HECTARE_REQUIRED') }]}
                         >
                             <Select size="large" placeholder="Chọn">
@@ -448,8 +448,8 @@ const BasicTab = ({
                     <Col span={8}>
                         <Form.Item
                             name="payoutBaseRate"
-                            label="Tỷ lệ chi trả cơ bản"
-                            tooltip="Tỷ lệ chi trả cơ bản (VND/ha hoặc hệ số nhân - multiplier). Thường hiểu là phần trăm, ví dụ: 0.75 = 75%. BẮT BUỘC"
+                            label="Tỷ lệ bồi thường cơ bản"
+                            tooltip="Tỷ lệ bồi thường cơ bản (Payout Base Rate): Tỷ lệ phần trăm (ví dụ: 0.75 tương đương 75%) của một giá trị cơ sở (như tổng thiệt hại hoặc chi phí cơ sở) sẽ được dùng để tính ra số tiền bồi thường cuối cùng. BẮT BUỘC"
                             rules={[
                                 { required: true, message: getBasePolicyError('PAYOUT_BASE_RATE_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_BASE_RATE_NEGATIVE') }
@@ -467,8 +467,8 @@ const BasicTab = ({
                     <Col span={8}>
                         <Form.Item
                             name="fixPayoutAmount"
-                            label="Số tiền chi trả cố định (VND)"
-                            tooltip="Nếu cung cấp, đây là số tiền bồi thường cố định (tổng) cho hợp đồng bảo hiểm (policy). Nếu có, sẽ ưu tiên dùng số tiền này thay vì tính theo tỷ lệ"
+                            label="Số tiền bồi thường cố định"
+                            tooltip="Số tiền bồi thường cố định (Fixed Payout Amount): Một số tiền bồi thường được ấn định trước sẽ được chi trả khi điều kiện bảo hiểm xảy ra, thay vì tính toán động"
                             rules={[
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_NEGATIVE') }
                             ]}
@@ -490,8 +490,8 @@ const BasicTab = ({
                     <Col span={12}>
                         <Form.Item
                             name="payoutCap"
-                            label="Giới hạn chi trả tối đa (VND)"
-                            tooltip="Giới hạn tối đa cho khoản bồi thường cho một hợp đồng. Nên >= số tiền chi trả cố định (nếu có)"
+                            label="Trần bồi thường"
+                            tooltip="Trần bồi thường (Payout Cap): Mức bồi thường tối đa mà một hợp đồng có thể nhận được, dù cho kết quả tính toán thực tế có thể cao hơn"
                             rules={[
                                 { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_CAP_NEGATIVE') }
                             ]}
@@ -510,8 +510,8 @@ const BasicTab = ({
                     <Col span={12}>
                         <Form.Item
                             name="overThresholdMultiplier"
-                            label="Hệ số nhân vượt ngưỡng"
-                            tooltip="Hệ số nhân khi mức vượt quá/ngang dưới ngưỡng xảy ra. Ví dụ: 2.0 = nhân đôi số tiền chi trả (payout) khi vượt ngưỡng nghiêm trọng. Mặc định: 1.0 (100%)"
+                            label="Hệ số vượt ngưỡng"
+                            tooltip="Hệ số vượt ngưỡng (Over Threshold Multiplier): Một hệ số nhân bổ sung, làm tăng số tiền bồi thường khi mức độ nghiêm trọng của sự kiện vượt xa giá trị ngưỡng đã định. Ví dụ: 2.0 = nhân đôi số tiền bồi thường. Mặc định: 1.0 (100%)"
                             rules={[
                                 { type: 'number', min: 0, message: getBasePolicyError('OVER_THRESHOLD_MULTIPLIER_NEGATIVE') }
                             ]}

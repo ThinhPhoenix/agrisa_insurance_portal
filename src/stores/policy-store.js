@@ -1,3 +1,6 @@
+import basePolicySchema from "@/schemas/base-policy/base-policy-schema";
+import conditionSchema from "@/schemas/base-policy/condition-schema";
+import triggerSchema from "@/schemas/base-policy/trigger-schema";
 import { create } from "zustand";
 
 /**
@@ -418,88 +421,40 @@ export const usePolicyStore = create((set, get) => ({
 
   // ====================== VALIDATION ======================
   /**
-   * Validate payload before sending to BE - Only check REQUIRED fields per BE spec
+   * Validate payload before sending to BE using Zod schemas
    */
   validatePayload: () => {
     const { basicData, configurationData, tagsData } = get();
     const errors = [];
 
-    // ✅ REQUIRED BasicTab fields per BE spec
-    if (!basicData.productName) errors.push("product_name is required");
-    if (!basicData.productCode) errors.push("product_code is required");
-    if (!basicData.coverageCurrency)
-      errors.push("coverage_currency is required");
-    if (!basicData.coverageDurationDays || basicData.coverageDurationDays <= 0)
-      errors.push("coverage_duration_days must be > 0");
+    // ✅ Validate Basic Policy data using Zod schema
+    const basicValidation = basePolicySchema.safeParse(basicData);
+    if (!basicValidation.success) {
+      basicValidation.error.issues.forEach((issue) => {
+        const path = issue.path.join(".");
+        errors.push(`[BasicTab] ${path}: ${issue.message}`);
+      });
+    }
 
-    // ✅ Boolean fields (check explicitly, false is valid)
-    if (basicData.isPerHectare === undefined || basicData.isPerHectare === null)
-      errors.push("is_per_hectare is required");
-    if (
-      basicData.isPayoutPerHectare === undefined ||
-      basicData.isPayoutPerHectare === null
-    )
-      errors.push("is_payout_per_hectare is required");
+    // ✅ Validate Trigger configuration using Zod schema
+    const triggerValidation = triggerSchema.safeParse(configurationData);
+    if (!triggerValidation.success) {
+      triggerValidation.error.issues.forEach((issue) => {
+        const path = issue.path.join(".");
+        errors.push(`[ConfigurationTab/Trigger] ${path}: ${issue.message}`);
+      });
+    }
 
-    // ✅ Premium validation - REQUIRED if no fix_premium_amount
-    if (!basicData.fixPremiumAmount) {
-      if (!basicData.premiumBaseRate || basicData.premiumBaseRate <= 0) {
-        errors.push(
-          "premium_base_rate is required if fix_premium_amount is not provided"
-        );
+    // ✅ Validate each condition using Zod schema
+    configurationData.conditions.forEach((condition, index) => {
+      const conditionValidation = conditionSchema.safeParse(condition);
+      if (!conditionValidation.success) {
+        conditionValidation.error.issues.forEach((issue) => {
+          const path = issue.path.join(".");
+          errors.push(`[Condition ${index + 1}] ${path}: ${issue.message}`);
+        });
       }
-    }
-
-    // ✅ Insurance provider (auto-filled, but still check)
-    if (!basicData.insuranceProviderId) {
-      console.warn("⚠️ insurance_provider_id not set, will use fallback");
-    }
-
-    // ✅ Date validation - REQUIRED
-    if (!basicData.insuranceValidFrom)
-      errors.push("insurance_valid_from_day is required");
-    if (!basicData.insuranceValidTo)
-      errors.push("insurance_valid_to_day is required");
-
-    if (basicData.insuranceValidFrom && basicData.insuranceValidTo) {
-      const fromEpoch = dateToEpochSeconds(basicData.insuranceValidFrom);
-      const toEpoch = dateToEpochSeconds(basicData.insuranceValidTo);
-      if (fromEpoch >= toEpoch) {
-        errors.push(
-          "insurance_valid_from_day must be before insurance_valid_to_day"
-        );
-      }
-    }
-
-    // ✅ Enrollment dates (Optional but if provided must be valid)
-    if (basicData.enrollmentStartDay && basicData.enrollmentEndDay) {
-      const startEpoch = dateToEpochSeconds(basicData.enrollmentStartDay);
-      const endEpoch = dateToEpochSeconds(basicData.enrollmentEndDay);
-      if (startEpoch >= endEpoch) {
-        errors.push("enrollment_start_day must be before enrollment_end_day");
-      }
-    }
-
-    // ✅ Check table: selectedDataSources must have at least 1 item
-    if (
-      !basicData.selectedDataSources ||
-      basicData.selectedDataSources.length === 0
-    ) {
-      errors.push(
-        "At least one data source is required (selectedDataSources table)"
-      );
-    }
-
-    // ✅ REQUIRED ConfigurationTab trigger fields per BE spec
-    if (!configurationData.logicalOperator)
-      errors.push("logical_operator is required");
-    if (
-      !configurationData.monitorInterval ||
-      configurationData.monitorInterval <= 0
-    )
-      errors.push("monitor_interval must be > 0");
-    if (!configurationData.monitorFrequencyUnit)
-      errors.push("monitor_frequency_unit is required");
+    });
 
     // ✅ Check table: conditions must have at least 1 item
     if (
@@ -509,34 +464,9 @@ export const usePolicyStore = create((set, get) => ({
       errors.push("At least one condition is required (conditions table)");
     }
 
-    // ✅ Each condition must have REQUIRED fields
-    configurationData.conditions.forEach((condition, index) => {
-      if (!condition.dataSourceId)
-        errors.push(`Condition ${index + 1}: data_source_id is required`);
-      if (!condition.thresholdOperator)
-        errors.push(`Condition ${index + 1}: threshold_operator is required`);
-      if (
-        condition.thresholdValue === null ||
-        condition.thresholdValue === undefined
-      )
-        errors.push(`Condition ${index + 1}: threshold_value is required`);
-      if (!condition.aggregationFunction)
-        errors.push(`Condition ${index + 1}: aggregation_function is required`);
-      if (
-        !condition.aggregationWindowDays ||
-        condition.aggregationWindowDays <= 0
-      )
-        errors.push(
-          `Condition ${index + 1}: aggregation_window_days must be > 0`
-        );
-    });
-
     // Tags validation (optional - no validation needed as data types are selected from fixed enum)
-    // Removed validation since data types are chosen from predefined select options
-
     // If uploadedFile exists, should have either modifiedPdfBytes or valid file
     if (tagsData.uploadedFile && !tagsData.modifiedPdfBytes) {
-      // This is acceptable - original file will be used
       console.log("ℹ️ Using original uploaded file (no modifications applied)");
     }
 

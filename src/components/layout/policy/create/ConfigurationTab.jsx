@@ -1,12 +1,11 @@
 import CustomForm from '@/components/custom-form';
 import CustomTable from '@/components/custom-table';
-import { calculateConditionCost } from '@/stores/policy-store';
 import {
-    getTriggerValidation,
-    getTriggerError,
+    getConditionError,
     getConditionValidation,
-    getConditionError
+    getTriggerValidation
 } from '@/libs/message';
+import { calculateConditionCost } from '@/stores/policy-store';
 import {
     AlertOutlined,
     ClockCircleOutlined,
@@ -133,18 +132,6 @@ const ConfigurationTab = ({
         conditionForm.resetFields();
     };
 
-    // Check if aggregation function is 'change'
-    const isChangeAggregation = Form.useWatch('aggregationFunction', conditionForm);
-
-    // Get filtered data sources by selected category
-    const getFilteredDataSources = (categoryValue) => {
-        if (!categoryValue) return mockData.dataSources;
-        return mockData.dataSources.filter(ds =>
-            mockData.dataTierCategories.find(cat => cat.value === categoryValue)?.id ===
-            mockData.dataTiers.find(tier => tier.id === ds.data_tier_id)?.data_tier_category_id
-        );
-    };
-
     // Helper function to render select option with tooltip
     const renderOptionWithTooltip = (option, tooltipContent) => {
         return (
@@ -186,14 +173,14 @@ const ConfigurationTab = ({
     const getMonitoringFields = () => [
         {
             name: 'monitorInterval',
-            label: 'Khoảng thời gian giám sát',
+            label: 'Tần suất giám sát',
             type: 'number',
             required: true,
             gridColumn: '1',
             min: 1,
             placeholder: '1',
             size: 'large',
-            tooltip: 'Số đơn vị thời gian giữa các lần giám sát. Ví dụ: 1 ngày = hệ thống kiểm tra dữ liệu mỗi ngày. Phải > 0',
+            tooltip: 'Tần suất giám sát (Monitor Interval): Khoảng thời gian định kỳ mà hệ thống sẽ kiểm tra dữ liệu. Ví dụ: giá trị là 1 và đơn vị là ngày nghĩa là hệ thống sẽ kiểm tra dữ liệu mỗi ngày một lần',
             rules: [
                 { required: true, message: getTriggerValidation('MONITOR_INTERVAL_REQUIRED') },
                 { type: 'number', min: 1, message: getTriggerValidation('MONITOR_INTERVAL_MIN') }
@@ -201,7 +188,7 @@ const ConfigurationTab = ({
         },
         {
             name: 'monitorFrequencyUnit',
-            label: 'Đơn vị thời gian',
+            label: 'Đơn vị tần suất',
             type: 'select',
             required: true,
             gridColumn: '2',
@@ -209,7 +196,7 @@ const ConfigurationTab = ({
             size: 'large',
             optionLabelProp: 'label',
             dropdownStyle: { maxWidth: '300px' },
-            tooltip: 'Đơn vị thời gian cho khoảng giám sát. Kết hợp với "Khoảng thời gian giám sát" để xác định tần suất kiểm tra (ví dụ: mỗi 1 ngày)',
+            tooltip: 'Đơn vị tần suất (Monitor Frequency Unit): Đơn vị thời gian cho tần suất giám sát (ví dụ: giờ, ngày, tuần)',
             options: [
                 { value: 'hour', label: 'giờ', description: 'Giám sát theo giờ' },
                 { value: 'day', label: 'ngày', description: 'Giám sát theo ngày' },
@@ -277,221 +264,6 @@ const ConfigurationTab = ({
     // - enableAutoRenewal → already have auto_renewal in BasicTab
     // - enableStorage → not in spec
     // - NotificationsManager → use important_additional_information in BasicTab
-
-    // Generate condition form fields
-    const getConditionFormFields = () => {
-        // Filter out data sources that are already used in conditions (except current editing condition)
-        const usedDataSourceIds = configurationData.conditions
-            ?.filter(condition => !editingCondition || condition.id !== editingCondition.id)
-            ?.map(condition => condition.dataSourceId) || [];
-
-        const availableDataSourcesFiltered = availableDataSources.filter(
-            source => !usedDataSourceIds.includes(source.value)
-        );
-
-        const fields = [
-            {
-                name: 'dataSourceId',
-                label: 'Nguồn dữ liệu',
-                type: 'select',
-                required: true,
-                gridColumn: '1',
-                placeholder: 'Chọn nguồn dữ liệu',
-                size: 'large',
-                optionLabelProp: 'displayLabel',
-                dropdownStyle: { maxWidth: '300px' },
-                options: availableDataSourcesFiltered.map(source => {
-                    const displayLabel = source.label.length > 17 ? source.label.substring(0, 17) + '...' : source.label;
-                    return {
-                        value: source.value,
-                        label: source.label,
-                        displayLabel: displayLabel,
-                        labelProp: source.label,
-                        parameterName: source.parameterName,
-                        unit: source.unit
-                    };
-                }),
-                renderOption: (option) => renderOptionWithTooltip(option, (
-                    <div>
-                        <div><strong>{option.label}</strong></div>
-                        <div style={{ marginTop: '4px' }}>{option.parameterName}</div>
-                        <div style={{ marginTop: '4px', color: '#52c41a' }}>
-                            Đơn vị: {option.unit}
-                        </div>
-                    </div>
-                ))
-            },
-            {
-                name: 'aggregationFunction',
-                label: 'Hàm tổng hợp',
-                type: 'select',
-                required: true,
-                gridColumn: '2',
-                placeholder: 'Chọn hàm tổng hợp',
-                size: 'large',
-                optionLabelProp: 'label',
-                dropdownStyle: { maxWidth: '300px' },
-                options: mockData.aggregationFunctions?.map(func => ({
-                    value: func.value,
-                    label: func.label,
-                    labelProp: func.label,
-                    description: func.description
-                })),
-                renderOption: (option) => renderOptionWithTooltip(option, (
-                    <div>
-                        <div><strong>{option.label}</strong></div>
-                        <div style={{ marginTop: '4px' }}>{option.description}</div>
-                    </div>
-                ))
-            },
-            {
-                name: 'aggregationWindowDays',
-                label: 'Cửa sổ Tổng hợp (Ngày)',
-                type: 'number',
-                required: true,
-                gridColumn: '3',
-                placeholder: '30',
-                min: 1,
-                size: 'large',
-                rules: [
-                    { required: true, message: 'Nhập cửa sổ tổng hợp' },
-                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
-                ]
-            },
-            {
-                name: 'thresholdOperator',
-                label: 'Toán tử Ngưỡng',
-                type: 'select',
-                required: true,
-                gridColumn: '1',
-                placeholder: 'Chọn toán tử',
-                size: 'large',
-                optionLabelProp: 'label',
-                dropdownStyle: { maxWidth: '300px' },
-                options: mockData.thresholdOperators?.map(operator => ({
-                    value: operator.value,
-                    label: operator.label,
-                    labelProp: operator.label,
-                    description: operator.description
-                })),
-                renderOption: (option) => renderOptionWithTooltip(option, (
-                    <div>
-                        <div><strong>{option.label}</strong></div>
-                        <div style={{ marginTop: '4px' }}>{option.description}</div>
-                    </div>
-                ))
-            },
-            {
-                name: 'thresholdValue',
-                label: 'Giá trị Ngưỡng',
-                type: 'number',
-                required: true,
-                gridColumn: '2',
-                placeholder: '200',
-                size: 'large'
-            },
-            {
-                name: 'earlyWarningThreshold',
-                label: 'Ngưỡng cảnh báo sớm',
-                type: 'number',
-                gridColumn: '3',
-                min: 0,
-                placeholder: '60',
-                size: 'large',
-                tooltip: 'Ngưỡng cảnh báo sớm trước khi đạt ngưỡng chính (early_warning_threshold)',
-                rules: [
-                    { type: 'number', min: 0, message: 'Phải >= 0' }
-                ]
-            },
-            {
-                name: 'consecutiveRequired',
-                label: 'Yêu cầu liên tiếp',
-                type: 'switch',
-                gridColumn: '1',
-                checkedChildren: 'Có',
-                unCheckedChildren: 'Không',
-                tooltip: 'Điều kiện phải thỏa liên tiếp qua các cửa sổ giám sát (monitor windows) mới kích hoạt'
-            },
-            {
-                name: 'includeComponent',
-                label: 'Bao gồm Component',
-                type: 'switch',
-                gridColumn: '2',
-                checkedChildren: 'Có',
-                unCheckedChildren: 'Không',
-                tooltip: 'Bao gồm các thành phần chi tiết (components) của dữ liệu nếu có'
-            },
-            {
-                name: 'validationWindowDays',
-                label: 'Cửa sổ kiểm tra (Ngày)',
-                type: 'number',
-                gridColumn: '3',
-                min: 1,
-                placeholder: '7',
-                size: 'large',
-                tooltip: 'Số ngày để kiểm tra dữ liệu có sẵn/hợp lệ trước khi kích hoạt',
-                rules: [
-                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày' }
-                ]
-            },
-            {
-                name: 'conditionOrder',
-                label: 'Thứ tự điều kiện',
-                type: 'number',
-                gridColumn: '1',
-                min: 1,
-                placeholder: '1',
-                size: 'large',
-                tooltip: 'Thứ tự ưu tiên của điều kiện này (1 = cao nhất)',
-                rules: [
-                    { type: 'number', min: 1, message: 'Tối thiểu 1' }
-                ]
-            },
-            // ✅ Baseline fields - OPTIONAL for ALL aggregation functions (not just 'change')
-            {
-                name: 'baselineWindowDays',
-                label: 'Cửa sổ Baseline (Ngày)',
-                type: 'number',
-                gridColumn: '2',
-                placeholder: '365',
-                min: 1,
-                size: 'large',
-                tooltip: 'Khoảng thời gian lịch sử để tính giá trị nền (baseline) và so sánh với giá trị hiện tại. TUỲ CHỌN - để trống nếu không cần so sánh lịch sử. Thường dùng cho hàm tổng hợp (aggregation) "change" hoặc so sánh xu hướng',
-                rules: [
-                    { type: 'number', min: 1, message: 'Tối thiểu 1 ngày nếu nhập' }
-                ]
-            },
-            {
-                name: 'baselineFunction',
-                label: 'Hàm Baseline',
-                type: 'select',
-                gridColumn: '3',
-                placeholder: 'Chọn hàm (nếu có baseline)',
-                size: 'large',
-                tooltip: 'Hàm tính giá trị nền (baseline function) từ dữ liệu lịch sử. TUỲ CHỌN - chỉ cần nếu đã nhập cửa sổ giá trị nền (baseline window)',
-                options: [
-                    { value: 'avg', label: 'Trung bình (Avg)' },
-                    { value: 'sum', label: 'Tổng (Sum)' },
-                    { value: 'min', label: 'Tối thiểu (Min)' },
-                    { value: 'max', label: 'Tối đa (Max)' }
-                ],
-                rules: [
-                    // ✅ Conditional validation: if baselineWindowDays exists, baselineFunction is required
-                    ({ getFieldValue }) => ({
-                        validator(_, value) {
-                            const baselineWindowDays = getFieldValue('baselineWindowDays');
-                            if (baselineWindowDays && !value) {
-                                return Promise.reject(new Error('Vui lòng chọn hàm baseline khi đã nhập cửa sổ baseline'));
-                            }
-                            return Promise.resolve();
-                        }
-                    })
-                ]
-            }
-        ];
-
-        return fields;
-    };
 
     // Trigger conditions table columns
     const conditionsColumns = [
@@ -739,8 +511,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="aggregationFunction"
-                                                label="Hàm tổng hợp"
-                                                tooltip="Hàm tổng hợp (aggregation function) là cách tổng hợp dữ liệu trong khoảng thời gian. Ví dụ: sum (tổng) = tổng lượng mưa 30 ngày, avg (trung bình) = nhiệt độ trung bình, change (thay đổi) = so sánh mức thay đổi so với giá trị nền"
+                                                label="Phương pháp tổng hợp"
+                                                tooltip="Phương pháp tổng hợp (Aggregation Function): Cách thức tính toán một giá trị duy nhất từ dữ liệu thu thập trong một chu kỳ. Ví dụ: SUM để tính tổng lượng mưa, AVG để tính nhiệt độ trung bình"
                                                 rules={[{ required: true, message: getConditionValidation('AGGREGATION_FUNCTION_REQUIRED') }]}
                                             >
                                                 <Select
@@ -786,8 +558,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="aggregationWindowDays"
-                                                label="Cửa sổ Tổng hợp (Ngày)"
-                                                tooltip="Cửa sổ tổng hợp (aggregation window) là khoảng thời gian (ngày) dùng để tính tổng hợp dữ liệu. Ví dụ: 30 = tính sum/avg của 30 ngày gần nhất. Phải lớn hơn hoặc bằng 1"
+                                                label="Chu kỳ tổng hợp (ngày)"
+                                                tooltip="Chu kỳ tổng hợp (Aggregation Window): Khoảng thời gian (tính bằng ngày) mà dữ liệu được gom lại để tính toán. Ví dụ: 30 ngày nghĩa là sẽ tính tổng/trung bình dữ liệu của 30 ngày gần nhất"
                                                 rules={[
                                                     { required: true, message: getConditionValidation('AGGREGATION_WINDOW_DAYS_REQUIRED') },
                                                     { type: 'number', min: 1, message: getConditionValidation('AGGREGATION_WINDOW_DAYS_MIN') }
@@ -804,8 +576,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="thresholdOperator"
-                                                label="Toán tử Ngưỡng"
-                                                tooltip="Toán tử ngưỡng (threshold operator) để so sánh giá trị tổng hợp với ngưỡng. Ví dụ: < (nhỏ hơn) = thiếu hụt, > (lớn hơn) = vượt mức, change_gt (thay đổi lớn hơn) = mức thay đổi lớn hơn giá trị nền"
+                                                label="Toán tử so sánh ngưỡng"
+                                                tooltip="Toán tử so sánh ngưỡng (Threshold Operator): Phép toán logic (ví dụ: >, <, =) dùng để so sánh giá trị dữ liệu thực tế với giá trị ngưỡng đã định"
                                                 rules={[{ required: true, message: getConditionValidation('THRESHOLD_OPERATOR_REQUIRED') }]}
                                             >
                                                 <Select
@@ -851,8 +623,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="thresholdValue"
-                                                label="Giá trị Ngưỡng"
-                                                tooltip="Giá trị ngưỡng (threshold value) để so sánh, có đơn vị lấy từ nguồn dữ liệu. Ví dụ: 200mm cho lượng mưa, 35°C cho nhiệt độ"
+                                                label="Giá trị ngưỡng"
+                                                tooltip="Giá trị ngưỡng (Threshold Value): Mốc giá trị cụ thể để xác định một sự kiện bảo hiểm. Ví dụ: Nếu lượng mưa < 10mm, điều kiện hạn hán được kích hoạt. Đơn vị của ngưỡng phụ thuộc vào nguồn dữ liệu"
                                                 rules={[{ required: true, message: getConditionValidation('THRESHOLD_VALUE_REQUIRED') }]}
                                             >
                                                 <InputNumber
@@ -866,7 +638,7 @@ const ConfigurationTab = ({
                                             <Form.Item
                                                 name="earlyWarningThreshold"
                                                 label="Ngưỡng cảnh báo sớm"
-                                                tooltip="Ngưỡng cảnh báo sớm (early warning threshold) để gửi cảnh báo trước khi đạt ngưỡng chính, là giá trị tuyệt đối (không phải phần trăm). Ví dụ: 60mm để cảnh báo khi lượng mưa còn 60mm nữa là đạt ngưỡng 200mm. Phải lớn hơn hoặc bằng 0"
+                                                tooltip="Ngưỡng cảnh báo sớm (Early Warning Threshold): Một mốc phụ, khi bị vi phạm sẽ gửi cảnh báo cho người dùng biết rủi ro sắp xảy ra, trước khi đạt đến ngưỡng kích hoạt bồi thường chính"
                                                 rules={[{ type: 'number', min: 0, message: getConditionValidation('EARLY_WARNING_THRESHOLD_MIN') }]}
                                             >
                                                 <InputNumber
@@ -880,8 +652,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="consecutiveRequired"
-                                                label="Yêu cầu liên tiếp"
-                                                tooltip="Yêu cầu liên tiếp (consecutive required): Nếu bật, điều kiện phải thỏa mãn liên tiếp qua các cửa sổ giám sát (monitor windows) mới kích hoạt. Ví dụ: lượng mưa < 50mm trong 30 ngày phải xảy ra liên tiếp, không ngắt quãng"
+                                                label="Yêu cầu điều kiện liên tục"
+                                                tooltip="Yêu cầu điều kiện liên tục (Consecutive Required): Nếu bật, sự kiện bảo hiểm chỉ xảy ra khi điều kiện được thỏa mãn trong nhiều chu kỳ giám sát liên tiếp nhau. Ví dụ: Hạn hán xảy ra nếu không có mưa trong 3 chu kỳ liên tiếp"
                                                 valuePropName="checked"
                                             >
                                                 <Select
@@ -897,8 +669,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="includeComponent"
-                                                label="Bao gồm thành phần chi tiết"
-                                                tooltip="Bao gồm thành phần (include component): Nếu bật, tính toán sẽ bao gồm các thành phần chi tiết (components) của tham số nếu nguồn hỗ trợ. Ví dụ: các loại mưa (các thành phần mưa - precipitation components: mưa phùn, mưa rào, mưa giông,...). Chỉ hợp lệ khi nguồn dữ liệu có hỗ trợ thành phần (support_component = true)"
+                                                label="Bao gồm thành phần con"
+                                                tooltip="Bao gồm thành phần con (Include Component): Cho phép tính toán dựa trên các thành phần con của một loại dữ liệu, nếu có. Ví dụ: Dữ liệu thời tiết có thể bao gồm các thành phần như 'lượng mưa' và 'độ ẩm'"
                                             >
                                                 <Select
                                                     placeholder="Không"
@@ -913,8 +685,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="validationWindowDays"
-                                                label="Cửa sổ kiểm tra (Ngày)"
-                                                tooltip="Số ngày để kiểm tra dữ liệu có sẵn/hợp lệ trước khi kích hoạt điều kiện. Ví dụ: 7 = kiểm tra 7 ngày dữ liệu để đảm bảo đủ độ tin cậy. Phải lớn hơn hoặc bằng 1 nếu nhập"
+                                                label="Chu kỳ xác thực dữ liệu (ngày)"
+                                                tooltip="Chu kỳ xác thực (Validation Window): Số ngày tối thiểu mà dữ liệu từ một nguồn phải có sẵn và hợp lệ trước khi hệ thống sử dụng nó để tính toán, nhằm đảm bảo tính chính xác"
                                                 rules={[{ type: 'number', min: 1, message: getConditionValidation('VALIDATION_WINDOW_DAYS_MIN') }]}
                                             >
                                                 <InputNumber
@@ -943,8 +715,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="baselineWindowDays"
-                                                label="Cửa sổ giá trị nền (Ngày)"
-                                                tooltip="Cửa sổ giá trị nền (baseline window) là khoảng thời gian lịch sử để tính giá trị chuẩn và so sánh với hiện tại. Ví dụ: 365 ngày = so sánh với trung bình 1 năm trước. TUỲ CHỌN - để trống nếu không cần so sánh lịch sử. Thường dùng cho hàm 'change'. Khuyến nghị lớn hơn hoặc bằng cửa sổ tổng hợp"
+                                                label="Chu kỳ tham chiếu (ngày)"
+                                                tooltip="Chu kỳ tham chiếu (Baseline Window): Khoảng thời gian trong quá khứ (tính bằng ngày) được dùng để tạo ra một giá trị 'nền' hoặc 'bình thường'. Ví dụ: Lấy dữ liệu của 365 ngày qua để tính lượng mưa trung bình hàng năm. TUỲ CHỌN - để trống nếu không cần so sánh lịch sử"
                                                 rules={[{ type: 'number', min: 1, message: getConditionValidation('BASELINE_WINDOW_DAYS_MIN') }]}
                                             >
                                                 <InputNumber
@@ -958,8 +730,8 @@ const ConfigurationTab = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="baselineFunction"
-                                                label="Hàm tính giá trị nền"
-                                                tooltip="Hàm tính giá trị nền (baseline function) để tính từ dữ liệu lịch sử. Ví dụ: avg (trung bình) = lấy giá trị trung bình lịch sử, sum (tổng) = tính tổng lịch sử. TUỲ CHỌN - BẮT BUỘC nếu đã nhập cửa sổ giá trị nền. Kết quả sẽ được dùng để so sánh với giá trị hiện tại (cho hàm change)"
+                                                label="Hàm tính tham chiếu"
+                                                tooltip="Hàm tính tham chiếu (Baseline Function): Phương pháp tính toán giá trị 'nền' từ dữ liệu lịch sử. Ví dụ: AVG để tính giá trị trung bình trong chu kỳ tham chiếu. TUỲ CHỌN - BẮT BUỘC nếu đã nhập chu kỳ tham chiếu"
                                                 rules={[
                                                     ({ getFieldValue }) => ({
                                                         validator(_, value) {
@@ -1088,13 +860,6 @@ const ConfigurationTab = ({
                         </Card>
                     )}
                 </Panel>
-
-                {/* Note: Additional Settings panel removed - fields not in BE spec */}
-                {/* - policyDescription → use product_description in BasicTab */}
-                {/* - enableGracePeriod/gracePeriodDays → not in spec */}
-                {/* - enableAutoRenewal → use auto_renewal in BasicTab */}
-                {/* - enableStorage → not in spec */}
-                {/* - importantNotifications → use important_additional_information in BasicTab */}
             </Collapse>
         </div>
     );

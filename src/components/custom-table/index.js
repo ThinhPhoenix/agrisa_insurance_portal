@@ -7,6 +7,9 @@ const CustomTable = ({
   scroll,
   pageSizeOptions = ["10", "20", "50", "100"],
   visibleColumns, // Array of dataIndex to show
+  rowSelection, // Row selection config
+  rowKey, // Row key for selection
+  ...restProps // Pass through any other props
 }) => {
   // Filter columns based on visibleColumns if provided
   const filteredColumns = visibleColumns
@@ -28,6 +31,8 @@ const CustomTable = ({
         columns={filteredColumns}
         scroll={scroll ?? { x: "100%" }}
         tableLayout="auto"
+        rowSelection={rowSelection}
+        rowKey={rowKey}
         pagination={
           pagination
             ? {
@@ -40,6 +45,7 @@ const CustomTable = ({
               }
             : false
         }
+        {...restProps}
       />
     </div>
   );

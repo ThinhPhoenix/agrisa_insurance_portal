@@ -5,7 +5,6 @@ import { create } from "zustand";
 
 /**
  * Policy Store - Quản lý state toàn cục cho việc tạo Base Policy
- * Theo spec: BE_create_base_policy_json_spec_vi.md
  */
 
 // ====================== HELPER UTILITIES ======================
@@ -431,8 +430,7 @@ export const usePolicyStore = create((set, get) => ({
     const basicValidation = basePolicySchema.safeParse(basicData);
     if (!basicValidation.success) {
       basicValidation.error.issues.forEach((issue) => {
-        const path = issue.path.join(".");
-        errors.push(`[BasicTab] ${path}: ${issue.message}`);
+        errors.push(`${issue.message}`);
       });
     }
 
@@ -440,8 +438,7 @@ export const usePolicyStore = create((set, get) => ({
     const triggerValidation = triggerSchema.safeParse(configurationData);
     if (!triggerValidation.success) {
       triggerValidation.error.issues.forEach((issue) => {
-        const path = issue.path.join(".");
-        errors.push(`[ConfigurationTab/Trigger] ${path}: ${issue.message}`);
+        errors.push(`${issue.message}`);
       });
     }
 
@@ -450,8 +447,7 @@ export const usePolicyStore = create((set, get) => ({
       const conditionValidation = conditionSchema.safeParse(condition);
       if (!conditionValidation.success) {
         conditionValidation.error.issues.forEach((issue) => {
-          const path = issue.path.join(".");
-          errors.push(`[Condition ${index + 1}] ${path}: ${issue.message}`);
+          errors.push(`${issue.message}`);
         });
       }
     });

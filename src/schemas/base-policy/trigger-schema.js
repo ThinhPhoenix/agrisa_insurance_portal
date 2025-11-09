@@ -41,32 +41,8 @@ export const triggerSchema = z.object({
   // Optional fields
   growthStage: z.string().max(500).optional().nullable(),
 
-  blackoutPeriods: z
-    .string()
-    .optional()
-    .nullable()
-    .refine(
-      (val) => {
-        if (!val) return true;
-        try {
-          const parsed = JSON.parse(val);
-          // Check if it's an array
-          if (!Array.isArray(parsed)) return false;
-          // Check each element has start and end
-          return parsed.every(
-            (period) =>
-              typeof period.start === "number" &&
-              typeof period.end === "number" &&
-              period.start < period.end
-          );
-        } catch (e) {
-          return false;
-        }
-      },
-      {
-        message: getTriggerError("BLACKOUT_PERIODS_INVALID"),
-      }
-    ),
+  // blackoutPeriods: Object rỗng {} nếu không có, không cần validate
+  blackoutPeriods: z.any().optional().default({}),
 
   conditions: z.array(z.any()).optional().default([]),
 });

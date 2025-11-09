@@ -1,5 +1,6 @@
 "use client";
 import Assets from "@/assets";
+import { sidebarMenuItems } from "@/libs/menu-config";
 import { Menu } from "antd";
 import {
   ArrowLeftToLine,
@@ -15,65 +16,11 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react"; // Add this import for state
 
-const items = [
-  {
-    key: "applications", //key here should match the route
-    label: "Đơn đăng ký đang chờ",
-    icon: <FileText size={16} />,
-  },
-  {
-    key: "transaction-history", //key here should match the route
-    label: "Lịch sử giao dịch",
-    icon: <History size={16} />,
-  },
-  {
-    key: "payment",
-    label: "Quản lý thanh toán",
-    icon: <CreditCard size={16} />,
-  },
-  {
-    key: "insurance",
-    label: "Quản lý bảo hiểm",
-    icon: <Shield size={16} />,
-  },
-  {
-    key: "beneficiary",
-    label: "Quản lý người thụ hưởng",
-    icon: <Users size={16} />,
-  },
-  {
-    key: "policy",
-    label: "Quản lý điều khoản bảo hiểm",
-    icon: <FileText size={16} />,
-  },
-  //configuration section
-  {
-    key: "configuration",
-    label: "Cấu hình",
-    icon: <Settings size={16} />,
-    children: [
-      { key: "configuration/overal", label: "Tổng quan" },
-      {
-        key: "configuration/approval",
-        label: "Phê duyệt",
-        children: [
-          {
-            key: "configuration/approval/claims-automation",
-            label: "Tự động hóa khiếu nại",
-          },
-          {
-            key: "configuration/approval/crop-assessment",
-            label: "Đánh giá cây trồng",
-          },
-        ],
-      },
-      { key: "configuration/fraud-detection", label: "Phát hiện gian lận" },
-      { key: "configuration/partners", label: "Đối tác" },
-      { key: "configuration/quality-compliance", label: "Tuân thủ chất lượng" },
-      { key: "configuration/satellite", label: "Vệ tinh" },
-    ],
-  },
-];
+// Map central menu config to AntD menu items and attach icons
+const items = sidebarMenuItems.map((item) => ({
+  ...item,
+  icon: getIconForKey(item.key),
+}));
 
 const CustomSidebar = ({ collapsed, setCollapsed }) => {
   const router = useRouter();
@@ -150,3 +97,18 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
   );
 };
 export default CustomSidebar;
+
+// Function to get icon based on key
+function getIconForKey(key) {
+  const iconMap = {
+    applications: <FileText size={16} />,
+    "transaction-history": <History size={16} />,
+    payment: <CreditCard size={16} />,
+    insurance: <Shield size={16} />,
+    beneficiary: <Users size={16} />,
+    policy: <FileText size={16} />,
+    configuration: <Settings size={16} />,
+  };
+
+  return iconMap[key] || <FileText size={16} />;
+}

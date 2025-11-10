@@ -19,6 +19,12 @@ export {
   getSignInWarning,
   splitAuthMessage,
   splitSignInMessage,
+  // Backend error mapping helpers
+  mapBackendError,
+  isErrorCode,
+  isAccountBlocked,
+  isInvalidCredentials,
+  isUserAlreadyExists,
 } from "./auth-message.js";
 export {
   COMMON_MESSAGES,

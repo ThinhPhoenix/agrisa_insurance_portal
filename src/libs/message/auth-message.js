@@ -95,8 +95,31 @@ export const AUTH_MESSAGES = {
     },
 
     ERROR: {
-      // Backend error codes mapping
+      // Backend error codes mapping (from AUTH_SERVICE.md)
       INVALID_CREDENTIALS: "Email/số điện thoại hoặc mật khẩu không đúng!",
+      INVALID_REQUEST_FORMAT:
+        "Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra và thử lại.",
+      VALIDATION_ERROR: "Dữ liệu nhập không hợp lệ. Vui lòng kiểm tra lại!",
+      BAD_REQUEST: "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin!",
+      EMAIL_INVALID: "Email không hợp lệ!",
+      PHONE_INVALID:
+        "Số điện thoại không hợp lệ! (VD: 0987654321 hoặc +84987654321)",
+      PASSWORD_INVALID: "Mật khẩu không đúng định dạng!",
+      NATIONAL_ID_INVALID: "Số CCCD/CMND không hợp lệ!",
+      ACTION_FORBIDDEN:
+        "Hành động không được phép. Trạng thái tài khoản không phù hợp.",
+      ACCOUNT_BLOCKED:
+        "Tài khoản tạm thời bị khóa do nhiều lần đăng nhập thất bại!",
+      USER_ALREADY_EXISTS:
+        "Tài khoản đã tồn tại. Email hoặc số điện thoại này đã được đăng ký.",
+      ALREADY_OCR_DONE:
+        "Bạn đã hoàn thành xác minh CCCD. Không cần làm lại.",
+      EXTERNAL_API_ERROR: "Lỗi khi xử lý eKYC. Vui lòng thử lại sau.",
+      INTERNAL_ERROR:
+        "Lỗi hệ thống. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
+      NOT_IMPLEMENTED: "Tính năng này chưa được phát hành.",
+
+      // Account status errors
       ACCOUNT_NOT_VERIFIED:
         "Tài khoản chưa được xác thực. Vui lòng xác thực tài khoản trước!",
       ACCOUNT_LOCKED:
@@ -126,6 +149,12 @@ export const AUTH_MESSAGES = {
       SOCIAL_ACCOUNT_NOT_LINKED: "Tài khoản {provider} chưa được liên kết!",
       SOCIAL_EMAIL_MISMATCH:
         "Email từ {provider} không khớp với tài khoản hiện tại!",
+
+      // Network errors
+      NETWORK_ERROR:
+        "Không có kết nối internet. Vui lòng kiểm tra và thử lại.",
+      UNKNOWN_ERROR:
+        "Có lỗi xảy ra. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
     },
 
     VALIDATION: {
@@ -283,6 +312,197 @@ export const getSignInMessageType = (type, key) =>
   getAuthMessageType("SIGNIN", type, key);
 export const splitSignInMessage = (type, key) =>
   splitAuthMessage("SIGNIN", type, key);
+
+/**
+ * Backend Error Code Mapping Helpers
+ * Maps backend error codes from auth-service to Vietnamese messages
+ * Based on AUTH_SERVICE.md documentation
+ */
+
+/**
+ * Maps backend error message patterns to error codes
+ * Used when backend returns error message instead of error code
+ */
+const ERROR_MESSAGE_PATTERNS = {
+  // Email patterns
+  email: { patterns: ["email", "Email"], code: "EMAIL_INVALID" },
+  // Phone patterns
+  phone: {
+    patterns: ["phone", "Phone", "số điện thoại"],
+    code: "PHONE_INVALID",
+  },
+  // Password patterns
+  password_format: {
+    patterns: ["password format", "Password format", "định dạng mật khẩu"],
+    code: "PASSWORD_INVALID",
+  },
+  password_incorrect: {
+    patterns: [
+      "invalid password",
+      "password incorrect",
+      "mật khẩu không đúng",
+    ],
+    code: "INVALID_CREDENTIALS",
+  },
+  // CCCD patterns
+  cccd_format: {
+    patterns: ["cccd format", "CCCD format", "national id format"],
+    code: "NATIONAL_ID_INVALID",
+  },
+  // Exists patterns
+  exists: {
+    patterns: ["exist", "already exists", "đã tồn tại"],
+    code: "USER_ALREADY_EXISTS",
+  },
+  // Account status patterns
+  action_forbidden: {
+    patterns: ["action forbidden", "hành động bị cấm"],
+    code: "ACTION_FORBIDDEN",
+  },
+  account_blocked: {
+    patterns: ["account blocked", "tài khoản bị khóa"],
+    code: "ACCOUNT_BLOCKED",
+  },
+  // Generic patterns
+  login_failed: {
+    patterns: ["Login failed", "Đăng nhập thất bại"],
+    code: "INVALID_CREDENTIALS",
+  },
+  registration_failed: {
+    patterns: ["Registration failed", "Đăng ký thất bại"],
+    code: "INTERNAL_ERROR",
+  },
+};
+
+/**
+ * Map backend error response to Vietnamese message
+ * Handles both error.code and error.message from backend
+ * @param {Object} error - Axios error object
+ * @returns {Object} { code, message, originalMessage }
+ */
+export const mapBackendError = (error) => {
+  // Extract error data from response
+  const errorData = error?.response?.data?.error;
+  const errorCode = errorData?.code;
+  const errorMessage = errorData?.message;
+
+  // If we have an error code, use direct mapping
+  if (errorCode) {
+    const mappedMessage =
+      AUTH_MESSAGES.SIGNIN.ERROR[errorCode] ||
+      AUTH_MESSAGES.REGISTER.ERROR[errorCode];
+
+    if (mappedMessage) {
+      return {
+        code: errorCode,
+        message: mappedMessage,
+        originalMessage: errorMessage,
+      };
+    }
+  }
+
+  // If no code, try to match error message patterns
+  if (errorMessage) {
+    for (const [, pattern] of Object.entries(ERROR_MESSAGE_PATTERNS)) {
+      for (const match of pattern.patterns) {
+        if (errorMessage.toLowerCase().includes(match.toLowerCase())) {
+          const mappedCode = pattern.code;
+          const mappedMessage =
+            AUTH_MESSAGES.SIGNIN.ERROR[mappedCode] ||
+            AUTH_MESSAGES.REGISTER.ERROR[mappedCode];
+
+          return {
+            code: mappedCode,
+            message: mappedMessage,
+            originalMessage: errorMessage,
+          };
+        }
+      }
+    }
+  }
+
+  // Check for network errors
+  if (!error.response) {
+    return {
+      code: "NETWORK_ERROR",
+      message: AUTH_MESSAGES.SIGNIN.ERROR.NETWORK_ERROR,
+      originalMessage: error.message,
+    };
+  }
+
+  // Check for HTTP status codes
+  const status = error?.response?.status;
+  if (status === 401) {
+    return {
+      code: "INVALID_CREDENTIALS",
+      message: AUTH_MESSAGES.SIGNIN.ERROR.INVALID_CREDENTIALS,
+      originalMessage: errorMessage,
+    };
+  } else if (status === 403) {
+    return {
+      code: "ACTION_FORBIDDEN",
+      message: AUTH_MESSAGES.SIGNIN.ERROR.ACTION_FORBIDDEN,
+      originalMessage: errorMessage,
+    };
+  } else if (status === 409) {
+    return {
+      code: "USER_ALREADY_EXISTS",
+      message: AUTH_MESSAGES.REGISTER.ERROR.USER_ALREADY_EXISTS,
+      originalMessage: errorMessage,
+    };
+  } else if (status >= 500) {
+    return {
+      code: "INTERNAL_ERROR",
+      message: AUTH_MESSAGES.SIGNIN.ERROR.INTERNAL_ERROR,
+      originalMessage: errorMessage,
+    };
+  }
+
+  // Default fallback
+  return {
+    code: "UNKNOWN_ERROR",
+    message:
+      errorMessage || AUTH_MESSAGES.SIGNIN.ERROR.UNKNOWN_ERROR,
+    originalMessage: errorMessage,
+  };
+};
+
+/**
+ * Helper to check if error is a specific type
+ * @param {Object} error - Mapped error object
+ * @param {string} code - Error code to check
+ * @returns {boolean}
+ */
+export const isErrorCode = (error, code) => {
+  return error?.code === code;
+};
+
+/**
+ * Helper to check if account is blocked
+ * @param {Object} error - Mapped error object
+ * @returns {boolean}
+ */
+export const isAccountBlocked = (error) => {
+  return error?.code === "ACCOUNT_BLOCKED";
+};
+
+/**
+ * Helper to check if credentials are invalid
+ * @param {Object} error - Mapped error object
+ * @returns {boolean}
+ */
+export const isInvalidCredentials = (error) => {
+  return error?.code === "INVALID_CREDENTIALS";
+};
+
+/**
+ * Helper to check if user already exists
+ * @param {Object} error - Mapped error object
+ * @returns {boolean}
+ */
+export const isUserAlreadyExists = (error) => {
+  return error?.code === "USER_ALREADY_EXISTS";
+};
 
 // Default exports
 export default AUTH_MESSAGES;

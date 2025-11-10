@@ -1,11 +1,11 @@
 import axiosInstance from "@/libs/axios-instance";
 import {
-  getErrorMessage,
   getRegisterSuccess,
   getRegisterValidation,
   getSignInError,
   getSignInSuccess,
   getSignInValidation,
+  mapBackendError,
 } from "@/libs/message";
 import signInRequestSchema from "@/schemas/sign-in-request-schema";
 import signUpRequestSchema from "@/schemas/sign-up-request-schema";
@@ -14,7 +14,9 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useCallback, useState } from "react";
 
 const handleError = (error) => {
-  return error.response?.data?.message || getErrorMessage("GENERIC_ERROR");
+  // Use the new mapBackendError function to get Vietnamese messages
+  const mappedError = mapBackendError(error);
+  return mappedError.message;
 };
 
 export const useSignIn = () => {

@@ -3,7 +3,7 @@ import Assets from "@/assets";
 import CustomForm from "@/components/custom-form";
 import { getSignInValidation } from "@/libs/message";
 import { useSignIn } from "@/services/hooks/auth/use-auth";
-import { Typography } from "antd";
+import { Typography, message } from "antd";
 import { Lock, LogIn, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,13 +21,12 @@ const SigninPage = () => {
       password: values.password,
     });
 
-    // if (result.success) {
-    //   message.success(result.message);
-    //   router.push("/");
-    // } else {
-    //   message.error(result.message);
-    // }
-    router.push("/dummy");
+    if (result.success) {
+      message.success(result.message);
+      router.push("/policy");
+    } else {
+      message.error(result.message);
+    }
   };
 
   const fields = [

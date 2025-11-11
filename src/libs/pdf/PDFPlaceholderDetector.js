@@ -107,6 +107,41 @@ export const extractTextFromPDF = async (file) => {
         const text = item.str;
         allText += text + " ";
 
+        // DEBUG: Log items containing target numbers AND surrounding items
+        const trimmedText = text.trim();
+        if (
+          trimmedText.includes("26") ||
+          trimmedText.includes("27") ||
+          trimmedText.includes("28") ||
+          trimmedText.includes("2 6") ||
+          trimmedText.includes("2 7") ||
+          trimmedText.includes("2 8") ||
+          trimmedText === "26" ||
+          trimmedText === "27" ||
+          trimmedText === "28" ||
+          trimmedText === "2" ||
+          trimmedText === "6" ||
+          trimmedText === "7" ||
+          trimmedText === "8"
+        ) {
+          console.log(
+            `🔎 Page ${pageNum}, Item ${i}: "${text}" (trimmed: "${trimmedText}")`
+          );
+
+          // Log surrounding items (3 before, 3 after)
+          console.log(`   📋 Context (3 items before & after):`);
+          for (
+            let k = Math.max(0, i - 3);
+            k <= Math.min(items.length - 1, i + 3);
+            k++
+          ) {
+            const contextItem = items[k];
+            const contextText = contextItem.str || "";
+            const marker = k === i ? ">>> " : "    ";
+            console.log(`   ${marker}[${k}]: "${contextText.trim()}"`);
+          }
+        }
+
         //  NEW: Handle SPLIT items like "(" + "1" + ")" in 3 separate items
         // PDF.js sometimes splits (1) into 3 items: "(", "1", ")"
         // ENHANCED: Also handle multi-digit split: "(", "2", "6", ")" or "(", " ", "2", " ", "7", ")"
@@ -157,12 +192,20 @@ export const extractTextFromPDF = async (file) => {
           if (closingParenIndex !== -1 && digits.length > 0) {
             const numValue = parseInt(digits);
 
+            console.log(
+              `🔍 SPLIT ITEMS DETECTED: Found (${numValue}) split across ${
+                closingParenIndex - i + 1
+              } items`
+            );
+
             // Skip if already processed
             if (seenNumbers.has(numValue)) {
+              console.log(`⚠️ Skipping ${numValue} - already processed`);
               continue;
             }
 
             if (numValue > 100) {
+              console.log(`⚠️ Skipping ${numValue} - too large (>100)`);
               continue;
             }
 
@@ -256,6 +299,20 @@ export const extractTextFromPDF = async (file) => {
         const matches = [...text.matchAll(regex)];
 
         // DEBUG: Log all matches found
+        if (matches.length > 0) {
+          console.log(
+            `📍 Found ${matches.length} matches in text: "${text.substring(
+              0,
+              60
+            )}..."`
+          );
+          matches.forEach((m, idx) => {
+            console.log(
+              `   Match ${idx + 1}: "${m[0]}" -> captured: "${m[1]}"`
+            );
+          });
+        }
+
         for (const numberedMatch of matches) {
           const num = numberedMatch[1];
           // Remove all spaces from the captured number string: "2 6" -> "26"
@@ -337,7 +394,18 @@ export const extractTextFromPDF = async (file) => {
           const hasPattern = /[._]{2,}/.test(normalizedText);
           const isValid = separatorCount >= 1 || hasPattern;
 
+          console.log(`🔍 Validation for (${cleanedNum}):`, {
+            combinedText: combinedText.substring(0, 50) + "...",
+            separatorCount,
+            hasPattern,
+            isValid,
+            normalizedText: normalizedText.substring(0, 50) + "...",
+          });
+
           if (!isValid) {
+            console.log(
+              `⚠️ REJECTED (${cleanedNum}) - insufficient separators`
+            );
             continue;
           }
 
@@ -370,6 +438,21 @@ export const extractTextFromPDF = async (file) => {
 
             exactNumberX = x + textBeforeWidth;
             exactNumberWidth = digitWidth;
+
+            console.log(
+              `🔍 Single item - digit "${digitOnly}" in "${itemText}":`,
+              {
+                originalNum: num,
+                cleanedNum: cleanedNum,
+                x: x.toFixed(2),
+                width: width.toFixed(2),
+                digitIndex,
+                charWidth: charWidth.toFixed(2),
+                exactNumberX: exactNumberX.toFixed(2),
+                exactNumberWidth: exactNumberWidth.toFixed(2),
+                fullWidth: fullWidth.toFixed(2),
+              }
+            );
           }
 
           placeholders.push({
@@ -400,6 +483,12 @@ export const extractTextFromPDF = async (file) => {
     if (placeholders.length === 0) {
       // Test patterns
     }
+
+    // Log full extracted data for debugging and copying
+    console.log("FULL EXTRACTED TEXT FROM PDF:");
+    console.log(allText);
+    console.log("FULL PLACEHOLDERS DATA:");
+    console.log(JSON.stringify(placeholders, null, 2));
 
     return {
       success: true,

@@ -109,108 +109,158 @@ export const extractTextFromPDF = async (file) => {
 
         //  NEW: Handle SPLIT items like "(" + "1" + ")" in 3 separate items
         // PDF.js sometimes splits (1) into 3 items: "(", "1", ")"
-        const isSingleDigit = /^\d+$/.test(text.trim());
-        if (isSingleDigit && text.trim().length <= 2) {
-          const prevItem = i > 0 ? items[i - 1] : null;
-          const nextItem = i < items.length - 1 ? items[i + 1] : null;
+        // ENHANCED: Also handle multi-digit split: "(", "2", "6", ")" or "(", " ", "2", " ", "7", ")"
+        // ENHANCED 2: Handle cases where "(" appears with dots: "...........("
+        // ENHANCED 3: Handle cases where "(" appears with digit: "...(2" (need to check next item)
 
-          if (prevItem && nextItem) {
-            const prevText = prevItem.str || "";
-            const nextText = nextItem.str || "";
+        // Check if current item contains "(" and next item might be a digit
+        const hasOpenParen = trimmedText.includes("(");
 
-            // Check if prev="(" and next=")"
-            if (prevText.trim() === "(" && nextText.trim() === ")") {
-              const numValue = parseInt(text.trim());
+        if (hasOpenParen) {
+          // Extract any digits that appear AFTER "(" in current item
+          // Example: "...(2" -> extract "2"
+          let digits = "";
+          const parenIndex = text.indexOf("(");
+          if (parenIndex !== -1) {
+            const afterParen = text.substring(parenIndex + 1).trim();
+            // Check if there are digits after "("
+            const digitMatch = afterParen.match(/^(\d+)/);
+            if (digitMatch) {
+              digits = digitMatch[1];
+            }
+          }
 
-              // Skip if already processed
-              if (seenNumbers.has(numValue)) {
-                continue;
-              }
+          // Look ahead to find matching ")" and collect MORE digits in between
+          let j = i + 1;
+          let closingParenIndex = -1;
+          let maxLookAhead = Math.min(i + 10, items.length); // Look max 10 items ahead
 
-              if (numValue > 100) {
-                continue;
-              }
+          while (j < maxLookAhead) {
+            const checkText = (items[j].str || "").trim();
 
-              // Calculate position: from "(" to ")"
-              const x = prevItem.transform[4];
-              const y = item.transform[5];
-              const endX = nextItem.transform[4] + (nextItem.width || 0);
-              const width = endX - x;
-              const fontSize = Math.abs(item.transform[0]) || 12;
-              const height = fontSize * 1.2;
+            if (checkText === ")" || checkText.startsWith(")")) {
+              closingParenIndex = j;
+              break;
+            } else if (/^\d+$/.test(checkText)) {
+              // It's a digit
+              digits += checkText;
+            } else if (checkText === "" || checkText === " ") {
+              // Ignore spaces
+            } else {
+              // Non-digit, non-space, non-paren -> not a valid pattern
+              break;
+            }
+            j++;
+          }
 
-              // Scan for nearby separators
-              const Y_TOLERANCE = 10;
-              const X_RANGE = 300;
+          // Valid pattern found: "(" + digits + ")"
+          if (closingParenIndex !== -1 && digits.length > 0) {
+            const numValue = parseInt(digits);
 
-              const nearbyItems = [];
-              for (let j = 0; j < items.length; j++) {
-                const checkItem = items[j];
-                const checkX = checkItem.transform[4];
-                const checkY = checkItem.transform[5];
-                const sameY = Math.abs(checkY - y) <= Y_TOLERANCE;
-                const nearX =
-                  checkX >= x - X_RANGE && checkX <= x + width + X_RANGE;
-                if (sameY && nearX) nearbyItems.push(checkItem);
-              }
-
-              nearbyItems.sort((a, b) => a.transform[4] - b.transform[4]);
-
-              // Build combined text
-              let combinedText = "";
-              let startX = x;
-              let endX2 = endX;
-
-              for (const nearItem of nearbyItems) {
-                combinedText += nearItem.str || "";
-                const itemX = nearItem.transform[4];
-                const itemWidth = nearItem.width || 0;
-                if (itemX < startX) startX = itemX;
-                if (itemX + itemWidth > endX2) endX2 = itemX + itemWidth;
-              }
-
-              // Validate separators
-              const separatorCount = (combinedText.match(/[._…]/g) || [])
-                .length;
-              const normalizedText = combinedText
-                .replace(/\s+/g, "")
-                .replace(/…/g, "...");
-              const hasPattern = /[._]{2,}/.test(normalizedText);
-              const isValid = separatorCount >= 2 || hasPattern;
-
-              if (!isValid) {
-                continue;
-              }
-
-              const fullWidth = endX2 - startX;
-
-              placeholders.push({
-                id: `placeholder_${placeholders.length + 1}`,
-                original: `(${numValue})`,
-                fullText: combinedText.trim(),
-                extractedKey: numValue.toString(),
-                page: pageNum,
-                x: startX,
-                y: y,
-                width: fullWidth,
-                height: height,
-                fontSize: fontSize,
-              });
-
-              seenNumbers.add(numValue);
+            // Skip if already processed
+            if (seenNumbers.has(numValue)) {
               continue;
             }
+
+            if (numValue > 100) {
+              continue;
+            }
+
+            // Get reference item for position (use first digit item)
+            const firstDigitIndex = i + 1;
+            const refItem = items[firstDigitIndex];
+
+            // Calculate position: from "(" to ")"
+            const prevItem = item; // "("
+            const nextItem = items[closingParenIndex]; // ")"
+
+            const x = prevItem.transform[4];
+            const y = refItem.transform[5];
+            const endX = nextItem.transform[4] + (nextItem.width || 0);
+            const width = endX - x;
+            const fontSize = Math.abs(refItem.transform[0]) || 12;
+            const height = fontSize * 1.2;
+
+            // Scan for nearby separators
+            const Y_TOLERANCE = 10;
+            const X_RANGE = 300;
+
+            const nearbyItems = [];
+            for (let k = 0; k < items.length; k++) {
+              const checkItem = items[k];
+              const checkX = checkItem.transform[4];
+              const checkY = checkItem.transform[5];
+              const sameY = Math.abs(checkY - y) <= Y_TOLERANCE;
+              const nearX =
+                checkX >= x - X_RANGE && checkX <= x + width + X_RANGE;
+              if (sameY && nearX) nearbyItems.push(checkItem);
+            }
+
+            nearbyItems.sort((a, b) => a.transform[4] - b.transform[4]);
+
+            // Build combined text
+            let combinedText = "";
+            let startX = x;
+            let endX2 = endX;
+
+            for (const nearItem of nearbyItems) {
+              combinedText += nearItem.str || "";
+              const itemX = nearItem.transform[4];
+              const itemWidth = nearItem.width || 0;
+              if (itemX < startX) startX = itemX;
+              if (itemX + itemWidth > endX2) endX2 = itemX + itemWidth;
+            }
+
+            // Validate separators
+            const separatorCount = (combinedText.match(/[._…]/g) || []).length;
+            const normalizedText = combinedText
+              .replace(/\s+/g, "")
+              .replace(/…/g, "...");
+            const hasPattern = /[._]{2,}/.test(normalizedText);
+            const isValid = separatorCount >= 2 || hasPattern;
+
+            if (!isValid) {
+              continue;
+            }
+
+            const fullWidth = endX2 - startX;
+
+            placeholders.push({
+              id: `placeholder_${placeholders.length + 1}`,
+              original: `(${numValue})`,
+              fullText: combinedText.trim(),
+              extractedKey: numValue.toString(),
+              type: "numbered",
+              page: pageNum,
+              x: startX,
+              y: y,
+              width: fullWidth,
+              backgroundX: x, // Position of the number itself
+              backgroundWidth: width, // Width of the number
+              height: height,
+              fontSize: fontSize,
+              position: allText.length,
+              mapped: false,
+              tagId: null,
+            });
+
+            seenNumbers.add(numValue);
+            continue;
           }
         }
 
         //  ORIGINAL: Find (number) in single text item
         // Support spaces inside: ( 1), (2 ), ( 3 )
-        const regex = /\(\s*(\d+)\s*\)/g;
+        // ENHANCED: Support spaces between digits: (2 6), ( 2 7 ), ( 2 8 )
+        const regex = /\(\s*([\d\s]+)\s*\)/g;
         const matches = [...text.matchAll(regex)];
 
+        // DEBUG: Log all matches found
         for (const numberedMatch of matches) {
           const num = numberedMatch[1];
-          const numValue = parseInt(num);
+          // Remove all spaces from the captured number string: "2 6" -> "26"
+          const cleanedNum = num.replace(/\s+/g, "");
+          const numValue = parseInt(cleanedNum);
 
           // Skip duplicates
           if (seenNumbers.has(numValue)) {
@@ -282,10 +332,10 @@ export const extractTextFromPDF = async (file) => {
             .replace(/…/g, "...");
 
           //  FLEXIBLE VALIDATION: Accept if:
-          // 1. >= 2 separators total (reduced from 3), OR
+          // 1. >= 1 separator total (reduced from 2 for testing), OR
           // 2. Has pattern of 2+ consecutive separators before/after (in normalized text)
           const hasPattern = /[._]{2,}/.test(normalizedText);
-          const isValid = separatorCount >= 2 || hasPattern;
+          const isValid = separatorCount >= 1 || hasPattern;
 
           if (!isValid) {
             continue;
@@ -296,9 +346,15 @@ export const extractTextFromPDF = async (file) => {
 
           // 🎯 CRITICAL: Extract ONLY digit position (ignore parentheses and dots)
           // Example: "...(2)..." - we only want position of "2"
+          // Handle spaces in numbers: "(2 6)" -> find position of "2" or "26"
           const itemText = item.str || "";
-          const digitOnly = num;
-          const digitIndex = itemText.indexOf(digitOnly);
+          const digitOnly = cleanedNum;
+          // Try to find the cleaned number first, then fall back to original
+          let digitIndex = itemText.indexOf(digitOnly);
+          if (digitIndex === -1 && num !== cleanedNum) {
+            // If cleaned number not found and differs from original, try original
+            digitIndex = itemText.indexOf(num);
+          }
 
           let exactNumberX = x;
           let exactNumberWidth = width;
@@ -308,33 +364,25 @@ export const extractTextFromPDF = async (file) => {
             const charWidth = width / itemText.length;
             // Calculate position of digit within the text
             const textBeforeWidth = charWidth * digitIndex;
-            const digitWidth = charWidth * digitOnly.length;
+            // Use the length of the matched text (with or without spaces)
+            const matchedText = num !== cleanedNum ? num : cleanedNum;
+            const digitWidth = charWidth * matchedText.length;
 
             exactNumberX = x + textBeforeWidth;
             exactNumberWidth = digitWidth;
-
-            console.log(`🔍 Single item - digit "${digitOnly}" in "${itemText}":`, {
-              x: x.toFixed(2),
-              width: width.toFixed(2),
-              digitIndex,
-              charWidth: charWidth.toFixed(2),
-              exactNumberX: exactNumberX.toFixed(2),
-              exactNumberWidth: exactNumberWidth.toFixed(2),
-              fullWidth: fullWidth.toFixed(2)
-            });
           }
 
           placeholders.push({
             id: `placeholder_${placeholders.length + 1}`,
             original: `(${num})`,
             fullText: combinedText.trim(),
-            extractedKey: num,
+            extractedKey: cleanedNum, // Use cleaned number without spaces
             type: "numbered",
             page: pageNum,
             x: startX,
             y: y,
             width: fullWidth,
-            backgroundX: exactNumberX,      // ✅ Only digit X
+            backgroundX: exactNumberX, // ✅ Only digit X
             backgroundWidth: exactNumberWidth, // ✅ Only digit width
             height: height,
             fontSize: fontSize,

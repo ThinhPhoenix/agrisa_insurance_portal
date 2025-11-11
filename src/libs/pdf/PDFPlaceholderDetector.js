@@ -224,6 +224,24 @@ export const extractTextFromPDF = async (file) => {
             const fontSize = Math.abs(refItem.transform[0]) || 12;
             const height = fontSize * 1.2;
 
+            // 🎯 Calculate EXACT position of digits (not "(")
+            // Collect all digit items between "(" and ")"
+            let digitStartX = Infinity;
+            let digitEndX = -Infinity;
+            for (let digitIdx = i + 1; digitIdx < closingParenIndex; digitIdx++) {
+              const digitItem = items[digitIdx];
+              const digitText = (digitItem.str || "").trim();
+              // Only count actual digit items, skip spaces
+              if (/^\d+$/.test(digitText)) {
+                const digitX = digitItem.transform[4];
+                const digitWidth = digitItem.width || 0;
+                if (digitX < digitStartX) digitStartX = digitX;
+                if (digitX + digitWidth > digitEndX) digitEndX = digitX + digitWidth;
+              }
+            }
+            const digitPositionX = digitStartX !== Infinity ? digitStartX : x;
+            const digitWidth = digitEndX !== -Infinity ? (digitEndX - digitStartX) : width;
+
             // Scan for nearby separators
             const Y_TOLERANCE = 10;
             const X_RANGE = 300;
@@ -278,8 +296,8 @@ export const extractTextFromPDF = async (file) => {
               x: startX,
               y: y,
               width: fullWidth,
-              backgroundX: x, // Position of the number itself
-              backgroundWidth: width, // Width of the number
+              backgroundX: digitPositionX, // ✅ EXACT position of digits only
+              backgroundWidth: digitWidth, // ✅ EXACT width of digits only
               height: height,
               fontSize: fontSize,
               position: allText.length,

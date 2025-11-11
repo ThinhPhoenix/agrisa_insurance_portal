@@ -264,11 +264,6 @@ const PlaceholderMappingPanel = ({
                 });
             }
 
-            message.success({
-                content: ` Đã thay thế ${replacements.length} placeholders trong PDF!`,
-                duration: 5
-            });
-
             //  Build and notify parent about document_tags and modified PDF
             const documentTags = buildDocumentTags();
             if (onMappingChange) {
@@ -416,7 +411,6 @@ const PlaceholderMappingPanel = ({
         if (result.success) {
             // Mark as applied to PDF
             setAppliedToPDF(prev => new Set([...prev, placeholderId]));
-            message.success(`Đã thay thế "${placeholder.original}" thành "${tag.key}"!`);
         } else {
             message.error(`Lỗi: ${result.error}`);
         }
@@ -1047,8 +1041,7 @@ const PlaceholderMappingPanel = ({
                         <Tag color="orange">Chưa map: {stats.unmapped}</Tag>
                         <Tag color="success">Đã áp dụng PDF: {appliedToPDF.size}</Tag>
                         <Text type="secondary">
-                            (Placeholders: {stats.total > 0 ? Math.round((stats.mapped / stats.total) * 100) : 0}% |
-                            Áp dụng: {stats.total > 0 ? Math.round((appliedToPDF.size / stats.total) * 100) : 0}%)
+                            Áp dụng: {stats.total > 0 ? Math.round((appliedToPDF.size / stats.total) * 100) : 0}%
                         </Text>
                     </Space>
                 }

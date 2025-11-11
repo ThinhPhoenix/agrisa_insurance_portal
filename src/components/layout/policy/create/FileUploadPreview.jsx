@@ -109,7 +109,7 @@ const FileUploadPreview = forwardRef(({
                 setModifiedPdfBytes(modifiedBytes);
 
                 message.destroy();
-                message.success(`✅ Đã áp dụng ${replacements.length} thay đổi vào PDF!`);
+                message.success(`Đã áp dụng ${replacements.length} thay đổi vào PDF!`);
 
                 return {
                     success: true,
@@ -240,8 +240,6 @@ const FileUploadPreview = forwardRef(({
                 }
 
                 setUploadProgress(100);
-                message.success(`${file.name} đã được tải lên thành công`);
-
                 if (onFileUpload) onFileUpload(file, url);
 
                 // Auto analyze PDF for placeholders

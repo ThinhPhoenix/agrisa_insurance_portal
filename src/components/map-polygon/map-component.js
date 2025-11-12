@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import Map, { Source, Layer } from "react-map-gl/maplibre";
-import { Button, Space } from "antd";
+import { Button, Space, message } from "antd";
 import { MapIcon, SatelliteIcon, LocateFixed } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -32,23 +32,21 @@ const isWithinVietnamBounds = (lng, lat) => {
   );
 };
 
-// Get OpenMap API key from environment variable
+// Get OpenMap API keys
 const OPENMAP_API_KEY = process.env.NEXT_PUBLIC_OPENMAP_API_KEY || "";
+const OPENMAP_API_KEY_V1 = process.env.NEXT_PUBLIC_OPENMAP_API_KEY_V1 || "";
+
+// Collect available keys
+const AVAILABLE_KEYS = [OPENMAP_API_KEY, OPENMAP_API_KEY_V1].filter(Boolean);
 
 /**
- * Get OpenMap style URL
- * OpenMap uses MapLibre style JSON format
- * @param {string} style - Map style ID (day-v1, night-v1, etc.)
+ * Get OpenMap style URL with specific API key
+ * @param {string} style - Map style ID (day-v1, satellite-v1)
+ * @param {string} apiKey - OpenMap API key
  * @returns {string} OpenMap style JSON URL
  */
-const getOpenMapStyleUrl = (style = "day-v1") => {
-  return `https://maptiles.openmap.vn/styles/${style}/style.json?apikey=${OPENMAP_API_KEY}`;
-};
-
-// Map style configurations using OpenMap.vn
-const MAP_STYLES = {
-  normal: getOpenMapStyleUrl("day-v1"), // OpenMap day style (normal map)
-  satellite: getOpenMapStyleUrl("satellite-v1"), // OpenMap satellite style
+const getOpenMapStyleUrl = (style = "day-v1", apiKey) => {
+  return `https://maptiles.openmap.vn/styles/${style}/style.json?apikey=${apiKey}`;
 };
 
 /**
@@ -96,14 +94,51 @@ export default function MapLibreWithPolygon({
 }) {
   const mapRef = useRef(null);
   const [mapStyle, setMapStyle] = useState("normal");
+  const [currentApiKey, setCurrentApiKey] = useState(() => {
+    // Random selection between available keys on mount
+    if (AVAILABLE_KEYS.length === 0) return "";
+    const randomIndex = Math.floor(Math.random() * AVAILABLE_KEYS.length);
+    console.log(`✓ Using API key #${randomIndex + 1} of ${AVAILABLE_KEYS.length}`);
+    return AVAILABLE_KEYS[randomIndex];
+  });
+  const [errorCount, setErrorCount] = useState(0);
 
-  // Check if OpenMap API key is configured
-  if (!OPENMAP_API_KEY) {
-    console.error("❌ OpenMap API key not configured. Please set NEXT_PUBLIC_OPENMAP_API_KEY in .env file");
-    console.info("ℹ️ Get your API key from: https://openmap.vn");
-  } else {
-    console.log("✓ OpenMap API key configured");
-  }
+  // Check if OpenMap API keys are configured
+  useEffect(() => {
+    if (AVAILABLE_KEYS.length === 0) {
+      console.error("❌ No OpenMap API keys configured. Please set NEXT_PUBLIC_OPENMAP_API_KEY in .env file");
+      console.info("ℹ️ Get your API key from: https://openmap.vn");
+      message.error("Không tìm thấy API key cho bản đồ");
+    } else {
+      console.log(`✓ ${AVAILABLE_KEYS.length} OpenMap API key(s) configured`);
+    }
+  }, []);
+
+  // Handle map error - switch to next available key
+  const handleMapError = useCallback((error) => {
+    console.error("❌ Map error:", error);
+
+    if (AVAILABLE_KEYS.length <= 1) {
+      console.error("❌ No alternative API keys available");
+      message.error("Lỗi tải bản đồ và không có key dự phòng");
+      return;
+    }
+
+    // Find next key (rotate to different key)
+    const currentIndex = AVAILABLE_KEYS.indexOf(currentApiKey);
+    const nextIndex = (currentIndex + 1) % AVAILABLE_KEYS.length;
+    const nextKey = AVAILABLE_KEYS[nextIndex];
+
+    console.log(`🔄 Switching to API key #${nextIndex + 1}...`);
+    setCurrentApiKey(nextKey);
+    setErrorCount(prev => prev + 1);
+
+    if (errorCount < 5) {
+      message.warning(`Đang thử API key khác... (${errorCount + 1})`);
+    } else {
+      message.error("Tất cả API keys đều gặp lỗi");
+    }
+  }, [currentApiKey, errorCount]);
 
   // Get map center from centerLocation or calculate from boundary
   const mapCenter = useMemo(() => {
@@ -244,6 +279,12 @@ export default function MapLibreWithPolygon({
     }
   }, [mapCenter]);
 
+  // Generate map styles dynamically based on current API key
+  const mapStyles = useMemo(() => ({
+    normal: getOpenMapStyleUrl("day-v1", currentApiKey),
+    satellite: getOpenMapStyleUrl("satellite-v1", currentApiKey),
+  }), [currentApiKey]);
+
   return (
     <div style={{ width: "100%", height: "400px", position: "relative" }}>
       <Map
@@ -254,7 +295,8 @@ export default function MapLibreWithPolygon({
           zoom: 15,
         }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={MAP_STYLES[mapStyle]}
+        mapStyle={mapStyles[mapStyle]}
+        onError={handleMapError}
         {...mapOptions}
       >
         {/* Draw polygon if boundary exists */}

@@ -35,20 +35,20 @@ export default function PaymentSuccessPage() {
     >
       <Result
         status="success"
-        title=" Thanh toán thành công / Payment Successful! !"
+        title="Thanh toán thành công"
         subTitle={
           orderInfo?.orderId
-            ? `Order ID: ${orderInfo.orderId}${
-                orderInfo.amount ? ` | Amount: ${orderInfo.amount} VND` : ""
+            ? `Mã đơn hàng: ${orderInfo.orderId}${
+                orderInfo.amount ? ` | Số tiền: ${orderInfo.amount} VND` : ""
               }`
-            : "Giao dịch của bạn đã được xử lý thành công. / Your payment has been processed successfully. "
+            : "Giao dịch của bạn đã được xử lý thành công."
         }
         extra={[
           <Button type="primary" key="home" onClick={() => router.push("/")}>
-            Go Home / Về trang chủ
+            Về trang chủ
           </Button>,
           <Button key="orders" onClick={() => router.push("/orders")}>
-            View Orders / Xem đơn hàng
+            Xem đơn hàng
           </Button>,
         ]}
       />

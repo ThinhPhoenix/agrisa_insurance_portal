@@ -29,17 +29,17 @@ export default function PaymentFailPage() {
 
   const getSubTitle = () => {
     if (errorInfo?.errorMessage) {
-      return `Error: ${errorInfo.errorMessage}`;
+      return `Lỗi: ${errorInfo.errorMessage}`;
     }
     if (errorInfo?.reason) {
-      return `Reason: ${errorInfo.reason} / Lý do: ${errorInfo.reason}`;
+      return `Lý do: ${errorInfo.reason}`;
     }
     if (errorInfo?.orderId) {
-      return `Order ID: ${errorInfo.orderId}${
-        errorInfo.errorCode ? ` | Error Code: ${errorInfo.errorCode}` : ""
+      return `Mã đơn hàng: ${errorInfo.orderId}${
+        errorInfo.errorCode ? ` | Mã lỗi: ${errorInfo.errorCode}` : ""
       }`;
     }
-    return "Giao dịch không thể xử lý. Vui lòng thử lại. / Your payment could not be processed. Please try again.";
+    return "Giao dịch không thể xử lý. Vui lòng thử lại.";
   };
 
   return (
@@ -54,17 +54,17 @@ export default function PaymentFailPage() {
     >
       <Result
         status="error"
-        title="Thanh toán thất bại / Payment Failed!"
+        title="Thanh toán thất bại"
         subTitle={getSubTitle()}
         extra={[
           <Button type="primary" key="retry" onClick={() => router.back()}>
-            Try Again / Thử lại
+            Thử lại
           </Button>,
           <Button key="home" onClick={() => router.push("/")}>
-            Go Home / Về trang chủ
+            Về trang chủ
           </Button>,
           <Button key="support" onClick={() => router.push("/support")}>
-            Contact Support / Liên hệ hỗ trợ
+            Liên hệ hỗ trợ
           </Button>,
         ]}
       />

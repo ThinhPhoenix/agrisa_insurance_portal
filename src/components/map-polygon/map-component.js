@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import Map, { Source, Layer } from "react-map-gl/maplibre";
-import { Button } from "antd";
-import { MapIcon, SatelliteIcon } from "lucide-react";
+import { Button, Space } from "antd";
+import { MapIcon, SatelliteIcon, LocateFixed } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // Default center (Vietnam - Ho Chi Minh City)
@@ -233,6 +233,17 @@ export default function MapLibreWithPolygon({
     setMapStyle((prev) => (prev === "normal" ? "satellite" : "normal"));
   };
 
+  // Reset view to boundary location
+  const resetView = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [mapCenter.lng, mapCenter.lat],
+        zoom: 15,
+        duration: 1000, // Animation duration in ms
+      });
+    }
+  }, [mapCenter]);
+
   return (
     <div style={{ width: "100%", height: "400px", position: "relative" }}>
       <Map
@@ -272,7 +283,7 @@ export default function MapLibreWithPolygon({
         )}
       </Map>
 
-      {/* Map style toggle button */}
+      {/* Map controls */}
       <div
         style={{
           position: "absolute",
@@ -281,18 +292,35 @@ export default function MapLibreWithPolygon({
           zIndex: 1,
         }}
       >
-        <Button
-          type="primary"
-          icon={mapStyle === "normal" ? <SatelliteIcon size={16} /> : <MapIcon size={16} />}
-          onClick={toggleMapStyle}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
-        >
-          {mapStyle === "normal" ? "Vệ tinh" : "Bản đồ"}
-        </Button>
+        <Space direction="vertical">
+          {/* Toggle map style button */}
+          <Button
+            type="primary"
+            icon={mapStyle === "normal" ? <SatelliteIcon size={16} /> : <MapIcon size={16} />}
+            onClick={toggleMapStyle}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            {mapStyle === "normal" ? "Vệ tinh" : "Bản đồ"}
+          </Button>
+
+          {/* Reset view button */}
+          <Button
+            icon={<LocateFixed size={16} />}
+            onClick={resetView}
+            title="Quay lại vị trí boundary"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            Định vị
+          </Button>
+        </Space>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { CustomForm } from "@/components/custom-form";
+import OpenStreetMapWithPolygon from "@/components/map-polygon";
 import { useApplicationDetail } from "@/services/hooks/applications/use-applications";
 import { DownloadOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import {
@@ -33,9 +34,8 @@ const { TextArea } = Input;
 export default function PendingApplicationDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { application, satelliteData, farmAnalysis } = useApplicationDetail(
-    params.id
-  );
+  const { application, satelliteData, farmAnalysis, loading } =
+    useApplicationDetail(params.id);
   const [decisionModalVisible, setDecisionModalVisible] = useState(false);
   const [decisionType, setDecisionType] = useState(null); // 'approve' or 'reject'
   const [form] = Form.useForm();
@@ -172,10 +172,10 @@ export default function PendingApplicationDetailPage() {
     }
   };
 
-  if (!application) {
+  if (loading || !application) {
     return (
       <Layout.Content className="application-loading">
-        <Spin size="large" />
+        <Spin size="large" tip="Đang tải thông tin đơn đăng ký..." />
       </Layout.Content>
     );
   }
@@ -269,18 +269,13 @@ export default function PendingApplicationDetailPage() {
                   direction="vertical"
                   size="middle"
                   className="application-farm-location"
+                  style={{ width: "100%" }}
                 >
-                  {/* Google Maps Embed */}
-                  <div className="application-map-container">
-                    <iframe
-                      src={application.farm_location_map}
-                      className="application-map-iframe"
-                      allowFullScreen=""
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Vị trí trang trại"
-                    />
-                  </div>
+                  {/* OpenStreetMap with Polygon */}
+                  <OpenStreetMapWithPolygon
+                    boundary={application.boundary}
+                    centerLocation={application.center_location}
+                  />
                 </Space>
               </Col>
             </Row>

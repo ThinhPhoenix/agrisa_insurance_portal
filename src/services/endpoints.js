@@ -34,4 +34,12 @@ export const endpoints = {
         `/policy/protected/api/v2/base-policies/complete?expiration_hours=${expiration_hours}`, // ✅ Changed from v1 to v2
     },
   },
+  applications: {
+    list: "/policy/protected/api/v2/farms",
+    detail: (id) => `/policy/protected/api/v2/farms/${id}`,
+    list_by_owner: "/policy/protected/api/v2/farms/me",
+    create: "/policy/protected/api/v2/farms",
+    update: (id) => `/policy/protected/api/v2/farms/${id}`,
+    delete: (id) => `/policy/protected/api/v2/farms/${id}`,
+  },
 };

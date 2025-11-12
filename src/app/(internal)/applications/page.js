@@ -20,6 +20,7 @@ export default function PendingApplicationsPage() {
     filterOptions,
     searchText,
     filters,
+    loading,
     handleFormSubmit,
     handleClearFilters,
   } = useApplications();
@@ -241,6 +242,7 @@ export default function PendingApplicationsPage() {
             scroll={{ x: true }}
             size="middle"
             pagination={true}
+            loading={loading}
           />
         </div>
       </Space>

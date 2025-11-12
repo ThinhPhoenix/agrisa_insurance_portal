@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import Map, { Source, Layer } from "react-map-gl/maplibre";
 import { Button, Space, message } from "antd";
-import { MapIcon, SatelliteIcon, LocateFixed } from "lucide-react";
+import { MapIcon, SatelliteIcon, LocateFixed, Maximize, Minimize } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // Default center (Vietnam - Ho Chi Minh City)
@@ -94,6 +94,7 @@ export default function MapLibreWithPolygon({
 }) {
   const mapRef = useRef(null);
   const [mapStyle, setMapStyle] = useState("normal");
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentApiKey, setCurrentApiKey] = useState(() => {
     // Random selection between available keys on mount
     if (AVAILABLE_KEYS.length === 0) return "";
@@ -279,6 +280,11 @@ export default function MapLibreWithPolygon({
     }
   }, [mapCenter]);
 
+  // Toggle fullscreen mode
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
+
   // Generate map styles dynamically based on current API key
   const mapStyles = useMemo(() => ({
     normal: getOpenMapStyleUrl("day-v1", currentApiKey),
@@ -286,7 +292,17 @@ export default function MapLibreWithPolygon({
   }), [currentApiKey]);
 
   return (
-    <div style={{ width: "100%", height: "400px", position: "relative" }}>
+    <div
+      style={{
+        width: "100%",
+        height: isFullscreen ? "100vh" : "400px",
+        position: isFullscreen ? "fixed" : "relative",
+        top: isFullscreen ? 0 : "auto",
+        left: isFullscreen ? 0 : "auto",
+        zIndex: isFullscreen ? 9999 : "auto",
+        backgroundColor: "#fff"
+      }}
+    >
       <Map
         ref={mapRef}
         initialViewState={{
@@ -361,6 +377,20 @@ export default function MapLibreWithPolygon({
             }}
           >
             Định vị
+          </Button>
+
+          {/* Fullscreen toggle button */}
+          <Button
+            icon={isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Thu nhỏ" : "Toàn màn hình"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            {isFullscreen ? "Thu nhỏ" : "Toàn màn hình"}
           </Button>
         </Space>
       </div>

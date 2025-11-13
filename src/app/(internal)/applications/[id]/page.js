@@ -199,10 +199,10 @@ export default function PendingApplicationDetailPage() {
                   />
                   <div>
                     <div className="application-farmer-name">
-                      {application.farmer_name}
+                      {application.farm_name}
                     </div>
                     <div className="application-farmer-id">
-                      Mã: {application.id}
+                      Mã chủ sở hữu: {application.owner_id}
                     </div>
                   </div>
                 </div>
@@ -215,18 +215,15 @@ export default function PendingApplicationDetailPage() {
                     {application.crop_type}
                   </Descriptions.Item>
                   <Descriptions.Item label="Diện tích">
-                    {application.area} ha
+                    {(application.area_sqm / 10000).toFixed(2)} ha
                   </Descriptions.Item>
-                  <Descriptions.Item label="Vị trí">
-                    {application.region}
+                  <Descriptions.Item label="Tỉnh">
+                    {application.province}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Ngày gửi">
-                    {new Date(application.submission_date).toLocaleDateString(
+                  <Descriptions.Item label="Ngày tạo">
+                    {new Date(application.created_at).toLocaleDateString(
                       "vi-VN"
                     )}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Số tiền bảo hiểm">
-                    {application.insured_amount.toLocaleString()} VND
                   </Descriptions.Item>
                   <Descriptions.Item label="Trạng thái">
                     <Tag color={getStatusColor(application.status)}>

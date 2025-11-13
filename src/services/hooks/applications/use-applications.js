@@ -8,8 +8,7 @@ export function useApplications() {
   const [searchText, setSearchText] = useState("");
   const [filters, setFilters] = useState({
     cropType: null,
-    region: null,
-    riskLevel: null,
+    province: null,
   });
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -21,42 +20,48 @@ export function useApplications() {
     setError(null);
     try {
       const response = await axiosInstance.get(endpoints.applications.list);
+      console.log(response);
+
       if (response.data.success) {
         // Transform API response to match expected format
         const transformedData = Array.isArray(response.data.data)
           ? response.data.data.map((farm) => ({
-              id: farm.ID,
-              farmer_name: farm.OwnerID, // Will be replaced with actual farmer name if available
-              farm_name: farm.FarmName,
-              farm_code: farm.FarmCode,
-              crop_type: farm.CropType,
-              region: farm.Province,
-              district: farm.District,
-              commune: farm.Commune,
-              address: farm.Address,
-              area: farm.AreaSQM / 10000, // Convert m² to hectares
-              submission_date: farm.CreatedAt,
-              status: farm.Status,
-              boundary: farm.Boundary,
-              center_location: farm.CenterLocation,
-              planting_date: farm.PlantingDate,
-              expected_harvest_date: farm.ExpectedHarvestDate,
-              // Additional fields
-              land_certificate_number: farm.LandCertificateNumber,
-              land_certificate_url: farm.LandCertificateURL,
-              has_irrigation: farm.HasIrrigation,
-              irrigation_type: farm.IrrigationType,
-              soil_type: farm.SoilType,
-              farm_photos: farm.farm_photos || [],
+              id: farm.id,
+              owner_id: farm.owner_id,
+              farm_name: farm.farm_name,
+              farm_code: farm.farm_code,
+              boundary: farm.boundary,
+              center_location: farm.center_location,
+              area_sqm: farm.area_sqm,
+              province: farm.province,
+              district: farm.district,
+              commune: farm.commune,
+              address: farm.address,
+              crop_type: farm.crop_type,
+              planting_date: farm.planting_date,
+              expected_harvest_date: farm.expected_harvest_date,
+              crop_type_verified: farm.crop_type_verified || false,
+              land_certificate_number: farm.land_certificate_number,
+              land_ownership_verified: farm.land_ownership_verified || false,
+              has_irrigation: farm.has_irrigation,
+              irrigation_type: farm.irrigation_type,
+              soil_type: farm.soil_type,
+              status: farm.status,
+              created_at: farm.created_at,
+              updated_at: farm.updated_at,
+              farm_photos: farm.farm_photos,
             }))
           : [];
         setApplications(transformedData);
       } else {
-        throw new Error(response.data.message || "Failed to fetch applications");
+        throw new Error(
+          response.data.message || "Failed to fetch applications"
+        );
       }
     } catch (error) {
       console.error("Error fetching applications:", error);
-      const errorMessage = error.response?.data?.message || "Failed to fetch applications";
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch applications";
       setError(errorMessage);
       message.error(`Lỗi khi tải danh sách đơn đăng ký: ${errorMessage}`);
       setApplications([]);
@@ -74,36 +79,26 @@ export function useApplications() {
   const filteredData = useMemo(() => {
     return applications.filter((item) => {
       const matchesSearch =
-        item.id.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.farmer_name.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.farm_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.crop_type.toLowerCase().includes(searchText.toLowerCase());
+        item?.id?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item?.owner_id?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item?.farm_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item?.crop_type?.toLowerCase().includes(searchText.toLowerCase());
 
       const matchesCropType =
         !filters.cropType || item.crop_type === filters.cropType;
-      const matchesRegion = !filters.region || item.region === filters.region;
-      const matchesRiskLevel =
-        !filters.riskLevel || item.risk_level === filters.riskLevel;
+      const matchesProvince =
+        !filters.province || item.province === filters.province;
 
-      return (
-        matchesSearch && matchesCropType && matchesRegion && matchesRiskLevel
-      );
+      return matchesSearch && matchesCropType && matchesProvince;
     });
   }, [applications, searchText, filters]);
 
   // Unique options for filters
   const filterOptions = useMemo(() => {
-    const cropTypes = [
-      ...new Set(applications.map((item) => item.crop_type)),
-    ];
-    const regions = [
-      ...new Set(applications.map((item) => item.region)),
-    ];
-    const riskLevels = [
-      ...new Set(applications.map((item) => item.risk_level).filter(Boolean)),
-    ];
+    const cropTypes = [...new Set(applications.map((item) => item.crop_type))];
+    const provinces = [...new Set(applications.map((item) => item.province))];
 
-    return { cropTypes, regions, riskLevels };
+    return { cropTypes, provinces };
   }, [applications]);
 
   const handleSearch = (value) => {
@@ -118,8 +113,7 @@ export function useApplications() {
     setSearchText(values.search || "");
     setFilters({
       cropType: values.cropType || null,
-      region: values.region || null,
-      riskLevel: values.riskLevel || null,
+      province: values.province || null,
     });
   };
 
@@ -127,8 +121,7 @@ export function useApplications() {
     setSearchText("");
     setFilters({
       cropType: null,
-      region: null,
-      riskLevel: null,
+      province: null,
     });
   };
 
@@ -160,58 +153,48 @@ export function useApplicationDetail(id) {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get(endpoints.applications.detail(id));
+      const response = await axiosInstance.get(
+        endpoints.applications.detail(id)
+      );
       if (response.data.success) {
         const farm = response.data.data;
         // Transform API response to match expected format
         const transformedData = {
-          id: farm.ID,
-          farmer_name: farm.OwnerID,
-          farmer_photo: null, // Not available in API
-          farm_name: farm.FarmName,
-          farm_code: farm.FarmCode,
-          crop_type: farm.CropType,
-          region: farm.Province,
-          district: farm.District,
-          commune: farm.Commune,
-          address: farm.Address,
-          area: farm.AreaSQM / 10000, // Convert m² to hectares
-          submission_date: farm.CreatedAt,
-          insured_amount: 0, // Not available in API
-          status: farm.Status,
-          boundary: farm.Boundary,
-          center_location: farm.CenterLocation,
-          gps_coordinates: farm.Boundary?.[0] || [], // First polygon ring
-          planting_date: farm.PlantingDate,
-          expected_harvest_date: farm.ExpectedHarvestDate,
-          // Risk assessment (placeholder - not in API)
-          risk_score: 0,
-          risk_level: "Low",
-          risk_summary: "Đánh giá tự động từ dữ liệu trang trại",
-          // Additional fields
-          land_certificate_number: farm.LandCertificateNumber,
-          land_certificate_url: farm.LandCertificateURL,
-          land_use_certificate_images: farm.LandCertificateURL ? [farm.LandCertificateURL] : [],
-          has_irrigation: farm.HasIrrigation,
-          irrigation_type: farm.IrrigationType,
-          soil_type: farm.SoilType,
-          farm_photos: farm.farm_photos || [],
-          land_images: (farm.farm_photos || [])
-            .filter((photo) => photo.photo_type === "crop" || photo.photo_type === "boundary")
-            .map((photo) => photo.photo_url),
-          application_documents: [], // Not available in API
-          // Generate map URL from center location
-          farm_location_map: farm.CenterLocation
-            ? `https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${farm.CenterLocation[1]},${farm.CenterLocation[0]}&zoom=15`
-            : null,
+          id: farm.id,
+          owner_id: farm.owner_id,
+          farm_name: farm.farm_name,
+          farm_code: farm.farm_code,
+          boundary: farm.boundary,
+          center_location: farm.center_location,
+          area_sqm: farm.area_sqm,
+          province: farm.province,
+          district: farm.district,
+          commune: farm.commune,
+          address: farm.address,
+          crop_type: farm.crop_type,
+          planting_date: farm.planting_date,
+          expected_harvest_date: farm.expected_harvest_date,
+          crop_type_verified: farm.crop_type_verified || false,
+          land_certificate_number: farm.land_certificate_number,
+          land_ownership_verified: farm.land_ownership_verified || false,
+          has_irrigation: farm.has_irrigation,
+          irrigation_type: farm.irrigation_type,
+          soil_type: farm.soil_type,
+          status: farm.status,
+          created_at: farm.created_at,
+          updated_at: farm.updated_at,
+          farm_photos: farm.farm_photos,
         };
         setApplication(transformedData);
       } else {
-        throw new Error(response.data.message || "Failed to fetch application detail");
+        throw new Error(
+          response.data.message || "Failed to fetch application detail"
+        );
       }
     } catch (error) {
       console.error("Error fetching application detail:", error);
-      const errorMessage = error.response?.data?.message || "Failed to fetch application detail";
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch application detail";
       setError(errorMessage);
       message.error(`Lỗi khi tải chi tiết đơn đăng ký: ${errorMessage}`);
       setApplication(null);

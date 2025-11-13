@@ -28,13 +28,86 @@ export default function PendingApplicationsPage() {
   // Visible columns state - action column is always visible
   const [visibleColumns, setVisibleColumns] = useState([
     "id",
-    "farmer_name",
+    "owner_id",
+    "farm_name",
     "crop_type",
-    "region",
-    "submission_date",
-    "risk_summary",
+    "province",
+    "created_at",
+    "status",
     "action", // Always visible
   ]);
+
+  const columns = [
+    {
+      title: "Mã đơn đăng ký",
+      dataIndex: "id",
+      key: "id",
+      sorter: (a, b) => a.id.localeCompare(b.id),
+      ellipsis: true,
+    },
+    {
+      title: "Mã chủ sở hữu",
+      dataIndex: "owner_id",
+      key: "owner_id",
+      sorter: (a, b) => a.owner_id.localeCompare(b.owner_id),
+    },
+    {
+      title: "Tên trang trại",
+      dataIndex: "farm_name",
+      key: "farm_name",
+      sorter: (a, b) => a.farm_name.localeCompare(b.farm_name),
+    },
+    {
+      title: "Loại cây trồng",
+      dataIndex: "crop_type",
+      key: "crop_type",
+      filters: (filterOptions.cropTypes || []).map((type) => ({
+        text: type,
+        value: type,
+      })),
+      onFilter: (value, record) => record.crop_type === value,
+      render: (type) => <Tag>{type}</Tag>,
+    },
+    {
+      title: "Tỉnh",
+      dataIndex: "province",
+      key: "province",
+      filters: (filterOptions.provinces || []).map((province) => ({
+        text: province,
+        value: province,
+      })),
+      onFilter: (value, record) => record.province === value,
+    },
+    {
+      title: "Ngày tạo",
+      dataIndex: "created_at",
+      key: "created_at",
+      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
+      render: (date) => new Date(date).toLocaleDateString("vi-VN"),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => <Tag>{status}</Tag>,
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      fixed: "right",
+      width: 100,
+      render: (_, record) => (
+        <Button
+          type="default"
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() => router.push(`/applications/${record.id}`)}
+        >
+          Xem chi tiết
+        </Button>
+      ),
+    },
+  ];
 
   // Search fields for custom form
   const searchFields = [
@@ -50,33 +123,22 @@ export default function PendingApplicationsPage() {
       label: "Loại cây trồng",
       type: "combobox",
       placeholder: "Chọn loại cây trồng",
-      options: filterOptions.cropTypes.map((type) => ({
+      options: (filterOptions.cropTypes || []).map((type) => ({
         label: type,
         value: type,
       })),
       value: filters.cropType,
     },
     {
-      name: "region",
-      label: "Khu vực",
+      name: "province",
+      label: "Tỉnh",
       type: "combobox",
-      placeholder: "Chọn khu vực",
-      options: filterOptions.regions.map((region) => ({
-        label: region,
-        value: region,
+      placeholder: "Chọn tỉnh",
+      options: (filterOptions.provinces || []).map((province) => ({
+        label: province,
+        value: province,
       })),
-      value: filters.region,
-    },
-    {
-      name: "riskLevel",
-      label: "Mức độ rủi ro",
-      type: "combobox",
-      placeholder: "Chọn mức độ rủi ro",
-      options: filterOptions.riskLevels.map((level) => ({
-        label: level,
-        value: level,
-      })),
-      value: filters.riskLevel,
+      value: filters.province,
     },
     {
       name: "searchButton",
@@ -95,93 +157,6 @@ export default function PendingApplicationsPage() {
       buttonText: "Xóa bộ lọc",
       startContent: <FilterOutlined size={14} />,
       onClick: handleClearFilters,
-    },
-  ];
-
-  const getRiskColor = (level) => {
-    switch (level) {
-      case "Low":
-        return "green";
-      case "Medium":
-        return "orange";
-      case "High":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const columns = [
-    {
-      title: "Mã đơn đăng ký",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => a.id.localeCompare(b.id),
-      ellipsis: true,
-    },
-    {
-      title: "Tên nông dân",
-      dataIndex: "farmer_name",
-      key: "farmer_name",
-      sorter: (a, b) => a.farmer_name.localeCompare(b.farmer_name),
-    },
-    {
-      title: "Loại cây trồng",
-      dataIndex: "crop_type",
-      key: "crop_type",
-      filters: filterOptions.cropTypes.map((type) => ({
-        text: type,
-        value: type,
-      })),
-      onFilter: (value, record) => record.crop_type === value,
-      render: (type) => <Tag>{type}</Tag>,
-    },
-    {
-      title: "Vị trí trang trại",
-      dataIndex: "region",
-      key: "region",
-      filters: filterOptions.regions.map((region) => ({
-        text: region,
-        value: region,
-      })),
-      onFilter: (value, record) => record.region === value,
-    },
-    {
-      title: "Ngày gửi",
-      dataIndex: "submission_date",
-      key: "submission_date",
-      sorter: (a, b) =>
-        new Date(a.submission_date) - new Date(b.submission_date),
-      render: (date) => new Date(date).toLocaleDateString("vi-VN"),
-    },
-    {
-      title: "Tóm tắt rủi ro",
-      dataIndex: "risk_summary",
-      key: "risk_summary",
-      filters: filterOptions.riskLevels.map((level) => ({
-        text: level,
-        value: level,
-      })),
-      onFilter: (value, record) => record.risk_level === value,
-      render: (summary, record) => (
-        <Tag color={getRiskColor(record.risk_level)}>{summary}</Tag>
-      ),
-    },
-    {
-      title: "Thao tác",
-      key: "action",
-      fixed: "right",
-      width: 100,
-      render: (_, record) => (
-        <Button
-          type="default"
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => router.push(`/applications/${record.id}`)}
-        >
-          Xem chi tiết
-        </Button>
-      ),
     },
   ];
 

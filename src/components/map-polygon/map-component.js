@@ -141,16 +141,52 @@ export default function MapLibreWithPolygon({
     }
   }, [currentApiKey, errorCount]);
 
+  // Parse boundary to get coordinates array from GeoJSON or raw array
+  const parsedBoundary = useMemo(() => {
+    if (!boundary) return null;
+
+    // Case 1: GeoJSON Polygon object {type: "Polygon", coordinates: [...]}
+    if (boundary.type === "Polygon" && boundary.coordinates) {
+      console.log("✓ Detected GeoJSON Polygon object format");
+      return boundary.coordinates; // Returns [[[lng,lat]...]]
+    }
+
+    // Case 2: Raw coordinates array [[[lng,lat]...]]
+    if (Array.isArray(boundary)) {
+      console.log("✓ Detected raw coordinates array format");
+      return boundary;
+    }
+
+    console.error("❌ Unknown boundary format:", boundary);
+    return null;
+  }, [boundary]);
+
+  // Parse centerLocation to get [lng, lat] from GeoJSON Point or raw array
+  const parsedCenterLocation = useMemo(() => {
+    if (!centerLocation) return null;
+
+    // Case 1: GeoJSON Point object {type: "Point", coordinates: [lng, lat]}
+    if (centerLocation.type === "Point" && centerLocation.coordinates) {
+      console.log("✓ Detected GeoJSON Point object format");
+      return centerLocation.coordinates; // Returns [lng, lat]
+    }
+
+    // Case 2: Raw coordinates array [lng, lat]
+    if (Array.isArray(centerLocation) && centerLocation.length === 2) {
+      console.log("✓ Detected raw center coordinates array format");
+      return centerLocation;
+    }
+
+    console.error("❌ Unknown centerLocation format:", centerLocation);
+    return null;
+  }, [centerLocation]);
+
   // Get map center from centerLocation or calculate from boundary
   const mapCenter = useMemo(() => {
     // Priority 1: Use centerLocation from API if available (GeoJSON format: [lng, lat])
-    if (
-      centerLocation &&
-      Array.isArray(centerLocation) &&
-      centerLocation.length === 2
-    ) {
-      const lng = parseFloat(centerLocation[0]); // longitude (kinh độ)
-      const lat = parseFloat(centerLocation[1]); // latitude (vĩ độ)
+    if (parsedCenterLocation && Array.isArray(parsedCenterLocation)) {
+      const lng = parseFloat(parsedCenterLocation[0]); // longitude (kinh độ)
+      const lat = parseFloat(parsedCenterLocation[1]); // latitude (vĩ độ)
 
       // Validate coordinates are valid numbers and within Vietnam bounds
       if (isWithinVietnamBounds(lng, lat)) {
@@ -158,7 +194,7 @@ export default function MapLibreWithPolygon({
         return { lng, lat };
       }
       console.warn("✗ Invalid centerLocation (out of Vietnam bounds):", {
-        provided: centerLocation,
+        provided: parsedCenterLocation,
         parsed: { lng, lat },
         bounds: VIETNAM_BOUNDS,
       });
@@ -166,8 +202,8 @@ export default function MapLibreWithPolygon({
 
     // Priority 2: Calculate centroid from boundary polygon if centerLocation not available
     // Boundary format: [[[lng, lat], [lng, lat], ...]]
-    if (boundary && Array.isArray(boundary) && boundary.length > 0) {
-      const outerRing = boundary[0]; // First ring is outer boundary
+    if (parsedBoundary && Array.isArray(parsedBoundary) && parsedBoundary.length > 0) {
+      const outerRing = parsedBoundary[0]; // First ring is outer boundary
       if (Array.isArray(outerRing) && outerRing.length > 0) {
         // Calculate polygon centroid using average of all points
         // Note: This is a simple arithmetic mean, not geometric centroid
@@ -189,29 +225,32 @@ export default function MapLibreWithPolygon({
         });
 
         if (validPoints > 0) {
-          return {
+          const calculatedCenter = {
             lng: sumLng / validPoints,
             lat: sumLat / validPoints,
           };
+          console.log("✓ Calculated center from boundary:", calculatedCenter);
+          return calculatedCenter;
         }
       }
     }
 
     // Priority 3: Default to Ho Chi Minh City center
-    console.warn("Using default center - no valid coordinates provided");
+    console.warn("⚠️ Using default center - no valid coordinates provided");
     return defaultCenter;
-  }, [centerLocation, boundary]);
+  }, [parsedCenterLocation, parsedBoundary]);
 
   // Create GeoJSON for polygon with validation
   const polygonGeoJSON = useMemo(() => {
-    if (!boundary || !Array.isArray(boundary) || boundary.length === 0) {
+    if (!parsedBoundary || !Array.isArray(parsedBoundary) || parsedBoundary.length === 0) {
+      console.warn("⚠️ No valid boundary data for polygon");
       return null;
     }
 
     // Validate boundary structure: [[[lng, lat], [lng, lat], ...]]
-    const outerRing = boundary[0];
+    const outerRing = parsedBoundary[0];
     if (!Array.isArray(outerRing) || outerRing.length < 3) {
-      console.error("Invalid boundary: must have at least 3 points", boundary);
+      console.error("❌ Invalid boundary: must have at least 3 points", parsedBoundary);
       return null;
     }
 
@@ -237,7 +276,7 @@ export default function MapLibreWithPolygon({
     });
 
     if (!validCoordinates) {
-      console.error("✗ Invalid boundary polygon:", {
+      console.error("❌ Invalid boundary polygon:", {
         totalPoints: outerRing.length,
         invalidPoints,
         bounds: VIETNAM_BOUNDS,
@@ -257,13 +296,13 @@ export default function MapLibreWithPolygon({
       type: "Feature",
       geometry: {
         type: "Polygon",
-        coordinates: boundary, // Format: [[[lng, lat], [lng, lat], ...]]
+        coordinates: parsedBoundary, // Format: [[[lng, lat], [lng, lat], ...]]
       },
       properties: {
         validated: true,
       },
     };
-  }, [boundary]);
+  }, [parsedBoundary]);
 
   const toggleMapStyle = () => {
     setMapStyle((prev) => (prev === "normal" ? "satellite" : "normal"));

@@ -7,7 +7,7 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex bg-secondary-100">
       <div className="hidden lg:block lg:w-2/5 relative">
         <img
-          src="https://vca.org.vn/upload/images/2020/20_5_2020/26.5.4.jpg"
+          src={Assets.SideBackground.src}
           alt="Agriculture Background"
           className="w-full h-full object-cover"
         />

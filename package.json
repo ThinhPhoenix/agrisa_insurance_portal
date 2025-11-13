@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "ass": "bun ./src/assets/generate-assets-index.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

@@ -109,6 +109,11 @@ const usePolicy = () => {
   const [dataSourcesLoading, setDataSourcesLoading] = useState(false);
   const [dataSourcesError, setDataSourcesError] = useState(null);
 
+  // State cho policies list
+  const [policies, setPolicies] = useState([]);
+  const [policiesLoading, setPoliciesLoading] = useState(false);
+  const [policiesError, setPoliciesError] = useState(null);
+
   // Tính toán chi phí ước tính theo thời gian thực
   const estimatedCosts = useMemo(() => {
     let monthlyDataCost = 0;
@@ -300,10 +305,80 @@ const usePolicy = () => {
     }
   }, []);
 
+  // Fetch policies by provider
+  const fetchPoliciesByProvider = useCallback(async (providerId) => {
+    if (!providerId) {
+      console.warn("⚠️ Provider ID is required to fetch policies");
+      return;
+    }
+
+    setPoliciesLoading(true);
+    setPoliciesError(null);
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await axiosInstance.get(
+        endpoints.policy.base_policy.get_draft_by_provider(providerId, false),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("✅ Fetch policies success:", response.data);
+
+      if (response.data?.success && response.data?.data?.policies) {
+        setPolicies(response.data.data.policies);
+      } else {
+        setPolicies([]);
+      }
+    } catch (error) {
+      console.error("❌ Fetch policies error:", error);
+      setPoliciesError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch policies"
+      );
+      setPolicies([]);
+    } finally {
+      setPoliciesLoading(false);
+    }
+  }, []);
+
+  // Fetch policies - Automatically get partner_id from localStorage
+  const fetchPolicies = useCallback(() => {
+    const meData = localStorage.getItem("me");
+    if (meData) {
+      try {
+        const userData = JSON.parse(meData);
+        const providerId = userData?.partner_id;
+        if (providerId) {
+          fetchPoliciesByProvider(providerId);
+        } else {
+          console.warn("⚠️ Partner ID not found in user data");
+          setPoliciesError("Partner ID not found in user data");
+        }
+      } catch (error) {
+        console.error("❌ Error parsing user data from localStorage:", error);
+        setPoliciesError("Failed to parse user data");
+      }
+    } else {
+      console.warn("⚠️ User data not found in localStorage");
+      setPoliciesError("User data not found");
+    }
+  }, [fetchPoliciesByProvider]);
+
   // Fetch categories on mount
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  // Fetch policies on mount
+  useEffect(() => {
+    fetchPolicies();
+  }, [fetchPolicies]);
 
   // ✅ AUTO-VALIDATE: Run validation whenever data changes
   // This ensures validationStatus is always up-to-date
@@ -832,6 +907,9 @@ const usePolicy = () => {
     dataSources,
     dataSourcesLoading,
     dataSourcesError,
+    policies,
+    policiesLoading,
+    policiesError,
 
     // Constants
     TABS,
@@ -857,6 +935,8 @@ const usePolicy = () => {
     fetchCategories,
     fetchTiersByCategory,
     fetchDataSourcesByTier,
+    fetchPoliciesByProvider,
+    fetchPolicies,
 
     // Utilities
     getAvailableDataSources,

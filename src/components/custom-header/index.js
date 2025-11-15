@@ -1,5 +1,5 @@
 import Assets from "@/assets";
-import { sidebarMenuItems } from "@/libs/menu-config";
+import { labelTranslations, sidebarMenuItems } from "@/libs/menu-config";
 import { Breadcrumb } from "antd";
 import { usePathname } from "next/navigation";
 import AvatarSection from "./avatar-section";
@@ -51,8 +51,10 @@ export default function CustomHeader() {
         });
       } else {
         // Fallback for unmapped routes
+        let title = segment.charAt(0).toUpperCase() + segment.slice(1);
+        title = labelTranslations[title] || title;
         items.push({
-          title: segment.charAt(0).toUpperCase() + segment.slice(1),
+          title,
           href: currentPath,
         });
       }

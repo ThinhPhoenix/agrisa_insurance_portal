@@ -503,13 +503,6 @@ const FileUploadPreview = forwardRef(({
 
                     <div style={{ marginLeft: 'auto' }}>
                         <Space>
-                            {analyzing && (
-                                <Space>
-                                    <Spin size="small" />
-                                    <Text type="secondary">Đang phân tích...</Text>
-                                </Space>
-                            )}
-
                             <Tooltip title="Paste text từ PDF">
                                 <Button
                                     type="default"

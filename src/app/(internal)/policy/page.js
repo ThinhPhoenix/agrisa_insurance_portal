@@ -3,27 +3,30 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
+import usePolicy from "@/services/hooks/policy/use-policy";
 import {
   CheckCircleOutlined,
   DownloadOutlined,
-  EditOutlined,
   EyeOutlined,
   FileTextOutlined,
   FilterOutlined,
   PercentageOutlined,
   SafetyOutlined,
   SearchOutlined,
-  TeamOutlined,
 } from "@ant-design/icons";
-import { Button, Collapse, Layout, Space, Tag, Typography } from "antd";
+import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import mockData from "./mock..json";
 import "./policy.css";
 
 const { Title, Text } = Typography;
 
 export default function PolicyPage() {
+  // Use policy hook
+  const { policies, policiesLoading, policiesError, fetchPoliciesByProvider } =
+    usePolicy();
+
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
     "productName",
@@ -45,20 +48,47 @@ export default function PolicyPage() {
   });
 
   // Filtered data
-  const [filteredData, setFilteredData] = useState(mockData.policies);
+  const [filteredData, setFilteredData] = useState([]);
+
+  // Transform API data to table format
+  const transformedPolicies = policies.map((item) => ({
+    id: item.base_policy.id,
+    productName: item.base_policy.product_name,
+    productCode: item.base_policy.product_code,
+    productDescription: item.base_policy.product_description,
+    insuranceProviderId: item.base_policy.insurance_provider_id,
+    cropType: item.base_policy.crop_type,
+    coverageCurrency: item.base_policy.coverage_currency,
+    coverageDurationDays: item.base_policy.coverage_duration_days,
+    premiumBaseRate: item.base_policy.premium_base_rate,
+    status: item.base_policy.status,
+  }));
+
+  // Update filtered data when policies change
+  useEffect(() => {
+    setFilteredData(transformedPolicies);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [policies]);
 
   // Calculate summary stats
   const summaryStats = {
-    totalPolicies: mockData.policies.length,
-    activePolicies: mockData.policies.length, // Assuming all are active
+    totalPolicies: transformedPolicies.length,
+    activePolicies: transformedPolicies.filter((p) => p.status === "draft")
+      .length,
     uniqueProviders: new Set(
-      mockData.policies.map((p) => p.insuranceProviderId)
+      transformedPolicies.map((p) => p.insuranceProviderId)
     ).size,
-    avgPremiumRate: (
-      (mockData.policies.reduce((sum, p) => sum + p.premiumBaseRate, 0) /
-        mockData.policies.length) *
-      100
-    ).toFixed(1),
+    avgPremiumRate:
+      transformedPolicies.length > 0
+        ? (
+            (transformedPolicies.reduce(
+              (sum, p) => sum + (p.premiumBaseRate || 0),
+              0
+            ) /
+              transformedPolicies.length) *
+            100
+          ).toFixed(1)
+        : "0.0",
   };
 
   // Filter options
@@ -101,12 +131,12 @@ export default function PolicyPage() {
       durationRange: "",
     };
     setFilters(clearedFilters);
-    setFilteredData(mockData.policies);
+    setFilteredData(transformedPolicies);
   };
 
   // Apply filters
   const applyFilters = (filterValues) => {
-    let filtered = [...mockData.policies];
+    let filtered = [...transformedPolicies];
 
     if (filterValues.productName) {
       filtered = filtered.filter((policy) =>
@@ -181,13 +211,7 @@ export default function PolicyPage() {
       width: 200,
       render: (text) => <Text code>{text}</Text>,
     },
-    {
-      title: "Đối tác Bảo hiểm",
-      dataIndex: "insuranceProviderId",
-      key: "insuranceProviderId",
-      width: 180,
-      render: (text) => <Tag color="blue">{text}</Tag>,
-    },
+
     {
       title: "Loại Cây trồng",
       dataIndex: "cropType",
@@ -225,20 +249,6 @@ export default function PolicyPage() {
               <EyeOutlined size={14} />
             </Button>
           </Link>
-          <Button
-            type="dashed"
-            size="small"
-            className="policy-action-btn !bg-green-100 !border-green-200 !text-green-800 hover:!bg-green-200"
-          >
-            <EditOutlined size={14} />
-          </Button>
-          <Button
-            type="dashed"
-            size="small"
-            className="policy-action-btn !bg-purple-100 !border-purple-200 !text-purple-800 hover:!bg-purple-200"
-          >
-            <DownloadOutlined size={14} />
-          </Button>
         </div>
       ),
     },
@@ -269,15 +279,7 @@ export default function PolicyPage() {
       options: filterOptions.cropTypes,
       value: filters.cropType,
     },
-    {
-      name: "insuranceProviderId",
-      label: "Đối tác bảo hiểm",
-      type: "combobox",
-      placeholder: "Chọn đối tác bảo hiểm",
-      options: filterOptions.providers,
-      value: filters.insuranceProviderId,
-    },
-    // Second row - Range filters and actions (4 fields)
+
     {
       name: "premiumRange",
       label: "Tỷ lệ phí BH",
@@ -316,146 +318,136 @@ export default function PolicyPage() {
 
   return (
     <Layout.Content className="policy-content">
-      <div className="policy-space">
-        {/* Header */}
-        <div className="policy-header">
-          <div>
-            <Title level={2} className="policy-title">
-              <SafetyOutlined className="policy-icon" />
-              Quản lý Chính sách Bảo hiểm
-            </Title>
-            <Text type="secondary" className="policy-subtitle">
-              Quản lý các chính sách bảo hiểm nông nghiệp
-            </Text>
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="policy-summary-row">
-          <div className="policy-summary-card-compact">
-            <div className="policy-summary-icon total">
-              <FileTextOutlined />
-            </div>
-            <div className="policy-summary-content">
-              <div className="policy-summary-value-compact">
-                {summaryStats.totalPolicies}
-              </div>
-              <div className="policy-summary-label-compact">
-                Tổng số chính sách
-              </div>
+      <Spin spinning={policiesLoading} tip="Đang tải dữ liệu...">
+        <div className="policy-space">
+          {/* Header */}
+          <div className="policy-header">
+            <div>
+              <Title level={2} className="policy-title">
+                <SafetyOutlined className="policy-icon" />
+                Quản lý Chính sách Bảo hiểm
+              </Title>
+              <Text type="secondary" className="policy-subtitle">
+                Quản lý các chính sách bảo hiểm nông nghiệp
+              </Text>
             </div>
           </div>
 
-          <div className="policy-summary-card-compact">
-            <div className="policy-summary-icon active">
-              <CheckCircleOutlined />
-            </div>
-            <div className="policy-summary-content">
-              <div className="policy-summary-value-compact">
-                {summaryStats.activePolicies}
+          {/* Summary Cards */}
+          <div className="policy-summary-row">
+            <div className="policy-summary-card-compact">
+              <div className="policy-summary-icon total">
+                <FileTextOutlined />
               </div>
-              <div className="policy-summary-label-compact">Đang hoạt động</div>
+              <div className="policy-summary-content">
+                <div className="policy-summary-value-compact">
+                  {summaryStats.totalPolicies}
+                </div>
+                <div className="policy-summary-label-compact">
+                  Tổng số chính sách
+                </div>
+              </div>
+            </div>
+
+            <div className="policy-summary-card-compact">
+              <div className="policy-summary-icon active">
+                <CheckCircleOutlined />
+              </div>
+              <div className="policy-summary-content">
+                <div className="policy-summary-value-compact">
+                  {summaryStats.activePolicies}
+                </div>
+                <div className="policy-summary-label-compact">
+                  Đang hoạt động
+                </div>
+              </div>
+            </div>
+
+            <div className="policy-summary-card-compact">
+              <div className="policy-summary-icon premium">
+                <PercentageOutlined />
+              </div>
+              <div className="policy-summary-content">
+                <div className="policy-summary-value-compact">
+                  {summaryStats.avgPremiumRate}%
+                </div>
+                <div className="policy-summary-label-compact">Phí BH TB</div>
+              </div>
             </div>
           </div>
 
-          <div className="policy-summary-card-compact">
-            <div className="policy-summary-icon providers">
-              <TeamOutlined />
-            </div>
-            <div className="policy-summary-content">
-              <div className="policy-summary-value-compact">
-                {summaryStats.uniqueProviders}
-              </div>
-              <div className="policy-summary-label-compact">
-                Đối tác bảo hiểm
-              </div>
-            </div>
-          </div>
-
-          <div className="policy-summary-card-compact">
-            <div className="policy-summary-icon premium">
-              <PercentageOutlined />
-            </div>
-            <div className="policy-summary-content">
-              <div className="policy-summary-value-compact">
-                {summaryStats.avgPremiumRate}%
-              </div>
-              <div className="policy-summary-label-compact">Phí BH TB</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="policy-filters">
-          <Collapse
-            items={[
-              {
-                key: "1",
-                label: (
-                  <Space>
-                    <FilterOutlined />
-                    Bộ lọc tìm kiếm
-                  </Space>
-                ),
-                children: (
-                  <div className="policy-filter-form">
-                    <div className="space-y-4">
-                      {/* First row - Main search fields */}
-                      <CustomForm
-                        fields={searchFields.slice(0, 4)}
-                        gridColumns="1fr 1fr 1fr 1fr"
-                        gap="16px"
-                        onSubmit={handleFormSubmit}
-                      />
-                      {/* Second row - Range filters and actions */}
-                      <CustomForm
-                        fields={searchFields.slice(4)}
-                        gridColumns="1fr 1fr 1fr 1fr"
-                        gap="16px"
-                        onSubmit={handleFormSubmit}
-                      />
+          {/* Filters */}
+          <div className="policy-filters">
+            <Collapse
+              items={[
+                {
+                  key: "1",
+                  label: (
+                    <Space>
+                      <FilterOutlined />
+                      Bộ lọc tìm kiếm
+                    </Space>
+                  ),
+                  children: (
+                    <div className="policy-filter-form">
+                      <div className="space-y-4">
+                        {/* First row - Main search fields */}
+                        <CustomForm
+                          fields={searchFields.slice(0, 4)}
+                          gridColumns="1fr 1fr 1fr 1fr"
+                          gap="16px"
+                          onSubmit={handleFormSubmit}
+                        />
+                        {/* Second row - Range filters and actions */}
+                        <CustomForm
+                          fields={searchFields.slice(4)}
+                          gridColumns="1fr 1fr 1fr 1fr"
+                          gap="16px"
+                          onSubmit={handleFormSubmit}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ),
-              },
-            ]}
-          />
-        </div>
-
-        {/* Table */}
-        <div>
-          <div className="flex justify-start items-center gap-2 mb-2">
-            <Link href="/policy/create">
-              <Button type="primary" icon={<SafetyOutlined />}>
-                Tạo mới
-              </Button>
-            </Link>
-            <Button icon={<DownloadOutlined />}>Nhập excel</Button>
-            <Button icon={<DownloadOutlined />}>Xuất excel</Button>
-            <SelectedColumn
-              columns={columns}
-              visibleColumns={visibleColumns}
-              setVisibleColumns={setVisibleColumns}
+                  ),
+                },
+              ]}
             />
           </div>
 
-          <CustomTable
-            columns={columns}
-            dataSource={filteredData}
-            visibleColumns={visibleColumns}
-            rowKey="id"
-            scroll={{ x: 1200 }}
-            pagination={{
-              total: filteredData.length,
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} của ${total} chính sách`,
-            }}
-          />
+          {/* Table */}
+          <div>
+            <div className="flex justify-start items-center gap-2 mb-2">
+              <Link href="/policy/create">
+                <Button type="primary" icon={<SafetyOutlined />}>
+                  Tạo mới
+                </Button>
+              </Link>
+              <Button icon={<DownloadOutlined />}>Nhập excel</Button>
+              <Button icon={<DownloadOutlined />}>Xuất excel</Button>
+              <SelectedColumn
+                columns={columns}
+                visibleColumns={visibleColumns}
+                setVisibleColumns={setVisibleColumns}
+              />
+            </div>
+
+            <CustomTable
+              columns={columns}
+              dataSource={filteredData}
+              visibleColumns={visibleColumns}
+              rowKey="id"
+              scroll={{ x: 1200 }}
+              pagination={{
+                total: filteredData.length,
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} của ${total} chính sách`,
+              }}
+            />
+          </div>
         </div>
-      </div>
+      </Spin>
     </Layout.Content>
   );
 }

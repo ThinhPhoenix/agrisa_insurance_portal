@@ -6,28 +6,25 @@ const { Title, Text } = Typography;
 const { Panel } = Collapse;
 
 const ConfigurationDetail = ({ policyData, mockData }) => {
-    const getCoverageTypeInfo = (value) => {
-        return mockData.coverageTypes.find(t => t.value === value) || {};
+    const getAggregationFunctionLabel = (value) => {
+        return mockData.aggregationFunctions.find(f => f.value === value)?.label || value;
     };
 
-    const getRiskLevelInfo = (value) => {
-        return mockData.riskLevels.find(r => r.value === value) || {};
-    };
-
-    const getPayoutMethodLabel = (value) => {
-        return mockData.payoutMethods.find(p => p.value === value)?.label || value;
-    };
-
-    const getPayoutCalculationLabel = (value) => {
-        return mockData.payoutCalculationMethods.find(p => p.value === value)?.label || value;
+    const getThresholdOperatorLabel = (value) => {
+        return mockData.thresholdOperators.find(op => op.value === value)?.label || value;
     };
 
     const getMonitoringFrequencyLabel = (value) => {
         return mockData.monitoringFrequencies.find(m => m.value === value)?.label || value;
     };
 
-    const coverageType = getCoverageTypeInfo(policyData.configuration?.coverageType);
-    const riskLevel = getRiskLevelInfo(policyData.configuration?.riskLevel);
+    const getDataSourceLabel = (dataSourceId) => {
+        return mockData.dataSources.find(ds => ds.id === dataSourceId)?.label || 'N/A';
+    };
+
+    const getDataSourceUnit = (dataSourceId) => {
+        return mockData.dataSources.find(ds => ds.id === dataSourceId)?.unit || '';
+    };
 
     // Trigger conditions table columns
     const triggerColumns = [
@@ -35,7 +32,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             title: '#',
             key: 'index',
             width: 50,
-            render: (_, __, index) => index + 1,
+            render: (_, record) => record.conditionOrder || 1,
         },
         {
             title: 'Nguồn dữ liệu',
@@ -43,12 +40,12 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             render: (_, record) => (
                 <div>
                     <Tag color="blue">
-                        {record.dataSourceLabel || mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.label || 'N/A'}
+                        {getDataSourceLabel(record.dataSourceId)}
                     </Tag>
                     <br />
                     <Text type="secondary" style={{ fontSize: 11 }}>
-                        {record.parameterName || mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.parameterName || ''} (
-                        {record.unit || mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.unit || ''})
+                        {mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.parameterName || ''} (
+                        {getDataSourceUnit(record.dataSourceId)})
                     </Text>
                 </div>
             ),
@@ -59,15 +56,21 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             render: (_, record) => (
                 <div>
                     <Tag color="green">
-                        {record.aggregationFunctionLabel || mockData.aggregationFunctions.find(f => f.value === record.aggregationFunction)?.label || record.aggregationFunction}
+                        {getAggregationFunctionLabel(record.aggregationFunction)}
                     </Tag>
                     <br />
                     <Text type="secondary" style={{ fontSize: 11 }}>
-                        {record.aggregationWindowDays} ngày
-                        {record.baselineWindowDays && (
+                        Cửa sổ: {record.aggregationWindowDays} ngày
+                        {record.baselineWindowDays > 0 && (
                             <> | Baseline: {record.baselineWindowDays} ngày</>
                         )}
                     </Text>
+                    {record.consecutiveRequired && (
+                        <>
+                            <br />
+                            <Tag color="orange" style={{ fontSize: 10 }}>Yêu cầu liên tục</Tag>
+                        </>
+                    )}
                 </div>
             ),
         },
@@ -77,17 +80,30 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             render: (_, record) => (
                 <div>
                     <Tag color="red">
-                        {record.thresholdOperatorLabel || mockData.thresholdOperators.find(op => op.value === record.thresholdOperator)?.label || record.thresholdOperator}
+                        {getThresholdOperatorLabel(record.thresholdOperator)}
                     </Tag>
-                    <Text strong> {record.thresholdValue}</Text> {record.unit}
-                    {record.alertThreshold && (
+                    <Text strong> {record.thresholdValue}</Text> {getDataSourceUnit(record.dataSourceId)}
+                    {record.earlyWarningThreshold && (
                         <>
                             <br />
                             <Text type="secondary" style={{ fontSize: 11 }}>
-                                Cảnh báo sớm: {record.alertThreshold}%
+                                Cảnh báo sớm: {record.earlyWarningThreshold}
                             </Text>
                         </>
                     )}
+                </div>
+            ),
+        },
+        {
+            title: 'Chi phí',
+            key: 'cost',
+            render: (_, record) => (
+                <div>
+                    <Text strong>{record.calculatedCost?.toLocaleString()} ₫</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: 10 }}>
+                        Cơ sở: {record.baseCost?.toLocaleString()}
+                    </Text>
                 </div>
             ),
         },
@@ -100,50 +116,32 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                 Cấu hình Chính sách
             </Title>
 
-            <Collapse defaultActiveKey={['payout']} size="large">
+            <Collapse defaultActiveKey={['payout', 'conditions']} size="large">
                 {/* Payout Configuration */}
                 <Panel
                     header="Cấu hình Thanh toán chi trả"
                     key="payout"
                 >
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Chi cố định (VND)">
-                            <Text strong>{policyData.fixedPayoutAmount?.toLocaleString()} ₫</Text>
+                        <Descriptions.Item label="Số tiền chi trả cố định">
+                            <Text strong>{policyData.fixPayoutAmount?.toLocaleString()} {policyData.coverageCurrency}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Chi trả tối đa (VND)">
-                            <Text strong>{policyData.payoutMaxAmount?.toLocaleString()} ₫</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Chi vượt ngưỡng (%)">
-                            <Text strong>{(policyData.exceedingThresholdRate * 100)?.toFixed(2)}%</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Chi trả cơ bản">
-                            <Text strong>{(policyData.basicPayoutRate * 100)?.toFixed(2)}%</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Chờ thanh toán (ngày)">
-                            <Text strong>{policyData.payoutDelayDays || 0} ngày</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Lấy theo diện tích">
-                            <Tag color={policyData.basedOnHectare ? 'green' : 'red'}>
-                                {policyData.basedOnHectare ? 'Có' : 'Không'}
+                        <Descriptions.Item label="Chi trả theo hecta">
+                            <Tag color={policyData.isPayoutPerHectare ? 'green' : 'red'}>
+                                {policyData.isPayoutPerHectare ? 'Có' : 'Không'}
                             </Tag>
                         </Descriptions.Item>
-                    </Descriptions>
-                </Panel>
-
-                {/* Insurance Cost Configuration */}
-                <Panel
-                    header="Cấu hình chi phí bảo hiểm"
-                    key="insurance-cost"
-                >
-                    <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Số tiền chi trả cố định (VND)">
-                            <Text strong>{policyData.insuranceFixedPayoutAmount?.toLocaleString()} ₫</Text>
+                        <Descriptions.Item label="Hệ số vượt ngưỡng">
+                            <Text strong>{policyData.overThresholdMultiplier}x</Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Tỉ lệ chi trả cơ bản">
-                            <Text strong>{(policyData.insuranceBasicPayoutRate * 100)?.toFixed(2)}%</Text>
+                            <Text strong>{(policyData.payoutBaseRate * 100)?.toFixed(2)}%</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian gia hạn tối đa (ngày)">
-                            <Text strong>{policyData.maxRenewalTime} ngày</Text>
+                        <Descriptions.Item label="Giới hạn chi trả">
+                            <Text strong>{policyData.payoutCap?.toLocaleString()} {policyData.coverageCurrency}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Tỉ lệ hoàn phí khi hủy">
+                            <Text strong>{(policyData.cancelPremiumRate * 100)?.toFixed(2)}%</Text>
                         </Descriptions.Item>
                     </Descriptions>
                 </Panel>
@@ -154,42 +152,28 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     key="monitoring"
                 >
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Số lần giám sát">
-                            <Text strong>{policyData.monitoringFrequencyValue} lần</Text>
+                        <Descriptions.Item label="Khoảng thời gian giám sát">
+                            <Text strong>{policyData.configuration?.monitorInterval} {policyData.configuration?.monitorFrequencyUnit || 'day'}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Đơn vị thời gian">
-                            <Text strong>{policyData.monitoringFrequencyUnit}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Loại cảnh báo" span={2}>
-                            <div>
-                                {policyData.alertTypes?.map((type, index) => (
-                                    <Tag key={index} color="orange" style={{ marginBottom: 4 }}>
-                                        {mockData.alertTypes.find(a => a.value === type)?.label || type}
-                                    </Tag>
-                                ))}
-                            </div>
+                        <Descriptions.Item label="Giai đoạn sinh trưởng">
+                            <Text strong>{policyData.configuration?.growthStage || 'N/A'}</Text>
                         </Descriptions.Item>
                     </Descriptions>
                 </Panel>
 
                 {/* Lifecycle Configuration */}
                 <Panel
-                    header="Cấu hình lifecycle (Chu kỳ sống của policy)"
+                    header="Cấu hình Chu kỳ sống của Policy"
                     key="lifecycle"
                 >
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Tự động làm mới (gia hạn) hợp đồng">
-                            <Tag color={policyData.autoRenew ? 'green' : 'red'}>
-                                {policyData.autoRenew ? 'Có' : 'Không'}
+                        <Descriptions.Item label="Tự động gia hạn hợp đồng">
+                            <Tag color={policyData.autoRenewal ? 'green' : 'red'}>
+                                {policyData.autoRenewal ? 'Có' : 'Không'}
                             </Tag>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Gia hạn nhiều thì có giảm giá (%)">
-                            <Text strong>{policyData.renewalDiscount?.toFixed(2)}%</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian sống/tồn tại của bảo hiểm gốc" span={2}>
-                            <Text strong>
-                                {policyData.originalInsuranceYears || 0} năm, {policyData.originalInsuranceMonths || 0} tháng, {policyData.originalInsuranceDays || 0} ngày
-                            </Text>
+                        <Descriptions.Item label="Tỉ lệ giảm giá khi gia hạn">
+                            <Text strong>{(policyData.renewalDiscountRate * 100)?.toFixed(2)}%</Text>
                         </Descriptions.Item>
                     </Descriptions>
                 </Panel>
@@ -200,35 +184,44 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     key="registration-time"
                 >
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Thời gian hiệu lực bảo hiểm (bắt đầu quan sát)">
-                            <Text strong>{policyData.insuranceEffectiveStartDate ? new Date(policyData.insuranceEffectiveStartDate).toLocaleDateString('vi-VN') : 'N/A'}</Text>
+                        <Descriptions.Item label="Thời gian mở đăng ký">
+                            <Text strong>{policyData.enrollmentStartDay}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian kết thúc hiệu lực bảo hiểm (kết thúc quan sát)">
-                            <Text strong>{policyData.insuranceEffectiveEndDate ? new Date(policyData.insuranceEffectiveEndDate).toLocaleDateString('vi-VN') : 'N/A'}</Text>
+                        <Descriptions.Item label="Thời gian đóng đăng ký">
+                            <Text strong>{policyData.enrollmentEndDay}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thời gian bắt đầu hiệu lực">
+                            <Text strong>{policyData.insuranceValidFromDay}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thời gian kết thúc hiệu lực">
+                            <Text strong>{policyData.insuranceValidToDay}</Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thời gian gia hạn thanh toán phí tối đa">
+                            <Text strong>{policyData.maxPremiumPaymentProlong} ngày</Text>
                         </Descriptions.Item>
                     </Descriptions>
                 </Panel>
 
                 {/* Trigger Conditions */}
                 <Panel
-                    header={`Điều kiện Kích hoạt (${policyData.conditions?.length || 0} điều kiện)`}
+                    header={`Điều kiện Kích hoạt (${policyData.configuration?.triggerConditions?.length || 0} điều kiện)`}
                     key="conditions"
                 >
-                    {policyData.conditions?.length > 0 && (
+                    {policyData.configuration?.triggerConditions?.length > 0 && (
                         <>
                             <Descriptions bordered column={1} size="small" style={{ marginBottom: 16 }}>
                                 <Descriptions.Item label="Toán tử Logic giữa các điều kiện">
-                                    <Tag color="blue">{policyData.logicalOperator}</Tag>
+                                    <Tag color="blue">{policyData.configuration?.logicalOperator}</Tag>
                                     <br />
                                     <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
-                                        {mockData.logicalOperators.find(op => op.value === policyData.logicalOperator)?.description || ''}
+                                        {mockData.logicalOperators.find(op => op.value === policyData.configuration?.logicalOperator)?.description || ''}
                                     </Text>
                                 </Descriptions.Item>
                             </Descriptions>
 
                             <CustomTable
                                 columns={triggerColumns}
-                                dataSource={policyData.conditions || []}
+                                dataSource={policyData.configuration?.triggerConditions || []}
                                 pagination={false}
                             />
 
@@ -240,22 +233,22 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                             >
                                 <div className="logic-preview">
                                     <Text>
-                                        Thanh toán <Text strong>{(policyData.basicPayoutRate * 100)?.toFixed(2)}%</Text> (tối đa{' '}
-                                        <Text strong>{policyData.payoutMaxAmount?.toLocaleString()} ₫</Text>) khi{' '}
+                                        Thanh toán <Text strong>{(policyData.payoutBaseRate * 100)?.toFixed(2)}%</Text> (tối đa{' '}
+                                        <Text strong>{policyData.payoutCap?.toLocaleString()} {policyData.coverageCurrency}</Text>) khi{' '}
                                         <Text strong>
-                                            {policyData.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
+                                            {policyData.configuration?.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
                                         </Text>
                                         {' '}các điều kiện sau được thỏa mãn:
                                     </Text>
                                     <ul style={{ marginTop: 8 }}>
-                                        {policyData.conditions.map((condition, index) => (
+                                        {policyData.configuration?.triggerConditions?.map((condition, index) => (
                                             <li key={condition.id}>
                                                 <Text>
-                                                    {condition.aggregationFunctionLabel} của {condition.dataSourceLabel}{' '}
+                                                    {getAggregationFunctionLabel(condition.aggregationFunction)} của {getDataSourceLabel(condition.dataSourceId)}{' '}
                                                     trong {condition.aggregationWindowDays} ngày{' '}
-                                                    {condition.thresholdOperatorLabel} {condition.thresholdValue} {condition.unit}
-                                                    {condition.baselineWindowDays && (
-                                                        <> (baseline: {condition.baselineWindowDays} ngày)</>
+                                                    {getThresholdOperatorLabel(condition.thresholdOperator)} {condition.thresholdValue} {getDataSourceUnit(condition.dataSourceId)}
+                                                    {condition.baselineWindowDays > 0 && (
+                                                        <> (baseline: {condition.baselineWindowDays} ngày, hàm: {condition.baselineFunction})</>
                                                     )}
                                                 </Text>
                                             </li>
@@ -266,7 +259,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                         </>
                     )}
 
-                    {(!policyData.conditions || policyData.conditions.length === 0) && (
+                    {(!policyData.configuration?.triggerConditions || policyData.configuration?.triggerConditions.length === 0) && (
                         <Text type="secondary">Chưa có điều kiện kích hoạt nào được cấu hình</Text>
                     )}
                 </Panel>
@@ -277,47 +270,21 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     key="additional"
                 >
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Mô tả Policy" span={2}>
-                            <Text>{policyData.policyDescription || 'Không có mô tả'}</Text>
+                        <Descriptions.Item label="Mô tả sản phẩm" span={2}>
+                            <Text>{policyData.description || 'Không có mô tả'}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Cho phép thời gian ân hạn">
-                            <Tag color={policyData.enableGracePeriod ? 'green' : 'red'}>
-                                {policyData.enableGracePeriod ? 'Có' : 'Không'}
-                            </Tag>
+                        <Descriptions.Item label="Thông tin bổ sung quan trọng" span={2}>
+                            <Text>{policyData.importantAdditionalInformation || 'Không có thông tin'}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian ân hạn (ngày)">
-                            <Text strong>{policyData.gracePeriodDays || 0} ngày</Text>
+                        <Descriptions.Item label="URL tài liệu mẫu" span={2}>
+                            <Text code>{policyData.templateDocumentUrl || 'N/A'}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Tự động gia hạn">
-                            <Tag color={policyData.enableAutoRenewal ? 'green' : 'red'}>
-                                {policyData.enableAutoRenewal ? 'Có' : 'Không'}
+                        <Descriptions.Item label="Trạng thái xác thực tài liệu">
+                            <Tag color={policyData.documentValidationStatus === 'approved' ? 'green' : 'orange'}>
+                                {policyData.documentValidationStatus || 'pending'}
                             </Tag>
                         </Descriptions.Item>
                     </Descriptions>
-
-                    {/* Notifications */}
-                    {policyData.importantNotifications?.length > 0 && (
-                        <div style={{ marginTop: 24 }}>
-                            <Title level={5}>Thông tin quan trọng cần thông báo</Title>
-                            <div className="notifications-list">
-                                {policyData.importantNotifications.map((notification, index) => (
-                                    <Card
-                                        key={notification.id}
-                                        size="small"
-                                        className="notification-item"
-                                        style={{ marginBottom: 16 }}
-                                    >
-                                        <div style={{ marginBottom: 12 }}>
-                                            <Text strong style={{ color: '#1890ff' }}>
-                                                #{index + 1}: {notification.title}
-                                            </Text>
-                                        </div>
-                                        <Text>{notification.description}</Text>
-                                    </Card>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </Panel>
             </Collapse>
         </Card>

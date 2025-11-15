@@ -1,7 +1,5 @@
-"use client";
-
 import Assets from "@/assets";
-import { sidebarMenuItems } from "@/libs/menu-config";
+import { labelTranslations, sidebarMenuItems } from "@/libs/menu-config";
 import { Breadcrumb } from "antd";
 import { usePathname } from "next/navigation";
 import AvatarSection from "./avatar-section";
@@ -24,17 +22,12 @@ export default function CustomHeader() {
       },
     ];
 
-    // Remove 'internal' from segments
-    const filteredSegments = segments.filter(
-      (segment) => segment !== "internal"
-    );
-
-    // Build breadcrumb path
-    let currentPath = "/internal";
+    // Build breadcrumb path from root
+    let currentPath = "";
     let foundItems = [];
 
-    for (let i = 0; i < filteredSegments.length; i++) {
-      const segment = filteredSegments[i];
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
       currentPath += `/${segment}`;
 
       // Find matching menu item
@@ -42,8 +35,11 @@ export default function CustomHeader() {
 
       if (menuItem) {
         foundItems.push(menuItem);
-        const href =
-          i === filteredSegments.length - 1 ? undefined : currentPath;
+        // Don't allow clicking on parent items that only have children (no actual page)
+        // Only the last item or items without children should be clickable
+        const isLastItem = i === segments.length - 1;
+        const hasChildren = menuItem.children && menuItem.children.length > 0;
+        const href = isLastItem || hasChildren ? undefined : currentPath;
         items.push({
           title: menuItem.label,
           href,
@@ -55,8 +51,10 @@ export default function CustomHeader() {
         });
       } else {
         // Fallback for unmapped routes
+        let title = segment.charAt(0).toUpperCase() + segment.slice(1);
+        title = labelTranslations[title] || title;
         items.push({
-          title: segment.charAt(0).toUpperCase() + segment.slice(1),
+          title,
           href: currentPath,
         });
       }

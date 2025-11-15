@@ -1,5 +1,4 @@
 import CustomTable from '@/components/custom-table';
-import contractTemplate from '@/libs/mockdata/contract-template.json';
 import {
     DownloadOutlined,
     FileTextOutlined,
@@ -7,9 +6,8 @@ import {
     PrinterOutlined,
     TagOutlined
 } from '@ant-design/icons';
-import { Button, Card, Col, Empty, Modal, Row, Space, Tag, Typography, message } from 'antd';
+import { Button, Card, Col, Descriptions, Empty, Modal, Row, Space, Tag, Typography, message } from 'antd';
 import React from 'react';
-import ContractPreview from '../ContractPreview';
 
 const { Title, Text } = Typography;
 
@@ -27,11 +25,11 @@ const TagsDetail = ({ policyData, mockData }) => {
         if (tag.dataType === 'decimal') {
             return parseFloat(tag.value).toLocaleString();
         }
-        return tag.value;
+        return tag.value || 'N/A';
     };
 
-    // Use contract-template.json data instead of policyData.tags
-    const tags = contractTemplate.tags || [];
+    // Convert document_tags object to array format
+    const tags = policyData.tags || [];
 
     // Columns for tags table
     const tagColumns = [
@@ -74,102 +72,51 @@ const TagsDetail = ({ policyData, mockData }) => {
     ];
 
     return (
-        <>
-            <Row gutter={[16, 16]}>
-                {/* Tags Table */}
-                <Col xs={24} lg={12}>
-                    <Card>
-                        <Title level={4}>
-                            <TagOutlined style={{ marginRight: 8 }} />
-                            Tags & Metadata
-                            <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
-                                ({tags.length} trường)
-                            </Text>
-                        </Title>
+        <Card>
+            <Title level={4}>
+                <TagOutlined style={{ marginRight: 8 }} />
+                Tags & Metadata
+                <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
+                    ({tags.length} trường)
+                </Text>
+            </Title>
 
-                        {tags.length === 0 ? (
-                            <Empty description="Không có tags nào được thêm" />
-                        ) : (
-                            <CustomTable
-                                columns={tagColumns}
-                                dataSource={tags}
-                                pagination={{
-                                    pageSize: 5,
-                                    showSizeChanger: false,
-                                    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} tags`,
-                                }}
-                            />
-                        )}
-                    </Card>
-                </Col>
+            {tags.length === 0 ? (
+                <Empty description="Không có tags nào được thêm" />
+            ) : (
+                <>
+                    <CustomTable
+                        columns={tagColumns}
+                        dataSource={tags}
+                        pagination={{
+                            pageSize: 10,
+                            showSizeChanger: false,
+                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} tags`,
+                        }}
+                    />
 
-                {/* Contract Preview */}
-                <Col xs={24} lg={12}>
                     <Card
-                        title={
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                                <Button
-                                    type="primary"
-                                    size="small"
-                                    icon={<FullscreenOutlined />}
-                                    onClick={() => setPreviewFullscreen(true)}
-                                >
-                                    Xem toàn màn hình
-                                </Button>
-                            </div>
-                        }
-                        size="small"
-                        bodyStyle={{ padding: 0 }}
+                        title="Thông tin tài liệu"
+                        style={{ marginTop: 16 }}
+                        type="inner"
                     >
-                        <div style={{ height: 'calc(100vh - 200px)' }}>
-                            <ContractPreview
-                                tagsData={contractTemplate}
-                                isFullscreen={false}
-                            />
-                        </div>
+                        <Descriptions bordered column={2} size="small">
+                            <Descriptions.Item label="URL tài liệu mẫu" span={2}>
+                                <Text code>{policyData.templateDocumentUrl || 'N/A'}</Text>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái xác thực">
+                                <Tag color={policyData.documentValidationStatus === 'approved' ? 'green' : 'orange'}>
+                                    {policyData.documentValidationStatus || 'pending'}
+                                </Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Số lượng tags">
+                                <Text strong>{tags.length}</Text>
+                            </Descriptions.Item>
+                        </Descriptions>
                     </Card>
-                </Col>
-            </Row>
-
-            {/* Fullscreen Preview Modal */}
-            <Modal
-                open={previewFullscreen}
-                onCancel={() => setPreviewFullscreen(false)}
-                width="100%"
-                style={{ top: 0, paddingBottom: 0, maxWidth: '100vw' }}
-                bodyStyle={{ height: 'calc(100vh - 110px)', padding: 0, overflow: 'auto' }}
-                closable={false}
-                title={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                        <Space>
-                            <FileTextOutlined />
-                            <span>Hợp đồng Mẫu - Toàn màn hình</span>
-                        </Space>
-                        <Space>
-                            <Button
-                                type="primary"
-                                icon={<DownloadOutlined />}
-                                onClick={() => message.info('Chức năng xuất PDF sẽ được triển khai sau')}
-                            >
-                                Xuất PDF
-                            </Button>
-                            <Button
-                                icon={<PrinterOutlined />}
-                                onClick={() => window.print()}
-                            >
-                                In ấn
-                            </Button>
-                            <Button onClick={() => setPreviewFullscreen(false)}>
-                                Đóng
-                            </Button>
-                        </Space>
-                    </div>
-                }
-                footer={null}
-            >
-                <ContractPreview tagsData={contractTemplate} isFullscreen={true} />
-            </Modal>
-        </>
+                </>
+            )}
+        </Card>
     );
 };
 

@@ -40,10 +40,18 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
             key: 'tierLabel',
         },
         {
-            title: 'Chi phí cơ sở',
-            dataIndex: 'baseCost',
-            key: 'baseCost',
-            render: (cost) => `${cost?.toLocaleString()} ₫/tháng`,
+            title: 'Chi phí',
+            dataIndex: 'calculatedCost',
+            key: 'calculatedCost',
+            render: (cost, record) => (
+                <div>
+                    <Text strong>{cost?.toLocaleString()} ₫</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '11px' }}>
+                        Cơ sở: {record.baseCost?.toLocaleString()} ₫
+                    </Text>
+                </div>
+            ),
         },
     ];
 
@@ -78,6 +86,15 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                 </Descriptions.Item>
                 <Descriptions.Item label="Thời hạn Bảo hiểm">
                     <Text strong>{policyData.coverageDurationDays} ngày</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Tiền tệ">
+                    <Text strong>{policyData.coverageCurrency}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Phí cố định">
+                    <Text strong>{policyData.fixPremiumAmount?.toLocaleString()} ₫</Text>
+                    {policyData.isPerHectare && (
+                        <Tag color="blue" style={{ marginLeft: 8 }}>Theo hecta</Tag>
+                    )}
                 </Descriptions.Item>
                 <Descriptions.Item label="Mô tả" span={2}>
                     {policyData.description || 'Không có mô tả'}

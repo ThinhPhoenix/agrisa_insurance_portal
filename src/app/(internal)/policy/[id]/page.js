@@ -6,6 +6,7 @@ import {
   CostSummary,
   TagsDetail,
 } from "@/components/layout/policy/detail";
+import usePolicy from "@/services/hooks/policy/use-policy";
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
@@ -23,12 +24,13 @@ import {
   Popconfirm,
   Row,
   Space,
+  Spin,
   Tabs,
   Tag,
   Typography,
 } from "antd";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect } from "react";
 import mockData from "../mock..json";
 
 const { Title, Text } = Typography;
@@ -37,141 +39,196 @@ const PolicyDetailPage = ({ params }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("basic");
 
-  // Mock policy detail data - trong thực tế sẽ fetch từ API
+  // Use policy hook
+  const {
+    policyDetail: apiPolicyDetail,
+    policyDetailLoading,
+    policyDetailError,
+    fetchPolicyDetail,
+  } = usePolicy();
+
+  // Fetch policy detail and validate on mount
+  useEffect(() => {
+    const loadPolicyDetail = async () => {
+      if (!params.id) {
+        message.error("ID chính sách không hợp lệ");
+        router.push("/policy");
+        return;
+      }
+
+      // Get partner_id from localStorage for validation
+      const meData = localStorage.getItem("me");
+      if (!meData) {
+        message.error("Không tìm thấy thông tin người dùng");
+        router.push("/policy");
+        return;
+      }
+
+      try {
+        const userData = JSON.parse(meData);
+        const userPartnerId = userData?.partner_id;
+
+        if (!userPartnerId) {
+          message.error("Không tìm thấy Partner ID trong thông tin người dùng");
+          router.push("/policy");
+          return;
+        }
+
+        // Fetch policy detail
+        const policyData = await fetchPolicyDetail(params.id);
+
+        if (!policyData) {
+          message.error("Không tìm thấy chính sách");
+          router.push("/policy");
+          return;
+        }
+
+        // Security validation: Check if policy belongs to current partner
+        const policyProviderId = policyData.base_policy?.insurance_provider_id;
+        if (policyProviderId !== userPartnerId) {
+          message.error(
+            "Bạn không có quyền truy cập chính sách này. Vi phạm bảo mật!"
+          );
+          console.warn(
+            "🚨 Security violation: User attempted to access policy from different provider"
+          );
+          router.push("/policy");
+          return;
+        }
+      } catch (error) {
+        console.error("❌ Error loading policy detail:", error);
+        message.error("Có lỗi xảy ra khi tải thông tin chính sách");
+        router.push("/policy");
+      }
+    };
+
+    loadPolicyDetail();
+  }, [params.id, fetchPolicyDetail, router]);
+
+  // Show loading spinner
+  if (policyDetailLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
+        <Spin size="large" tip="Đang tải thông tin chính sách..." />
+      </div>
+    );
+  }
+
+  // Show error or redirect handled in useEffect
+  if (!apiPolicyDetail) {
+    return null;
+  }
+
+  // Transform API data to component format
+  const basePolicy = apiPolicyDetail.base_policy;
+  const trigger = apiPolicyDetail.trigger;
+  const conditions = apiPolicyDetail.conditions || [];
+
+  // Convert timestamp to date string
+  const formatDate = (timestamp) => {
+    if (!timestamp || timestamp === 0 || timestamp === "0001-01-01T00:00:00Z") return "N/A";
+
+    // Handle both Unix timestamp and ISO string
+    let date;
+    if (typeof timestamp === 'string') {
+      date = new Date(timestamp);
+    } else {
+      date = new Date(timestamp * 1000);
+    }
+
+    return date.toLocaleDateString("vi-VN");
+  };
+
   const policyDetail = {
-    id: params.id || "policy_001",
-    productName: "Bảo hiểm Lúa Mùa Đông 2025",
-    productCode: "RICE_WINTER_2025",
-    insuranceProviderId: "PARTNER_001",
-    cropType: "rice",
-    premiumBaseRate: 0.05,
-    coverageDurationDays: 120,
-    coverageAmount: 100000000, // 100 triệu
-    status: "active",
-    createdAt: "2025-01-15",
-    updatedAt: "2025-01-20",
-    description:
-      "Chính sách bảo hiểm lúa cho vụ mùa đông 2025, bảo vệ nông dân khỏi rủi ro thiên tai và thời tiết bất lợi.",
+    id: basePolicy.id,
+    productName: basePolicy.product_name,
+    productCode: basePolicy.product_code,
+    insuranceProviderId: basePolicy.insurance_provider_id,
+    cropType: basePolicy.crop_type,
+    premiumBaseRate: basePolicy.premium_base_rate,
+    coverageDurationDays: basePolicy.coverage_duration_days,
+    coverageAmount: basePolicy.fix_payout_amount || 0,
+    status: basePolicy.status,
+    createdAt: formatDate(basePolicy.created_at),
+    updatedAt: formatDate(basePolicy.updated_at),
+    description: basePolicy.product_description || "",
+    coverageCurrency: basePolicy.coverage_currency,
+    fixPremiumAmount: basePolicy.fix_premium_amount,
+    isPerHectare: basePolicy.is_per_hectare,
+    maxPremiumPaymentProlong: basePolicy.max_premium_payment_prolong,
+    fixPayoutAmount: basePolicy.fix_payout_amount,
+    isPayoutPerHectare: basePolicy.is_payout_per_hectare,
+    overThresholdMultiplier: basePolicy.over_threshold_multiplier,
+    payoutBaseRate: basePolicy.payout_base_rate,
+    payoutCap: basePolicy.payout_cap,
+    cancelPremiumRate: basePolicy.cancel_premium_rate,
+    enrollmentStartDay: formatDate(basePolicy.enrollment_start_day),
+    enrollmentEndDay: formatDate(basePolicy.enrollment_end_day),
+    autoRenewal: basePolicy.auto_renewal,
+    renewalDiscountRate: basePolicy.renewal_discount_rate,
+    insuranceValidFromDay: formatDate(basePolicy.insurance_valid_from_day),
+    insuranceValidToDay: formatDate(basePolicy.insurance_valid_to_day),
+    templateDocumentUrl: basePolicy.template_document_url,
+    documentValidationStatus: basePolicy.document_validation_status,
+    documentTags: basePolicy.document_tags || {},
+    importantAdditionalInformation:
+      basePolicy.important_additional_information || "",
+    createdBy: basePolicy.created_by,
 
-    selectedDataSources: [
-      {
-        id: "770e8400-e29b-41d4-a716-446655440001",
-        label: "Lượng mưa",
-        parameterName: "rainfall",
-        unit: "mm",
-        baseCost: 62500,
-        category: "weather",
-        tier: "weather_tier_1",
-        categoryLabel: "Weather",
-        tierLabel: "Weather Tier 1",
-      },
-      {
-        id: "770e8400-e29b-41d4-a716-446655440002",
-        label: "Nhiệt độ",
-        parameterName: "temperature",
-        unit: "°C",
-        baseCost: 50000,
-        category: "weather",
-        tier: "weather_tier_2",
-        categoryLabel: "Weather",
-        tierLabel: "Weather Tier 2",
-      },
-      {
-        id: "770e8400-e29b-41d4-a716-446655440003",
-        label: "Chỉ số NDVI",
-        parameterName: "ndvi",
-        unit: "index",
-        baseCost: 125000,
-        category: "satellite",
-        tier: "satellite_tier_1",
-        categoryLabel: "Satellite",
-        tierLabel: "Satellite Tier 1",
-      },
-    ],
-
+    // Configuration from trigger and conditions
     configuration: {
-      coverageType: "weather_index",
-      riskLevel: "medium",
-      logicalOperator: "AND",
-      payoutPercentage: 80,
-      maxPayoutAmount: 50000000,
-      payoutMethod: "automatic",
-      payoutCalculation: "linear",
-      monitoringFrequency: "daily",
-      alertTypes: ["email", "sms", "push"],
-
-      triggerConditions: [
-        {
-          id: "condition_1",
-          dataSourceId: "770e8400-e29b-41d4-a716-446655440001",
-          aggregationFunction: "sum",
-          timeWindow: 7,
-          timeUnit: "days",
-          thresholdOperator: "<",
-          thresholdValue: 50,
-          baselineValue: null,
-        },
-        {
-          id: "condition_2",
-          dataSourceId: "770e8400-e29b-41d4-a716-446655440002",
-          aggregationFunction: "avg",
-          timeWindow: 3,
-          timeUnit: "days",
-          thresholdOperator: ">",
-          thresholdValue: 38,
-          baselineValue: null,
-        },
-        {
-          id: "condition_3",
-          dataSourceId: "770e8400-e29b-41d4-a716-446655440003",
-          aggregationFunction: "change",
-          timeWindow: 14,
-          timeUnit: "days",
-          thresholdOperator: "change_lt",
-          thresholdValue: -0.2,
-          baselineValue: 0.7,
-        },
-      ],
+      logicalOperator: trigger?.logical_operator || "AND",
+      growthStage: trigger?.growth_stage || "",
+      monitorInterval: trigger?.monitor_interval || 1,
+      monitorFrequencyUnit: trigger?.monitor_frequency_unit || "day",
+      triggerConditions: conditions.map((condition) => ({
+        id: condition.id,
+        dataSourceId: condition.data_source_id,
+        thresholdOperator: condition.threshold_operator,
+        thresholdValue: condition.threshold_value,
+        earlyWarningThreshold: condition.early_warning_threshold,
+        aggregationFunction: condition.aggregation_function,
+        aggregationWindowDays: condition.aggregation_window_days,
+        consecutiveRequired: condition.consecutive_required,
+        includeComponent: condition.include_component,
+        baselineWindowDays: condition.baseline_window_days,
+        baselineFunction: condition.baseline_function,
+        validationWindowDays: condition.validation_window_days,
+        conditionOrder: condition.condition_order,
+        baseCost: condition.base_cost,
+        categoryMultiplier: condition.category_multiplier,
+        tierMultiplier: condition.tier_multiplier,
+        calculatedCost: condition.calculated_cost,
+      })),
     },
 
-    tags: [
-      {
-        key: "region",
-        label: "Khu vực",
-        value: "Đồng bằng sông Cửu Long",
-        dataType: "string",
-      },
-      {
-        key: "season",
-        label: "Mùa vụ",
-        value: "Mùa đông",
-        dataType: "string",
-      },
-      {
-        key: "area_hectares",
-        label: "Diện tích (ha)",
-        value: "1000",
-        dataType: "integer",
-      },
-      {
-        key: "is_organic",
-        label: "Canh tác hữu cơ",
-        value: false,
-        dataType: "boolean",
-      },
-      {
-        key: "expected_yield",
-        label: "Năng suất dự kiến (tấn/ha)",
-        value: "6.5",
-        dataType: "decimal",
-      },
-      {
-        key: "contract_start",
-        label: "Ngày bắt đầu hợp đồng",
-        value: "2025-01-15",
-        dataType: "date",
-      },
-    ],
+    // Tags from document_tags
+    tags: Object.entries(basePolicy.document_tags || {}).map(
+      ([key, dataType]) => ({
+        id: key,
+        key,
+        label: key,
+        value: "",
+        dataType,
+      })
+    ),
+
+    // Data sources - map from conditions
+    selectedDataSources: conditions.map((condition) => ({
+      id: condition.data_source_id,
+      dataSourceId: condition.data_source_id,
+      baseCost: condition.base_cost,
+      calculatedCost: condition.calculated_cost,
+      categoryMultiplier: condition.category_multiplier,
+      tierMultiplier: condition.tier_multiplier,
+    })),
   };
 
   const handleEdit = () => {
@@ -192,6 +249,11 @@ const PolicyDetailPage = ({ params }) => {
 
   const getStatusTag = (status) => {
     const statusConfig = {
+      draft: {
+        color: "orange",
+        icon: <ClockCircleOutlined />,
+        text: "Nháp",
+      },
       active: {
         color: "green",
         icon: <CheckCircleOutlined />,
@@ -208,7 +270,7 @@ const PolicyDetailPage = ({ params }) => {
         text: "Không hoạt động",
       },
     };
-    const config = statusConfig[status] || statusConfig.active;
+    const config = statusConfig[status] || statusConfig.draft;
     return (
       <Tag color={config.color} icon={config.icon}>
         {config.text}

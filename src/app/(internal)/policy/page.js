@@ -7,7 +7,6 @@ import usePolicy from "@/services/hooks/policy/use-policy";
 import {
   CheckCircleOutlined,
   DownloadOutlined,
-  EditOutlined,
   EyeOutlined,
   FileTextOutlined,
   FilterOutlined,
@@ -250,20 +249,6 @@ export default function PolicyPage() {
               <EyeOutlined size={14} />
             </Button>
           </Link>
-          <Button
-            type="dashed"
-            size="small"
-            className="policy-action-btn !bg-green-100 !border-green-200 !text-green-800 hover:!bg-green-200"
-          >
-            <EditOutlined size={14} />
-          </Button>
-          <Button
-            type="dashed"
-            size="small"
-            className="policy-action-btn !bg-purple-100 !border-purple-200 !text-purple-800 hover:!bg-purple-200"
-          >
-            <DownloadOutlined size={14} />
-          </Button>
         </div>
       ),
     },

@@ -6,31 +6,26 @@ const { Title, Text } = Typography;
 const CostSummary = ({ policyData, mockData }) => {
     // Calculate costs
     const calculateCosts = () => {
-        const dataSourcesCost = (policyData.selectedDataSources || []).reduce((sum, source) => {
-            return sum + (source.baseCost || 0);
+        // Calculate total cost from trigger conditions
+        const conditionsCost = (policyData.configuration?.triggerConditions || []).reduce((sum, condition) => {
+            return sum + (condition.calculatedCost || 0);
         }, 0);
 
-        const coverageType = mockData.coverageTypes.find(
-            t => t.value === policyData.configuration?.coverageType
-        );
-        const premiumRate = coverageType?.premium_rate || policyData.premiumBaseRate || 0;
+        // Get premium information
+        const fixPremiumAmount = policyData.fixPremiumAmount || 0;
+        const premiumBaseRate = policyData.premiumBaseRate || 0;
 
-        const riskLevel = mockData.riskLevels.find(
-            r => r.value === policyData.configuration?.riskLevel
-        );
-        const riskMultiplier = riskLevel?.multiplier || 1;
-
-        const basePremium = policyData.coverageAmount || 0;
-        const estimatedPremium = basePremium * premiumRate * riskMultiplier;
+        // Get payout information
+        const fixPayoutAmount = policyData.fixPayoutAmount || 0;
+        const payoutCap = policyData.payoutCap || 0;
 
         return {
-            dataSourcesCost,
-            basePremium,
-            premiumRate,
-            riskMultiplier,
-            estimatedPremium,
-            totalMonthlyCost: dataSourcesCost,
-            maxPayout: policyData.configuration?.maxPayoutAmount || 0
+            conditionsCost,
+            fixPremiumAmount,
+            premiumBaseRate,
+            fixPayoutAmount,
+            payoutCap,
+            conditionsCount: policyData.configuration?.triggerConditions?.length || 0
         };
     };
 
@@ -46,19 +41,22 @@ const CostSummary = ({ policyData, mockData }) => {
             <Row gutter={16}>
                 <Col span={12}>
                     <Statistic
-                        title="Chi phí Dữ liệu (Tháng)"
-                        value={costs.dataSourcesCost}
-                        suffix="₫"
+                        title="Phí cố định"
+                        value={costs.fixPremiumAmount}
+                        suffix={policyData.coverageCurrency}
                         precision={0}
                         valueStyle={{ color: '#1890ff' }}
                     />
+                    {policyData.isPerHectare && (
+                        <Text type="secondary" style={{ fontSize: 12 }}>Theo hecta</Text>
+                    )}
                 </Col>
                 <Col span={12}>
                     <Statistic
-                        title="Phí Bảo hiểm Ước tính"
-                        value={costs.estimatedPremium}
-                        suffix="₫"
-                        precision={0}
+                        title="Tỷ lệ Phí BH"
+                        value={costs.premiumBaseRate * 100}
+                        suffix="%"
+                        precision={2}
                         valueStyle={{ color: '#52c41a' }}
                     />
                 </Col>
@@ -69,19 +67,44 @@ const CostSummary = ({ policyData, mockData }) => {
             <Row gutter={16}>
                 <Col span={12}>
                     <Statistic
-                        title="Thanh toán Tối đa"
-                        value={costs.maxPayout}
-                        suffix="₫"
+                        title="Chi trả cố định"
+                        value={costs.fixPayoutAmount}
+                        suffix={policyData.coverageCurrency}
                         precision={0}
                         valueStyle={{ color: '#ff4d4f' }}
+                    />
+                    {policyData.isPayoutPerHectare && (
+                        <Text type="secondary" style={{ fontSize: 12 }}>Theo hecta</Text>
+                    )}
+                </Col>
+                <Col span={12}>
+                    <Statistic
+                        title="Giới hạn chi trả"
+                        value={costs.payoutCap}
+                        suffix={policyData.coverageCurrency}
+                        precision={0}
+                        valueStyle={{ color: '#fa8c16' }}
+                    />
+                </Col>
+            </Row>
+
+            <Divider />
+
+            <Row gutter={16}>
+                <Col span={12}>
+                    <Statistic
+                        title="Tỷ lệ chi trả"
+                        value={policyData.payoutBaseRate * 100}
+                        suffix="%"
+                        precision={2}
                     />
                 </Col>
                 <Col span={12}>
                     <Statistic
-                        title="Tỷ lệ Thanh toán"
-                        value={policyData.configuration?.payoutPercentage || 0}
-                        suffix="%"
-                        precision={0}
+                        title="Hệ số vượt ngưỡng"
+                        value={policyData.overThresholdMultiplier}
+                        suffix="x"
+                        precision={1}
                     />
                 </Col>
             </Row>
@@ -90,24 +113,28 @@ const CostSummary = ({ policyData, mockData }) => {
 
             <List
                 size="small"
-                header={<Text strong>Chi tiết Tính toán</Text>}
+                header={<Text strong>Chi tiết Điều kiện</Text>}
                 bordered
                 dataSource={[
                     {
-                        label: 'Tỷ lệ Phí BH',
-                        value: `${(costs.premiumRate * 100).toFixed(2)}%`
+                        label: 'Số điều kiện kích hoạt',
+                        value: costs.conditionsCount
                     },
                     {
-                        label: 'Hệ số Rủi ro',
-                        value: `${costs.riskMultiplier}x`
+                        label: 'Tổng chi phí điều kiện',
+                        value: `${costs.conditionsCost?.toLocaleString()} ${policyData.coverageCurrency}`
                     },
                     {
-                        label: 'Số nguồn Dữ liệu',
-                        value: policyData.selectedDataSources?.length || 0
+                        label: 'Toán tử logic',
+                        value: policyData.configuration?.logicalOperator || 'N/A'
                     },
                     {
-                        label: 'Số Điều kiện Kích hoạt',
-                        value: policyData.configuration?.triggerConditions?.length || 0
+                        label: 'Thời hạn bảo hiểm',
+                        value: `${policyData.coverageDurationDays} ngày`
+                    },
+                    {
+                        label: 'Tỷ lệ hoàn phí khi hủy',
+                        value: `${(policyData.cancelPremiumRate * 100)?.toFixed(2)}%`
                     }
                 ]}
                 renderItem={(item) => (

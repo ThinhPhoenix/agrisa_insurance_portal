@@ -743,7 +743,7 @@ const BasicTab = ({
                                     optionLabelProp="label"
                                     loading={categoriesLoading}
                                 >
-                                    {categories.map(category => (
+                                    {categories?.map(category => (
                                         <Option key={category.id} value={category.category_name} label={category.category_name}>
                                             <Tooltip
                                                 title={

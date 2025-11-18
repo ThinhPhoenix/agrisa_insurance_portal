@@ -6,6 +6,7 @@ import CustomTable from "@/components/custom-table";
 import usePolicy from "@/services/hooks/policy/use-policy";
 import {
   CheckCircleOutlined,
+  ClockCircleOutlined,
   DownloadOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -24,17 +25,28 @@ const { Title, Text } = Typography;
 
 export default function PolicyPage() {
   // Use policy hook
-  const { policies, policiesLoading, policiesError, fetchPoliciesByProvider } =
-    usePolicy();
+  const {
+    policies,
+    policiesLoading,
+    policiesError,
+    activePolicies,
+    activePoliciesLoading,
+    activePoliciesError,
+    policyCounts,
+    policyCountsLoading,
+    fetchPoliciesByProvider,
+    fetchActivePoliciesByProvider,
+    fetchPolicyCounts,
+  } = usePolicy();
 
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
     "productName",
     "productCode",
-    "insuranceProviderId",
     "cropType",
     "premiumBaseRate",
     "coverageDurationDays",
+    "status",
   ]);
 
   // Filter state
@@ -45,13 +57,14 @@ export default function PolicyPage() {
     cropType: "",
     premiumRange: "",
     durationRange: "",
+    policyStatus: "all", // New filter: "draft", "active", or "all"
   });
 
   // Filtered data
   const [filteredData, setFilteredData] = useState([]);
 
   // Transform API data to table format
-  const transformedPolicies = policies.map((item) => ({
+  const transformPolicy = (item) => ({
     id: item.base_policy.id,
     productName: item.base_policy.product_name,
     productCode: item.base_policy.product_code,
@@ -62,30 +75,48 @@ export default function PolicyPage() {
     coverageDurationDays: item.base_policy.coverage_duration_days,
     premiumBaseRate: item.base_policy.premium_base_rate,
     status: item.base_policy.status,
-  }));
+  });
 
-  // Update filtered data when policies change
+  // Determine which data to use based on status filter
+  // This automatically uses the appropriate API data:
+  // - "draft" -> uses data from draft API
+  // - "active" -> uses data from active API
+  // - "all" -> combines both APIs
+  const allPoliciesRaw = (() => {
+    switch (filters.policyStatus) {
+      case "draft":
+        return policies.map(transformPolicy);
+      case "active":
+        return activePolicies.map(transformPolicy);
+      case "all":
+      default:
+        return [
+          ...policies.map(transformPolicy),
+          ...activePolicies.map(transformPolicy),
+        ];
+    }
+  })();
+
+  // Apply OTHER filters (excluding status) whenever policies or filters change
   useEffect(() => {
-    setFilteredData(transformedPolicies);
+    applyFilters(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [policies]);
+  }, [policies, activePolicies, filters]);
 
-  // Calculate summary stats
+  // Calculate summary stats using real API data
   const summaryStats = {
-    totalPolicies: transformedPolicies.length,
-    activePolicies: transformedPolicies.filter((p) => p.status === "draft")
-      .length,
-    uniqueProviders: new Set(
-      transformedPolicies.map((p) => p.insuranceProviderId)
-    ).size,
+    totalPolicies: policyCounts.total,
+    draftPolicies: policyCounts.draft,
+    activePoliciesCount: policyCounts.active,
+    archivedPolicies: policyCounts.archived,
     avgPremiumRate:
-      transformedPolicies.length > 0
+      allPoliciesRaw.length > 0
         ? (
-            (transformedPolicies.reduce(
+            (allPoliciesRaw.reduce(
               (sum, p) => sum + (p.premiumBaseRate || 0),
               0
             ) /
-              transformedPolicies.length) *
+              allPoliciesRaw.length) *
             100
           ).toFixed(1)
         : "0.0",
@@ -112,12 +143,26 @@ export default function PolicyPage() {
       { label: "120 - 300 ngày", value: "120-300" },
       { label: "Trên 300 ngày", value: "300-999" },
     ],
+    policyStatuses: [
+      { label: "Tất cả", value: "all" },
+      { label: "Chờ duyệt", value: "draft" },
+      { label: "Đang hoạt động", value: "active" },
+    ],
   };
 
   // Handle form submit
   const handleFormSubmit = (formData) => {
     setFilters(formData);
     applyFilters(formData);
+  };
+
+  // Handle form values change (for auto-apply filters)
+  const handleFormValuesChange = (changedValues) => {
+    // Auto-apply filter when status changes
+    if (changedValues.policyStatus !== undefined) {
+      const newFilters = { ...filters, ...changedValues };
+      setFilters(newFilters);
+    }
   };
 
   // Handle clear filters
@@ -129,14 +174,19 @@ export default function PolicyPage() {
       cropType: "",
       premiumRange: "",
       durationRange: "",
+      policyStatus: "all",
     };
     setFilters(clearedFilters);
-    setFilteredData(transformedPolicies);
+    applyFilters(clearedFilters);
   };
 
   // Apply filters
   const applyFilters = (filterValues) => {
-    let filtered = [...transformedPolicies];
+    // Start with policies already filtered by status (via allPoliciesRaw)
+    let filtered = [...allPoliciesRaw];
+
+    // Note: Status filter is handled by allPoliciesRaw calculation
+    // This function only applies OTHER filters (productName, cropType, etc.)
 
     if (filterValues.productName) {
       filtered = filtered.filter((policy) =>
@@ -234,6 +284,30 @@ export default function PolicyPage() {
       render: (days) => <Text>{days} ngày</Text>,
     },
     {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      width: 150,
+      render: (status) => {
+        const statusConfig = {
+          draft: {
+            color: "orange",
+            text: "Chờ duyệt",
+          },
+          active: {
+            color: "green",
+            text: "Đang hoạt động",
+          },
+          archived: {
+            color: "red",
+            text: "Đã lưu trữ",
+          },
+        };
+        const config = statusConfig[status] || statusConfig.draft;
+        return <Tag color={config.color}>{config.text}</Tag>;
+      },
+    },
+    {
       title: "Hành động",
       key: "action",
       fixed: "right",
@@ -279,6 +353,14 @@ export default function PolicyPage() {
       options: filterOptions.cropTypes,
       value: filters.cropType,
     },
+    {
+      name: "policyStatus",
+      label: "Trạng thái",
+      type: "combobox",
+      placeholder: "Chọn trạng thái",
+      options: filterOptions.policyStatuses,
+      value: filters.policyStatus,
+    },
 
     {
       name: "premiumRange",
@@ -318,7 +400,12 @@ export default function PolicyPage() {
 
   return (
     <Layout.Content className="policy-content">
-      <Spin spinning={policiesLoading} tip="Đang tải dữ liệu...">
+      <Spin
+        spinning={
+          policiesLoading || activePoliciesLoading || policyCountsLoading
+        }
+        tip="Đang tải dữ liệu..."
+      >
         <div className="policy-space">
           {/* Header */}
           <div className="policy-header">
@@ -355,11 +442,26 @@ export default function PolicyPage() {
               </div>
               <div className="policy-summary-content">
                 <div className="policy-summary-value-compact">
-                  {summaryStats.activePolicies}
+                  {summaryStats.activePoliciesCount}
                 </div>
                 <div className="policy-summary-label-compact">
                   Đang hoạt động
                 </div>
+              </div>
+            </div>
+
+            <div className="policy-summary-card-compact">
+              <div
+                className="policy-summary-icon"
+                style={{ backgroundColor: "#fff7e6", color: "#fa8c16" }}
+              >
+                <ClockCircleOutlined />
+              </div>
+              <div className="policy-summary-content">
+                <div className="policy-summary-value-compact">
+                  {summaryStats.draftPolicies}
+                </div>
+                <div className="policy-summary-label-compact">Chờ duyệt</div>
               </div>
             </div>
 
@@ -397,6 +499,7 @@ export default function PolicyPage() {
                           gridColumns="1fr 1fr 1fr 1fr"
                           gap="16px"
                           onSubmit={handleFormSubmit}
+                          onValuesChange={handleFormValuesChange}
                         />
                         {/* Second row - Range filters and actions */}
                         <CustomForm
@@ -404,6 +507,7 @@ export default function PolicyPage() {
                           gridColumns="1fr 1fr 1fr 1fr"
                           gap="16px"
                           onSubmit={handleFormSubmit}
+                          onValuesChange={handleFormValuesChange}
                         />
                       </div>
                     </div>

@@ -114,6 +114,21 @@ const usePolicy = () => {
   const [policiesLoading, setPoliciesLoading] = useState(false);
   const [policiesError, setPoliciesError] = useState(null);
 
+  // State cho active policies list
+  const [activePolicies, setActivePolicies] = useState([]);
+  const [activePoliciesLoading, setActivePoliciesLoading] = useState(false);
+  const [activePoliciesError, setActivePoliciesError] = useState(null);
+
+  // State cho policy counts
+  const [policyCounts, setPolicyCounts] = useState({
+    total: 0,
+    draft: 0,
+    active: 0,
+    archived: 0,
+  });
+  const [policyCountsLoading, setPolicyCountsLoading] = useState(false);
+  const [policyCountsError, setPolicyCountsError] = useState(null);
+
   // State cho policy detail
   const [policyDetail, setPolicyDetail] = useState(null);
   const [policyDetailLoading, setPolicyDetailLoading] = useState(false);
@@ -165,18 +180,11 @@ const usePolicy = () => {
     setCategoriesError(null);
 
     const token = localStorage.getItem("token");
-    console.log("🔑 Current token:", token);
 
     try {
-      console.log(
-        "🚀 Calling API:",
-        endpoints.policy.data_tier.category.get_all
-      );
       const response = await axiosInstance.get(
         endpoints.policy.data_tier.category.get_all
       );
-
-      console.log("📥 Response:", response.data);
 
       if (response.data.success) {
         setCategories(response.data.data);
@@ -184,8 +192,6 @@ const usePolicy = () => {
         throw new Error(response.data.message || "Failed to fetch categories");
       }
     } catch (error) {
-      console.error("❌ API Error:", error);
-      console.error("❌ Error response:", error.response?.data);
       const errorMessage =
         error.response?.data?.message || "Failed to fetch categories";
       setCategoriesError(errorMessage);
@@ -206,15 +212,9 @@ const usePolicy = () => {
     setTiersError(null);
 
     try {
-      console.log(
-        "🚀 Calling API:",
-        endpoints.policy.data_tier.tier.get_by_category(categoryId)
-      );
       const response = await axiosInstance.get(
         endpoints.policy.data_tier.tier.get_by_category(categoryId)
       );
-
-      console.log("📥 Tiers Response:", response.data);
 
       if (response.data.success) {
         // Transform API response to match expected format
@@ -234,8 +234,6 @@ const usePolicy = () => {
         throw new Error(response.data.message || "Failed to fetch tiers");
       }
     } catch (error) {
-      console.error("❌ API Error:", error);
-      console.error("❌ Error response:", error.response?.data);
       const errorMessage =
         error.response?.data?.message || "Failed to fetch tiers";
       setTiersError(errorMessage);
@@ -257,15 +255,9 @@ const usePolicy = () => {
     setDataSourcesError(null);
 
     try {
-      console.log(
-        "🚀 Calling API:",
-        endpoints.policy.data_tier.tier.get_data_sources(tierId)
-      );
       const response = await axiosInstance.get(
         endpoints.policy.data_tier.tier.get_data_sources(tierId)
       );
-
-      console.log("📥 Data Sources Response:", response.data);
 
       if (response.data.success) {
         // Transform API response to match expected format
@@ -298,8 +290,6 @@ const usePolicy = () => {
         );
       }
     } catch (error) {
-      console.error("❌ API Error:", error);
-      console.error("❌ Error response:", error.response?.data);
       const errorMessage =
         error.response?.data?.message || "Failed to fetch data sources";
       setDataSourcesError(errorMessage);
@@ -313,7 +303,6 @@ const usePolicy = () => {
   // Fetch policies by provider
   const fetchPoliciesByProvider = useCallback(async (providerId) => {
     if (!providerId) {
-      console.warn("⚠️ Provider ID is required to fetch policies");
       return;
     }
 
@@ -332,15 +321,39 @@ const usePolicy = () => {
         }
       );
 
-      console.log(" Fetch policies success:", response.data);
-
       if (response.data?.success && response.data?.data?.policies) {
-        setPolicies(response.data.data.policies);
+        const draftPoliciesData = response.data.data.policies;
+
+        // Filter by user_id from /me as fallback if BE filter doesn't work
+        const meData = localStorage.getItem("me");
+        if (meData) {
+          try {
+            const userData = JSON.parse(meData);
+            const userId = userData?.user_id;
+
+            if (userId) {
+              // Filter policies to only show ones belonging to current user
+              const filteredPolicies = draftPoliciesData.filter(
+                (policy) => policy.base_policy?.insurance_provider_id === userId
+              );
+
+              setPolicies(filteredPolicies);
+            } else {
+              // No user_id found, use all policies
+              setPolicies(draftPoliciesData);
+            }
+          } catch (error) {
+            // On error, use all policies
+            setPolicies(draftPoliciesData);
+          }
+        } else {
+          // No /me data, use all policies
+          setPolicies(draftPoliciesData);
+        }
       } else {
         setPolicies([]);
       }
     } catch (error) {
-      console.error("❌ Fetch policies error:", error);
       setPoliciesError(
         error.response?.data?.message ||
           error.message ||
@@ -352,36 +365,185 @@ const usePolicy = () => {
     }
   }, []);
 
-  // Fetch policies - Automatically get partner_id from localStorage
+  // Fetch policies - Automatically get user_id from localStorage
   const fetchPolicies = useCallback(() => {
     const meData = localStorage.getItem("me");
     if (meData) {
       try {
         const userData = JSON.parse(meData);
-        const providerId = userData?.partner_id;
-        if (providerId) {
-          fetchPoliciesByProvider(providerId);
+        // Use user_id for draft policies (fallback to partner_id if user_id not available)
+        const userId = userData?.user_id || userData?.partner_id;
+        if (userId) {
+          fetchPoliciesByProvider(userId);
         } else {
-          console.warn("⚠️ Partner ID not found in user data");
-          setPoliciesError("Partner ID not found in user data");
+          setPoliciesError("User ID not found in user data");
         }
       } catch (error) {
-        console.error("❌ Error parsing user data from localStorage:", error);
         setPoliciesError("Failed to parse user data");
       }
     } else {
-      console.warn("⚠️ User data not found in localStorage");
       setPoliciesError("User data not found");
     }
   }, [fetchPoliciesByProvider]);
+
+  // Fetch active policies by provider
+  const fetchActivePoliciesByProvider = useCallback(async (providerId) => {
+    if (!providerId) {
+      return;
+    }
+
+    setActivePoliciesLoading(true);
+    setActivePoliciesError(null);
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await axiosInstance.get(
+        endpoints.policy.base_policy.get_active(providerId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Active policies API returns array directly under data, not data.policies
+      if (response.data?.success && response.data?.data) {
+        const activePoliciesData = Array.isArray(response.data.data)
+          ? response.data.data
+          : [];
+
+        // Filter by user_id from /me as fallback if BE filter doesn't work
+        const meData = localStorage.getItem("me");
+        if (meData) {
+          try {
+            const userData = JSON.parse(meData);
+            const userId = userData?.user_id;
+
+            if (userId) {
+              // Filter policies to only show ones belonging to current user
+              const filteredPolicies = activePoliciesData.filter(
+                (policy) => policy.insurance_provider_id === userId
+              );
+
+              // Transform to match expected format with base_policy wrapper
+              const transformedPolicies = filteredPolicies.map((policy) => ({
+                base_policy: policy,
+              }));
+
+              setActivePolicies(transformedPolicies);
+            } else {
+              // No user_id found, use all policies
+              const transformedPolicies = activePoliciesData.map((policy) => ({
+                base_policy: policy,
+              }));
+              setActivePolicies(transformedPolicies);
+            }
+          } catch (error) {
+            // On error, use all policies
+            const transformedPolicies = activePoliciesData.map((policy) => ({
+              base_policy: policy,
+            }));
+            setActivePolicies(transformedPolicies);
+          }
+        } else {
+          // No /me data, use all policies
+          const transformedPolicies = activePoliciesData.map((policy) => ({
+            base_policy: policy,
+          }));
+          setActivePolicies(transformedPolicies);
+        }
+      } else {
+        setActivePolicies([]);
+      }
+    } catch (error) {
+      setActivePoliciesError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch active policies"
+      );
+      setActivePolicies([]);
+    } finally {
+      setActivePoliciesLoading(false);
+    }
+  }, []);
+
+  // Fetch active policies - Automatically get user_id from localStorage
+  const fetchActivePolicies = useCallback(() => {
+    const meData = localStorage.getItem("me");
+    if (meData) {
+      try {
+        const userData = JSON.parse(meData);
+        // Use user_id for active policies instead of partner_id
+        const userId = userData?.user_id;
+        if (userId) {
+          fetchActivePoliciesByProvider(userId);
+        } else {
+          setActivePoliciesError("User ID not found in user data");
+        }
+      } catch (error) {
+        setActivePoliciesError("Failed to parse user data");
+      }
+    } else {
+      setActivePoliciesError("User data not found");
+    }
+  }, [fetchActivePoliciesByProvider]);
+
+  // Fetch policy counts
+  const fetchPolicyCounts = useCallback(async () => {
+    setPolicyCountsLoading(true);
+    setPolicyCountsError(null);
+
+    const token = localStorage.getItem("token");
+
+    try {
+      // Fetch all counts in parallel
+      const [totalResponse, draftResponse, activeResponse, archivedResponse] =
+        await Promise.all([
+          axiosInstance.get(endpoints.policy.base_policy.get_count, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axiosInstance.get(
+            endpoints.policy.base_policy.get_count_by_status("draft"),
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ),
+          axiosInstance.get(
+            endpoints.policy.base_policy.get_count_by_status("active"),
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ),
+          axiosInstance.get(
+            endpoints.policy.base_policy.get_count_by_status("archived"),
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ),
+        ]);
+
+      setPolicyCounts({
+        total: totalResponse.data?.data?.total_count || 0,
+        draft: draftResponse.data?.data?.count || 0,
+        active: activeResponse.data?.data?.count || 0,
+        archived: archivedResponse.data?.data?.count || 0,
+      });
+    } catch (error) {
+      setPolicyCountsError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch policy counts"
+      );
+    } finally {
+      setPolicyCountsLoading(false);
+    }
+  }, []);
 
   // Fetch policy detail by provider and policy ID
   const fetchPolicyDetailByProvider = useCallback(
     async (providerId, basePolicyId) => {
       if (!providerId || !basePolicyId) {
-        console.warn(
-          "⚠️ Provider ID and Base Policy ID are required to fetch policy detail"
-        );
         return null;
       }
 
@@ -404,14 +566,38 @@ const usePolicy = () => {
           }
         );
 
-        console.log(" Fetch policy detail success:", response.data);
-
         if (
           response.data?.success &&
           response.data?.data?.policies &&
           response.data.data.policies.length > 0
         ) {
           const policyData = response.data.data.policies[0];
+
+          // Security fallback: Verify policy belongs to current user
+          const meData = localStorage.getItem("me");
+          if (meData) {
+            try {
+              const userData = JSON.parse(meData);
+              const userId = userData?.user_id;
+
+              if (userId) {
+                const policyProviderId =
+                  policyData.base_policy?.insurance_provider_id;
+
+                // Check if policy belongs to the current user
+                if (policyProviderId !== userId) {
+                  setPolicyDetail(null);
+                  setPolicyDetailError(
+                    "You do not have permission to access this policy"
+                  );
+                  return null;
+                }
+              }
+            } catch (error) {
+              // Continue even if security check fails (but log it)
+            }
+          }
+
           setPolicyDetail(policyData);
           return policyData;
         } else {
@@ -420,7 +606,6 @@ const usePolicy = () => {
           return null;
         }
       } catch (error) {
-        console.error("❌ Fetch policy detail error:", error);
         setPolicyDetailError(
           error.response?.data?.message ||
             error.message ||
@@ -446,22 +631,104 @@ const usePolicy = () => {
           if (providerId) {
             return await fetchPolicyDetailByProvider(providerId, basePolicyId);
           } else {
-            console.warn("⚠️ Partner ID not found in user data");
             setPolicyDetailError("Partner ID not found in user data");
             return null;
           }
         } catch (error) {
-          console.error("❌ Error parsing user data from localStorage:", error);
           setPolicyDetailError("Failed to parse user data");
           return null;
         }
       } else {
-        console.warn("⚠️ User data not found in localStorage");
         setPolicyDetailError("User data not found");
         return null;
       }
     },
     [fetchPolicyDetailByProvider]
+  );
+
+  // Fetch active policy detail by ID (for active policies)
+  const fetchActivePolicyDetail = useCallback(
+    async (basePolicyId, includePdf = true) => {
+      if (!basePolicyId) {
+        return null;
+      }
+
+      setPolicyDetailLoading(true);
+      setPolicyDetailError(null);
+
+      const token = localStorage.getItem("token");
+
+      try {
+        const response = await axiosInstance.get(
+          endpoints.policy.base_policy.get_active_detail(
+            basePolicyId,
+            includePdf
+          ),
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data?.success && response.data?.data) {
+          const policyData = response.data.data;
+
+          // Security fallback: Verify policy belongs to current user
+          const meData = localStorage.getItem("me");
+          if (meData) {
+            try {
+              const userData = JSON.parse(meData);
+              const userId = userData?.user_id;
+
+              if (userId) {
+                const policyProviderId =
+                  policyData.base_policy?.insurance_provider_id;
+
+                // Check if policy belongs to the current user
+                if (policyProviderId !== userId) {
+                  setPolicyDetail(null);
+                  setPolicyDetailError(
+                    "You do not have permission to access this policy"
+                  );
+                  return null;
+                }
+              }
+            } catch (error) {
+              // Continue even if security check fails (but log it)
+            }
+          }
+
+          // Transform the new API response format to match the old format
+          // The new format has triggers as an array, we need to adapt it
+          const transformedData = {
+            base_policy: policyData.base_policy,
+            trigger: policyData.triggers?.[0] || null, // Take first trigger
+            conditions: policyData.triggers?.[0]?.conditions || [],
+            document: policyData.document,
+            metadata: policyData.metadata,
+          };
+
+          setPolicyDetail(transformedData);
+          return transformedData;
+        } else {
+          setPolicyDetail(null);
+          setPolicyDetailError("Active policy not found");
+          return null;
+        }
+      } catch (error) {
+        setPolicyDetailError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to fetch active policy detail"
+        );
+        setPolicyDetail(null);
+        return null;
+      } finally {
+        setPolicyDetailLoading(false);
+      }
+    },
+    []
   );
 
   // Fetch categories on mount
@@ -473,6 +740,16 @@ const usePolicy = () => {
   useEffect(() => {
     fetchPolicies();
   }, [fetchPolicies]);
+
+  // Fetch active policies on mount
+  useEffect(() => {
+    fetchActivePolicies();
+  }, [fetchActivePolicies]);
+
+  // Fetch policy counts on mount
+  useEffect(() => {
+    fetchPolicyCounts();
+  }, [fetchPolicyCounts]);
 
   //  AUTO-VALIDATE: Run validation whenever data changes
   // This ensures validationStatus is always up-to-date
@@ -508,14 +785,6 @@ const usePolicy = () => {
       basicData.selectedDataSources && basicData.selectedDataSources.length > 0;
 
     const isValid = allRequiredFilled && hasDataSources;
-
-    if (!isValid) {
-      console.warn("❌ BasicTab validation failed:", {
-        allRequiredFilled,
-        hasDataSources,
-        basicData,
-      });
-    }
 
     setValidationStatus((prev) => ({ ...prev, basic: isValid }));
     return isValid;
@@ -553,15 +822,6 @@ const usePolicy = () => {
 
     const isValid =
       allTriggerFieldsFilled && hasConditions && allConditionsValid;
-
-    if (!isValid) {
-      console.warn("❌ ConfigurationTab validation failed:", {
-        allTriggerFieldsFilled,
-        hasConditions,
-        allConditionsValid,
-        configurationData,
-      });
-    }
 
     setValidationStatus((prev) => ({ ...prev, configuration: isValid }));
     return isValid;
@@ -711,21 +971,15 @@ const usePolicy = () => {
 
   // Handle tags data change
   const handleTagsDataChange = useCallback((newData) => {
-    console.log("🔥 handleTagsDataChange called with:", newData);
     //  Support both object and function updater
     if (typeof newData === "function") {
       setTagsData((prev) => {
-        console.log("🔥 handleTagsDataChange - prev:", prev);
         const result = newData(prev);
-        console.log("🔥 handleTagsDataChange - result:", result);
         return result;
       });
     } else {
       setTagsData((prev) => {
-        console.log("🔥 handleTagsDataChange - prev:", prev);
-        console.log("🔥 handleTagsDataChange - newData:", newData);
         const result = { ...prev, ...newData };
-        console.log("🔥 handleTagsDataChange - result:", result);
         return result;
       });
     }
@@ -733,9 +987,7 @@ const usePolicy = () => {
 
   // Handle add tag
   const handleAddTag = useCallback((tag) => {
-    console.log("🔥 handleAddTag called with:", tag);
     setTagsData((prev) => {
-      console.log("🔥 handleAddTag - prev.tags:", prev.tags);
       const newTags = [
         ...prev.tags,
         {
@@ -745,7 +997,7 @@ const usePolicy = () => {
           id: tag.id || `tag_${Date.now()}`,
         },
       ];
-      console.log("🔥 handleAddTag - newTags:", newTags);
+
       return {
         ...prev,
         tags: newTags,
@@ -885,15 +1137,13 @@ const usePolicy = () => {
           const meData = localStorage.getItem("me");
           if (meData) {
             const parsed = JSON.parse(meData);
-            insuranceProviderId = parsed.user_id || "UCtPr8F7fq";
+            insuranceProviderId = parsed.user_id || "temp_id";
           }
-        } catch (e) {
-          console.warn("Could not parse /me from localStorage:", e);
-        }
+        } catch (e) {}
 
         // Final fallback to hardcoded user_id
         if (!insuranceProviderId) {
-          insuranceProviderId = "UCtPr8F7fr";
+          insuranceProviderId = "temp_id";
         }
       }
 
@@ -913,7 +1163,6 @@ const usePolicy = () => {
       const validation = policyStore.validatePayload();
       if (!validation.isValid) {
         message.error(`Validation failed: ${validation.errors.join(", ")}`);
-        console.error("Validation errors:", validation.errors);
         return false;
       }
 
@@ -927,22 +1176,11 @@ const usePolicy = () => {
         });
       }
 
-      console.log("📤 [DEBUG] Raw payload object:", payload);
-      console.log("📤 [DEBUG] payload.base_policy:", payload.base_policy);
-      console.log("📤 [DEBUG] payload.trigger:", payload.trigger);
-      console.log("📤 [DEBUG] payload.conditions:", payload.conditions);
-      console.log(
-        "📤 [DEBUG] payload.policy_document:",
-        payload.policy_document
-      );
-
       // Call API with application/json Content-Type (matching Postman CURL)
       const response = await axiosInstance.post(
         endpoints.policy.base_policy.create_complete(24),
         payload //  Send object directly, axios will stringify and set Content-Type: application/json
       );
-
-      console.log("📥 API Response:", response.data);
 
       if (response.data.success) {
         message.success("Base Policy đã được tạo thành công!");
@@ -956,9 +1194,6 @@ const usePolicy = () => {
         throw new Error(response.data.message || "Failed to create policy");
       }
     } catch (error) {
-      console.error("❌ Error creating policy:", error);
-      console.error("❌ Error response:", error.response?.data);
-
       // Parse error messages
       const errorMessage =
         error.response?.data?.message ||
@@ -1003,6 +1238,12 @@ const usePolicy = () => {
     policies,
     policiesLoading,
     policiesError,
+    activePolicies,
+    activePoliciesLoading,
+    activePoliciesError,
+    policyCounts,
+    policyCountsLoading,
+    policyCountsError,
     policyDetail,
     policyDetailLoading,
     policyDetailError,
@@ -1033,8 +1274,12 @@ const usePolicy = () => {
     fetchDataSourcesByTier,
     fetchPoliciesByProvider,
     fetchPolicies,
+    fetchActivePoliciesByProvider,
+    fetchActivePolicies,
+    fetchPolicyCounts,
     fetchPolicyDetailByProvider,
     fetchPolicyDetail,
+    fetchActivePolicyDetail,
 
     // Utilities
     getAvailableDataSources,

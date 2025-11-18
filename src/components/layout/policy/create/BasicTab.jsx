@@ -20,7 +20,7 @@ import {
     Tooltip,
     Typography
 } from 'antd';
-import { memo, useEffect, useState, useCallback, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -266,7 +266,7 @@ const BasicTabComponent = ({
                             normalize={(value) => value ? value.toUpperCase() : value}
                         >
                             <Input
-                                placeholder="Ví dụ: rice_winter_2025 (tự động thành RICE_WINTER_2025)"
+                                placeholder="Ví dụ: rice_winter_2025"
                                 size="large"
                                 style={{ textTransform: 'uppercase' }}
                             />
@@ -292,7 +292,10 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="cropType"
                             label="Loại Cây trồng"
-                            tooltip="Loại cây trồng áp dụng (tuỳ chọn)"
+                            tooltip="Loại cây trồng áp dụng (BẮT BUỘC)"
+                            rules={[
+                                { required: true, message: 'Vui lòng chọn loại cây trồng!' }
+                            ]}
                         >
                             <Select
                                 placeholder="Chọn loại cây trồng"
@@ -393,8 +396,9 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="fixPremiumAmount"
                             label="Phí bảo hiểm cố định"
-                            tooltip="Phí bảo hiểm cố định (Fixed Premium Amount): Một số tiền phí bảo hiểm được ấn định trước cho hợp đồng, không cần qua các bước tính toán động"
+                            tooltip="Phí bảo hiểm cố định (Fixed Premium Amount): Một số tiền phí bảo hiểm được ấn định trước cho hợp đồng, không cần qua các bước tính toán động (BẮT BUỘC)"
                             rules={[
+                                { required: true, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_NEGATIVE') }
                             ]}
                         >
@@ -489,8 +493,9 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="fixPayoutAmount"
                             label="Số tiền bồi thường cố định"
-                            tooltip="Số tiền bồi thường cố định (Fixed Payout Amount): Một số tiền bồi thường được ấn định trước sẽ được chi trả khi điều kiện bảo hiểm xảy ra, thay vì tính toán động"
+                            tooltip="Số tiền bồi thường cố định (Fixed Payout Amount): Một số tiền bồi thường được ấn định trước sẽ được chi trả khi điều kiện bảo hiểm xảy ra, thay vì tính toán động (BẮT BUỘC)"
                             rules={[
+                                { required: true, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_NEGATIVE') }
                             ]}
                         >
@@ -595,6 +600,22 @@ const BasicTabComponent = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabledDate={(current) => {
+                                    const startDay = form.getFieldValue('enrollmentStartDay');
+                                    const validFrom = form.getFieldValue('insuranceValidFrom');
+
+                                    // Disable dates before start day
+                                    if (startDay && current && current.isBefore(startDay, 'day')) {
+                                        return true;
+                                    }
+
+                                    // Disable dates after insurance valid from
+                                    if (validFrom && current && current.isAfter(validFrom, 'day')) {
+                                        return true;
+                                    }
+
+                                    return false;
+                                }}
                             />
                         </Form.Item>
                     </Col>
@@ -641,6 +662,16 @@ const BasicTabComponent = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabledDate={(current) => {
+                                    const validFrom = form.getFieldValue('insuranceValidFrom');
+
+                                    // Disable dates before or equal to insurance valid from
+                                    if (validFrom && current) {
+                                        return current.isBefore(validFrom, 'day') || current.isSame(validFrom, 'day');
+                                    }
+
+                                    return false;
+                                }}
                             />
                         </Form.Item>
                     </Col>
@@ -687,13 +718,24 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="basePolicyInvalidDate"
                             label="Ngày vô hiệu hóa"
-                            tooltip="Ngày mà hợp đồng bảo hiểm (policy) này sẽ bị vô hiệu hóa (tuỳ chọn)"
+                            tooltip="Ngày mà hợp đồng bảo hiểm (policy) này sẽ bị vô hiệu hóa (tuỳ chọn). Phải sau ngày kết thúc hiệu lực"
                         >
                             <DatePicker
                                 placeholder="Chọn ngày vô hiệu"
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabled={!form.getFieldValue('insuranceValidTo')}
+                                disabledDate={(current) => {
+                                    const validTo = form.getFieldValue('insuranceValidTo');
+
+                                    // Disable dates before or equal to insurance valid to
+                                    if (validTo && current) {
+                                        return current.isBefore(validTo, 'day') || current.isSame(validTo, 'day');
+                                    }
+
+                                    return false;
+                                }}
                             />
                         </Form.Item>
                     </Col>

@@ -21,11 +21,13 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
             key: 'label',
             render: (text, record) => (
                 <div>
-                    <Text strong>{text}</Text>
+                    <Text strong>{text || record.dataSourceId || 'N/A'}</Text>
                     <br />
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                        {record.parameterName} ({record.unit})
-                    </Text>
+                    {(record.parameterName || record.unit) && (
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                            {record.parameterName || ''} {record.unit ? `(${record.unit})` : ''}
+                        </Text>
+                    )}
                 </div>
             ),
         },
@@ -33,11 +35,17 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
             title: 'Danh mục',
             dataIndex: 'categoryLabel',
             key: 'categoryLabel',
+            render: (text, record) => (
+                <Text>{text || `Hệ số: ${record.categoryMultiplier || 'N/A'}`}</Text>
+            ),
         },
         {
             title: 'Gói',
             dataIndex: 'tierLabel',
             key: 'tierLabel',
+            render: (text, record) => (
+                <Text>{text || `Hệ số: ${record.tierMultiplier || 'N/A'}`}</Text>
+            ),
         },
         {
             title: 'Chi phí',
@@ -45,11 +53,13 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
             key: 'calculatedCost',
             render: (cost, record) => (
                 <div>
-                    <Text strong>{cost?.toLocaleString()} ₫</Text>
+                    <Text strong>{cost?.toLocaleString() || 'N/A'} ₫</Text>
                     <br />
-                    <Text type="secondary" style={{ fontSize: '11px' }}>
-                        Cơ sở: {record.baseCost?.toLocaleString()} ₫
-                    </Text>
+                    {record.baseCost && (
+                        <Text type="secondary" style={{ fontSize: '11px' }}>
+                            Cơ sở: {record.baseCost?.toLocaleString()} ₫
+                        </Text>
+                    )}
                 </div>
             ),
         },

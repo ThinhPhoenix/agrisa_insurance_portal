@@ -121,7 +121,7 @@ export const calculateConditionCost = (
 // ====================== INITIAL STATE ======================
 
 const initialBasicData = {
-  // ✅ Product Info (REQUIRED)
+  //  Product Info (REQUIRED)
   productName: "",
   productCode: "",
   productDescription: "",
@@ -130,52 +130,52 @@ const initialBasicData = {
   coverageCurrency: "VND",
   coverageDurationDays: 120,
 
-  // ✅ Premium Config (REQUIRED)
+  //  Premium Config (REQUIRED)
   isPerHectare: true,
   premiumBaseRate: 0,
   fixPremiumAmount: null,
   maxPremiumPaymentProlong: null,
   cancelPremiumRate: null,
 
-  // ✅ Payout Config (moved from ConfigurationTab - per BE spec)
+  //  Payout Config (moved from ConfigurationTab - per BE spec)
   isPayoutPerHectare: true,
   payoutBaseRate: 0.75,
   fixPayoutAmount: null,
   payoutCap: null,
   overThresholdMultiplier: 1.0,
 
-  // ✅ Enrollment & Validity Dates
+  //  Enrollment & Validity Dates
   enrollmentStartDay: null,
   enrollmentEndDay: null,
   insuranceValidFrom: null, // Date object, will be converted to epoch
   insuranceValidTo: null, // Date object, will be converted to epoch
 
-  // ✅ Renewal Config
+  //  Renewal Config
   autoRenewal: false,
   renewalDiscountRate: 0,
   basePolicyInvalidDate: null,
 
-  // ✅ Status & Document (auto fields)
+  //  Status & Document (auto fields)
   status: "draft", // draft | active | archived
   templateDocumentUrl: null,
   documentValidationStatus: "pending", // pending | passed | passed_ai | failed | warning
   importantAdditionalInformation: "",
 
-  // ✅ Data Sources Table
+  //  Data Sources Table
   selectedDataSources: [], // { id, label, baseCost, category, tier, categoryMultiplier, tierMultiplier, parameterName, unit }
 };
 
 const initialConfigurationData = {
-  // ✅ Trigger Config (REQUIRED)
+  //  Trigger Config (REQUIRED)
   logicalOperator: "AND", // AND | OR
   monitorInterval: 1,
   monitorFrequencyUnit: "day", // hour | day | week | month | year
 
-  // ✅ Optional Trigger Fields
+  //  Optional Trigger Fields
   growthStage: "",
-  blackoutPeriods: {}, // ✅ Object, not array - per BE spec
+  blackoutPeriods: {}, //  Object, not array - per BE spec
 
-  // ✅ Conditions Table (REQUIRED at least 1)
+  //  Conditions Table (REQUIRED at least 1)
   conditions: [], // Array of condition objects
 };
 
@@ -223,50 +223,50 @@ export const usePolicyStore = create((set, get) => ({
 
     // Build base_policy object
     const base_policy = {
-      // ✅ Provider & Product Info
+      //  Provider & Product Info
       insurance_provider_id:
-        basicData.insuranceProviderId || "fallback_partner_id",
+        basicData.insuranceProviderId || "UCtPr8F7fq",
       product_name: basicData.productName,
       product_code: basicData.productCode,
       product_description: basicData.productDescription || "",
       crop_type: basicData.cropType || "",
 
-      // ✅ Coverage Config
+      //  Coverage Config
       coverage_currency: basicData.coverageCurrency,
       coverage_duration_days: basicData.coverageDurationDays,
 
-      // ✅ Premium Config
+      //  Premium Config
       fix_premium_amount: basicData.fixPremiumAmount || null,
       is_per_hectare: basicData.isPerHectare,
       premium_base_rate: basicData.premiumBaseRate,
       max_premium_payment_prolong: basicData.maxPremiumPaymentProlong || null,
 
-      // ✅ Payout Config (NOW from basicData - per BE spec)
+      //  Payout Config (NOW from basicData - per BE spec)
       fix_payout_amount: basicData.fixPayoutAmount || null,
       is_payout_per_hectare: basicData.isPayoutPerHectare,
       over_threshold_multiplier: basicData.overThresholdMultiplier,
       payout_base_rate: basicData.payoutBaseRate,
       payout_cap: basicData.payoutCap || null,
 
-      // ✅ Cancellation & Enrollment
+      //  Cancellation & Enrollment
       cancel_premium_rate: basicData.cancelPremiumRate || null,
       enrollment_start_day: dateToEpochSeconds(basicData.enrollmentStartDay),
       enrollment_end_day: dateToEpochSeconds(basicData.enrollmentEndDay),
 
-      // ✅ Renewal Config
+      //  Renewal Config
       auto_renewal: basicData.autoRenewal,
       renewal_discount_rate: basicData.renewalDiscountRate,
       base_policy_invalid_date: basicData.basePolicyInvalidDate
         ? dateToEpochSeconds(basicData.basePolicyInvalidDate)
-        : null, // ✅ Return null if empty (matching Postman)
+        : null, //  Return null if empty (matching Postman)
 
-      // ✅ Insurance Validity Dates (REQUIRED)
+      //  Insurance Validity Dates (REQUIRED)
       insurance_valid_from_day: dateToEpochSeconds(
         basicData.insuranceValidFrom
       ),
       insurance_valid_to_day: dateToEpochSeconds(basicData.insuranceValidTo),
 
-      // ✅ Status & Document
+      //  Status & Document
       status: basicData.status,
       template_document_url: basicData.templateDocumentUrl || null,
       document_validation_status: basicData.documentValidationStatus,
@@ -283,21 +283,21 @@ export const usePolicyStore = create((set, get) => ({
       monitor_frequency_unit: mapFrequencyUnit(
         configurationData.monitorFrequencyUnit
       ),
-      // ✅ Parse blackout_periods if it's a string, otherwise use as-is
+      //  Parse blackout_periods if it's a string, otherwise use as-is
       // ⚠️ Return {} instead of null when empty (backend may reject empty object)
       blackout_periods: (() => {
         const bp = configurationData.blackoutPeriods;
-        if (!bp) return {}; // ✅ Changed from null to {}
+        if (!bp) return {}; //  Changed from null to {}
         if (typeof bp === "string") {
           try {
             const parsed = JSON.parse(bp);
-            return parsed && Object.keys(parsed).length > 0 ? parsed : null; // ✅ Return null if empty
+            return parsed && Object.keys(parsed).length > 0 ? parsed : null; //  Return null if empty
           } catch (e) {
             console.warn("❌ Invalid blackout_periods JSON:", bp);
-            return null; // ✅ Changed from {} to null
+            return null; //  Changed from {} to null
           }
         }
-        return Object.keys(bp).length > 0 ? bp : null; // ✅ Return null if empty object
+        return Object.keys(bp).length > 0 ? bp : null; //  Return null if empty object
       })(),
     };
 
@@ -312,7 +312,7 @@ export const usePolicyStore = create((set, get) => ({
           condition.tierMultiplier
         );
 
-      // ✅ Build condition object, include REQUIRED and OPTIONAL fields with defaults
+      //  Build condition object, include REQUIRED and OPTIONAL fields with defaults
       const mappedCondition = {
         // REQUIRED fields
         data_source_id: condition.dataSourceId,
@@ -344,14 +344,14 @@ export const usePolicyStore = create((set, get) => ({
     if (tagsData.modifiedPdfBytes || tagsData.uploadedFile) {
       const fileToConvert = tagsData.modifiedPdfBytes || tagsData.uploadedFile;
 
-      // ✅ Check file size (warn if > 5MB)
+      //  Check file size (warn if > 5MB)
       const fileSizeBytes = fileToConvert.size || fileToConvert.byteLength || 0;
       const fileSizeMB = (fileSizeBytes / (1024 * 1024)).toFixed(2);
       console.log(`📄 Policy document size: ${fileSizeMB} MB`);
 
       const base64Data = await bytesToBase64(fileToConvert);
 
-      // ✅ Check base64 string size
+      //  Check base64 string size
       const base64SizeBytes = base64Data ? base64Data.length : 0;
       const base64SizeMB = (base64SizeBytes / (1024 * 1024)).toFixed(2);
       console.log(
@@ -373,7 +373,7 @@ export const usePolicyStore = create((set, get) => ({
         warnings.push(warningMsg);
       }
 
-      // ✅ Always send policy_document as required by BE
+      //  Always send policy_document as required by BE
       policy_document = {
         name: fileName,
         data: base64Data,
@@ -381,7 +381,7 @@ export const usePolicyStore = create((set, get) => ({
     }
 
     // Final payload (document_tags đã được add vào base_policy ở trên)
-    // ✅ Only include policy_document if file was uploaded
+    //  Only include policy_document if file was uploaded
     const payload = {
       base_policy,
       trigger,
@@ -390,7 +390,7 @@ export const usePolicyStore = create((set, get) => ({
       is_archive: false,
     };
 
-    // ✅ Check total payload size
+    //  Check total payload size
     const payloadStr = JSON.stringify(payload);
     const payloadSizeBytes = new Blob([payloadStr]).size;
     const payloadSizeMB = (payloadSizeBytes / (1024 * 1024)).toFixed(2);
@@ -426,7 +426,7 @@ export const usePolicyStore = create((set, get) => ({
     const { basicData, configurationData, tagsData } = get();
     const errors = [];
 
-    // ✅ Validate Basic Policy data using Zod schema
+    //  Validate Basic Policy data using Zod schema
     const basicValidation = basePolicySchema.safeParse(basicData);
     if (!basicValidation.success) {
       basicValidation.error.issues.forEach((issue) => {
@@ -434,7 +434,7 @@ export const usePolicyStore = create((set, get) => ({
       });
     }
 
-    // ✅ Validate Trigger configuration using Zod schema
+    //  Validate Trigger configuration using Zod schema
     const triggerValidation = triggerSchema.safeParse(configurationData);
     if (!triggerValidation.success) {
       triggerValidation.error.issues.forEach((issue) => {
@@ -442,7 +442,7 @@ export const usePolicyStore = create((set, get) => ({
       });
     }
 
-    // ✅ Validate each condition using Zod schema
+    //  Validate each condition using Zod schema
     configurationData.conditions.forEach((condition, index) => {
       const conditionValidation = conditionSchema.safeParse(condition);
       if (!conditionValidation.success) {
@@ -452,7 +452,7 @@ export const usePolicyStore = create((set, get) => ({
       }
     });
 
-    // ✅ Check table: conditions must have at least 1 item
+    //  Check table: conditions must have at least 1 item
     if (
       !configurationData.conditions ||
       configurationData.conditions.length === 0

@@ -36,6 +36,13 @@ export const endpoints = {
         `/policy/protected/api/v2/base-policies/draft/provider/${provider_id}?archive_status=${archive_status}`,
       get_draft_detail: (provider_id, base_policy_id, archive_status = false) =>
         `/policy/protected/api/v2/base-policies/draft/filter?provider_id=${provider_id}&base_policy_id=${base_policy_id}&archive_status=${archive_status}`,
+      get_active: (insurance_provider_id) =>
+        `/policy/protected/api/v2/base-policies/active?insurance_provider_id=${insurance_provider_id}`,
+      get_active_detail: (id, include_pdf = true) =>
+        `/policy/protected/api/v2/base-policies/detail?id=${id}&include_pdf=${include_pdf}`,
+      get_count: `/policy/protected/api/v2/base-policies/count`,
+      get_count_by_status: (status) =>
+        `/policy/protected/api/v2/base-policies/count/status/${status}`,
     },
   },
   applications: {

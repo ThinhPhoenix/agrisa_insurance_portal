@@ -45,6 +45,9 @@ const PolicyDetailPage = ({ params }) => {
     policyDetailLoading,
     policyDetailError,
     fetchPolicyDetail,
+    fetchActivePolicyDetail,
+    policies,
+    activePolicies,
   } = usePolicy();
 
   // Fetch policy detail and validate on mount
@@ -66,16 +69,30 @@ const PolicyDetailPage = ({ params }) => {
 
       try {
         const userData = JSON.parse(meData);
-        const userPartnerId = userData?.partner_id;
+        // Use user_id instead of partner_id for consistency
+        const userId = userData?.user_id;
 
-        if (!userPartnerId) {
-          message.error("Không tìm thấy Partner ID trong thông tin người dùng");
+        if (!userId) {
+          message.error("Không tìm thấy User ID trong thông tin người dùng");
           router.push("/policy");
           return;
         }
 
-        // Fetch policy detail
-        const policyData = await fetchPolicyDetail(params.id);
+        // Determine if policy is draft or active by checking both lists
+        const isDraft = policies.some(p => p.base_policy?.id === params.id);
+        const isActive = activePolicies.some(p => p.base_policy?.id === params.id);
+
+        let policyData = null;
+
+        // Try to fetch as active policy first (uses the new API)
+        if (isActive || (!isDraft && !isActive)) {
+          policyData = await fetchActivePolicyDetail(params.id);
+        }
+
+        // If not found or is draft, try draft API
+        if (!policyData && (isDraft || !isActive)) {
+          policyData = await fetchPolicyDetail(params.id);
+        }
 
         if (!policyData) {
           message.error("Không tìm thấy chính sách");
@@ -83,14 +100,14 @@ const PolicyDetailPage = ({ params }) => {
           return;
         }
 
-        // Security validation: Check if policy belongs to current partner
+        // Security validation: Check if policy belongs to current user
+        // Note: The security check is already done in fetchPolicyDetail and fetchActivePolicyDetail
+        // This is a redundant check that can be removed, but kept for extra safety
         const policyProviderId = policyData.base_policy?.insurance_provider_id;
-        if (policyProviderId !== userPartnerId) {
+
+        if (policyProviderId !== userId) {
           message.error(
             "Bạn không có quyền truy cập chính sách này. Vi phạm bảo mật!"
-          );
-          console.warn(
-            "🚨 Security violation: User attempted to access policy from different provider"
           );
           router.push("/policy");
           return;
@@ -103,7 +120,7 @@ const PolicyDetailPage = ({ params }) => {
     };
 
     loadPolicyDetail();
-  }, [params.id, fetchPolicyDetail, router]);
+  }, [params.id, fetchPolicyDetail, fetchActivePolicyDetail, policies, activePolicies, router]);
 
   // Show loading spinner
   if (policyDetailLoading) {

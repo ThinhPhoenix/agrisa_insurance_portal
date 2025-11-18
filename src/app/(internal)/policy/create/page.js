@@ -26,7 +26,7 @@ import ReviewTab from "@/components/layout/policy/create/ReviewTab";
 import TagsTab from "@/components/layout/policy/create/TagsTab";
 
 // Hook
-import usePolicy from "@/services/hooks/policy/use-policy";
+import useCreatePolicy from "@/services/hooks/policy/use-create-policy";
 
 const { Title, Text } = Typography;
 
@@ -81,7 +81,7 @@ const CreatePolicyPage = () => {
 
     // Utilities
     getAvailableDataSourcesForTrigger,
-  } = usePolicy();
+  } = useCreatePolicy();
 
   // Handle successful policy creation
   const handlePolicyCreated = async () => {

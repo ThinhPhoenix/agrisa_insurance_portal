@@ -7,6 +7,7 @@ import {
   TagsDetail,
 } from "@/components/layout/policy/detail";
 import usePolicy from "@/services/hooks/policy/use-policy";
+import useDetailPolicy from "@/services/hooks/policy/use-detail-policy";
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
@@ -39,16 +40,20 @@ const PolicyDetailPage = ({ params }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("basic");
 
-  // Use policy hook
+  // Use policy list hook for checking draft/active status
+  const {
+    policies,
+    activePolicies,
+  } = usePolicy();
+
+  // Use detail policy hook for fetching policy details
   const {
     policyDetail: apiPolicyDetail,
     policyDetailLoading,
     policyDetailError,
     fetchPolicyDetail,
     fetchActivePolicyDetail,
-    policies,
-    activePolicies,
-  } = usePolicy();
+  } = useDetailPolicy();
 
   // Fetch policy detail and validate on mount
   useEffect(() => {

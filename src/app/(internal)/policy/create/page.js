@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import "./create-policy.css";
 
 import {
@@ -17,7 +17,7 @@ import {
 import { Alert, Button, Card, Col, Row, Space, Tabs, Typography } from "antd";
 import { useRouter } from "next/navigation";
 
-// Components
+// Components - Lazy loaded for code splitting
 import BasicTab from "@/components/layout/policy/create/BasicTab";
 import ConfigurationTab from "@/components/layout/policy/create/ConfigurationTab";
 import EstimatedCosts from "@/components/layout/policy/create/EstimatedCosts";
@@ -26,7 +26,7 @@ import ReviewTab from "@/components/layout/policy/create/ReviewTab";
 import TagsTab from "@/components/layout/policy/create/TagsTab";
 
 // Hook
-import usePolicy from "@/services/hooks/policy/use-policy";
+import useCreatePolicy from "@/services/hooks/policy/use-create-policy";
 
 const { Title, Text } = Typography;
 
@@ -81,7 +81,7 @@ const CreatePolicyPage = () => {
 
     // Utilities
     getAvailableDataSourcesForTrigger,
-  } = usePolicy();
+  } = useCreatePolicy();
 
   // Handle successful policy creation
   const handlePolicyCreated = async () => {
@@ -98,8 +98,8 @@ const CreatePolicyPage = () => {
     router.push("/policy");
   };
 
-  // Handle file upload
-  const handleFileUpload = (file, url) => {
+  // Handle file upload - Memoized to prevent unnecessary re-renders
+  const handleFileUpload = useCallback((file, url) => {
     setUploadedFile(file);
     setFileUrl(url);
 
@@ -108,10 +108,10 @@ const CreatePolicyPage = () => {
       uploadedFile: file,
       // Note: modifiedPdfBytes will be set later by TagsTab when tags are applied
     });
-  };
+  }, [handleTagsDataChange]);
 
-  // Handle file remove
-  const handleFileRemove = () => {
+  // Handle file remove - Memoized to prevent unnecessary re-renders
+  const handleFileRemove = useCallback(() => {
     // Clear local preview state
     setUploadedFile(null);
     setFileUrl(null);
@@ -146,17 +146,17 @@ const CreatePolicyPage = () => {
     } catch (e) {
       console.warn("Error clearing tags on file remove", e);
     }
-  };
+  }, [handleTagsDataChange, handleRemoveTag, tagsData]);
 
-  const handlePlaceholdersDetected = (placeholders) => {
+  const handlePlaceholdersDetected = useCallback((placeholders) => {
     setDetectedPlaceholders(placeholders || []);
-  };
+  }, []);
 
-  // ✅ NEW: Handle manual placeholder creation from click-to-place
-  const handleCreatePlaceholder = (newPlaceholder) => {
-    console.log('📍 Adding manual placeholder to list:', newPlaceholder);
-    setDetectedPlaceholders(prev => [...prev, newPlaceholder]);
-  };
+  // ✅ NEW: Handle manual placeholder creation from click-to-place - Memoized
+  const handleCreatePlaceholder = useCallback((newPlaceholder) => {
+    console.log("📍 Adding manual placeholder to list:", newPlaceholder);
+    setDetectedPlaceholders((prev) => [...prev, newPlaceholder]);
+  }, []);
 
   // Get current step index
   const getCurrentStepIndex = () => {
@@ -291,7 +291,7 @@ const CreatePolicyPage = () => {
       label: (
         <Space>
           <TagOutlined />
-          <span>Tags</span>
+          <span>Tài liệu & Trường thông tin</span>
           {isTabCompleted(TABS.TAGS) && (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
           )}

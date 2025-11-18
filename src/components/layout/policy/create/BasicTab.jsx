@@ -20,12 +20,13 @@ import {
     Tooltip,
     Typography
 } from 'antd';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-const BasicTab = ({
+// ✅ OPTIMIZATION: Memoize BasicTab to prevent unnecessary re-renders
+const BasicTabComponent = ({
     basicData,
     mockData,
     onDataChange,
@@ -83,13 +84,32 @@ const BasicTab = ({
         }
     }, [basicData, onDataChange, user]);
 
-    // Handle form values change
-    const handleValuesChange = (changedValues, allValues) => {
-        onDataChange(allValues);
-    };
+    // ✅ OPTIMIZATION: Debounce form changes to prevent input lag with Vietnamese typing
+    const timeoutRef = useRef(null);
+    const handleValuesChange = useCallback((changedValues, allValues) => {
+        // Clear previous timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        // Debounce the onChange call to prevent re-render during typing
+        // This fixes Vietnamese input composition issues
+        timeoutRef.current = setTimeout(() => {
+            onDataChange(allValues);
+        }, 300); // 300ms debounce
+    }, [onDataChange]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
 
     // Handle category change
-    const handleCategoryChange = (categoryName) => {
+    const handleCategoryChange = useCallback((categoryName) => {
         setSelectedCategory(categoryName);
         setSelectedTier('');
         dataSourceForm.setFieldsValue({ tier: undefined, dataSource: undefined });
@@ -99,10 +119,10 @@ const BasicTab = ({
         if (selectedCategoryObj && fetchTiersByCategory) {
             fetchTiersByCategory(selectedCategoryObj.id);
         }
-    };
+    }, [categories, dataSourceForm, fetchTiersByCategory]);
 
     // Handle tier change
-    const handleTierChange = (tier) => {
+    const handleTierChange = useCallback((tier) => {
         setSelectedTier(tier);
         dataSourceForm.setFieldsValue({ dataSource: undefined });
 
@@ -111,10 +131,10 @@ const BasicTab = ({
         if (selectedTierData && fetchDataSourcesByTier) {
             fetchDataSourcesByTier(selectedTierData.id);
         }
-    };
+    }, [tiers, dataSourceForm, fetchDataSourcesByTier]);
 
     // Handle add data source
-    const handleAddDataSource = () => {
+    const handleAddDataSource = useCallback(() => {
         dataSourceForm.validateFields().then(values => {
             const selectedSource = dataSources.find(source => source.id === values.dataSource);
             if (selectedSource) {
@@ -149,7 +169,7 @@ const BasicTab = ({
                 setSelectedTier('');
             }
         });
-    };
+    }, [dataSourceForm, dataSources, onAddDataSource, selectedCategory, selectedTier, basicData.selectedDataSources, categories, tiers]);
 
     // Data source table columns
     const dataSourceColumns = [
@@ -235,17 +255,18 @@ const BasicTab = ({
                         <Form.Item
                             name="productCode"
                             label="Mã Sản phẩm"
-                            tooltip="Mã định danh duy nhất cho sản phẩm (chỉ chữ hoa, số và dấu gạch dưới). Ví dụ: RICE_WINTER_2025"
+                            tooltip="Mã định danh duy nhất cho sản phẩm (chỉ chữ cái, số và dấu gạch dưới). Tự động chuyển thành chữ hoa"
                             rules={[
                                 { required: true, message: getBasePolicyError('PRODUCT_CODE_REQUIRED') },
                                 {
-                                    pattern: /^[A-Z0-9_]+$/,
-                                    message: getBasePolicyValidation('PRODUCT_CODE_FORMAT')
+                                    pattern: /^[A-Za-z0-9_]+$/,
+                                    message: 'Mã sản phẩm chỉ được chứa chữ cái, số và dấu gạch dưới (_)!'
                                 }
                             ]}
+                            normalize={(value) => value ? value.toUpperCase() : value}
                         >
                             <Input
-                                placeholder="Ví dụ: RICE_WINTER_2025"
+                                placeholder="Ví dụ: rice_winter_2025"
                                 size="large"
                                 style={{ textTransform: 'uppercase' }}
                             />
@@ -271,7 +292,10 @@ const BasicTab = ({
                         <Form.Item
                             name="cropType"
                             label="Loại Cây trồng"
-                            tooltip="Loại cây trồng áp dụng (tuỳ chọn)"
+                            tooltip="Loại cây trồng áp dụng (BẮT BUỘC)"
+                            rules={[
+                                { required: true, message: 'Vui lòng chọn loại cây trồng!' }
+                            ]}
                         >
                             <Select
                                 placeholder="Chọn loại cây trồng"
@@ -372,8 +396,9 @@ const BasicTab = ({
                         <Form.Item
                             name="fixPremiumAmount"
                             label="Phí bảo hiểm cố định"
-                            tooltip="Phí bảo hiểm cố định (Fixed Premium Amount): Một số tiền phí bảo hiểm được ấn định trước cho hợp đồng, không cần qua các bước tính toán động"
+                            tooltip="Phí bảo hiểm cố định (Fixed Premium Amount): Một số tiền phí bảo hiểm được ấn định trước cho hợp đồng, không cần qua các bước tính toán động (BẮT BUỘC)"
                             rules={[
+                                { required: true, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_NEGATIVE') }
                             ]}
                         >
@@ -468,8 +493,9 @@ const BasicTab = ({
                         <Form.Item
                             name="fixPayoutAmount"
                             label="Số tiền bồi thường cố định"
-                            tooltip="Số tiền bồi thường cố định (Fixed Payout Amount): Một số tiền bồi thường được ấn định trước sẽ được chi trả khi điều kiện bảo hiểm xảy ra, thay vì tính toán động"
+                            tooltip="Số tiền bồi thường cố định (Fixed Payout Amount): Một số tiền bồi thường được ấn định trước sẽ được chi trả khi điều kiện bảo hiểm xảy ra, thay vì tính toán động (BẮT BUỘC)"
                             rules={[
+                                { required: true, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_NEGATIVE') }
                             ]}
                         >
@@ -574,6 +600,22 @@ const BasicTab = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabledDate={(current) => {
+                                    const startDay = form.getFieldValue('enrollmentStartDay');
+                                    const validFrom = form.getFieldValue('insuranceValidFrom');
+
+                                    // Disable dates before start day
+                                    if (startDay && current && current.isBefore(startDay, 'day')) {
+                                        return true;
+                                    }
+
+                                    // Disable dates after insurance valid from
+                                    if (validFrom && current && current.isAfter(validFrom, 'day')) {
+                                        return true;
+                                    }
+
+                                    return false;
+                                }}
                             />
                         </Form.Item>
                     </Col>
@@ -620,6 +662,16 @@ const BasicTab = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabledDate={(current) => {
+                                    const validFrom = form.getFieldValue('insuranceValidFrom');
+
+                                    // Disable dates before or equal to insurance valid from
+                                    if (validFrom && current) {
+                                        return current.isBefore(validFrom, 'day') || current.isSame(validFrom, 'day');
+                                    }
+
+                                    return false;
+                                }}
                             />
                         </Form.Item>
                     </Col>
@@ -666,13 +718,24 @@ const BasicTab = ({
                         <Form.Item
                             name="basePolicyInvalidDate"
                             label="Ngày vô hiệu hóa"
-                            tooltip="Ngày mà hợp đồng bảo hiểm (policy) này sẽ bị vô hiệu hóa (tuỳ chọn)"
+                            tooltip="Ngày mà hợp đồng bảo hiểm (policy) này sẽ bị vô hiệu hóa (tuỳ chọn). Phải sau ngày kết thúc hiệu lực"
                         >
                             <DatePicker
                                 placeholder="Chọn ngày vô hiệu"
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabled={!form.getFieldValue('insuranceValidTo')}
+                                disabledDate={(current) => {
+                                    const validTo = form.getFieldValue('insuranceValidTo');
+
+                                    // Disable dates before or equal to insurance valid to
+                                    if (validTo && current) {
+                                        return current.isBefore(validTo, 'day') || current.isSame(validTo, 'day');
+                                    }
+
+                                    return false;
+                                }}
                             />
                         </Form.Item>
                     </Col>
@@ -724,7 +787,7 @@ const BasicTab = ({
                 </Text>
             </Title>
 
-            <Card className="data-source-card">
+            <Card className="data-source-card" styles={{ body: { padding: '24px' } }}>
                 <Form
                     form={dataSourceForm}
                     layout="vertical"
@@ -891,5 +954,9 @@ const BasicTab = ({
         </div>
     );
 };
+
+// ✅ OPTIMIZATION: Wrap with memo and add display name
+const BasicTab = memo(BasicTabComponent);
+BasicTab.displayName = 'BasicTab';
 
 export default BasicTab;

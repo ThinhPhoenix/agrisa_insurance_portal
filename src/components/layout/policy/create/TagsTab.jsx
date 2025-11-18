@@ -21,13 +21,14 @@ import {
     TimePicker,
     Typography
 } from 'antd';
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-const TagsTab = ({
+// ✅ OPTIMIZATION: Memoize TagsTab to prevent unnecessary re-renders
+const TagsTabComponent = ({
     tagsData,
     mockData,
     onDataChange,
@@ -645,7 +646,7 @@ const TagsTab = ({
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                     <Title level={4} style={{ margin: 0 }}>
-                        <TagOutlined /> Gắn thẻ & Metadata
+                        <TagOutlined /> Tài liệu & Trường thông tin
                     </Title>
                     <Space wrap>
                         <Button
@@ -660,7 +661,7 @@ const TagsTab = ({
 
                 <Alert
                     message="Cấu hình trường thông tin cho hợp đồng"
-                    description="Thêm các trường thông tin để tạo mẫu hợp đồng bảo hiểm. Các trường này sẽ được hiển thị trên hợp đồng PDF theo thứ tự và độ rộng bạn cấu hình. Xem trước realtime ở bên phải."
+                    description="Thêm các trường thông tin để tạo mẫu hợp đồng bảo hiểm. Các trường này sẽ được hiển thị trên hợp đồng PDF theo thứ tự và độ rộng bạn cấu hình. Xem trước ở bên phải."
                     type="info"
                     showIcon
                     style={{ marginBottom: 24 }}
@@ -710,19 +711,23 @@ const TagsTab = ({
                     />
                 ) : (
                     <Alert
-                        message="Chưa có placeholders"
-                        description="Upload hoặc paste text từ PDF để phát hiện placeholders và map với tags"
+                        message="Chưa có trường thông tin được thêm"
+                        description="Tải tệp PDF để phát hiện trường thông tin cần thêm"
                         type="info"
                         showIcon
                     />
                 )}
 
                 <div style={{ marginTop: 12 }}>
-                    <Text type="secondary">Tổng tags hiện tại: <Text strong>{tagsData.tags.length}</Text></Text>
+                    <Text type="secondary">Tổng trường thông tin hiện tại: <Text strong>{tagsData.tags.length}</Text></Text>
                 </div>
             </div>
         </div>
     );
 };
+
+// ✅ OPTIMIZATION: Wrap with memo and add display name
+const TagsTab = memo(TagsTabComponent);
+TagsTab.displayName = 'TagsTab';
 
 export default TagsTab;

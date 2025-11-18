@@ -22,12 +22,14 @@ export const POLICY_MESSAGES = {
       COVERAGE_DURATION_INVALID: "Thời hạn bảo hiểm phải lớn hơn 0 ngày!",
 
       // Premium validation
+      FIX_PREMIUM_AMOUNT_REQUIRED: "Vui lòng nhập phí bảo hiểm cố định!",
       FIX_PREMIUM_AMOUNT_NEGATIVE: "Phí bảo hiểm cố định không được âm!",
       PREMIUM_BASE_RATE_NEGATIVE: "Tỷ lệ phí cơ bản không được âm!",
       PREMIUM_BASE_RATE_REQUIRED:
         "Vui lòng nhập tỷ lệ phí cơ bản khi không có phí cố định!",
 
       // Payout validation
+      FIX_PAYOUT_AMOUNT_REQUIRED: "Vui lòng nhập số tiền bồi thường cố định!",
       FIX_PAYOUT_AMOUNT_NEGATIVE: "Số tiền chi trả cố định không được âm!",
       PAYOUT_BASE_RATE_NEGATIVE: "Tỷ lệ chi trả cơ bản không được âm!",
       PAYOUT_BASE_RATE_REQUIRED: "Vui lòng nhập tỷ lệ chi trả cơ bản!",

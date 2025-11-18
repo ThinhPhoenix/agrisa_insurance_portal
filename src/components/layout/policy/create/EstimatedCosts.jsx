@@ -1,9 +1,11 @@
 import { CalculatorOutlined, DollarOutlined, PercentageOutlined } from '@ant-design/icons';
 import { Card, Col, Divider, Progress, Row, Space, Statistic, Tag, Typography } from 'antd';
+import { memo, useMemo } from 'react';
 
 const { Title, Text } = Typography;
 
-const EstimatedCosts = ({ estimatedCosts, basicData, configurationData }) => {
+// ✅ OPTIMIZATION: Memoize EstimatedCosts to prevent unnecessary re-renders
+const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData }) => {
     const {
         monthlyDataCost,
         dataComplexityScore,
@@ -11,21 +13,22 @@ const EstimatedCosts = ({ estimatedCosts, basicData, configurationData }) => {
         totalEstimatedCost
     } = estimatedCosts;
 
-    // Calculate total condition cost
-    const totalConditionCost = (configurationData?.conditions || []).reduce(
-        (sum, condition) => sum + (condition.calculatedCost || 0),
-        0
+    // ✅ OPTIMIZATION: Memoize expensive calculations
+    const totalConditionCost = useMemo(() =>
+        (configurationData?.conditions || []).reduce(
+            (sum, condition) => sum + (condition.calculatedCost || 0),
+            0
+        ),
+        [configurationData?.conditions]
     );
 
     // Calculate complexity level
-    const getComplexityLevel = (score) => {
-        if (score === 0) return { level: 'Chưa cấu hình', color: 'default' };
-        if (score <= 2) return { level: 'Đơn giản', color: 'green' };
-        if (score <= 4) return { level: 'Trung bình', color: 'orange' };
+    const complexityInfo = useMemo(() => {
+        if (dataComplexityScore === 0) return { level: 'Chưa cấu hình', color: 'default' };
+        if (dataComplexityScore <= 2) return { level: 'Đơn giản', color: 'green' };
+        if (dataComplexityScore <= 4) return { level: 'Trung bình', color: 'orange' };
         return { level: 'Phức tạp', color: 'red' };
-    };
-
-    const complexityInfo = getComplexityLevel(dataComplexityScore);
+    }, [dataComplexityScore]);
 
     return (
         <Card
@@ -41,8 +44,8 @@ const EstimatedCosts = ({ estimatedCosts, basicData, configurationData }) => {
                 maxHeight: '100%',
                 overflow: 'unset'
             }}
-            bodyStyle={{
-                padding: '12px'
+            styles={{
+                body: { padding: '12px' }
             }}
         >
             {/* Monthly Data Cost */}
@@ -225,5 +228,9 @@ const EstimatedCosts = ({ estimatedCosts, basicData, configurationData }) => {
         </Card>
     );
 };
+
+// ✅ OPTIMIZATION: Wrap with memo and add display name
+const EstimatedCosts = memo(EstimatedCostsComponent);
+EstimatedCosts.displayName = 'EstimatedCosts';
 
 export default EstimatedCosts;

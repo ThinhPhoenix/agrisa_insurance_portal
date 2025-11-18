@@ -448,7 +448,7 @@ const FileUploadPreview = forwardRef(({
                     <Text type="secondary" style={{ fontSize: '12px' }}>
                         • Hỗ trợ: PDF<br />
                         • Dung lượng tối đa: 10MB<br />
-                        • File sẽ được xử lý để phát hiện các placeholder tự động
+                        • File sẽ được xử lý để phát hiện các trường thông tin tự động
                     </Text>
                 </div>
             </Dragger>
@@ -664,9 +664,9 @@ const FileUploadPreview = forwardRef(({
                 footer={null}
                 width="95vw"
                 style={{ top: 20, padding: 0 }}
-                bodyStyle={{ height: '90vh', padding: 0 }}
+                styles={{ body: { height: '90vh', padding: 0 } }}
                 centered
-                destroyOnClose
+                destroyOnHidden
             >
                 <iframe
                     key={fileUrl}

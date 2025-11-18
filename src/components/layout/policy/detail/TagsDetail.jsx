@@ -1,12 +1,8 @@
 import CustomTable from '@/components/custom-table';
 import {
-    DownloadOutlined,
-    FileTextOutlined,
-    FullscreenOutlined,
-    PrinterOutlined,
     TagOutlined
 } from '@ant-design/icons';
-import { Button, Card, Col, Descriptions, Empty, Modal, Row, Space, Tag, Typography, message } from 'antd';
+import { Card, Descriptions, Empty, Tag, Typography } from 'antd';
 import React from 'react';
 
 const { Title, Text } = Typography;
@@ -26,6 +22,14 @@ const TagsDetail = ({ policyData, mockData }) => {
             return parseFloat(tag.value).toLocaleString();
         }
         return tag.value || 'N/A';
+    };
+
+    const getValidationStatusLabel = (status) => {
+        const statusMap = {
+            'approved': 'đang hoạt động',
+            'pending': 'chờ duyệt',
+        };
+        return statusMap[status] || status;
     };
 
     // Convert document_tags object to array format
@@ -62,20 +66,13 @@ const TagsDetail = ({ policyData, mockData }) => {
                 <Tag color="blue">{getDataTypeLabel(value)}</Tag>
             ),
         },
-        {
-            title: 'Giá trị',
-            key: 'value',
-            render: (_, record) => (
-                <Text>{formatTagValue(record)}</Text>
-            ),
-        },
     ];
 
     return (
         <Card>
             <Title level={4}>
                 <TagOutlined style={{ marginRight: 8 }} />
-                Tags & Metadata
+                Tài liệu & Trường thông tin
                 <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
                     ({tags.length} trường)
                 </Text>
@@ -106,7 +103,7 @@ const TagsDetail = ({ policyData, mockData }) => {
                             </Descriptions.Item>
                             <Descriptions.Item label="Trạng thái xác thực">
                                 <Tag color={policyData.documentValidationStatus === 'approved' ? 'green' : 'orange'}>
-                                    {policyData.documentValidationStatus || 'pending'}
+                                    {getValidationStatusLabel(policyData.documentValidationStatus) || 'chờ duyệt'}
                                 </Tag>
                             </Descriptions.Item>
                             <Descriptions.Item label="Số lượng tags">

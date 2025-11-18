@@ -154,8 +154,8 @@ const CreatePolicyPage = () => {
 
   // ✅ NEW: Handle manual placeholder creation from click-to-place
   const handleCreatePlaceholder = (newPlaceholder) => {
-    console.log('📍 Adding manual placeholder to list:', newPlaceholder);
-    setDetectedPlaceholders(prev => [...prev, newPlaceholder]);
+    console.log("📍 Adding manual placeholder to list:", newPlaceholder);
+    setDetectedPlaceholders((prev) => [...prev, newPlaceholder]);
   };
 
   // Get current step index
@@ -291,7 +291,7 @@ const CreatePolicyPage = () => {
       label: (
         <Space>
           <TagOutlined />
-          <span>Tags</span>
+          <span>Tài liệu & Trường thông tin</span>
           {isTabCompleted(TABS.TAGS) && (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
           )}

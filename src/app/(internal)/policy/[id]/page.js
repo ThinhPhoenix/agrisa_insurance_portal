@@ -6,14 +6,12 @@ import {
   CostSummary,
   TagsDetail,
 } from "@/components/layout/policy/detail";
-import usePolicy from "@/services/hooks/policy/use-policy";
 import useDetailPolicy from "@/services/hooks/policy/use-detail-policy";
+import usePolicy from "@/services/hooks/policy/use-policy";
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  DeleteOutlined,
-  EditOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
 import {
@@ -22,7 +20,6 @@ import {
   Col,
   Divider,
   message,
-  Popconfirm,
   Row,
   Space,
   Spin,
@@ -41,10 +38,7 @@ const PolicyDetailPage = ({ params }) => {
   const [activeTab, setActiveTab] = React.useState("basic");
 
   // Use policy list hook for checking draft/active status
-  const {
-    policies,
-    activePolicies,
-  } = usePolicy();
+  const { policies, activePolicies } = usePolicy();
 
   // Use detail policy hook for fetching policy details
   const {
@@ -84,8 +78,10 @@ const PolicyDetailPage = ({ params }) => {
         }
 
         // Determine if policy is draft or active by checking both lists
-        const isDraft = policies.some(p => p.base_policy?.id === params.id);
-        const isActive = activePolicies.some(p => p.base_policy?.id === params.id);
+        const isDraft = policies.some((p) => p.base_policy?.id === params.id);
+        const isActive = activePolicies.some(
+          (p) => p.base_policy?.id === params.id
+        );
 
         let policyData = null;
 
@@ -125,7 +121,14 @@ const PolicyDetailPage = ({ params }) => {
     };
 
     loadPolicyDetail();
-  }, [params.id, fetchPolicyDetail, fetchActivePolicyDetail, policies, activePolicies, router]);
+  }, [
+    params.id,
+    fetchPolicyDetail,
+    fetchActivePolicyDetail,
+    policies,
+    activePolicies,
+    router,
+  ]);
 
   // Show loading spinner
   if (policyDetailLoading) {
@@ -155,11 +158,12 @@ const PolicyDetailPage = ({ params }) => {
 
   // Convert timestamp to date string
   const formatDate = (timestamp) => {
-    if (!timestamp || timestamp === 0 || timestamp === "0001-01-01T00:00:00Z") return "N/A";
+    if (!timestamp || timestamp === 0 || timestamp === "0001-01-01T00:00:00Z")
+      return "N/A";
 
     // Handle both Unix timestamp and ISO string
     let date;
-    if (typeof timestamp === 'string') {
+    if (typeof timestamp === "string") {
       date = new Date(timestamp);
     } else {
       date = new Date(timestamp * 1000);
@@ -253,18 +257,6 @@ const PolicyDetailPage = ({ params }) => {
     })),
   };
 
-  const handleEdit = () => {
-    message.info("Chuyển đến trang chỉnh sửa...");
-    // router.push(`/policy/${params.id}/edit`);
-  };
-
-  const handleDelete = () => {
-    message.success("Đã xóa chính sách thành công!");
-    setTimeout(() => {
-      router.push("/policy");
-    }, 1500);
-  };
-
   const handleBack = () => {
     router.push("/policy");
   };
@@ -274,7 +266,7 @@ const PolicyDetailPage = ({ params }) => {
       draft: {
         color: "orange",
         icon: <ClockCircleOutlined />,
-        text: "Nháp",
+        text: "Chờ duyệt",
       },
       active: {
         color: "green",
@@ -330,7 +322,7 @@ const PolicyDetailPage = ({ params }) => {
       label: (
         <Space>
           <FileTextOutlined />
-          <span>Tags & Metadata</span>
+          <span>Tài liệu & Trường thông tin</span>
         </Space>
       ),
       children: <TagsDetail policyData={policyDetail} mockData={mockData} />,
@@ -341,7 +333,7 @@ const PolicyDetailPage = ({ params }) => {
     <div className="space-y-4">
       {/* Header */}
       <Card>
-        <Row justify="space-between" align="middle">
+        <Row align="middle">
           <Col>
             <Space direction="vertical" size={0}>
               <Button
@@ -361,29 +353,6 @@ const PolicyDetailPage = ({ params }) => {
                 </Text>
                 {getStatusTag(policyDetail.status)}
               </Space>
-            </Space>
-          </Col>
-          <Col>
-            <Space>
-              <Button
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={handleEdit}
-              >
-                Chỉnh sửa
-              </Button>
-              <Popconfirm
-                title="Xóa chính sách"
-                description="Bạn có chắc chắn muốn xóa chính sách này?"
-                onConfirm={handleDelete}
-                okText="Xóa"
-                cancelText="Hủy"
-                okButtonProps={{ danger: true }}
-              >
-                <Button danger icon={<DeleteOutlined />}>
-                  Xóa
-                </Button>
-              </Popconfirm>
             </Space>
           </Col>
         </Row>

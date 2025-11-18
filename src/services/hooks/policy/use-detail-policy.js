@@ -94,11 +94,11 @@ const useDetailPolicy = () => {
       if (meData) {
         try {
           const userData = JSON.parse(meData);
-          const providerId = userData?.partner_id;
+          const providerId = userData?.user_id;
           if (providerId) {
             return await fetchPolicyDetailByProvider(providerId, basePolicyId);
           } else {
-            setPolicyDetailError("Partner ID not found in user data");
+            setPolicyDetailError("User ID not found in user data");
             return null;
           }
         } catch (error) {

@@ -31,12 +31,13 @@ import {
     Tooltip,
     Typography
 } from 'antd';
-import { useRef, useState } from 'react';
+import { memo, useRef, useState, useCallback, useEffect } from 'react';
 
 const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
 
-const ConfigurationTab = ({
+// ✅ OPTIMIZATION: Memoize ConfigurationTab to prevent unnecessary re-renders
+const ConfigurationTabComponent = ({
     configurationData,
     mockData,
     onDataChange,
@@ -464,7 +465,7 @@ const ConfigurationTab = ({
                                                     placeholder="Chọn nguồn dữ liệu"
                                                     size="large"
                                                     optionLabelProp="displayLabel"
-                                                    dropdownStyle={{ maxWidth: '300px' }}
+                                                    popupMatchSelectWidth={300}
                                                 >
                                                     {availableDataSources.map(source => {
                                                         const displayLabel = source.label.length > 17 ? source.label.substring(0, 17) + '...' : source.label;
@@ -519,7 +520,7 @@ const ConfigurationTab = ({
                                                     placeholder="Chọn hàm tổng hợp"
                                                     size="large"
                                                     optionLabelProp="label"
-                                                    dropdownStyle={{ maxWidth: '300px' }}
+                                                    popupMatchSelectWidth={300}
                                                 >
                                                     {mockData.aggregationFunctions?.map(func => (
                                                         <Select.Option
@@ -584,7 +585,7 @@ const ConfigurationTab = ({
                                                     placeholder="Chọn toán tử"
                                                     size="large"
                                                     optionLabelProp="label"
-                                                    dropdownStyle={{ maxWidth: '300px' }}
+                                                    popupMatchSelectWidth={300}
                                                 >
                                                     {mockData.thresholdOperators?.map(operator => (
                                                         <Select.Option
@@ -864,5 +865,9 @@ const ConfigurationTab = ({
         </div>
     );
 };
+
+// ✅ OPTIMIZATION: Wrap with memo and add display name
+const ConfigurationTab = memo(ConfigurationTabComponent);
+ConfigurationTab.displayName = 'ConfigurationTab';
 
 export default ConfigurationTab;

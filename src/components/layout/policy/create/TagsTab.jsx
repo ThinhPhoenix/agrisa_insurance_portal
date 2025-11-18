@@ -21,13 +21,14 @@ import {
     TimePicker,
     Typography
 } from 'antd';
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-const TagsTab = ({
+// ✅ OPTIMIZATION: Memoize TagsTab to prevent unnecessary re-renders
+const TagsTabComponent = ({
     tagsData,
     mockData,
     onDataChange,
@@ -724,5 +725,9 @@ const TagsTab = ({
         </div>
     );
 };
+
+// ✅ OPTIMIZATION: Wrap with memo and add display name
+const TagsTab = memo(TagsTabComponent);
+TagsTab.displayName = 'TagsTab';
 
 export default TagsTab;

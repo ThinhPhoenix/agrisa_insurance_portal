@@ -664,9 +664,9 @@ const FileUploadPreview = forwardRef(({
                 footer={null}
                 width="95vw"
                 style={{ top: 20, padding: 0 }}
-                bodyStyle={{ height: '90vh', padding: 0 }}
+                styles={{ body: { height: '90vh', padding: 0 } }}
                 centered
-                destroyOnClose
+                destroyOnHidden
             >
                 <iframe
                     key={fileUrl}

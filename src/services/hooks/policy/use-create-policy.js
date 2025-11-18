@@ -3,7 +3,7 @@ import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
 import { calculateConditionCost, usePolicyStore } from "@/stores/policy-store";
 import { message } from "antd";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 
 const TABS = {
   BASIC: "basic",
@@ -13,11 +13,31 @@ const TABS = {
 };
 
 /**
+ * Debounce utility for expensive operations
+ */
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+/**
  * Hook for policy creation functionality
  * Used in: /policy/create page for creating new policies
  */
 const useCreatePolicy = () => {
   const [currentTab, setCurrentTab] = useState(TABS.BASIC);
+  const validationTimeoutRef = useRef(null);
 
   const [basicData, setBasicData] = useState({
     productName: "",
@@ -88,9 +108,21 @@ const useCreatePolicy = () => {
   const [dataSourcesLoading, setDataSourcesLoading] = useState(false);
   const [dataSourcesError, setDataSourcesError] = useState(null);
 
+  // ✅ OPTIMIZATION: Memoize expensive cost calculations
+  // Only recalculate when dependencies actually change
   const estimatedCosts = useMemo(() => {
     let monthlyDataCost = 0;
     let dataComplexityScore = 0;
+
+    // Skip calculation if no data sources
+    if (!basicData.selectedDataSources || basicData.selectedDataSources.length === 0) {
+      return {
+        monthlyDataCost: "0.00",
+        dataComplexityScore: 0,
+        premiumBaseRate: basicData.premiumBaseRate || 0,
+        totalEstimatedCost: "0.00",
+      };
+    }
 
     basicData.selectedDataSources.forEach((source) => {
       const category = categories.find(

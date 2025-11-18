@@ -18,10 +18,12 @@ import {
     Tag,
     Typography
 } from 'antd';
+import { memo } from 'react';
 
 const { Title, Text } = Typography;
 
-const ReviewTab = ({
+// ✅ OPTIMIZATION: Memoize ReviewTab to prevent unnecessary re-renders
+const ReviewTabComponent = ({
     basicData,
     configurationData,
     tagsData,
@@ -548,5 +550,9 @@ const ReviewTab = ({
         </div>
     );
 };
+
+// ✅ OPTIMIZATION: Wrap with memo and add display name
+const ReviewTab = memo(ReviewTabComponent);
+ReviewTab.displayName = 'ReviewTab';
 
 export default ReviewTab;

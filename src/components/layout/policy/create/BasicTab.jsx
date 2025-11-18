@@ -20,12 +20,13 @@ import {
     Tooltip,
     Typography
 } from 'antd';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState, useCallback, useRef } from 'react';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-const BasicTab = ({
+// ✅ OPTIMIZATION: Memoize BasicTab to prevent unnecessary re-renders
+const BasicTabComponent = ({
     basicData,
     mockData,
     onDataChange,
@@ -83,13 +84,32 @@ const BasicTab = ({
         }
     }, [basicData, onDataChange, user]);
 
-    // Handle form values change
-    const handleValuesChange = (changedValues, allValues) => {
-        onDataChange(allValues);
-    };
+    // ✅ OPTIMIZATION: Debounce form changes to prevent input lag with Vietnamese typing
+    const timeoutRef = useRef(null);
+    const handleValuesChange = useCallback((changedValues, allValues) => {
+        // Clear previous timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        // Debounce the onChange call to prevent re-render during typing
+        // This fixes Vietnamese input composition issues
+        timeoutRef.current = setTimeout(() => {
+            onDataChange(allValues);
+        }, 300); // 300ms debounce
+    }, [onDataChange]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
 
     // Handle category change
-    const handleCategoryChange = (categoryName) => {
+    const handleCategoryChange = useCallback((categoryName) => {
         setSelectedCategory(categoryName);
         setSelectedTier('');
         dataSourceForm.setFieldsValue({ tier: undefined, dataSource: undefined });
@@ -99,10 +119,10 @@ const BasicTab = ({
         if (selectedCategoryObj && fetchTiersByCategory) {
             fetchTiersByCategory(selectedCategoryObj.id);
         }
-    };
+    }, [categories, dataSourceForm, fetchTiersByCategory]);
 
     // Handle tier change
-    const handleTierChange = (tier) => {
+    const handleTierChange = useCallback((tier) => {
         setSelectedTier(tier);
         dataSourceForm.setFieldsValue({ dataSource: undefined });
 
@@ -111,10 +131,10 @@ const BasicTab = ({
         if (selectedTierData && fetchDataSourcesByTier) {
             fetchDataSourcesByTier(selectedTierData.id);
         }
-    };
+    }, [tiers, dataSourceForm, fetchDataSourcesByTier]);
 
     // Handle add data source
-    const handleAddDataSource = () => {
+    const handleAddDataSource = useCallback(() => {
         dataSourceForm.validateFields().then(values => {
             const selectedSource = dataSources.find(source => source.id === values.dataSource);
             if (selectedSource) {
@@ -149,7 +169,7 @@ const BasicTab = ({
                 setSelectedTier('');
             }
         });
-    };
+    }, [dataSourceForm, dataSources, onAddDataSource, selectedCategory, selectedTier, basicData.selectedDataSources, categories, tiers]);
 
     // Data source table columns
     const dataSourceColumns = [
@@ -235,17 +255,18 @@ const BasicTab = ({
                         <Form.Item
                             name="productCode"
                             label="Mã Sản phẩm"
-                            tooltip="Mã định danh duy nhất cho sản phẩm (chỉ chữ hoa, số và dấu gạch dưới). Ví dụ: RICE_WINTER_2025"
+                            tooltip="Mã định danh duy nhất cho sản phẩm (chỉ chữ cái, số và dấu gạch dưới). Tự động chuyển thành chữ hoa"
                             rules={[
                                 { required: true, message: getBasePolicyError('PRODUCT_CODE_REQUIRED') },
                                 {
-                                    pattern: /^[A-Z0-9_]+$/,
-                                    message: getBasePolicyValidation('PRODUCT_CODE_FORMAT')
+                                    pattern: /^[A-Za-z0-9_]+$/,
+                                    message: 'Mã sản phẩm chỉ được chứa chữ cái, số và dấu gạch dưới (_)!'
                                 }
                             ]}
+                            normalize={(value) => value ? value.toUpperCase() : value}
                         >
                             <Input
-                                placeholder="Ví dụ: RICE_WINTER_2025"
+                                placeholder="Ví dụ: rice_winter_2025 (tự động thành RICE_WINTER_2025)"
                                 size="large"
                                 style={{ textTransform: 'uppercase' }}
                             />
@@ -724,7 +745,7 @@ const BasicTab = ({
                 </Text>
             </Title>
 
-            <Card className="data-source-card">
+            <Card className="data-source-card" styles={{ body: { padding: '24px' } }}>
                 <Form
                     form={dataSourceForm}
                     layout="vertical"
@@ -891,5 +912,9 @@ const BasicTab = ({
         </div>
     );
 };
+
+// ✅ OPTIMIZATION: Wrap with memo and add display name
+const BasicTab = memo(BasicTabComponent);
+BasicTab.displayName = 'BasicTab';
 
 export default BasicTab;

@@ -21,13 +21,13 @@ import {
     TimePicker,
     Typography
 } from 'antd';
-import React, { memo, useCallback } from 'react';
+import React, { memo } from 'react';
 import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-// ✅ OPTIMIZATION: Memoize TagsTab to prevent unnecessary re-renders
+//  OPTIMIZATION: Memoize TagsTab to prevent unnecessary re-renders
 const TagsTabComponent = ({
     tagsData,
     mockData,
@@ -692,8 +692,13 @@ const TagsTabComponent = ({
 
                                 // Only update fields that exist in pdfData (avoid overwriting with undefined)
                                 if (pdfData) {
+                                    //  FIX: MERGE documentTagsObject instead of overwriting
+                                    // This preserves previously mapped tags when adding new ones
                                     if (pdfData.documentTagsObject !== undefined) {
-                                        updates.documentTagsObject = pdfData.documentTagsObject;
+                                        updates.documentTagsObject = {
+                                            ...prev.documentTagsObject,
+                                            ...pdfData.documentTagsObject
+                                        };
                                     }
                                     if (pdfData.modifiedPdfBytes !== undefined) {
                                         updates.modifiedPdfBytes = pdfData.modifiedPdfBytes;
@@ -726,7 +731,7 @@ const TagsTabComponent = ({
     );
 };
 
-// ✅ OPTIMIZATION: Wrap with memo and add display name
+//  OPTIMIZATION: Wrap with memo and add display name
 const TagsTab = memo(TagsTabComponent);
 TagsTab.displayName = 'TagsTab';
 

@@ -87,9 +87,10 @@ const CreatePolicyPage = () => {
   const handlePolicyCreated = async () => {
     const success = await handleCreatePolicy();
     if (success) {
+      // Redirect to policy list page after brief delay to show success message
       setTimeout(() => {
         router.push("/policy");
-      }, 2000);
+      }, 1000); // Reduced from 2000ms to 1000ms for faster UX
     }
   };
 

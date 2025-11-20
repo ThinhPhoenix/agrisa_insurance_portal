@@ -23,15 +23,110 @@ import {
     Typography,
     message
 } from 'antd';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CustomTable from '../../../custom-table';
 
 const { Text, Title } = Typography;
 
 /**
+ *  OPTIMIZATION: Separate memoized component for mapping input
+ * Strategy: Keep local state for smooth UI + sync to parent with debounce
+ */
+const MappingInputCell = memo(({
+    recordId,
+    initialValue,
+    onInputChange,
+    onApplyClick,
+    dataTypeOptions,
+    isApplying
+}) => {
+    const [localKey, setLocalKey] = useState(initialValue?.key || '');
+    const [localDataType, setLocalDataType] = useState(initialValue?.dataType || dataTypeOptions[0]?.value || 'string');
+    const timeoutRef = useRef(null);
+
+    // Sync local state when initialValue.key is cleared (empty string)
+    useEffect(() => {
+        if (initialValue?.key === '') {
+            setLocalKey('');
+        }
+    }, [initialValue?.key]);
+
+    // Handle key input with debounce
+    const handleKeyChange = useCallback((e) => {
+        const newValue = e.target.value.toLowerCase();
+        setLocalKey(newValue); // Update local immediately for smooth typing
+
+        // Clear previous timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        // Debounce parent update
+        timeoutRef.current = setTimeout(() => {
+            onInputChange(recordId, 'key', newValue);
+        }, 300);
+    }, [recordId, onInputChange]);
+
+    // Handle dataType change (immediate parent update)
+    const handleDataTypeChange = useCallback((val) => {
+        setLocalDataType(val);
+        onInputChange(recordId, 'dataType', val);
+    }, [recordId, onInputChange]);
+
+    //  CRITICAL: Initialize default dataType to parent on mount
+    useEffect(() => {
+        if (initialValue?.dataType || dataTypeOptions[0]?.value) {
+            onInputChange(recordId, 'dataType', initialValue?.dataType || dataTypeOptions[0]?.value || 'string');
+        }
+    }, []); // Only on mount
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    return (
+        <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
+            <Input
+                placeholder="Tên trường (key)"
+                value={localKey}
+                onChange={handleKeyChange}
+                style={{ flex: '0 0 28%', minWidth: 100 }}
+                size="middle"
+            />
+
+            <Select
+                value={localDataType}
+                onChange={handleDataTypeChange}
+                style={{ flex: '0 0 20%', minWidth: 100 }}
+                size="middle"
+                options={dataTypeOptions}
+            />
+
+            <Tooltip title="Tạo tag mới và áp dụng ngay vào PDF">
+                <Button
+                    type="primary"
+                    size="middle"
+                    onClick={() => onApplyClick(recordId)}
+                    loading={isApplying}
+                >
+                    Áp dụng
+                </Button>
+            </Tooltip>
+        </div>
+    );
+});
+
+MappingInputCell.displayName = 'MappingInputCell';
+
+/**
  * Panel để map placeholders trong PDF với tags đã tạo
  */
-const PlaceholderMappingPanel = ({
+const PlaceholderMappingPanelComponent = ({
     placeholders = [],
     tags = [],
     tagDataTypes = [],
@@ -53,6 +148,13 @@ const PlaceholderMappingPanel = ({
 
     // Sử dụng tagDataTypes từ prop nếu có, ngược lại dùng default
     const effectiveTagDataTypes = tagDataTypes.length > 0 ? tagDataTypes : defaultTagDataTypes;
+
+    //  OPTIMIZATION: Memoize dataType options to prevent re-creation on every render
+    const dataTypeOptions = useMemo(() =>
+        effectiveTagDataTypes.map(dt => ({ label: dt.label, value: dt.value })),
+        [effectiveTagDataTypes]
+    );
+
     const [mappings, setMappings] = useState({});
     const [stats, setStats] = useState({
         total: 0,
@@ -280,6 +382,14 @@ const PlaceholderMappingPanel = ({
 
     const [tempInputs, setTempInputs] = useState({});
 
+    //  OPTIMIZATION: Update tempInputs from MappingInputCell (already debounced in component)
+    const handleInputChange = useCallback((id, field, value) => {
+        setTempInputs(prev => ({
+            ...prev,
+            [id]: { ...(prev[id] || {}), [field]: value }
+        }));
+    }, []);
+
     const setTempInput = (id, value) => {
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
@@ -415,6 +525,45 @@ const PlaceholderMappingPanel = ({
             message.error(`Lỗi: ${result.error}`);
         }
     };
+
+    //  OPTIMIZATION: Memoize apply button handler to prevent re-creation
+    const handleApplyClick = useCallback(async (recordId) => {
+        //  FIX: Use tempInputs (debounced state) instead of localValue for validation
+        const finalValue = tempInputs[recordId] || { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' };
+
+        if (!finalValue.key || !finalValue.dataType) {
+            message.warning('Vui lòng nhập tên trường và chọn loại dữ liệu');
+            return;
+        }
+
+        const newId = `local-${Date.now()}`;
+        const dataTypeLabel = effectiveTagDataTypes.find(t => t.value === finalValue.dataType)?.label || finalValue.dataType;
+        const newTag = {
+            id: newId,
+            key: finalValue.key,
+            dataType: finalValue.dataType,
+            dataTypeLabel,
+            value: '',
+            index: effectiveTags.length + 1
+        };
+
+        // 1. Notify parent FIRST to add tag with proper ID
+        if (onCreateTag) {
+            onCreateTag(newTag);
+        }
+
+        // 2. Map placeholder with tag - Pass newTag to avoid race condition
+        handleMapPlaceholder(recordId, newId, newTag);
+
+        // 3. Auto-replace on PDF (realtime!) - Pass tag object directly
+        await applySingleReplacement(recordId, newTag);
+
+        // 4. Clear temp inputs (MappingInputCell will update via initialValue prop)
+        setTempInput(recordId, { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' });
+
+        // 5. Remove from selection if it was selected
+        setSelectedRows(prev => prev.filter(id => id !== recordId));
+    }, [tempInputs, effectiveTagDataTypes, effectiveTags, onCreateTag, handleMapPlaceholder, applySingleReplacement]);
 
     //  NEW: Apply selected placeholders in batch
     const applySelectedBatch = async () => {
@@ -747,8 +896,8 @@ const PlaceholderMappingPanel = ({
         }),
     };
 
-    // Table columns
-    const columns = [
+    //  OPTIMIZATION: Memoize columns to prevent re-creation on every render
+    const columns = useMemo(() => [
         {
             title: 'Vị trí',
             dataIndex: 'original',
@@ -818,67 +967,18 @@ const PlaceholderMappingPanel = ({
                 }
 
                 // Not mapped and not applied - show input form
+                //  OPTIMIZATION: Use MappingInputCell with internal state to prevent Vietnamese IME lag
+                const initialValue = tempInputs[record.id] || { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' };
+
                 return (
-                    <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
-                        <Input
-                            placeholder="Tên trường (key)"
-                            value={local.key}
-                            onChange={(e) => setTempInput(record.id, { ...local, key: e.target.value.toLowerCase() })}
-                            style={{ flex: '0 0 28%', minWidth: 100 }}
-                            size="middle"
-                        />
-
-                        <Select
-                            value={local.dataType}
-                            onChange={(val) => setTempInput(record.id, { ...local, dataType: val })}
-                            style={{ flex: '0 0 20%', minWidth: 100 }}
-                            size="middle"
-                            options={effectiveTagDataTypes.map(dt => ({ label: dt.label, value: dt.value }))}
-                        />
-
-                        <Tooltip title="Tạo tag mới và áp dụng ngay vào PDF">
-                            <Button
-                                type="primary"
-                                size="middle"
-                                onClick={async () => {
-                                    if (!local.key || !local.dataType) {
-                                        message.warning('Vui lòng nhập tên trường và chọn loại dữ liệu');
-                                        return;
-                                    }
-
-                                    const newId = `local-${Date.now()}`;
-                                    const dataTypeLabel = effectiveTagDataTypes.find(t => t.value === local.dataType)?.label || local.dataType;
-                                    const newTag = {
-                                        id: newId,
-                                        key: local.key,
-                                        dataType: local.dataType,
-                                        dataTypeLabel,
-                                        value: '',
-                                        index: effectiveTags.length + 1
-                                    };
-
-                                    // 1. Notify parent FIRST to add tag with proper ID
-                                    if (onCreateTag) {
-                                        onCreateTag(newTag);
-                                    }
-
-                                    // 2. Map placeholder with tag - Pass newTag to avoid race condition
-                                    handleMapPlaceholder(record.id, newId, newTag);
-
-                                    // 3. Auto-replace on PDF (realtime!) - Pass tag object directly
-                                    await applySingleReplacement(record.id, newTag);
-
-                                    // 4. Clear temp input
-                                    setTempInput(record.id, { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' });
-
-                                    // 5. Remove from selection if it was selected
-                                    setSelectedRows(prev => prev.filter(id => id !== record.id));
-                                }}
-                            >
-                                Áp dụng
-                            </Button>
-                        </Tooltip>
-                    </div>
+                    <MappingInputCell
+                        recordId={record.id}
+                        initialValue={initialValue}
+                        onInputChange={handleInputChange}
+                        onApplyClick={handleApplyClick}
+                        dataTypeOptions={dataTypeOptions}
+                        isApplying={false}
+                    />
                 );
             }
         },
@@ -962,7 +1062,7 @@ const PlaceholderMappingPanel = ({
                 );
             }
         }
-    ];
+    ], [mappings, appliedToPDF, batchCreatedTags, effectiveTags, tempInputs, effectiveTagDataTypes, handleInputChange, handleApplyClick, dataTypeOptions, handleDeletePlaceholder]);
 
     // compute horizontal scroll width (fallback)
     const tableX = Math.max(900, columns.reduce((acc, c) => acc + (c.width || 200), 0));
@@ -1064,5 +1164,9 @@ const PlaceholderMappingPanel = ({
         </Card>
     );
 };
+
+// OPTIMIZATION: Wrap with memo to prevent unnecessary re-renders
+const PlaceholderMappingPanel = memo(PlaceholderMappingPanelComponent);
+PlaceholderMappingPanel.displayName = 'PlaceholderMappingPanel';
 
 export default PlaceholderMappingPanel;

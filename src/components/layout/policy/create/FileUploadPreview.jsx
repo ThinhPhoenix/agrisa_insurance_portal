@@ -20,7 +20,7 @@ import {
     Typography,
     Upload
 } from 'antd';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { analyzePDFForPlaceholders } from '../../../../libs/pdf/PDFPlaceholderDetector';
 import PDFViewerWithSelection from './PDFViewerWithSelection';
 
@@ -32,9 +32,9 @@ const FileUploadPreview = forwardRef(({
     onFileUpload,
     onFileRemove,
     onPlaceholdersDetected,
-    onCreatePlaceholder, // ✅ NEW: Callback for placeholder creation (placement mode)
+    onCreatePlaceholder, //  NEW: Callback for placeholder creation (placement mode)
     compactButtons = false,
-    tags = [], // ✅ NEW: Tags for manual placement
+    tags = [], //  NEW: Tags for manual placement
     // allow parent to control/persist uploaded file across unmounts
     uploadedFile: uploadedFileProp = null,
     fileUrl: fileUrlProp = null
@@ -43,7 +43,7 @@ const FileUploadPreview = forwardRef(({
         openPasteModal: () => handleOpenPasteModal(),
         openFullscreen: () => handleFullscreenOpen(),
 
-        // ✅ Apply replacements - OVERWRITE uploadedFile (In-place Editing)
+        //  Apply replacements - OVERWRITE uploadedFile (In-place Editing)
         applyReplacements: async (replacements) => {
             if (!uploadedFile) {
                 return { success: false, error: 'No file uploaded' };
@@ -67,7 +67,7 @@ const FileUploadPreview = forwardRef(({
                 // Apply replacements
                 const result = await replacePlaceholdersInPDF(arrayBuffer, replacements);
 
-                // ✅ Extract pdfBytes from result object
+                //  Extract pdfBytes from result object
                 const modifiedBytes = result.pdfBytes || result; // Backward compatibility
                 const warnings = result.warnings || [];
 
@@ -78,7 +78,7 @@ const FileUploadPreview = forwardRef(({
 
                 // ⭐ OVERWRITE: Convert bytes to File object
                 const newFile = new File(
-                    [modifiedBytes],  // ✅ Now correctly contains Uint8Array
+                    [modifiedBytes],  //  Now correctly contains Uint8Array
                     uploadedFile.name,
                     { type: 'application/pdf' }
                 );
@@ -130,7 +130,7 @@ const FileUploadPreview = forwardRef(({
             }
         },
 
-        // ✅ Get current file (for backend submission)
+        //  Get current file (for backend submission)
         getCurrentFile: () => {
             if (!uploadedFile) {
                 return {
@@ -151,7 +151,7 @@ const FileUploadPreview = forwardRef(({
     const [fileUrl, setFileUrl] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // ✅ Sync fileUrlProp from parent into local state
+    //  Sync fileUrlProp from parent into local state
     useEffect(() => {
         if (fileUrlProp !== null && fileUrlProp !== fileUrl) {
             setFileUrl(fileUrlProp);
@@ -197,8 +197,52 @@ const FileUploadPreview = forwardRef(({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [uploadedFileProp, fileUrlProp]);
 
-    // Upload props for Ant Design Upload component
-    const uploadProps = {
+    //  OPTIMIZATION: Memoize handleRemoveFile
+    const handleRemoveFile = useCallback(() => {
+        if (fileUrl) {
+            URL.revokeObjectURL(fileUrl);
+        }
+        setUploadedFile(null);
+        setFileUrl(null);
+        setPdfError(null);
+        setPlaceholders([]);
+        if (onFileRemove) {
+            onFileRemove();
+        }
+        message.success('File đã được xóa');
+    }, [fileUrl, onFileRemove]);
+
+    //  OPTIMIZATION: Memoize analyzePDF to prevent re-creation
+    const analyzePDF = useCallback(async (file) => {
+        setAnalyzing(true);
+        try {
+            //  OPTIMIZATION: Delay analysis for large files to allow UI to render first
+            const fileSizeMB = file.size / 1024 / 1024;
+            if (fileSizeMB > 5) {
+                // For files > 5MB, delay analysis by 500ms to allow UI to render
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            const result = await analyzePDFForPlaceholders(file);
+
+            if (result && result.placeholders) {
+                setPlaceholders(result.placeholders);
+
+                // Notify parent
+                if (onPlaceholdersDetected) {
+                    onPlaceholdersDetected(result.placeholders);
+                }
+            }
+        } catch (error) {
+            message.error('Không thể phân tích PDF: ' + error.message);
+        } finally {
+            setAnalyzing(false);
+        }
+    }, [onPlaceholdersDetected]);
+
+    //  OPTIMIZATION: Memoize uploadProps to prevent re-creation
+    // IMPORTANT: Must be defined AFTER analyzePDF
+    const uploadProps = useMemo(() => ({
         name: 'file',
         multiple: false,
         accept: '.pdf',
@@ -268,45 +312,7 @@ const FileUploadPreview = forwardRef(({
             setPdfError(null);
             if (onFileRemove) onFileRemove();
         }
-    };
-
-
-    const handleRemoveFile = () => {
-        if (fileUrl) {
-            URL.revokeObjectURL(fileUrl);
-        }
-        setUploadedFile(null);
-        setFileUrl(null);
-        setPdfError(null);
-        setPlaceholders([]);
-        if (onFileRemove) {
-            onFileRemove();
-        }
-        message.success('File đã được xóa');
-    };
-
-    // Analyze PDF for placeholders
-    const analyzePDF = async (file) => {
-        setAnalyzing(true);
-        try {
-            const result = await analyzePDFForPlaceholders(file);
-
-            if (result && result.placeholders) {
-                setPlaceholders(result.placeholders);
-
-                // Notify parent
-
-                // Notify parent
-                if (onPlaceholdersDetected) {
-                    onPlaceholdersDetected(result.placeholders);
-                }
-            }
-        } catch (error) {
-            message.error('Không thể phân tích PDF: ' + error.message);
-        } finally {
-            setAnalyzing(false);
-        }
-    };
+    }), [analyzePDF, onFileUpload, onFileRemove, fileUrl]);
 
     // Handle paste text from PDF
     const handleOpenPasteModal = () => {
@@ -349,7 +355,8 @@ const FileUploadPreview = forwardRef(({
 
     // Note: mapping and modified-text generation moved to TagsTab; preview only handles file display and placeholder detection
 
-    const handleDownloadFile = () => {
+    //  OPTIMIZATION: Memoize handleDownloadFile
+    const handleDownloadFile = useCallback(() => {
         if (fileUrl && uploadedFile) {
             const link = document.createElement('a');
             link.href = fileUrl;
@@ -358,7 +365,7 @@ const FileUploadPreview = forwardRef(({
             link.click();
             document.body.removeChild(link);
         }
-    };
+    }, [fileUrl, uploadedFile]);
 
     // PDF callbacks - Not needed with iframe
     const onPdfLoad = () => {
@@ -370,24 +377,24 @@ const FileUploadPreview = forwardRef(({
         message.error('Không thể tải PDF. Vui lòng kiểm tra file.');
     };
 
-    // Fullscreen handlers
-    const handleFullscreenOpen = () => {
+    //  OPTIMIZATION: Memoize fullscreen handlers
+    const handleFullscreenOpen = useCallback(() => {
         setFullscreenVisible(true);
-    };
+    }, []);
 
-    const handleFullscreenClose = () => {
+    const handleFullscreenClose = useCallback(() => {
         setFullscreenVisible(false);
-    };
+    }, []);
 
-    // ✅ NEW: Placement mode handlers
-    const handleEnterPlacementMode = () => {
+    //  OPTIMIZATION: Memoize placement mode handlers
+    const handleEnterPlacementMode = useCallback(() => {
         setIsPlacementMode(true);
         message.info('Chế độ đặt tag: Click vào vị trí trong PDF để đặt tag');
-    };
+    }, []);
 
-    const handleExitPlacementMode = () => {
+    const handleExitPlacementMode = useCallback(() => {
         setIsPlacementMode(false);
-    };
+    }, []);
 
     const handleTagPlaced = async ({ tag, coordinates }) => {
         try {

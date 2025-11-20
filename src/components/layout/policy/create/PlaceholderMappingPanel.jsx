@@ -43,7 +43,7 @@ const PlaceholderMappingPanel = ({
     // Định nghĩa rõ các loại dữ liệu theo quy định
     const defaultTagDataTypes = [
         { label: 'Chuỗi/Text', value: 'string' },
-        { label: 'Văn bản dài', value: 'long_string' },
+        { label: 'Văn bản dài', value: 'textarea' },
         { label: 'Ngày tháng', value: 'date' },
         { label: 'Ngày giờ', value: 'datetime' },
         { label: 'Giờ phút', value: 'time' },

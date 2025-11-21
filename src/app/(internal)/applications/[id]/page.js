@@ -2,7 +2,7 @@
 
 import { CustomForm } from "@/components/custom-form";
 import OpenStreetMapWithPolygon from "@/components/map-polygon";
-import { useApplicationDetail } from "@/services/hooks/applications/use-applications";
+import { useApplicationDetail } from "@/services/hooks/approval/use-aproval";
 import { DownloadOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import {
   Avatar,

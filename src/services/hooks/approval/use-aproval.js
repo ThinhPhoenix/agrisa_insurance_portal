@@ -1,3 +1,5 @@
+"use client";
+
 import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
 import { message } from "antd";
@@ -246,5 +248,186 @@ export function useApplicationDetail(id) {
     loading,
     error,
     refetch: fetchApplicationDetail,
+  };
+}
+
+// Hook for insurance policies list
+export function useInsurancePolicies() {
+  const [searchText, setSearchText] = useState("");
+  const [filters, setFilters] = useState({
+    status: null,
+  });
+  const [policies, setPolicies] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchPolicies = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axiosInstance.get(
+        endpoints.policy.read_partner.list
+      );
+      if (response.data.success) {
+        setPolicies(response.data.data.policies || []);
+      } else {
+        throw new Error(response.data.message || "Failed to fetch policies");
+      }
+    } catch (error) {
+      console.error("Error fetching policies:", error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch policies";
+      setError(errorMessage);
+      message.error(`Lỗi khi tải danh sách bảo hiểm: ${errorMessage}`);
+      setPolicies([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPolicies();
+  }, [fetchPolicies]);
+
+  const filteredData = useMemo(() => {
+    return policies.filter((item) => {
+      const matchesSearch =
+        item?.policy_number?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item?.farmer_id?.toLowerCase().includes(searchText.toLowerCase());
+
+      const matchesStatus = !filters.status || item.status === filters.status;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [policies, searchText, filters]);
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleFormSubmit = (values) => {
+    setSearchText(values.search || "");
+    setFilters({
+      status: values.status || null,
+    });
+  };
+
+  const handleClearFilters = () => {
+    setSearchText("");
+    setFilters({
+      status: null,
+    });
+  };
+
+  return {
+    filteredData,
+    loading,
+    error,
+    searchText,
+    filters,
+    handleSearch,
+    handleFilterChange,
+    handleFormSubmit,
+    handleClearFilters,
+    refetch: fetchPolicies,
+  };
+}
+
+// Hook for insurance policy detail
+export function useInsurancePolicyDetail(id) {
+  const [policy, setPolicy] = useState(null);
+  const [farm, setFarm] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchPolicyDetail = useCallback(async () => {
+    if (!id) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Fetch Policy Detail
+      const policyResponse = await axiosInstance.get(
+        endpoints.policy.read_partner.detail(id)
+      );
+
+      if (policyResponse.data.success) {
+        const policyData = policyResponse.data.data;
+        setPolicy(policyData);
+
+        // 2. Fetch Farm Detail if farm_id exists
+        if (policyData.farm_id) {
+          const farmResponse = await axiosInstance.get(
+            endpoints.applications.detail(policyData.farm_id)
+          );
+          if (farmResponse.data.success) {
+            setFarm(farmResponse.data.data);
+          }
+        }
+      } else {
+        throw new Error(
+          policyResponse.data.message || "Failed to fetch policy detail"
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching policy detail:", error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch policy detail";
+      setError(errorMessage);
+      message.error(`Lỗi khi tải chi tiết bảo hiểm: ${errorMessage}`);
+      setPolicy(null);
+      setFarm(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchPolicyDetail();
+  }, [fetchPolicyDetail]);
+
+  // Reuse mock satellite/analysis logic for the farm
+  const satelliteData = useMemo(() => {
+    if (!farm) return null;
+    return {
+      ndvi_index: 0.7,
+      crop_health_status: "good",
+      actual_area: farm.area_sqm ? farm.area_sqm / 10000 : 0,
+    };
+  }, [farm]);
+
+  const farmAnalysis = useMemo(() => {
+    if (!farm) return null;
+    return {
+      crop_health: {
+        average_ndvi: 0.7,
+        coverage_rate: 85,
+        growth_stage: "Sinh trưởng",
+      },
+      soil_conditions: {
+        soil_type: farm.soil_type || "Không rõ",
+        moisture: "Trung bình",
+        ph_level: "6.5-7.0",
+      },
+      weather_model: {
+        average_temperature: 28,
+        humidity: 75,
+        rainfall_30days: 150,
+      },
+    };
+  }, [farm]);
+
+  return {
+    policy,
+    farm,
+    satelliteData,
+    farmAnalysis,
+    loading,
+    error,
+    refetch: fetchPolicyDetail,
   };
 }

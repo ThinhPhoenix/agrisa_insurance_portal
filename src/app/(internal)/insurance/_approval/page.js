@@ -3,7 +3,7 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
-import { useApplications } from "@/services/hooks/applications/use-applications";
+import { useInsurancePolicies } from "@/services/hooks/approval/use-aproval";
 import {
   CheckCircleOutlined,
   CheckOutlined,
@@ -31,49 +31,46 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useState } from "react";
-import "../insurance.css";
+import "./approval.css";
 
 const { Title, Text } = Typography;
 
 export default function InsuranceApprovalPage() {
   const {
     filteredData,
-    filterOptions,
     searchText,
     filters,
     handleFormSubmit,
     handleClearFilters,
-  } = useApplications();
+    loading,
+  } = useInsurancePolicies();
 
   // Modal states
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [form] = Form.useForm();
 
-  // Visible columns state - simplified to key fields only
+  // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
-    "application_id",
-    "farmer_name",
+    "policy_number",
+    "farmer_id",
     "status",
-    "submission_date",
+    "created_at",
   ]);
 
-  // Calculate summary stats from applications data
+  // Calculate summary stats
   const summaryStats = {
-    totalApplications: filteredData.length,
-    pendingApplications: filteredData.filter(
-      (app) => app.status === "awaiting_assessment"
+    totalPolicies: filteredData.length,
+    pendingReview: filteredData.filter(
+      (p) => p.status === "pending_review"
     ).length,
-    underAssessment: filteredData.filter(
-      (app) => app.status === "under_assessment"
+    underwritingPending: filteredData.filter(
+      (p) => p.underwriting_status === "pending"
     ).length,
-    avgRiskScore:
-      filteredData.length > 0
-        ? (
-            filteredData.reduce((sum, app) => sum + (app.risk_score || 0), 0) /
-            filteredData.length
-          ).toFixed(2)
-        : 0,
+    totalPremium: filteredData.reduce(
+      (sum, p) => sum + (p.total_farmer_premium || 0),
+      0
+    ),
   };
 
   // Handle form submit
@@ -88,7 +85,7 @@ export default function InsuranceApprovalPage() {
 
   // Handle reject modal
   const handleRejectClick = (record) => {
-    setSelectedApplication(record);
+    setSelectedPolicy(record);
     setRejectModalVisible(true);
     form.resetFields();
   };
@@ -96,25 +93,18 @@ export default function InsuranceApprovalPage() {
   const handleRejectConfirm = async () => {
     try {
       const values = await form.validateFields();
-      // Here you would typically call an API to reject the application
       console.log(
-        "Rejecting application:",
-        selectedApplication.id,
+        "Rejecting policy:",
+        selectedPolicy.id,
         "with reason:",
-        values.rejectReason,
-        "verification:",
-        values.verificationCode
+        values.rejectReason
       );
 
-      // Show success message
-      message.success(`Đã từ chối đơn ${selectedApplication.id} thành công`);
+      message.success(`Đã từ chối đơn ${selectedPolicy.policy_number} thành công`);
 
-      // Close modal
       setRejectModalVisible(false);
-      setSelectedApplication(null);
+      setSelectedPolicy(null);
       form.resetFields();
-
-      // TODO: Refresh data or update local state
     } catch (error) {
       console.error("Validation failed:", error);
     }
@@ -122,29 +112,22 @@ export default function InsuranceApprovalPage() {
 
   const handleRejectCancel = () => {
     setRejectModalVisible(false);
-    setSelectedApplication(null);
+    setSelectedPolicy(null);
     form.resetFields();
   };
 
   // Handle approve action
   const handleApproveClick = (record) => {
-    // Here you would typically call an API to approve the application
-    console.log("Approving application:", record.id);
-
-    // Show success message
-    message.success(`Đã duyệt đơn ${record.id} thành công`);
-
-    // TODO: Refresh data or update local state
+    console.log("Approving policy:", record.id);
+    message.success(`Đã duyệt đơn ${record.policy_number} thành công`);
   };
 
-  // Get status color for applications
+  // Get status color
   const getStatusColor = (status) => {
     switch (status) {
-      case "awaiting_assessment":
+      case "pending_review":
         return "orange";
-      case "under_assessment":
-        return "blue";
-      case "approved":
+      case "active":
         return "green";
       case "rejected":
         return "red";
@@ -153,38 +136,24 @@ export default function InsuranceApprovalPage() {
     }
   };
 
-  // Get risk level color
-  const getRiskLevelColor = (riskLevel) => {
-    switch (riskLevel) {
-      case "Low":
-        return "green";
-      case "Medium":
-        return "orange";
-      case "High":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  // Table columns for applications - simplified to key fields
+  // Table columns
   const columns = [
     {
-      title: "Mã đơn đăng ký",
-      dataIndex: "application_id",
-      key: "application_id",
+      title: "Số hợp đồng",
+      dataIndex: "policy_number",
+      key: "policy_number",
       width: 150,
       render: (_, record) => (
-        <div className="insurance-package-id">{record.id}</div>
+        <div className="insurance-package-id">{record.policy_number}</div>
       ),
     },
     {
-      title: "Tên nông dân",
-      dataIndex: "farmer_name",
-      key: "farmer_name",
-      width: 200,
+      title: "Mã nông dân",
+      dataIndex: "farmer_id",
+      key: "farmer_id",
+      width: 150,
       render: (_, record) => (
-        <div className="insurance-package-name">{record.farmer_name}</div>
+        <div className="insurance-package-name">{record.farmer_id}</div>
       ),
     },
     {
@@ -197,25 +166,34 @@ export default function InsuranceApprovalPage() {
           color={getStatusColor(record.status)}
           className="insurance-status-tag"
         >
-          {record.status === "awaiting_assessment"
-            ? "Chờ đánh giá"
-            : record.status === "under_assessment"
-            ? "Đang đánh giá"
-            : record.status === "approved"
-            ? "Đã duyệt"
-            : "Từ chối"}
+          {record.status === "pending_review"
+            ? "Chờ duyệt"
+            : record.status === "active"
+            ? "Đang hoạt động"
+            : record.status}
         </Tag>
       ),
     },
     {
-      title: "Ngày gửi",
-      dataIndex: "submission_date",
-      key: "submission_date",
+      title: "Phí bảo hiểm",
+      dataIndex: "total_farmer_premium",
+      key: "total_farmer_premium",
+      width: 150,
+      render: (val) =>
+        new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(val),
+    },
+    {
+      title: "Ngày tạo",
+      dataIndex: "created_at",
+      key: "created_at",
       width: 120,
       render: (_, record) => (
         <div className="insurance-statistics">
           <div className="insurance-stat-item">
-            {new Date(record.submission_date).toLocaleDateString("vi-VN")}
+            {new Date(record.created_at).toLocaleDateString("vi-VN")}
           </div>
         </div>
       ),
@@ -227,7 +205,7 @@ export default function InsuranceApprovalPage() {
       width: 200,
       render: (_, record) => (
         <div className="insurance-actions-cell">
-          <Link href={`/applications/${record.id}`}>
+          <Link href={`/insurance/approval/${record.id}`}>
             <Button
               type="dashed"
               size="small"
@@ -266,52 +244,14 @@ export default function InsuranceApprovalPage() {
     },
   ];
 
-  // Search fields for applications
+  // Search fields
   const searchFields = [
-    // First row - Main filters (3 fields)
     {
       name: "search",
       label: "Tìm kiếm",
       type: "input",
-      placeholder: "Tìm theo tên nông dân hoặc ID...",
+      placeholder: "Tìm theo số HĐ hoặc mã nông dân...",
       value: searchText,
-    },
-    {
-      name: "cropType",
-      label: "Loại cây trồng",
-      type: "combobox",
-      placeholder: "Chọn loại cây",
-      options:
-        filterOptions.cropTypes?.map((type) => ({
-          label: type,
-          value: type,
-        })) || [],
-      value: filters.cropType,
-    },
-    {
-      name: "region",
-      label: "Khu vực",
-      type: "combobox",
-      placeholder: "Chọn khu vực",
-      options:
-        filterOptions.regions?.map((region) => ({
-          label: region,
-          value: region,
-        })) || [],
-      value: filters.region,
-    },
-    // Second row - Additional filters and actions (4 fields)
-    {
-      name: "riskLevel",
-      label: "Mức độ rủi ro",
-      type: "combobox",
-      placeholder: "Chọn mức rủi ro",
-      options: [
-        { label: "Thấp", value: "Low" },
-        { label: "Trung bình", value: "Medium" },
-        { label: "Cao", value: "High" },
-      ],
-      value: filters.riskLevel,
     },
     {
       name: "status",
@@ -319,9 +259,8 @@ export default function InsuranceApprovalPage() {
       type: "combobox",
       placeholder: "Chọn trạng thái",
       options: [
-        { label: "Chờ đánh giá", value: "awaiting_assessment" },
-        { label: "Đang đánh giá", value: "under_assessment" },
-        { label: "Đã duyệt", value: "approved" },
+        { label: "Chờ duyệt", value: "pending_review" },
+        { label: "Đang hoạt động", value: "active" },
         { label: "Từ chối", value: "rejected" },
       ],
       value: filters.status,
@@ -345,6 +284,7 @@ export default function InsuranceApprovalPage() {
       onClick: handleClearFiltersWrapper,
     },
   ];
+
   return (
     <Layout.Content className="insurance-content">
       <div className="insurance-space">
@@ -368,7 +308,7 @@ export default function InsuranceApprovalPage() {
             </div>
             <div className="insurance-summary-content">
               <div className="insurance-summary-value-compact">
-                {summaryStats.totalApplications}
+                {summaryStats.totalPolicies}
               </div>
               <div className="insurance-summary-label-compact">Tổng đơn</div>
             </div>
@@ -380,7 +320,7 @@ export default function InsuranceApprovalPage() {
             </div>
             <div className="insurance-summary-content">
               <div className="insurance-summary-value-compact">
-                {summaryStats.pendingApplications}
+                {summaryStats.pendingReview}
               </div>
               <div className="insurance-summary-label-compact">Chờ duyệt</div>
             </div>
@@ -392,10 +332,10 @@ export default function InsuranceApprovalPage() {
             </div>
             <div className="insurance-summary-content">
               <div className="insurance-summary-value-compact">
-                {summaryStats.underAssessment}
+                {summaryStats.underwritingPending}
               </div>
               <div className="insurance-summary-label-compact">
-                Đang đánh giá
+                Chờ thẩm định
               </div>
             </div>
           </div>
@@ -406,10 +346,14 @@ export default function InsuranceApprovalPage() {
             </div>
             <div className="insurance-summary-content">
               <div className="insurance-summary-value-compact">
-                {summaryStats.avgRiskScore}
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                  maximumFractionDigits: 0,
+                }).format(summaryStats.totalPremium)}
               </div>
               <div className="insurance-summary-label-compact">
-                Điểm rủi ro TB
+                Tổng phí BH
               </div>
             </div>
           </div>
@@ -431,14 +375,7 @@ export default function InsuranceApprovalPage() {
                   <div className="insurance-filter-form">
                     <div className="space-y-4">
                       <CustomForm
-                        fields={searchFields.slice(0, 3)}
-                        gridColumns="1fr 1fr 1fr"
-                        gap="16px"
-                        onSubmit={handleFormSubmitWrapper}
-                      />
-                      {/* Second row - Additional filters and actions */}
-                      <CustomForm
-                        fields={searchFields.slice(3)}
+                        fields={searchFields}
                         gridColumns="1fr 1fr 1fr 1fr"
                         gap="16px"
                         onSubmit={handleFormSubmitWrapper}
@@ -471,6 +408,7 @@ export default function InsuranceApprovalPage() {
             dataSource={filteredData}
             visibleColumns={visibleColumns}
             rowKey="id"
+            loading={loading}
             scroll={{ x: 800 }}
             pagination={{
               total: filteredData.length,
@@ -486,7 +424,7 @@ export default function InsuranceApprovalPage() {
 
       {/* Reject Modal */}
       <Modal
-        title={`Từ chối đơn ${selectedApplication?.id}`}
+        title={`Từ chối đơn ${selectedPolicy?.policy_number}`}
         open={rejectModalVisible}
         onOk={handleRejectConfirm}
         onCancel={handleRejectCancel}
@@ -497,10 +435,10 @@ export default function InsuranceApprovalPage() {
       >
         <div className="mb-4">
           <p>
-            <strong>Nông dân:</strong> {selectedApplication?.farmer_name}
+            <strong>Mã nông dân:</strong> {selectedPolicy?.farmer_id}
           </p>
           <p>
-            <strong>Mã đơn:</strong> {selectedApplication?.id}
+            <strong>Số hợp đồng:</strong> {selectedPolicy?.policy_number}
           </p>
         </div>
 

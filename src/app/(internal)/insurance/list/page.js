@@ -5,20 +5,20 @@ import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { usePremium } from "@/services/hooks/premium/use-premium";
 import {
-    CheckCircleOutlined,
-    DownloadOutlined,
-    EditOutlined,
-    EyeOutlined,
-    FilterOutlined,
-    InsuranceOutlined,
-    SafetyOutlined,
-    SearchOutlined,
-    StarOutlined,
+  CheckCircleOutlined,
+  DownloadOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  InsuranceOutlined,
+  SafetyOutlined,
+  SearchOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
 import { Button, Collapse, Image, Layout, Space, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useState } from "react";
-import "../approval/approval.css";
+import "../_approval/approval.css";
 
 const { Title, Text } = Typography;
 

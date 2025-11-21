@@ -43,6 +43,45 @@ const FileUploadPreview = forwardRef(({
         openPasteModal: () => handleOpenPasteModal(),
         openFullscreen: () => handleFullscreenOpen(),
 
+        // ✅ NEW: Update with fillable PDF (called from PlaceholderMappingPanel after createFillablePDF)
+        updateFillablePDF: async (fillableFile, fillableBytes) => {
+            try {
+                // Create new blob URL for fillable PDF
+                const newUrl = URL.createObjectURL(fillableFile);
+
+                // Cleanup old URL
+                if (fileUrl) {
+                    setTimeout(() => {
+                        URL.revokeObjectURL(fileUrl);
+                    }, 500);
+                }
+
+                // Update state to show fillable PDF in iframe
+                setUploadedFile(fillableFile);
+                setFileUrl(newUrl);
+                setModifiedPdfBytes(fillableBytes);
+
+                // Notify parent
+                if (onFileUpload) {
+                    onFileUpload(fillableFile, newUrl);
+                }
+
+                console.log('✅ Fillable PDF updated in FileUploadPreview, iframe will reload');
+
+                return {
+                    success: true,
+                    url: newUrl,
+                    file: fillableFile
+                };
+            } catch (error) {
+                console.error('❌ Error updating fillable PDF:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        },
+
         //  Apply replacements - OVERWRITE uploadedFile (In-place Editing)
         applyReplacements: async (replacements) => {
             if (!uploadedFile) {

@@ -1,10 +1,10 @@
 import {
     CheckCircleOutlined,
     DeleteOutlined,
+    DownloadOutlined,
     ExclamationCircleOutlined,
     InfoCircleOutlined,
-    LinkOutlined,
-    WarningOutlined
+    LinkOutlined
 } from '@ant-design/icons';
 import {
     Alert,
@@ -36,9 +36,7 @@ const MappingInputCell = memo(({
     recordId,
     initialValue,
     onInputChange,
-    onApplyClick,
-    dataTypeOptions,
-    isApplying
+    dataTypeOptions
 }) => {
     const [localKey, setLocalKey] = useState(initialValue?.key || '');
     const [localDataType, setLocalDataType] = useState(initialValue?.dataType || dataTypeOptions[0]?.value || 'string');
@@ -102,21 +100,10 @@ const MappingInputCell = memo(({
             <Select
                 value={localDataType}
                 onChange={handleDataTypeChange}
-                style={{ flex: '0 0 20%', minWidth: 100 }}
+                style={{ flex: '1', minWidth: 100 }}
                 size="middle"
                 options={dataTypeOptions}
             />
-
-            <Tooltip title="Tạo tag mới và áp dụng ngay vào PDF">
-                <Button
-                    type="primary"
-                    size="middle"
-                    onClick={() => onApplyClick(recordId)}
-                    loading={isApplying}
-                >
-                    Áp dụng
-                </Button>
-            </Tooltip>
         </div>
     );
 });
@@ -394,463 +381,9 @@ const PlaceholderMappingPanelComponent = ({
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
 
-    //  NEW: Check if text will overflow field (conservative check)
-    const checkTextOverflow = (text, fieldWidth, fontSize = 10) => {
-        // Approximate: 1 character ≈ 0.7 * fontSize
-        const estimatedTextWidth = text.length * fontSize * 0.7;
-
-        // Very conservative: warn if text > 40% of fieldWidth
-        // This accounts for dots/underscores taking up space
-        const safeFieldWidth = fieldWidth * 0.4;
-
-        return {
-            willOverflow: estimatedTextWidth > safeFieldWidth,
-            estimatedTextWidth,
-            fieldWidth,
-            safeFieldWidth,
-            overflow: Math.max(0, estimatedTextWidth - safeFieldWidth)
-        };
-    };
-
-    //  NEW: Apply single placeholder replacement (for inline creation)
-    const applySingleReplacement = async (placeholderId, tagIdOrTag, skipWarning = false) => {
-        if (!filePreviewRef?.current?.applyReplacements) {
-            return;
-        }
-
-        const placeholder = placeholders.find(p => p.id === placeholderId);
-        if (!placeholder) {
-            return;
-        }
-
-        // Accept either tagId (string) or tag object directly
-        const tag = typeof tagIdOrTag === 'string'
-            ? effectiveTags.find(t => t.id === tagIdOrTag)
-            : tagIdOrTag;
-
-        if (!tag) {
-            return;
-        }
-
-        // Calculate appropriate font size
-        const originalFontSize = placeholder.fontSize || 12;
-        const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
-
-        //  Check if text will overflow
-        const overflowCheck = checkTextOverflow(tag.key, placeholder.width, adjustedFontSize);
-
-        console.log(`🔍 Overflow check for "${tag.key}":`, {
-            textLength: tag.key.length,
-            fieldWidth: placeholder.width,
-            fontSize: adjustedFontSize,
-            ...overflowCheck
-        });
-
-        if (!skipWarning && overflowCheck.willOverflow) {
-            console.log(`⚠️ Showing overflow warning modal for "${tag.key}"`);
-
-            // Show warning modal
-            Modal.confirm({
-                title: 'Nội dung có thể vượt quá kích thước ô trống',
-                icon: <WarningOutlined style={{ color: '#faad14' }} />,
-                content: (
-                    <div>
-                        <p>Văn bản <strong>"{tag.key}"</strong> có thể vượt quá kích thước ô trống <strong>{placeholder.original}</strong></p>
-                        <ul>
-                            <li>Độ rộng văn bản (ước tính): ~{overflowCheck.estimatedTextWidth.toFixed(0)}px</li>
-                            <li>Độ rộng field an toàn: ~{overflowCheck.safeFieldWidth.toFixed(0)}px</li>
-                            <li>Vượt quá: ~{overflowCheck.overflow.toFixed(0)}px</li>
-                        </ul>
-                        <Alert
-                            message="Bạn có muốn tiếp tục áp dụng? Text có thể làm vỡ bố cục file PDF."
-                            type="warning"
-                            showIcon
-                        />
-                    </div>
-                ),
-                okText: 'Chấp nhận và áp dụng',
-                cancelText: 'Hủy và điều chỉnh lại',
-                onOk: () => {
-                    // Retry with skipWarning = true
-                    applySingleReplacement(placeholderId, tagIdOrTag, true);
-                },
-                onCancel: () => {
-                    //  Unmapping to allow re-input
-                    console.log(`🔙 User cancelled - unmapping placeholder ${placeholderId}`);
-
-                    // Remove mapping
-                    const newMappings = { ...mappings };
-                    delete newMappings[placeholderId];
-                    setMappings(newMappings);
-
-                    // Remove tag from parent
-                    if (onMappingChange) {
-                        const documentTags = buildDocumentTags();
-                        // Remove this tag from documentTags
-                        delete documentTags[tag.key];
-
-                        onMappingChange(newMappings, {
-                            documentTagsObject: documentTags
-                        });
-                    }
-
-                    // Clear temp input
-                    setTempInput(placeholderId, { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' });
-
-                    message.info('Đã hủy mapping. Vui lòng nhập lại.');
-                }
-            });
-            return;
-        }
-
-        const replacement = {
-            page: placeholder.page || 1,
-            x: placeholder.x,
-            y: placeholder.y,
-            width: placeholder.width,
-            height: placeholder.height,
-            backgroundX: placeholder.backgroundX,  //  NEW: Exact position of (number) for accurate centering
-            backgroundWidth: placeholder.backgroundWidth,  //  NEW: Exact width of (number) for accurate centering
-            oldText: placeholder.fullText || placeholder.original,  //  Use fullText like "______(1)______"
-            newText: tag.key, //  Use tag.key directly (match PDF format)
-            fontSize: adjustedFontSize  //  8-10pt range
-        };
-
-        const result = await filePreviewRef.current.applyReplacements([replacement]);
-
-        if (result.success) {
-            // Mark as applied to PDF
-            setAppliedToPDF(prev => new Set([...prev, placeholderId]));
-        } else {
-            message.error(`Lỗi: ${result.error}`);
-        }
-    };
-
-    //  OPTIMIZATION: Memoize apply button handler to prevent re-creation
-    const handleApplyClick = useCallback(async (recordId) => {
-        //  FIX: Use tempInputs (debounced state) instead of localValue for validation
-        const finalValue = tempInputs[recordId] || { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' };
-
-        if (!finalValue.key || !finalValue.dataType) {
-            message.warning('Vui lòng nhập tên trường và chọn loại dữ liệu');
-            return;
-        }
-
-        const newId = `local-${Date.now()}`;
-        const dataTypeLabel = effectiveTagDataTypes.find(t => t.value === finalValue.dataType)?.label || finalValue.dataType;
-        const newTag = {
-            id: newId,
-            key: finalValue.key,
-            dataType: finalValue.dataType,
-            dataTypeLabel,
-            value: '',
-            index: effectiveTags.length + 1
-        };
-
-        // 1. Notify parent FIRST to add tag with proper ID
-        if (onCreateTag) {
-            onCreateTag(newTag);
-        }
-
-        // 2. Map placeholder with tag - Pass newTag to avoid race condition
-        handleMapPlaceholder(recordId, newId, newTag);
-
-        // 3. Auto-replace on PDF (realtime!) - Pass tag object directly
-        await applySingleReplacement(recordId, newTag);
-
-        // 4. Clear temp inputs (MappingInputCell will update via initialValue prop)
-        setTempInput(recordId, { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' });
-
-        // 5. Remove from selection if it was selected
-        setSelectedRows(prev => prev.filter(id => id !== recordId));
-    }, [tempInputs, effectiveTagDataTypes, effectiveTags, onCreateTag, handleMapPlaceholder, applySingleReplacement]);
-
-    //  NEW: Apply selected placeholders in batch
-    const applySelectedBatch = async () => {
-        if (selectedRows.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một vị trí để áp dụng');
-            return;
-        }
-
-        if (!filePreviewRef?.current?.applyReplacements) {
-            message.warning('Chức năng chỉnh sửa PDF chưa sẵn sàng');
-            return;
-        }
-
-        const replacements = [];
-        const appliedIds = [];
-        const createdTagsInBatch = []; // Track newly created tags in this batch
-
-        // Process each selected placeholder
-        for (let i = 0; i < selectedRows.length; i++) {
-            const placeholderId = selectedRows[i];
-            const placeholder = placeholders.find(p => p.id === placeholderId);
-
-            if (!placeholder) continue;
-
-            // Check if already mapped
-            let tagId = mappings[placeholderId];
-            let tag = tagId ? effectiveTags.find(t => t.id === tagId) : null;
-            let newlyCreatedTag = null;
-
-            // If not mapped, prepare tag data from temp input
-            if (!tag) {
-                const local = tempInputs[placeholderId];
-
-                if (!local || !local.key || !local.dataType) {
-                    continue; // Skip if not filled
-                }
-
-                // Prepare new tag (but don't create yet)
-                const dataTypeLabel = effectiveTagDataTypes.find(t => t.value === local.dataType)?.label || local.dataType;
-                tag = {
-                    key: local.key,
-                    dataType: local.dataType,
-                    dataTypeLabel,
-                    value: ''
-                };
-                newlyCreatedTag = tag;
-            }
-
-            const originalFontSize = placeholder.fontSize || 12;
-            const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
-
-            // Check overflow
-            const overflowCheck = checkTextOverflow(tag.key, placeholder.width, adjustedFontSize);
-
-            if (overflowCheck.willOverflow) {
-                // Show warning and wait for user decision
-                const userContinues = await new Promise((resolve) => {
-                    Modal.confirm({
-                        title: 'Nội dung có thể vượt quá kích thước ô trống',
-                        icon: <WarningOutlined style={{ color: '#faad14' }} />,
-                        content: (
-                            <div>
-                                <p>Đang áp dụng: <strong>{replacements.length + 1}/{selectedRows.length}</strong></p>
-                                <p>Văn bản <strong>"{tag.key}"</strong> có thể vượt quá ô trống <strong>{placeholder.original}</strong></p>
-                                <ul>
-                                    <li>Độ rộng văn bản: ~{overflowCheck.estimatedTextWidth.toFixed(0)}px</li>
-                                    <li>Độ rộng an toàn: ~{overflowCheck.safeFieldWidth.toFixed(0)}px</li>
-                                    <li>Vượt quá: ~{overflowCheck.overflow.toFixed(0)}px</li>
-                                </ul>
-                                <Alert message="Text có thể làm vỡ bố cục PDF." type="warning" showIcon />
-                                <Alert message={`Còn ${selectedRows.length - replacements.length - 1} vị trí.`} type="info" showIcon style={{ marginTop: 8 }} />
-                            </div>
-                        ),
-                        okText: 'Tiếp tục',
-                        cancelText: 'Dừng lại',
-                        onOk: () => resolve(true),
-                        onCancel: () => resolve(false)
-                    });
-                });
-
-                if (!userContinues) {
-                    message.info(`Đã dừng. Đã áp dụng ${replacements.length} vị trí.`);
-                    break; // Stop here - tag won't be created
-                }
-            }
-
-            // NOW create tag and map (after user confirmed or no overflow)
-            if (newlyCreatedTag) {
-                const newId = `local-${Date.now()}-${replacements.length}`;
-                const fullTag = {
-                    id: newId,
-                    ...newlyCreatedTag,
-                    index: effectiveTags.length + createdTagsInBatch.length + 1
-                };
-
-                // Notify parent to add tag
-                if (onCreateTag) {
-                    onCreateTag(fullTag);
-                }
-
-                // Map placeholder
-                handleMapPlaceholder(placeholderId, newId, fullTag);
-
-                // Track this tag locally (don't update state here - batch update later)
-                createdTagsInBatch.push(fullTag);
-
-                tag = fullTag; // Update tag reference
-            }            // Add to replacements
-            replacements.push({
-                page: placeholder.page || 1,
-                x: placeholder.x,
-                y: placeholder.y,
-                width: placeholder.width,
-                height: placeholder.height,
-                backgroundX: placeholder.backgroundX,
-                backgroundWidth: placeholder.backgroundWidth,
-                oldText: placeholder.fullText || placeholder.original,
-                newText: tag.key,
-                fontSize: adjustedFontSize
-            });
-            appliedIds.push(placeholderId);
-        }
-
-        if (replacements.length === 0) {
-            message.warning('Không có vị trí nào để áp dụng. Vui lòng điền thông tin cho các vị trí đã chọn.');
-            return;
-        }
-
-        // Update state with all created tags at once
-        if (createdTagsInBatch.length > 0) {
-            setBatchCreatedTags(prev => [...prev, ...createdTagsInBatch]);
-        }
-
-        // Apply all collected replacements
-        const result = await filePreviewRef.current.applyReplacements(replacements);
-
-        if (result.success) {
-            const newApplied = new Set(appliedToPDF);
-            appliedIds.forEach(id => newApplied.add(id));
-            setAppliedToPDF(newApplied);
-
-            message.success(`Đã áp dụng ${replacements.length} vị trí vào PDF!`);
-            setSelectedRows([]);
-        } else {
-            message.error(`Lỗi: ${result.error}`);
-        }
-    };
-
-    //  NEW: Apply all mapped placeholders
-    const applyAllMapped = async () => {
-        if (!filePreviewRef?.current?.applyReplacements) {
-            message.warning('Chức năng chỉnh sửa PDF chưa sẵn sàng');
-            return;
-        }
-
-        const replacements = [];
-        const appliedIds = [];
-        const createdTagsInBatch = []; // Track newly created tags in this batch
-
-        // Process ALL placeholders (create tag if needed)
-        for (let i = 0; i < sortedPlaceholders.length; i++) {
-            const placeholder = sortedPlaceholders[i];
-            const placeholderId = placeholder.id;
-
-            // Check if already mapped
-            let tagId = mappings[placeholderId];
-            let tag = tagId ? effectiveTags.find(t => t.id === tagId) : null;
-
-            // If not mapped, try to create from temp input
-            if (!tag) {
-                const local = tempInputs[placeholderId];
-
-                if (!local || !local.key || !local.dataType) {
-                    continue; // Skip if not filled
-                }
-
-                // Create new tag
-                const newId = `local-${Date.now()}-${replacements.length}`;
-                const dataTypeLabel = effectiveTagDataTypes.find(t => t.value === local.dataType)?.label || local.dataType;
-                tag = {
-                    id: newId,
-                    key: local.key,
-                    dataType: local.dataType,
-                    dataTypeLabel,
-                    value: '',
-                    index: effectiveTags.length + createdTagsInBatch.length + 1
-                };
-
-                // Notify parent to add tag
-                if (onCreateTag) {
-                    onCreateTag(tag);
-                }
-
-                // Map placeholder
-                handleMapPlaceholder(placeholderId, newId, tag);
-
-                // Track this tag locally (don't update state here - batch update later)
-                createdTagsInBatch.push(tag);
-            }
-
-            const originalFontSize = placeholder.fontSize || 12;
-            const adjustedFontSize = Math.max(8, Math.min(10, originalFontSize * 0.8));
-
-            // Check overflow
-            const overflowCheck = checkTextOverflow(tag.key, placeholder.width, adjustedFontSize);
-
-            if (overflowCheck.willOverflow) {
-                // Show warning and wait for user decision
-                const userContinues = await new Promise((resolve) => {
-                    Modal.confirm({
-                        title: 'Nội dung có thể vượt quá kích thước ô trống',
-                        icon: <WarningOutlined style={{ color: '#faad14' }} />,
-                        content: (
-                            <div>
-                                <p>Đang áp dụng: <strong>{i + 1}/{allMappedIds.length}</strong></p>
-                                <p>Văn bản <strong>"{tag.key}"</strong> có thể vượt quá ô trống <strong>{placeholder.original}</strong></p>
-                                <ul>
-                                    <li>Độ rộng văn bản: ~{overflowCheck.estimatedTextWidth.toFixed(0)}px</li>
-                                    <li>Độ rộng an toàn: ~{overflowCheck.safeFieldWidth.toFixed(0)}px</li>
-                                    <li>Vượt quá: ~{overflowCheck.overflow.toFixed(0)}px</li>
-                                </ul>
-                                <Alert message="Text có thể làm vỡ bố cục PDF." type="warning" showIcon />
-                                <Alert message={`Còn ${allMappedIds.length - i - 1} vị trí.`} type="info" showIcon style={{ marginTop: 8 }} />
-                            </div>
-                        ),
-                        okText: 'Tiếp tục',
-                        cancelText: 'Dừng lại',
-                        onOk: () => resolve(true),
-                        onCancel: () => resolve(false)
-                    });
-                });
-
-                if (!userContinues) {
-                    message.info(`Đã dừng. Đã áp dụng ${replacements.length} vị trí.`);
-                    break; // Stop here
-                }
-            }
-
-            // Add to replacements
-            replacements.push({
-                page: placeholder.page || 1,
-                x: placeholder.x,
-                y: placeholder.y,
-                width: placeholder.width,
-                height: placeholder.height,
-                backgroundX: placeholder.backgroundX,
-                backgroundWidth: placeholder.backgroundWidth,
-                oldText: placeholder.fullText || placeholder.original,
-                newText: tag.key,
-                fontSize: adjustedFontSize
-            });
-            appliedIds.push(placeholderId);
-        }
-
-        if (replacements.length === 0) {
-            message.warning('Không có vị trí nào để áp dụng. Vui lòng điền thông tin cho các vị trí trước.');
-            return;
-        }
-
-        // Update state with all created tags at once
-        if (createdTagsInBatch.length > 0) {
-            setBatchCreatedTags(prev => [...prev, ...createdTagsInBatch]);
-        }
-
-        // Apply all collected replacements
-        const result = await filePreviewRef.current.applyReplacements(replacements);
-
-        if (result.success) {
-            const newApplied = new Set(appliedToPDF);
-            appliedIds.forEach(id => newApplied.add(id));
-            setAppliedToPDF(newApplied);
-
-            message.success(`Đã áp dụng ${replacements.length} vị trí vào PDF!`);
-
-            // Notify parent about modified PDF
-            const documentTags = buildDocumentTags();
-            if (onMappingChange) {
-                onMappingChange(mappings, {
-                    documentTagsObject: documentTags,
-                    modifiedPdfBytes: result.bytes,
-                    uploadedFile: result.file
-                });
-            }
-        } else {
-            message.error(`Lỗi: ${result.error}`);
-        }
-    };
+    // ❌ REMOVED: checkTextOverflow, applySingleReplacement, handleApplyClick, applySelectedBatch, applyAllMapped
+    // All per-row apply and overflow check logic removed
+    // Only applySelectedFillable (fillable AcroForm creation) is now supported
 
     //  NEW: Delete unmapped placeholder
     const handleDeletePlaceholder = (placeholderId) => {
@@ -885,16 +418,253 @@ const PlaceholderMappingPanelComponent = ({
         message.success('Đã xóa vị trí placeholder');
     };
 
-    // Handle row selection
-    const rowSelection = {
-        selectedRowKeys: selectedRows,
-        onChange: (selectedRowKeys) => {
-            setSelectedRows(selectedRowKeys);
-        },
-        getCheckboxProps: (record) => ({
-            disabled: appliedToPDF.has(record.id), // Disable checkbox if already applied to PDF
-        }),
+    // NEW: Apply selected fillable fields only
+    const applySelectedFillable = async () => {
+        if (selectedRows.length === 0) {
+            message.warning('Vui lòng chọn ít nhất một vị trí để áp dụng');
+            return;
+        }
+
+        if (!filePreviewRef?.current?.getCurrentFile) {
+            message.warning('Chức năng xuất PDF chưa sẵn sàng');
+            return;
+        }
+
+        try {
+            message.loading('Đang tạo fillable PDF cho các vị trí đã chọn...', 0);
+
+            // Get current PDF file
+            const fileResult = filePreviewRef.current.getCurrentFile();
+            if (!fileResult || !fileResult.success || !fileResult.file) {
+                message.destroy();
+                message.error('Không tìm thấy file PDF');
+                return;
+            }
+
+            const currentFile = fileResult.file;
+            const arrayBuffer = await currentFile.arrayBuffer();
+
+            // Import functions
+            const { createFillablePDFFromMappings, pdfBytesToFile } = await import('../../../../libs/pdf/pdfEditor');
+
+            // Filter: Only selected placeholders
+            const selectedPlaceholders = placeholders.filter(p => selectedRows.includes(p.id));
+
+            // Build mappings for selected (create tags from input if needed)
+            const selectedMappings = {};
+            const createdTagsInBatch = [];
+
+            for (const rowId of selectedRows) {
+                // Check if already mapped
+                let tagId = mappings[rowId];
+                let tag = tagId ? effectiveTags.find(t => t.id === tagId) : null;
+
+                // If not mapped, create from temp input
+                if (!tag) {
+                    const local = tempInputs[rowId];
+
+                    if (!local || !local.key || !local.dataType) {
+                        continue; // Skip if not filled
+                    }
+
+                    // Create new tag
+                    const newId = `local-${Date.now()}-${createdTagsInBatch.length}`;
+                    const dataTypeLabel = effectiveTagDataTypes.find(t => t.value === local.dataType)?.label || local.dataType;
+                    tag = {
+                        id: newId,
+                        key: local.key,
+                        dataType: local.dataType,
+                        dataTypeLabel,
+                        value: '',
+                        index: effectiveTags.length + createdTagsInBatch.length + 1
+                    };
+
+                    // Notify parent to add tag
+                    if (onCreateTag) {
+                        onCreateTag(tag);
+                    }
+
+                    // Map placeholder
+                    handleMapPlaceholder(rowId, newId, tag);
+
+                    createdTagsInBatch.push(tag);
+                    tagId = newId;
+                }
+
+                selectedMappings[rowId] = tagId;
+            }
+
+            if (Object.keys(selectedMappings).length === 0) {
+                message.destroy();
+                message.error('Các vị trí đã chọn chưa có thông tin để map');
+                return;
+            }
+
+            // Update batch created tags state
+            if (createdTagsInBatch.length > 0) {
+                setBatchCreatedTags(prev => [...prev, ...createdTagsInBatch]);
+            }
+
+            // ✅ Merge effectiveTags + createdTagsInBatch để tránh race condition
+            const allTagsIncludingNew = [...effectiveTags, ...createdTagsInBatch];
+            console.log('🔍 allTagsIncludingNew for fillable PDF:', allTagsIncludingNew);
+
+            // ✅ Create fillable AcroForm fields directly (no text writing layer)
+            const result = await createFillablePDFFromMappings(
+                arrayBuffer,   // Original PDF without text modifications
+                selectedPlaceholders,
+                selectedMappings,
+                allTagsIncludingNew,
+                {
+                    fillFields: true,              // Pre-fill with ASCII-safe tag.key
+                    makeFieldsEditable: true,      // Editable for backend
+                    showBorders: true,             // Show field borders
+                    removeOriginalText: true,      // Remove placeholder background text
+                    writeTextBeforeField: false,   // No text writing layer
+                }
+            );
+
+            message.destroy();
+
+            if (result.warnings && result.warnings.length > 0) {
+                Modal.warning({
+                    title: 'Có một số cảnh báo khi tạo fillable PDF',
+                    content: (
+                        <div>
+                            <ul>
+                                {result.warnings.map((w, i) => (
+                                    <li key={i}>{w.fieldName}: {w.warning}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    ),
+                });
+            }
+
+            // Convert to File object
+            const fillableFile = pdfBytesToFile(result.pdfBytes, currentFile.name);
+
+            // ✅ Update FileUploadPreview to show fillable PDF in iframe
+            if (filePreviewRef?.current?.updateFillablePDF) {
+                await filePreviewRef.current.updateFillablePDF(fillableFile, result.pdfBytes);
+            }
+
+            // Build document_tags for backend (only selected)
+            const documentTags = {};
+            selectedPlaceholders.forEach(placeholder => {
+                const tagId = selectedMappings[placeholder.id];
+                if (tagId) {
+                    // ✅ FIX: Search in merged tags (including newly created)
+                    const tag = allTagsIncludingNew.find(t => t.id === tagId);
+                    if (tag) {
+                        documentTags[tag.key] = tag.dataType || 'string';
+                    }
+                }
+            });
+
+            // Notify parent to update state with fillable PDF
+            if (onMappingChange) {
+                onMappingChange(mappings, {
+                    documentTagsObject: documentTags,
+                    modifiedPdfBytes: result.pdfBytes,
+                    uploadedFile: fillableFile,
+                });
+            }
+
+            // Mark applied to PDF
+            const newApplied = new Set(appliedToPDF);
+            selectedRows.forEach(id => newApplied.add(id));
+            setAppliedToPDF(newApplied);
+
+            message.success(`Đã tạo fillable PDF với ${Object.keys(selectedMappings).length} field(s)!`);
+
+            // Clear selection after apply
+            setSelectedRows([]);
+
+        } catch (error) {
+            message.destroy();
+            console.error('Error creating fillable PDF:', error);
+            message.error(`Lỗi khi tạo fillable PDF: ${error.message}`);
+        }
     };
+
+
+    // NEW: Export fillable PDF (download only)
+    const exportFillablePDF = async () => {
+        if (!filePreviewRef?.current?.getCurrentFile) {
+            message.warning('Chức năng xuất PDF chưa sẵn sàng');
+            return;
+        }
+
+        try {
+            message.loading('Đang tạo fillable PDF...', 0);
+
+            // Get current PDF file
+            const fileResult = filePreviewRef.current.getCurrentFile();
+            if (!fileResult || !fileResult.success || !fileResult.file) {
+                message.destroy();
+                message.error('Không tìm thấy file PDF');
+                return;
+            }
+
+            const currentFile = fileResult.file;
+
+            // Read file as ArrayBuffer
+            const arrayBuffer = await currentFile.arrayBuffer();
+
+            // Import the createFillablePDFFromMappings function
+            const { createFillablePDFFromMappings, downloadPDF } = await import('../../../../libs/pdf/pdfEditor');
+
+            if (stats.mapped === 0) {
+                message.destroy();
+                message.error('Chưa có mapping nào để tạo fillable PDF');
+                return;
+            }
+
+            // Create fillable PDF
+            const result = await createFillablePDFFromMappings(
+                arrayBuffer,
+                placeholders,
+                mappings,
+                effectiveTags,
+                {
+                    fillFields: false,        // Don't fill fields with default values
+                    makeFieldsEditable: true, // Make fields editable
+                    showBorders: true,        // Show field borders
+                }
+            );
+
+            message.destroy();
+
+            if (result.warnings && result.warnings.length > 0) {
+                Modal.warning({
+                    title: 'Có một số cảnh báo khi tạo fillable PDF',
+                    content: (
+                        <div>
+                            <ul>
+                                {result.warnings.map((w, i) => (
+                                    <li key={i}>{w.fieldName}: {w.warning}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    ),
+                });
+            }
+
+            // Download the fillable PDF
+            const filename = `fillable_${currentFile.name}`;
+            downloadPDF(result.pdfBytes, filename);
+
+            message.success('Đã tạo và tải xuống fillable PDF thành công!');
+
+        } catch (error) {
+            message.destroy();
+            console.error('Error creating fillable PDF:', error);
+            message.error(`Lỗi khi tạo fillable PDF: ${error.message}`);
+        }
+    };
+
+    // Row selection removed - no longer needed with fillable PDF workflow
 
     //  OPTIMIZATION: Memoize columns to prevent re-creation on every render
     const columns = useMemo(() => [
@@ -975,9 +745,7 @@ const PlaceholderMappingPanelComponent = ({
                         recordId={record.id}
                         initialValue={initialValue}
                         onInputChange={handleInputChange}
-                        onApplyClick={handleApplyClick}
                         dataTypeOptions={dataTypeOptions}
-                        isApplying={false}
                     />
                 );
             }
@@ -1062,7 +830,7 @@ const PlaceholderMappingPanelComponent = ({
                 );
             }
         }
-    ], [mappings, appliedToPDF, batchCreatedTags, effectiveTags, tempInputs, effectiveTagDataTypes, handleInputChange, handleApplyClick, dataTypeOptions, handleDeletePlaceholder]);
+    ], [mappings, appliedToPDF, batchCreatedTags, effectiveTags, tempInputs, effectiveTagDataTypes, handleInputChange, dataTypeOptions, handleDeletePlaceholder]);
 
     // compute horizontal scroll width (fallback)
     const tableX = Math.max(900, columns.reduce((acc, c) => acc + (c.width || 200), 0));
@@ -1099,13 +867,22 @@ const PlaceholderMappingPanelComponent = ({
             extra={
                 <Space>
                     <Button
-                        type="default"
+                        type="primary"
                         icon={<CheckCircleOutlined />}
-                        onClick={applySelectedBatch}
+                        onClick={applySelectedFillable}
                         disabled={selectedRows.length === 0}
                         size="middle"
                     >
-                        Áp dụng đã chọn ({selectedRows.length})
+                        Áp dụng ({selectedRows.length} vị trí)
+                    </Button>
+                    <Button
+                        type="default"
+                        icon={<DownloadOutlined />}
+                        onClick={exportFillablePDF}
+                        disabled={stats.mapped === 0}
+                        size="middle"
+                    >
+                        Tải xuống PDF
                     </Button>
                 </Space>
             }
@@ -1118,10 +895,11 @@ const PlaceholderMappingPanelComponent = ({
                             <InfoCircleOutlined /> Hướng dẫn sử dụng:
                         </Text>
                         <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
-                            <li> <strong>Tick chọn</strong> các vị trí cần áp dụng, sau đó nhấn <strong>"Áp dụng đã chọn"</strong> để áp dụng hàng loạt</li>
-                            <li><strong>Xóa vị trí:</strong> Chỉ có thể xóa vị trí chưa được áp dụng vào PDF</li>
-                            <li><strong>Cảnh báo kích thước:</strong> Nếu văn bản vượt quá kích thước ô trống, hệ thống sẽ cảnh báo. Bạn có thể chấp nhận hoặc điều chỉnh lại</li>
-                            <li>Khi áp dụng hàng loạt, nếu gặp văn bản quá kích thước, tiến trình sẽ dừng để bạn quyết định tiếp tục hay điều chỉnh</li>
+                            <li><strong>Bước 1:</strong> Điền tên trường (key) và chọn loại dữ liệu cho từng vị trí (1), (2)...</li>
+                            <li><strong>Bước 2:</strong> Tick chọn các vị trí muốn áp dụng (có thể tick nhiều vị trí cùng lúc)</li>
+                            <li><strong>Bước 3:</strong> Bấm nút <strong>"Áp dụng"</strong> để tạo fillable PDF cho các vị trí đã chọn</li>
+                            <li><strong>Bước 4:</strong> Bấm <strong>"Tải xuống PDF"</strong> để xem trước fillable PDF cuối cùng</li>
+                            <li><Text type="warning">⚠️ Lưu ý:</Text> Checkbox sẽ enable khi đã điền đủ thông tin (key + loại dữ liệu)</li>
                         </ul>
                     </div>
                 }
@@ -1155,9 +933,32 @@ const PlaceholderMappingPanelComponent = ({
                 columns={columns}
                 dataSource={sortedPlaceholders}
                 rowKey="id"
-                rowSelection={rowSelection}
                 pagination={false}
                 scroll={{ x: tableX, y: 400 }}
+                rowSelection={{
+                    selectedRowKeys: selectedRows,
+                    onChange: (selectedRowKeys) => {
+                        setSelectedRows(selectedRowKeys);
+                    },
+                    getCheckboxProps: (record) => {
+                        // ✅ DISABLE khi đã áp dụng vào PDF
+                        if (appliedToPDF.has(record.id)) {
+                            return {
+                                disabled: true,
+                            };
+                        }
+
+                        // Enable khi:
+                        // 1. Đã có mapping (tag đã tạo)
+                        // 2. HOẶC đã điền input (key + dataType)
+                        const hasMappedTag = !!mappings[record.id];
+                        const hasInput = tempInputs[record.id]?.key && tempInputs[record.id]?.dataType;
+
+                        return {
+                            disabled: !hasMappedTag && !hasInput,
+                        };
+                    },
+                }}
             />
 
             <Divider />

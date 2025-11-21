@@ -688,7 +688,12 @@ const TagsTabComponent = ({
                             //  FIX: Use handleTagsDataChange (prev => ...) instead of spreading tagsData
                             // to avoid race condition where tags haven't been added yet
                             onDataChange && onDataChange((prev) => {
-                                const updates = { ...prev, mappings };
+                                const updates = {
+                                    ...prev,
+                                    mappings,
+                                    // ✅ Lưu placeholders để dùng cho auto-conversion
+                                    placeholders: placeholders
+                                };
 
                                 // Only update fields that exist in pdfData (avoid overwriting with undefined)
                                 if (pdfData) {
@@ -707,6 +712,12 @@ const TagsTabComponent = ({
                                         updates.uploadedFile = pdfData.uploadedFile;
                                     }
                                 }
+
+                                console.log('💾 Saving to tagsData:', {
+                                    placeholders: updates.placeholders?.length,
+                                    mappings: Object.keys(updates.mappings || {}).length,
+                                    documentTags: Object.keys(updates.documentTagsObject || {}).length
+                                });
 
                                 return updates;
                             });

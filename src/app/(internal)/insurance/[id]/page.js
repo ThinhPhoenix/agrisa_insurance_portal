@@ -30,7 +30,7 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import "../insurance.css";
+import "../_approval/approval.css";
 
 const { Title, Text, Paragraph } = Typography;
 const { Content } = Layout;

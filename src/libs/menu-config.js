@@ -1,7 +1,15 @@
 export const sidebarMenuItems = [
   {
-    key: "applications",
-    label: "Đơn đăng ký đang chờ",
+    key: "policy",
+    label: "Quản lý bảo hiểm",
+    children: [
+      { key: "policy", label: "Danh sách bảo hiểm" },
+      { key: "policy/approval", label: "Duyệt đơn đăng ký" },
+    ],
+  },
+  {
+    key: "beneficiary",
+    label: "Quản lý người thụ hưởng",
   },
   {
     key: "transaction-history",
@@ -10,22 +18,6 @@ export const sidebarMenuItems = [
   {
     key: "payment",
     label: "Quản lý thanh toán",
-  },
-  {
-    key: "insurance",
-    label: "Quản lý bảo hiểm",
-    children: [
-      { key: "insurance/list", label: "Danh sách bảo hiểm" },
-      { key: "insurance/approval", label: "Duyệt đơn đăng ký" },
-    ],
-  },
-  {
-    key: "beneficiary",
-    label: "Quản lý người thụ hưởng",
-  },
-  {
-    key: "policy",
-    label: "Quản lý điều khoản bảo hiểm",
   },
   {
     key: "configuration",

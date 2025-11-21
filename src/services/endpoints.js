@@ -44,6 +44,11 @@ export const endpoints = {
       get_count_by_status: (status) =>
         `/policy/protected/api/v2/base-policies/count/status/${status}`,
     },
+    read_partner: {
+      list: "/policy/protected/api/v2/policies/read-partner/list",
+      detail: (id) =>
+        `/policy/protected/api/v2/policies/read-partner/detail/${id}`,
+    },
   },
   applications: {
     list: "/policy/protected/api/v2/farms",

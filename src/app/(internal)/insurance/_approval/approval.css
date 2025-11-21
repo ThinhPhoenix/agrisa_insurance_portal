@@ -417,3 +417,12 @@
     @apply p-4;
   }
 }
+
+/* Application Loading */
+.application-loading {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+}

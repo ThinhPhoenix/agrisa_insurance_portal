@@ -6,12 +6,10 @@ import CustomTable from "@/components/custom-table";
 import { useInsurancePolicies } from "@/services/hooks/approval/use-aproval";
 import {
   CheckCircleOutlined,
-  CheckOutlined,
-  CloseOutlined,
   DownloadOutlined,
   EyeOutlined,
+  FileTextOutlined,
   FilterOutlined,
-  InsuranceOutlined,
   SafetyOutlined,
   SearchOutlined,
   StarOutlined,
@@ -19,12 +17,7 @@ import {
 import {
   Button,
   Collapse,
-  Form,
-  Input,
   Layout,
-  message,
-  Modal,
-  Popconfirm,
   Space,
   Tag,
   Typography,
@@ -45,11 +38,6 @@ export default function InsuranceApprovalPage() {
     loading,
   } = useInsurancePolicies();
 
-  // Modal states
-  const [rejectModalVisible, setRejectModalVisible] = useState(false);
-  const [selectedPolicy, setSelectedPolicy] = useState(null);
-  const [form] = Form.useForm();
-
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
     "policy_number",
@@ -61,9 +49,8 @@ export default function InsuranceApprovalPage() {
   // Calculate summary stats
   const summaryStats = {
     totalPolicies: filteredData.length,
-    pendingReview: filteredData.filter(
-      (p) => p.status === "pending_review"
-    ).length,
+    pendingReview: filteredData.filter((p) => p.status === "pending_review")
+      .length,
     underwritingPending: filteredData.filter(
       (p) => p.underwriting_status === "pending"
     ).length,
@@ -81,45 +68,6 @@ export default function InsuranceApprovalPage() {
   // Handle clear filters
   const handleClearFiltersWrapper = () => {
     handleClearFilters();
-  };
-
-  // Handle reject modal
-  const handleRejectClick = (record) => {
-    setSelectedPolicy(record);
-    setRejectModalVisible(true);
-    form.resetFields();
-  };
-
-  const handleRejectConfirm = async () => {
-    try {
-      const values = await form.validateFields();
-      console.log(
-        "Rejecting policy:",
-        selectedPolicy.id,
-        "with reason:",
-        values.rejectReason
-      );
-
-      message.success(`Đã từ chối đơn ${selectedPolicy.policy_number} thành công`);
-
-      setRejectModalVisible(false);
-      setSelectedPolicy(null);
-      form.resetFields();
-    } catch (error) {
-      console.error("Validation failed:", error);
-    }
-  };
-
-  const handleRejectCancel = () => {
-    setRejectModalVisible(false);
-    setSelectedPolicy(null);
-    form.resetFields();
-  };
-
-  // Handle approve action
-  const handleApproveClick = (record) => {
-    console.log("Approving policy:", record.id);
-    message.success(`Đã duyệt đơn ${record.policy_number} thành công`);
   };
 
   // Get status color
@@ -202,7 +150,7 @@ export default function InsuranceApprovalPage() {
       title: "Hành động",
       key: "action",
       fixed: "right",
-      width: 200,
+      width: 100,
       render: (_, record) => (
         <div className="insurance-actions-cell">
           <Link href={`/policy/approval/${record.id}`}>
@@ -215,30 +163,6 @@ export default function InsuranceApprovalPage() {
               Xem
             </Button>
           </Link>
-          <Popconfirm
-            title="Bạn có chắc chắn muốn duyệt đơn này?"
-            onConfirm={() => handleApproveClick(record)}
-            okText="Xác nhận"
-            cancelText="Hủy"
-          >
-            <Button
-              type="dashed"
-              size="small"
-              className="insurance-action-btn !bg-green-100 !border-green-200 !text-green-800 hover:!bg-green-200"
-            >
-              <CheckOutlined size={14} />
-              Duyệt
-            </Button>
-          </Popconfirm>
-          <Button
-            type="dashed"
-            size="small"
-            className="insurance-action-btn !bg-red-100 !border-red-200 !text-red-800 hover:!bg-red-200"
-            onClick={() => handleRejectClick(record)}
-          >
-            <CloseOutlined size={14} />
-            Từ chối
-          </Button>
         </div>
       ),
     },
@@ -304,7 +228,7 @@ export default function InsuranceApprovalPage() {
         <div className="insurance-summary-row">
           <div className="insurance-summary-card-compact">
             <div className="insurance-summary-icon total">
-              <InsuranceOutlined />
+              <FileTextOutlined />
             </div>
             <div className="insurance-summary-content">
               <div className="insurance-summary-value-compact">
@@ -352,9 +276,7 @@ export default function InsuranceApprovalPage() {
                   maximumFractionDigits: 0,
                 }).format(summaryStats.totalPremium)}
               </div>
-              <div className="insurance-summary-label-compact">
-                Tổng phí BH
-              </div>
+              <div className="insurance-summary-label-compact">Tổng phí BH</div>
             </div>
           </div>
         </div>
@@ -391,9 +313,9 @@ export default function InsuranceApprovalPage() {
         {/* Table */}
         <div className="insurance-table-wrapper">
           <div className="flex justify-start items-center gap-2 mb-2">
-            <Button type="primary" icon={<SafetyOutlined />}>
+            {/* <Button type="primary" icon={<SafetyOutlined />}>
               Duyệt hàng loạt
-            </Button>
+            </Button> */}
             <Button icon={<DownloadOutlined />}>Xuất excel</Button>
             <Button icon={<DownloadOutlined />}>Xuất báo cáo</Button>
             <SelectedColumn
@@ -421,45 +343,6 @@ export default function InsuranceApprovalPage() {
           />
         </div>
       </div>
-
-      {/* Reject Modal */}
-      <Modal
-        title={`Từ chối đơn ${selectedPolicy?.policy_number}`}
-        open={rejectModalVisible}
-        onOk={handleRejectConfirm}
-        onCancel={handleRejectCancel}
-        okText="Xác nhận từ chối"
-        cancelText="Hủy"
-        okButtonProps={{ danger: true }}
-        width={500}
-      >
-        <div className="mb-4">
-          <p>
-            <strong>Mã nông dân:</strong> {selectedPolicy?.farmer_id}
-          </p>
-          <p>
-            <strong>Số hợp đồng:</strong> {selectedPolicy?.policy_number}
-          </p>
-        </div>
-
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="rejectReason"
-            label="Lý do từ chối"
-            rules={[
-              { required: true, message: "Vui lòng nhập lý do từ chối" },
-              { min: 10, message: "Lý do từ chối phải có ít nhất 10 ký tự" },
-            ]}
-          >
-            <Input.TextArea
-              rows={4}
-              placeholder="Nhập lý do từ chối đơn đăng ký..."
-              maxLength={500}
-              showCount
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
     </Layout.Content>
   );
 }

@@ -1,4 +1,5 @@
 import {
+    CheckCircleOutlined,
     DeleteOutlined,
     DragOutlined,
     EditOutlined,
@@ -15,19 +16,20 @@ import {
     Form,
     Input,
     InputNumber,
+    message,
     Popconfirm,
     Select,
     Space,
     TimePicker,
     Typography
 } from 'antd';
-import React, { memo, useCallback } from 'react';
+import React, { memo, useRef } from 'react';
 import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-// ✅ OPTIMIZATION: Memoize TagsTab to prevent unnecessary re-renders
+//  OPTIMIZATION: Memoize TagsTab to prevent unnecessary re-renders
 const TagsTabComponent = ({
     tagsData,
     mockData,
@@ -47,12 +49,30 @@ const TagsTabComponent = ({
     filePreviewRef  //  NEW - receive from parent to pass down to PlaceholderMappingPanel
 }) => {
     const [tagForm] = Form.useForm();
+    const placeholderMappingRef = useRef(null);
+    const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
     const [selectedDataType, setSelectedDataType] = React.useState('string');
     const [selectOptions, setSelectOptions] = React.useState(['']);
     const [isMultipleSelect, setIsMultipleSelect] = React.useState(false);
     const [editingRows, setEditingRows] = React.useState(new Set()); // Track which rows are in edit mode
     const [fieldWidth, setFieldWidth] = React.useState(40); // Field width percentage for layout (default 40% = 2 fields/row)
     const [textareaRows, setTextareaRows] = React.useState(3); // Number of rows for textarea
+
+    // Handle apply button
+    const handleApply = async () => {
+        if (!placeholderMappingRef.current) return;
+
+        message.loading('Đang tạo PDF có thể điền cho các vị trí đã chọn...', 0);
+
+        try {
+            await placeholderMappingRef.current.applySelectedFillable();
+            message.destroy();
+            message.success('Đã tạo PDF có thể điền thành công!');
+        } catch (error) {
+            message.destroy();
+            message.error('Lỗi khi tạo PDF có thể điền');
+        }
+    };
 
     // Handle data type change
     const handleDataTypeChange = (value) => {
@@ -673,9 +693,11 @@ const TagsTabComponent = ({
 
                 {placeholders && placeholders.length > 0 ? (
                     <PlaceholderMappingPanel
+                        ref={placeholderMappingRef}
                         placeholders={placeholders}
                         tags={tagsData?.tags || []}
                         tagDataTypes={mockData.tagDataTypes || []}
+                        onSelectedRowsChange={setSelectedRowsCount}
                         onCreateTag={(tag) => {
                             console.log('🔍 TagsTab - onCreateTag called with:', tag);
                             console.log('🔍 TagsTab - calling onAddTag...');
@@ -688,12 +710,22 @@ const TagsTabComponent = ({
                             //  FIX: Use handleTagsDataChange (prev => ...) instead of spreading tagsData
                             // to avoid race condition where tags haven't been added yet
                             onDataChange && onDataChange((prev) => {
-                                const updates = { ...prev, mappings };
+                                const updates = {
+                                    ...prev,
+                                    mappings,
+                                    // ✅ Lưu placeholders để dùng cho auto-conversion
+                                    placeholders: placeholders
+                                };
 
                                 // Only update fields that exist in pdfData (avoid overwriting with undefined)
                                 if (pdfData) {
+                                    //  FIX: MERGE documentTagsObject instead of overwriting
+                                    // This preserves previously mapped tags when adding new ones
                                     if (pdfData.documentTagsObject !== undefined) {
-                                        updates.documentTagsObject = pdfData.documentTagsObject;
+                                        updates.documentTagsObject = {
+                                            ...prev.documentTagsObject,
+                                            ...pdfData.documentTagsObject
+                                        };
                                     }
                                     if (pdfData.modifiedPdfBytes !== undefined) {
                                         updates.modifiedPdfBytes = pdfData.modifiedPdfBytes;
@@ -702,6 +734,12 @@ const TagsTabComponent = ({
                                         updates.uploadedFile = pdfData.uploadedFile;
                                     }
                                 }
+
+                                console.log('💾 Saving to tagsData:', {
+                                    placeholders: updates.placeholders?.length,
+                                    mappings: Object.keys(updates.mappings || {}).length,
+                                    documentTags: Object.keys(updates.documentTagsObject || {}).length
+                                });
 
                                 return updates;
                             });
@@ -718,15 +756,24 @@ const TagsTabComponent = ({
                     />
                 )}
 
-                <div style={{ marginTop: 12 }}>
+                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text type="secondary">Tổng trường thông tin hiện tại: <Text strong>{tagsData.tags.length}</Text></Text>
+                    <Button
+                        type="primary"
+                        icon={<CheckCircleOutlined />}
+                        onClick={handleApply}
+                        disabled={selectedRowsCount === 0}
+                        size="middle"
+                    >
+                        Áp dụng ({selectedRowsCount} vị trí)
+                    </Button>
                 </div>
             </div>
         </div>
     );
 };
 
-// ✅ OPTIMIZATION: Wrap with memo and add display name
+//  OPTIMIZATION: Wrap with memo and add display name
 const TagsTab = memo(TagsTabComponent);
 TagsTab.displayName = 'TagsTab';
 

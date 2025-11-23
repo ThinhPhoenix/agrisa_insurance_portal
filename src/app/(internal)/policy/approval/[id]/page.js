@@ -61,7 +61,7 @@ export default function InsurancePolicyDetailPage() {
     setDecisionModalVisible(false);
     form.resetFields();
     // Redirect back to list
-    router.push("/insurance/approval");
+    router.push("/policy/approval");
   };
 
   const handleFormSubmit = async () => {
@@ -415,7 +415,7 @@ export default function InsurancePolicyDetailPage() {
         <Divider />
 
         <Space className="application-actions">
-          <Button onClick={() => router.push("/insurance/approval")}>
+          <Button onClick={() => router.push("/policy/approval")}>
             Quay lại
           </Button>
           <Button danger onClick={() => handleDecision("reject")}>

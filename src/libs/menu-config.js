@@ -15,10 +15,10 @@ export const sidebarMenuItems = [
     key: "transaction-history",
     label: "Lịch sử giao dịch",
   },
-  {
-    key: "payment",
-    label: "Quản lý thanh toán",
-  },
+  // {
+  //   key: "payment",
+  //   label: "Quản lý thanh toán",
+  // },
   {
     key: "configuration",
     label: "Cấu hình",

@@ -183,7 +183,9 @@ const initialTagsData = {
   tags: [], // { id, key, value, dataType }
   uploadedFile: null, // File object
   modifiedPdfBytes: null, // Uint8Array after replacements
-  documentTagsObject: {}, // Final tags for BE: { "key": "value" }
+  documentTagsObject: {}, // Final tags for BE: { "key": "dataType" }
+  placeholders: [], // ✅ Placeholders for auto-conversion
+  mappings: {}, // ✅ Mappings { placeholderId: tagId } for auto-conversion
 };
 
 // ====================== ZUSTAND STORE ======================
@@ -224,8 +226,7 @@ export const usePolicyStore = create((set, get) => ({
     // Build base_policy object
     const base_policy = {
       //  Provider & Product Info
-      insurance_provider_id:
-        basicData.insuranceProviderId || "UCtPr8F7fq",
+      insurance_provider_id: basicData.insuranceProviderId || "UCtPr8F7fq",
       product_name: basicData.productName,
       product_code: basicData.productCode,
       product_description: basicData.productDescription || "",
@@ -460,10 +461,28 @@ export const usePolicyStore = create((set, get) => ({
       errors.push("At least one condition is required (conditions table)");
     }
 
-    // Tags validation (optional - no validation needed as data types are selected from fixed enum)
-    // If uploadedFile exists, should have either modifiedPdfBytes or valid file
-    if (tagsData.uploadedFile && !tagsData.modifiedPdfBytes) {
-      console.log("ℹ️ Using original uploaded file (no modifications applied)");
+    // Tags validation
+    // If uploadedFile exists, should have documentTagsObject with mappings
+    if (tagsData.uploadedFile) {
+      const hasMappings =
+        tagsData.documentTagsObject &&
+        Object.keys(tagsData.documentTagsObject).length > 0;
+
+      if (!hasMappings) {
+        errors.push(
+          "PDF template uploaded but no field mappings defined. Please map placeholders to data fields."
+        );
+      }
+
+      // ⚠️ Warning (not error) if user hasn't clicked "Apply" button yet
+      if (!tagsData.modifiedPdfBytes && hasMappings) {
+        console.warn(
+          "⚠️ User has mappings but hasn't applied to PDF yet. Recommend clicking 'Apply' button first."
+        );
+        warnings.push(
+          "Bạn đã map các trường nhưng chưa bấm nút 'Áp dụng'. Hãy bấm 'Áp dụng' để tạo fillable PDF trước khi submit."
+        );
+      }
     }
 
     return {

@@ -3,7 +3,7 @@ import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
 import { calculateConditionCost, usePolicyStore } from "@/stores/policy-store";
 import { message } from "antd";
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const TABS = {
   BASIC: "basic",
@@ -115,7 +115,10 @@ const useCreatePolicy = () => {
     let dataComplexityScore = 0;
 
     // Skip calculation if no data sources
-    if (!basicData.selectedDataSources || basicData.selectedDataSources.length === 0) {
+    if (
+      !basicData.selectedDataSources ||
+      basicData.selectedDataSources.length === 0
+    ) {
       return {
         monthlyDataCost: "0.00",
         dataComplexityScore: 0,
@@ -570,6 +573,8 @@ const useCreatePolicy = () => {
       uploadedFile: null,
       modifiedPdfBytes: null,
       documentTagsObject: {},
+      placeholders: [],
+      mappings: {},
     });
     setCurrentTab(TABS.BASIC);
     setValidationStatus({
@@ -616,7 +621,7 @@ const useCreatePolicy = () => {
 
       const validation = policyStore.validatePayload();
       if (!validation.isValid) {
-        message.error(`Validation failed: ${validation.errors.join(", ")}`);
+        message.error(validation.errors.join(", "));
         return false;
       }
 
@@ -636,7 +641,7 @@ const useCreatePolicy = () => {
       if (response.data.success) {
         message.success("Base Policy đã được tạo thành công!");
 
-        handleReset();
+        // Reset store data but don't reset UI state yet to allow redirect to complete
         policyStore.resetPolicyData();
 
         return true;

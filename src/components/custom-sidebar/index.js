@@ -13,8 +13,8 @@ import {
   Shield,
   Users,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react"; // Add this import for state
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 // Map central menu config to AntD menu items and attach icons
 const items = sidebarMenuItems.map((item) => ({
@@ -24,11 +24,104 @@ const items = sidebarMenuItems.map((item) => ({
 
 const CustomSidebar = ({ collapsed, setCollapsed }) => {
   const router = useRouter();
+  const pathname = usePathname();
   // store a key for which icon to show: 'panel' | 'right' | 'left'
   const [hoverIcon, setHoverIcon] = useState("panel");
+  const [selectedKeys, setSelectedKeys] = useState([]);
+  const [openKeys, setOpenKeys] = useState([]);
+
+  // Update selected keys based on current pathname
+  useEffect(() => {
+    if (pathname) {
+      // Remove leading slash for comparison
+      const currentPath = pathname.startsWith("/") ? pathname.slice(1) : pathname;
+
+      // Find the matching menu item key - prioritize exact matches and deeper matches
+      const findMatchingKey = (items, path) => {
+        let bestMatch = null;
+        let bestMatchLength = -1;
+
+        const searchItems = (itemsList) => {
+          for (const item of itemsList) {
+            // Check children first (prioritize deeper matches)
+            if (item.children) {
+              const childResult = searchItems(item.children);
+              if (childResult) {
+                // If exact match found in children, use it
+                if (childResult.exact || childResult.length > bestMatchLength) {
+                  bestMatch = childResult.key;
+                  bestMatchLength = childResult.length;
+                  if (childResult.exact) {
+                    return childResult; // Return immediately for exact match
+                  }
+                }
+              }
+            }
+
+            // Check for exact match
+            if (path === item.key) {
+              return { key: item.key, length: item.key.length, exact: true };
+            }
+
+            // Check if path starts with item key
+            if (path.startsWith(item.key + "/")) {
+              if (item.key.length > bestMatchLength) {
+                bestMatch = item.key;
+                bestMatchLength = item.key.length;
+              }
+            }
+          }
+          return bestMatch ? { key: bestMatch, length: bestMatchLength } : null;
+        };
+
+        const result = searchItems(items);
+        return result ? result.key : null;
+      };
+
+      // Find the parent keys for opening submenus
+      const findOpenKeys = (items, path, parents = []) => {
+        for (const item of items) {
+          // Check children first (prioritize deeper matches)
+          if (item.children) {
+            const result = findOpenKeys(item.children, path, [...parents, item.key]);
+            if (result.length > 0) {
+              return result;
+            }
+          }
+
+          // Exact match - this is a leaf item
+          if (path === item.key) {
+            return parents;
+          }
+
+          // Check if path starts with item key
+          if (path.startsWith(item.key + "/")) {
+            return [...parents, item.key];
+          }
+        }
+        return [];
+      };
+
+      const matchedKey = findMatchingKey(sidebarMenuItems, currentPath);
+      const matchedOpenKeys = findOpenKeys(sidebarMenuItems, currentPath);
+
+      if (matchedKey) {
+        setSelectedKeys([matchedKey]);
+        // Set open keys for parent menus
+        if (matchedOpenKeys.length > 0) {
+          setOpenKeys(matchedOpenKeys);
+        }
+      }
+    }
+  }, [pathname]);
+
   const onClick = (e) => {
     console.log("click ", e);
     router.push(`/${e.key}`);
+  };
+
+  const onOpenChange = (keys) => {
+    setOpenKeys(keys);
   };
 
   const handleMouseEnter = () => {
@@ -86,7 +179,9 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
       >
         <Menu
           onClick={onClick}
-          defaultSelectedKeys={["payment"]}
+          selectedKeys={selectedKeys}
+          openKeys={openKeys}
+          onOpenChange={onOpenChange}
           mode="inline"
           items={items}
           inlineCollapsed={collapsed}

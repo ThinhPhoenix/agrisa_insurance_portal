@@ -641,7 +641,7 @@ const useCreatePolicy = () => {
       if (response.data.success) {
         message.success("Base Policy đã được tạo thành công!");
 
-        handleReset();
+        // Reset store data but don't reset UI state yet to allow redirect to complete
         policyStore.resetPolicyData();
 
         return true;

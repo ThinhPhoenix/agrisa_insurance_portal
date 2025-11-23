@@ -1,0 +1,52 @@
+[
+  {
+    "id": "notif_001",
+    "type": "approval",
+    "title": "Đơn bảo hiểm được duyệt",
+    "description": "Đơn bảo hiểm #BH-2024-001 của bạn đã được phê duyệt thành công",
+    "timestamp": "2025-11-23T10:30:00Z",
+    "read": false,
+    "icon": "CheckCircle",
+    "color": "green"
+  },
+  {
+    "id": "notif_002",
+    "type": "claim",
+    "title": "Kích hoạt bồi thường",
+    "description": "Yêu cầu bồi thường cho bảo hiểm #BH-2024-002 đã được kích hoạt",
+    "timestamp": "2025-11-23T09:15:00Z",
+    "read": false,
+    "icon": "DollarSign",
+    "color": "blue"
+  },
+  {
+    "id": "notif_003",
+    "type": "policy",
+    "title": "Bảo hiểm sắp hết hạn",
+    "description": "Bảo hiểm #BH-2024-003 của bạn sẽ hết hạn trong 7 ngày",
+    "timestamp": "2025-11-22T14:20:00Z",
+    "read": true,
+    "icon": "AlertCircle",
+    "color": "orange"
+  },
+  {
+    "id": "notif_004",
+    "type": "approval",
+    "title": "Đơn chờ phê duyệt",
+    "description": "Đơn bảo hiểm #BH-2024-004 đang chờ phê duyệt từ bộ phận quản lý",
+    "timestamp": "2025-11-22T11:00:00Z",
+    "read": true,
+    "icon": "Clock",
+    "color": "yellow"
+  },
+  {
+    "id": "notif_005",
+    "type": "claim",
+    "title": "Hoàn tất bồi thường",
+    "description": "Bồi thường cho bảo hiểm #BH-2024-005 đã được chuyển khoản thành công",
+    "timestamp": "2025-11-21T16:45:00Z",
+    "read": true,
+    "icon": "CheckCircle",
+    "color": "green"
+  }
+]

@@ -48,4 +48,5 @@ export const sidebarMenuItems = [
 export const labelTranslations = {
   Create: "Tạo mới",
   Edit: "Chỉnh sửa",
+  Profile: "Hồ sơ",
 };

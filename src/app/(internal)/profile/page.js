@@ -1,436 +1,288 @@
 "use client";
 import {
-  Avatar,
-  Button,
   Card,
   Col,
   Divider,
   Image,
   Rate,
   Row,
-  Tabs,
+  Spin,
   Tag,
   Typography,
+  message,
 } from "antd";
 import {
   Building,
-  Edit,
-  Handshake,
   Mail,
   MapPin,
   Phone,
-  Star,
-  TrendingUp,
-  Users,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import CustomerViewModal from "../../../components/layout/profile/CustomerViewModal";
-import mockData from "./mockdata.json";
+import { useEffect } from "react";
+import { useGetPartnerProfile } from "@/services/hooks/profile/use-profile";
+import { useAuthStore } from "@/stores/auth-store";
 import "./profile.css";
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
-const { Meta } = Card;
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [activeTab, setActiveTab] = useState("company");
-  const [isCustomerViewModalVisible, setIsCustomerViewModalVisible] =
-    useState(false);
+  const { user } = useAuthStore();
+  const { getPartnerProfile, isLoading, error, data } = useGetPartnerProfile();
 
-  // Force navigation function for auth to internal route transitions
-  const forceNavigate = (path) => {
-    const isAuthRoute =
-      pathname.startsWith("/signin") ||
-      pathname.startsWith("/signup") ||
-      pathname.startsWith("/profile");
-    const isInternalRoute =
-      path.startsWith("/dashboard") ||
-      path.startsWith("/portal") ||
-      (path.startsWith("/") &&
-        !path.startsWith("/signin") &&
-        !path.startsWith("/signup") &&
-        !path.startsWith("/profile"));
+  useEffect(() => {
+    const fetchProfile = async () => {
+      let partnerId = null;
+      try {
+        const meData = localStorage.getItem("me");
+        if (meData) {
+          const me = JSON.parse(meData);
+          partnerId = me.partner_id;
+        }
+      } catch (e) {
+        console.error("Failed to parse me data from localStorage:", e);
+      }
 
-    if (isAuthRoute && isInternalRoute) {
-      window.location.href = path;
-    } else {
-      router.push(path);
-    }
-  };
+      if (!partnerId) {
+        partnerId = user?.user?.partner_id || user?.profile?.partner_id;
+      }
 
-  // Dynamically get data from mock data
-  const data = mockData;
+      if (!partnerId) {
+        message.error("Không tìm thấy thông tin đối tác");
+        return;
+      }
 
-  const handleTabChange = (key) => {
-    setActiveTab(key);
-  };
+      const result = await getPartnerProfile(partnerId);
+      if (!result.success) {
+        message.error(result.message || "Không thể tải thông tin đối tác");
+      }
+    };
 
-  // Render activity dot based on type
-  const renderActivityDot = (type) => {
-    const className = `activity-dot ${type}`;
-    return <div className={className}></div>;
-  };
+    fetchProfile();
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
+        <Spin size="large" tip="Đang tải thông tin đối tác..." />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
+        <Text type="danger">Không thể tải thông tin đối tác</Text>
+      </div>
+    );
+  }
 
   return (
-    <div className="profile-container">
-      <div className="resume-page">
-        {/* Resume Header */}
-        <div
-          className="resume-header"
-          style={{
-            background: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${data.cover_photo_url})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="partner-logo-container mr-4">
-                <Image
-                  src={data.partner_logo_url}
-                  alt={data.partner_name}
-                  preview={false}
-                  className="partner-logo"
-                  width={80}
-                  height={80}
-                  style={{ borderRadius: "50%", objectFit: "cover" }}
-                />
+    <div className="space-y-4">
+      {/* Header Card */}
+      <Card>
+        <Row align="middle" gutter={16}>
+          <Col>
+            {data.partner_logo_url ? (
+              <Image
+                src={data.partner_logo_url}
+                alt={data.partner_display_name}
+                preview={false}
+                width={80}
+                height={80}
+                style={{ borderRadius: "8px", objectFit: "cover" }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: "8px",
+                  backgroundColor: "#f6ffed",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 32,
+                  fontWeight: "bold",
+                  color: "#52c41a",
+                }}
+              >
+                {data.partner_display_name?.charAt(0) || "P"}
               </div>
-              <div>
-                <Title level={2}>{data.partner_name}</Title>
-                <Text>{data.partner_tagline}</Text>
-                <div className="flex items-center">
-                  <Rate
-                    disabled
-                    defaultValue={data.partner_rating_score}
-                    className="mr-2"
-                  />
-                  <Text>
-                    {data.partner_rating_score} ({data.partner_rating_count}{" "}
-                    đánh giá)
-                  </Text>
-                </div>
-              </div>
+            )}
+          </Col>
+          <Col flex={1}>
+            <Title level={3} style={{ margin: 0 }}>
+              {data.partner_display_name}
+            </Title>
+            <Text type="secondary">{data.partner_tagline}</Text>
+            <div style={{ marginTop: 8 }}>
+              <Rate
+                disabled
+                value={data.partner_rating_score}
+                style={{ fontSize: 16 }}
+              />
+              <Text type="secondary" style={{ marginLeft: 8 }}>
+                {data.partner_rating_score} ({data.partner_rating_count} đánh giá)
+              </Text>
             </div>
-          </div>
-        </div>
+          </Col>
+        </Row>
 
-        {/* Resume Content */}
-        <div className="resume-content">
-          {/* Left Sidebar */}
-          <div className="resume-sidebar">
-            {/* Contact Information */}
-            <div className="resume-section">
-              <h3 className="resume-section-title">THÔNG TIN LIÊN HỆ</h3>
-              <div className="contact-item">
-                <Mail size={16} className="contact-icon" />
-                <Text className="text-secondary-900">{data.partner_email}</Text>
-              </div>
-              <div className="contact-item">
-                <Phone size={16} className="contact-icon" />
-                <Text className="text-secondary-900">{data.partner_phone}</Text>
-              </div>
-              <div className="contact-item">
-                <MapPin size={16} className="contact-icon" />
-                <Text className="text-secondary-900">
-                  {data.partner_address}
-                </Text>
-              </div>
-              <div className="contact-item">
-                <Building size={16} className="contact-icon" />
-                <Text className="text-secondary-900">
-                  {data.partner_website}
-                </Text>
-              </div>
-            </div>
+        <Divider />
 
-            {/* Trust Metrics */}
-            <div className="resume-section">
-              <h3 className="resume-section-title">CHỈ SỐ TIN CẬY</h3>
-              <div className="trust-metric">
-                <div className="flex items-center justify-between mb-2">
-                  <Text className="text-secondary-700">Kinh nghiệm</Text>
-                  <Text className="font-bold text-primary-600">
-                    {data.trust_metric_experience} năm
-                  </Text>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <Text className="text-secondary-700">Khách hàng</Text>
-                  <Text className="font-bold text-primary-600">
-                    {data.trust_metric_clients.toLocaleString()} hộ
-                  </Text>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <Text className="text-secondary-700">Tỷ lệ chi trả</Text>
-                  <Text className="font-bold text-primary-600">
-                    {data.trust_metric_claim_rate}%
-                  </Text>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Text className="text-secondary-700">Tổng chi trả</Text>
-                  <Text className="font-bold text-primary-600">
-                    {data.total_payouts}
-                  </Text>
-                </div>
-              </div>
-            </div>
-          </div>
+        <Row gutter={16}>
+          <Col span={6}>
+            <Text type="secondary">Kinh nghiệm:</Text>
+            <br />
+            <Text strong>{data.trust_metric_experience} năm</Text>
+          </Col>
+          <Col span={6}>
+            <Text type="secondary">Khách hàng:</Text>
+            <br />
+            <Text strong>{data.trust_metric_clients.toLocaleString()} hộ</Text>
+          </Col>
+          <Col span={6}>
+            <Text type="secondary">Tỷ lệ chi trả:</Text>
+            <br />
+            <Text strong style={{ color: "#52c41a" }}>
+              {data.trust_metric_claim_rate}%
+            </Text>
+          </Col>
+          <Col span={6}>
+            <Text type="secondary">Tổng chi trả:</Text>
+            <br />
+            <Text strong style={{ color: "#faad14" }}>{data.total_payouts}</Text>
+          </Col>
+        </Row>
+      </Card>
 
-          {/* Main Content Area */}
-          <div className="resume-main">
-            {/* Company Header */}
-            <div className="company-header">
-              <div>
-                <Title level={3} className="text-primary-700 mb-1">
-                  {data.partner_name}
-                </Title>
-                <div className="flex items-center text-secondary-600 mb-2">
-                  <Star size={16} className="text-yellow-500 mr-1" />
-                  <Text>
-                    {data.partner_rating_score} ({data.partner_rating_count}{" "}
-                    đánh giá)
-                  </Text>
-                  <Divider type="vertical" />
-                  <Users size={16} className="mr-2" />
-                  <Text>
-                    {data.trust_metric_clients.toLocaleString()} khách hàng
-                  </Text>
-                </div>
-                <Paragraph className="text-secondary-800">
-                  {data.partner_description}
+      {/* Main Content */}
+      <Row gutter={24}>
+        {/* Left Content - Details */}
+        <Col span={16}>
+          <Card>
+            <Title level={4}>Giới thiệu</Title>
+            <Paragraph>{data.partner_description}</Paragraph>
+            <Paragraph>
+              <Text strong>Tagline:</Text> {data.partner_tagline}
+            </Paragraph>
+            <Paragraph>
+              <Text strong>Kinh nghiệm:</Text> {data.trust_metric_experience} năm hoạt động trong lĩnh vực bảo hiểm nông nghiệp
+            </Paragraph>
+            {data.year_established && (
+              <Paragraph>
+                <Text strong>Năm thành lập:</Text> {data.year_established}
+              </Paragraph>
+            )}
+            {data.legal_company_name && (
+              <Paragraph>
+                <Text strong>Tên pháp lý:</Text> {data.legal_company_name}
+              </Paragraph>
+            )}
+
+            <Divider />
+
+            <Title level={4}>Chi tiết dịch vụ</Title>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Paragraph>
+                  <Text type="secondary">Thời gian xác nhận:</Text>
+                  <br />
+                  <Text>{data.confirmation_timeline}</Text>
                 </Paragraph>
+              </Col>
+              <Col span={12}>
+                <Paragraph>
+                  <Text type="secondary">Thời gian thanh toán TB:</Text>
+                  <br />
+                  <Text>{data.average_payout_time}</Text>
+                </Paragraph>
+              </Col>
+            </Row>
+
+            <Paragraph>
+              <Text type="secondary">Khu vực phục vụ:</Text>
+              <br />
+              {data.operating_provinces ? (
+                <div style={{ marginTop: 8 }}>
+                  {data.operating_provinces.map((province, index) => (
+                    <Tag key={index} color="green">
+                      {province}
+                    </Tag>
+                  ))}
+                </div>
+              ) : (
+                <Text>{data.coverage_areas}</Text>
+              )}
+            </Paragraph>
+
+            {data.support_hours && (
+              <Paragraph>
+                <Text type="secondary">Giờ hỗ trợ:</Text>
+                <br />
+                <Text>{data.support_hours}</Text>
+              </Paragraph>
+            )}
+
+            {data.authorized_insurance_lines && data.authorized_insurance_lines.length > 0 && (
+              <Paragraph>
+                <Text type="secondary">Loại hình bảo hiểm được phép:</Text>
+                <br />
+                <div style={{ marginTop: 8 }}>
+                  {data.authorized_insurance_lines.map((line, index) => (
+                    <Tag key={index} color="gold">
+                      {line}
+                    </Tag>
+                  ))}
+                </div>
+              </Paragraph>
+            )}
+          </Card>
+        </Col>
+
+        {/* Right Content - Contact Info */}
+        <Col span={8}>
+          <Card title="Thông tin liên hệ">
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+                <Mail size={16} style={{ marginRight: 8, color: "#52c41a" }} />
+                <Text>{data.partner_official_email}</Text>
               </div>
-              <div className="flex space-x-3">
-                <Button
-                  type="primary"
-                  className="bg-primary-500 hover:bg-primary-600 border-primary-500"
-                  onClick={() => setIsCustomerViewModalVisible(true)}
-                >
-                  <Handshake size={16} className="mr-2" />
-                  Góc nhìn từ khách hàng
-                </Button>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+                <Phone size={16} style={{ marginRight: 8, color: "#52c41a" }} />
+                <Text>{data.partner_phone}</Text>
+              </div>
+              {data.customer_service_hotline && (
+                <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+                  <Phone size={16} style={{ marginRight: 8, color: "#52c41a" }} />
+                  <Text>Hotline: {data.customer_service_hotline}</Text>
+                </div>
+              )}
+              <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 12 }}>
+                <MapPin size={16} style={{ marginRight: 8, marginTop: 4, color: "#52c41a" }} />
+                <Text>{data.head_office_address}</Text>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+                <Building size={16} style={{ marginRight: 8, color: "#52c41a" }} />
+                <Text>{data.partner_website}</Text>
               </div>
             </div>
-
-            {/* Navigation Tabs */}
-            <Tabs
-              activeKey={activeTab}
-              onChange={handleTabChange}
-              className="resume-tabs"
-            >
-              <TabPane
-                tab={
-                  <span className="flex items-center">
-                    <Building size={16} className="mr-2" />
-                    Thông tin chi tiết
-                  </span>
-                }
-                key="company"
-              />
-              <TabPane
-                tab={
-                  <span className="flex items-center">
-                    <Star size={16} className="mr-2" />
-                    Đánh giá
-                  </span>
-                }
-                key="reviews"
-              />
-              <TabPane
-                tab={
-                  <span className="flex items-center">
-                    <TrendingUp size={16} className="mr-2" />
-                    Sản phẩm
-                  </span>
-                }
-                key="products"
-              />
-            </Tabs>
-
-            {/* Tab Content */}
-            {activeTab === "company" && (
-              <div>
-                {/* Company Description */}
-                <div className="resume-section">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="resume-section-title">GIỚI THIỆU</h3>
-                    <Button
-                      type="text"
-                      shape="circle"
-                      icon={<Edit size={14} />}
-                      className="edit-btn"
-                    />
-                  </div>
-                  <Paragraph className="text-secondary-900 leading-relaxed">
-                    {data.partner_description}
-                  </Paragraph>
-                  <Paragraph className="text-secondary-900 leading-relaxed">
-                    <Text strong>Tagline:</Text> {data.partner_tagline}
-                  </Paragraph>
-                  <Paragraph className="text-secondary-900 leading-relaxed">
-                    <Text strong>Kinh nghiệm:</Text>{" "}
-                    {data.trust_metric_experience} năm hoạt động trong lĩnh vực
-                    bảo hiểm nông nghiệp.
-                  </Paragraph>
-                </div>
-
-                <div className="section-divider"></div>
-
-                {/* Contact Information */}
-                {/* <div className="resume-section">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="resume-section-title">THÔNG TIN LIÊN HỆ</h3>
-                                        <Button type="text" shape="circle" icon={<Edit size={14} />} className="edit-btn" />
-                                    </div>
-                                    <Row gutter={24}>
-                                        <Col span={12}>
-                                            <Space direction="vertical" size="middle" className="w-full">
-                                                <div><span className="info-label">Email:</span> <span className="info-value">{data.partner_email}</span></div>
-                                                <div><span className="info-label">Điện thoại:</span> <span className="info-value">{data.partner_phone}</span></div>
-                                                <div><span className="info-label">Website:</span> <span className="info-value">{data.partner_website}</span></div>
-                                            </Space>
-                                        </Col>
-                                        <Col span={12}>
-                                            <Space direction="vertical" size="middle" className="w-full">
-                                                <div><span className="info-label">Địa chỉ:</span> <span className="info-value">{data.partner_address}</span></div>
-                                                <div><span className="info-label">Hotline:</span> <span className="info-value">{data.hotline}</span></div>
-                                                <div><span className="info-label">Giờ hỗ trợ:</span> <span className="info-value">{data.support_hours}</span></div>
-                                            </Space>
-                                        </Col>
-                                    </Row>
-                                </div> */}
-
-                {/* Service Details */}
-                <div className="resume-section">
-                  <h3 className="resume-section-title">CHI TIẾT DỊCH VỤ</h3>
-                  <Row gutter={24}>
-                    <Col span={12}>
-                      <div>
-                        <div className="mb-2">
-                          <span className="info-label">
-                            Thời gian xác nhận:
-                          </span>
-                        </div>
-                        <Text className="text-secondary-900">
-                          {data.confirmation_timeline}
-                        </Text>
-                      </div>
-                    </Col>
-                    <Col span={12}>
-                      <div>
-                        <div className="mb-2">
-                          <span className="info-label">
-                            Thời gian thanh toán TB:
-                          </span>
-                        </div>
-                        <Text className="text-secondary-900">
-                          {data.average_payout_time}
-                        </Text>
-                      </div>
-                    </Col>
-                  </Row>
-                  <div className="mt-4">
-                    <div className="mb-2">
-                      <span className="info-label">Khu vực phục vụ:</span>
-                    </div>
-                    <Text className="text-secondary-900">
-                      {data.coverage_areas}
-                    </Text>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Reviews Tab */}
-            {activeTab === "reviews" && (
-              <div>
-                <div className="resume-section">
-                  <h3 className="resume-section-title">
-                    ĐÁNH GIÁ TỪ KHÁCH HÀNG
-                  </h3>
-                  <div className="reviews-list">
-                    {data.reviews.map((review, index) => (
-                      <Card key={index} className="review-card mb-4">
-                        <Meta
-                          avatar={<Avatar src={review.reviewer_avatar_url} />}
-                          title={
-                            <div className="flex items-center justify-between">
-                              <Text strong>{review.reviewer_name}</Text>
-                              <Rate
-                                disabled
-                                defaultValue={review.rating_stars}
-                              />
-                            </div>
-                          }
-                          description={
-                            <div>
-                              <Text className="text-secondary-600">
-                                {review.review_content}
-                              </Text>
-                              <div className="mt-2">
-                                <Text type="secondary" className="text-xs">
-                                  ID: {review.reviewer_id}
-                                </Text>
-                              </div>
-                            </div>
-                          }
-                        />
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Products Tab */}
-            {activeTab === "products" && (
-              <div>
-                <div className="resume-section">
-                  <h3 className="resume-section-title">
-                    DANH SÁCH SẢN PHẨM BẢO HIỂM
-                  </h3>
-                  <Row gutter={16}>
-                    {data.products.map((product, index) => (
-                      <Col span={12} key={index}>
-                        <Card className="product-card">
-                          <div className="flex items-center mb-3">
-                            <i
-                              className={`${product.product_icon} text-2xl text-primary-500 mr-3`}
-                            ></i>
-                            <div>
-                              <Title level={4} className="mb-1">
-                                {product.product_name}
-                              </Title>
-                              <Tag color="blue">
-                                {product.product_supported_crop}
-                              </Tag>
-                            </div>
-                          </div>
-                          <Paragraph className="text-secondary-600 mb-3">
-                            {product.product_description}
-                          </Paragraph>
-                          <Button type="primary" size="small">
-                            Xem chi tiết
-                          </Button>
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <CustomerViewModal
-        visible={isCustomerViewModalVisible}
-        onClose={() => setIsCustomerViewModalVisible(false)}
-        companyData={mockData}
-      />
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

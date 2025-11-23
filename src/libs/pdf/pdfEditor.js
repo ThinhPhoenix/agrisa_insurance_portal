@@ -400,6 +400,9 @@ export const createFillablePDF = async (
             // Text field (default)
             formField = form.createTextField(fieldName);
 
+            // ✅ Reduce font size to avoid overlapping when multiple fields are close
+            const reducedFontSize = fontSize * 0.85; // 85% of original font size
+
             // ✅ CRITICAL: Set default appearance with Vietnamese font BEFORE setText
             // This prevents WinAnsi encoding error
             try {
@@ -409,9 +412,9 @@ export const createFillablePDF = async (
 
               // Set /DA (Default Appearance) string manually
               // Format: /FontKey FontSize Tf r g b rg
-              // Use simple ASCII placeholder to avoid encoding issues
+              // Use reduced font size to prevent overlap
               acroField.setDefaultAppearance(
-                `/${fontKey} ${fontSize} Tf 0 0 0 rg`
+                `/${fontKey} ${reducedFontSize} Tf 0 0 0 rg`
               );
             } catch (daError) {
               console.warn(
@@ -478,8 +481,8 @@ export const createFillablePDF = async (
             // Field dimensions based on tag text width
             const fieldX = textX - 2; // Add 2px padding on left
             const fieldWidth = tagTextWidth + 4; // Add 2px padding each side
-            const fieldY = y - fontSize * 0.35; // Position field at text baseline
-            const fieldHeightCalculated = fontSize * 1.5; // Field height 1.5x font size
+            const fieldY = y - reducedFontSize * 0.3; // Position field at text baseline
+            const fieldHeightCalculated = reducedFontSize * 1.2; // Field height 1.2x reduced font size
 
             console.log(`📐 Field dimensions for "${fieldName}":`, {
               tagTextWidth: tagTextWidth.toFixed(2),
@@ -487,6 +490,7 @@ export const createFillablePDF = async (
               fieldWidth: fieldWidth.toFixed(2),
               fieldY: fieldY.toFixed(2),
               fieldHeight: fieldHeightCalculated.toFixed(2),
+              fontSize: reducedFontSize.toFixed(2),
             });
 
             // Add to page (will use /DA we set above, no auto-appearance generation)

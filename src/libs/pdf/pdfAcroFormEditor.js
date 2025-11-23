@@ -203,9 +203,36 @@ export const createAcroFormFields = async (
               // Create text field
               formField = form.createTextField(fieldName);
 
-              // Set field properties
-              formField.setText(fillFields ? defaultValue : "");
-              formField.setFontSize(fontSize);
+              // ✅ CRITICAL: Set Vietnamese font BEFORE setText to avoid WinAnsi error
+              try {
+                // Get font name from embedded font
+                const fontName = font.name;
+                const fontRef = pdfDoc.context.getObjectRef(font.ref);
+
+                // Add font to AcroForm's default resources
+                const acroForm = pdfDoc.catalog.lookup(pdfDoc.context.obj('AcroForm'));
+                if (acroForm) {
+                  const dr = acroForm.get(pdfDoc.context.obj('DR'));
+                  const fontDict = dr?.get(pdfDoc.context.obj('Font'));
+                  if (fontDict) {
+                    fontDict.set(pdfDoc.context.obj(fontName), fontRef);
+                  }
+                }
+
+                // Set Default Appearance with embedded font
+                const acroField = formField.acroField;
+                acroField.setDefaultAppearance(
+                  `/${fontName} ${fontSize} Tf 0 0 0 rg`
+                );
+              } catch (fontError) {
+                console.warn(
+                  `⚠️ Could not set Vietnamese font for ${fieldName}:`,
+                  fontError.message
+                );
+              }
+
+              // ⚠️ DO NOT call setText before addToPage - it will trigger WinAnsi encoding
+              const textValue = fillFields ? defaultValue : "";
 
               if (multiline) {
                 formField.enableMultiline();
@@ -220,16 +247,33 @@ export const createAcroFormFields = async (
               }
 
               // Add widget (visual appearance) to the page
+              // ✅ Use minimal options to avoid triggering WinAnsi appearance generation
               formField.addToPage(page, {
                 x: x,
                 y: y - fontSize * 0.35, // Adjust for baseline
                 width: width,
                 height: fieldHeight || fontSize * 1.5,
-                textColor: rgb(0, 0, 0),
-                backgroundColor: rgb(...backgroundColor),
-                borderColor: rgb(...borderColor),
-                borderWidth: borderWidth,
+                // Skip appearance options to avoid WinAnsi encoding errors
               });
+
+              // ✅ Set Vietnamese text AFTER addToPage using low-level API
+              if (textValue) {
+                try {
+                  const acroField = formField.acroField;
+                  // ✅ Normalize to NFC to prevent decomposed characters
+                  const normalizedText = textValue.normalize('NFC');
+                  acroField.dict.set(
+                    pdfDoc.context.obj('V'),
+                    pdfDoc.context.obj(normalizedText)
+                  );
+                  console.log(`✍️ Set Vietnamese value: "${fieldName}" = "${normalizedText}"`);
+                } catch (setValueError) {
+                  console.warn(
+                    `⚠️ Could not set value for ${fieldName}:`,
+                    setValueError.message
+                  );
+                }
+              }
 
               break;
 
@@ -293,15 +337,12 @@ export const createAcroFormFields = async (
               }
 
               // Add widget to the page
+              // ✅ Use minimal options for dropdown to avoid WinAnsi errors
               formField.addToPage(page, {
                 x: x,
                 y: y,
                 width: width,
                 height: fieldHeight || fontSize * 1.5,
-                textColor: rgb(0, 0, 0),
-                backgroundColor: rgb(...backgroundColor),
-                borderColor: rgb(...borderColor),
-                borderWidth: borderWidth,
               });
 
               break;
@@ -314,19 +355,53 @@ export const createAcroFormFields = async (
 
               // Default to text field
               formField = form.createTextField(fieldName);
-              formField.setText(fillFields ? defaultValue : "");
-              formField.setFontSize(fontSize);
 
+              // ✅ Set Vietnamese font for default text field too
+              try {
+                const fontName = font.name;
+                const fontRef = pdfDoc.context.getObjectRef(font.ref);
+
+                const acroForm = pdfDoc.catalog.lookup(pdfDoc.context.obj('AcroForm'));
+                if (acroForm) {
+                  const dr = acroForm.get(pdfDoc.context.obj('DR'));
+                  const fontDict = dr?.get(pdfDoc.context.obj('Font'));
+                  if (fontDict) {
+                    fontDict.set(pdfDoc.context.obj(fontName), fontRef);
+                  }
+                }
+
+                const acroField = formField.acroField;
+                acroField.setDefaultAppearance(
+                  `/${fontName} ${fontSize} Tf 0 0 0 rg`
+                );
+              } catch (fontError) {
+                console.warn(`⚠️ Font setup failed for ${fieldName}`);
+              }
+
+              const defaultText = fillFields ? defaultValue : "";
+
+              // ✅ Add without appearance options for default case too
               formField.addToPage(page, {
                 x: x,
                 y: y,
                 width: width,
                 height: fieldHeight || fontSize * 1.5,
-                textColor: rgb(0, 0, 0),
-                backgroundColor: rgb(...backgroundColor),
-                borderColor: rgb(...borderColor),
-                borderWidth: borderWidth,
               });
+
+              // ✅ Set Vietnamese text AFTER addToPage
+              if (defaultText) {
+                try {
+                  const acroField = formField.acroField;
+                  // ✅ Normalize to NFC
+                  const normalizedText = defaultText.normalize('NFC');
+                  acroField.dict.set(
+                    pdfDoc.context.obj('V'),
+                    pdfDoc.context.obj(normalizedText)
+                  );
+                } catch (err) {
+                  console.warn(`⚠️ Failed to set value for ${fieldName}`);
+                }
+              }
           }
 
           console.log(
@@ -346,7 +421,10 @@ export const createAcroFormFields = async (
     }
 
     // Save modified PDF with form fields
-    const modifiedPdfBytes = await pdfDoc.save();
+    // ✅ CRITICAL: Disable updateFieldAppearances to prevent WinAnsi encoding errors
+    const modifiedPdfBytes = await pdfDoc.save({
+      updateFieldAppearances: false,
+    });
 
     // Log warnings summary
     if (warnings.length > 0) {
@@ -397,6 +475,10 @@ export const createFillablePDFFromMappings = async (
       const tag = tags.find((t) => t.id === tagId);
       if (!tag) return;
 
+      // ✅ Normalize all Vietnamese text to NFC (composed form)
+      const normalizedKey = (tag.key || "").normalize('NFC');
+      const normalizedDefaultValue = (tag.defaultValue || "").normalize('NFC');
+
       // Map tag to field definition
       const fieldDef = {
         page: placeholder.page,
@@ -406,9 +488,9 @@ export const createFillablePDFFromMappings = async (
         height: placeholder.height,
         backgroundX: placeholder.backgroundX,
         backgroundWidth: placeholder.backgroundWidth,
-        fieldName: tag.key, // Use tag key as field name
+        fieldName: normalizedKey, // Use normalized tag key as field name
         fieldType: mapDataTypeToFieldType(tag.dataType),
-        defaultValue: tag.defaultValue || "",
+        defaultValue: normalizedDefaultValue,
         placeholder: placeholder.fullText,
         dataType: tag.dataType,
         fontSize: placeholder.fontSize || 12,

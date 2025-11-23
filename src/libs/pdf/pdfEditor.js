@@ -433,54 +433,39 @@ export const createFillablePDF = async (
             // ✅ Reduce font size to avoid overlapping when multiple fields are close
             const reducedFontSize = fontSize * 0.85; // 85% of original font size
 
-            // ✅ CRITICAL: Set default appearance with Vietnamese font BEFORE setText
-            // This prevents WinAnsi encoding error
+            // ✅ CRITICAL: Embed Vietnamese font into form resources and set as field font
+            // This allows Vietnamese text to be rendered properly in form fields
             try {
-              // Get the acroField to set /DA manually
-              const acroField = formField.acroField;
-              const fontKey = "F1"; // Standard font key in resources
+              // Get font name from embedded font
+              const fontName = font.name;
+              const fontRef = pdfDoc.context.getObjectRef(font.ref);
 
-              // Set /DA (Default Appearance) string manually
-              // Format: /FontKey FontSize Tf r g b rg
-              // Use reduced font size to prevent overlap
+              // Add font to AcroForm's default resources
+              const acroForm = pdfDoc.catalog.lookup(pdfDoc.context.obj('AcroForm'));
+              if (acroForm) {
+                const dr = acroForm.get(pdfDoc.context.obj('DR'));
+                const fontDict = dr?.get(pdfDoc.context.obj('Font'));
+                if (fontDict) {
+                  fontDict.set(pdfDoc.context.obj(fontName), fontRef);
+                }
+              }
+
+              // Set Default Appearance with embedded font
+              const acroField = formField.acroField;
               acroField.setDefaultAppearance(
-                `/${fontKey} ${reducedFontSize} Tf 0 0 0 rg`
+                `/${fontName} ${reducedFontSize} Tf 0 0 0 rg`
               );
             } catch (daError) {
               console.warn(
-                `⚠️ Could not set /DA for ${fieldName}:`,
+                `⚠️ Could not set Vietnamese font for ${fieldName}:`,
                 daError.message
               );
             }
 
-            // ✅ Set field value with ASCII-safe identifier (no Vietnamese chars)
-            // Field value is used by BE to identify which field to fill
-            // This is the pre-filled value visible in the PDF form
+            // ⚠️ CRITICAL: DO NOT call setText() before addToPage()
+            // setText() stores text but addToPage() will try to render it with WinAnsi
+            // We will set the value AFTER addToPage using low-level PDF API
             const textValue = fillFields ? defaultValue || fieldName : "";
-            if (textValue) {
-              try {
-                // Convert Vietnamese to ASCII-safe identifier for /V field
-                // Example: "mã hồ sơ" → "ma_ho_so" or use field index
-                const asciiSafeValue = textValue
-                  .normalize("NFD")
-                  .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-                  .replace(/đ/g, "d")
-                  .replace(/Đ/g, "D")
-                  .replace(/\s+/g, "_") // Replace spaces with underscore
-                  .toLowerCase();
-
-                formField.setText(asciiSafeValue);
-                console.log(
-                  `✍️ Pre-filled field "${fieldName}" with ASCII-safe: "${asciiSafeValue}"`
-                );
-              } catch (setTextError) {
-                console.warn(
-                  `⚠️ Could not set text for ${fieldName}:`,
-                  setTextError.message
-                );
-                // Continue without text - field structure still valid
-              }
-            }
 
             // Set multiline/readonly BEFORE adding to page
             if (multiline) {
@@ -523,20 +508,75 @@ export const createFillablePDF = async (
               fontSize: reducedFontSize.toFixed(2),
             });
 
-            // Add to page (will use /DA we set above, no auto-appearance generation)
-            formField.addToPage(page, {
-              x: fieldX,
-              y: fieldY,
-              width: fieldWidth, // ✅ Width matches tag text width
-              height: fieldHeightCalculated,
-              textColor: rgb(0, 0, 0),
-              backgroundColor: rgb(1, 1, 1, 0), // ✅ Transparent background (don't cover text)
-              borderColor: rgb(0.7, 0.7, 0.7),
-              borderWidth: showBorders ? 1 : 0,
-            });
+            // ✅ CRITICAL: Add to page WITHOUT appearance options to prevent auto-generation
+            // This avoids the WinAnsi encoding error when pdf-lib tries to render text
+            // The /DA string we set earlier will be used by PDF readers instead
+            try {
+              // Use minimal options to avoid triggering appearance generation
+              formField.addToPage(page, {
+                x: fieldX,
+                y: fieldY,
+                width: fieldWidth,
+                height: fieldHeightCalculated,
+                // ⚠️ Don't specify textColor - it triggers appearance generation
+                // backgroundColor: rgb(1, 1, 1, 0), // Skip to avoid appearance gen
+                // borderColor: rgb(0.7, 0.7, 0.7),  // Skip to avoid appearance gen
+                // borderWidth: showBorders ? 1 : 0,  // Skip to avoid appearance gen
+              });
+
+              // ✅ Set field value AFTER addToPage using low-level API
+              // This sets the /V (Value) entry without triggering appearance generation
+              if (textValue && fillFields) {
+                try {
+                  const acroField = formField.acroField;
+                  // ✅ CRITICAL: Normalize Vietnamese text to NFC (composed form)
+                  const normalizedText = textValue.normalize('NFC');
+
+                  // ✅ Encode as UTF-16BE with BOM for proper Unicode support in PDF
+                  // PDF spec: Text strings can be PDFDocEncoding or UTF-16BE (with BOM: 0xFEFF)
+                  const utf16Bytes = new Uint8Array([0xFE, 0xFF]); // BOM
+                  const encoder = new TextEncoder();
+
+                  // Convert to UTF-16BE manually
+                  let utf16String = '\uFEFF'; // BOM character
+                  for (let i = 0; i < normalizedText.length; i++) {
+                    const code = normalizedText.charCodeAt(i);
+                    utf16String += String.fromCharCode(code);
+                  }
+
+                  // Use PDFHexString for UTF-16BE encoding
+                  const { PDFHexString } = await import('pdf-lib');
+
+                  // Convert text to UTF-16BE hex string
+                  let hexStr = 'FEFF'; // BOM in hex
+                  for (let i = 0; i < normalizedText.length; i++) {
+                    const code = normalizedText.charCodeAt(i);
+                    hexStr += code.toString(16).padStart(4, '0').toUpperCase();
+                  }
+
+                  const pdfHexString = PDFHexString.of(hexStr);
+                  acroField.dict.set(pdfDoc.context.obj('V'), pdfHexString);
+
+                  console.log(
+                    `✍️ Set Vietnamese value (UTF-16BE) for "${fieldName}": "${normalizedText}"`
+                  );
+                } catch (setValueError) {
+                  console.warn(
+                    `⚠️ Could not set value for ${fieldName}:`,
+                    setValueError.message
+                  );
+                }
+              }
+            } catch (addError) {
+              console.error(
+                `❌ Failed to add field to page: ${fieldName}`,
+                addError
+              );
+              throw addError;
+            }
 
             // ❌ Don't call updateAppearances() - it will try to render with WinAnsi
-            // Field value uses ASCII-safe identifier, PDF reader will handle appearance
+            // Field value is set directly in /V, PDF reader will render using /DA font
           }
 
           console.log(
@@ -603,6 +643,10 @@ export const createFillablePDFFromMappings = async (
       const tag = tags.find((t) => t.id === tagId);
       if (!tag) return;
 
+      // ✅ Normalize all Vietnamese text to NFC (composed form) to prevent decomposed characters
+      const normalizedKey = (tag.key || "").normalize('NFC');
+      const normalizedDefaultValue = (tag.defaultValue || tag.key || "").normalize('NFC');
+
       const fieldDef = {
         page: placeholder.page,
         x: placeholder.x,
@@ -611,10 +655,10 @@ export const createFillablePDFFromMappings = async (
         height: placeholder.height,
         backgroundX: placeholder.backgroundX,
         backgroundWidth: placeholder.backgroundWidth,
-        fieldName: tag.key,
+        fieldName: normalizedKey,
         fieldType: mapDataTypeToFieldType(tag.dataType),
-        // ✅ Use tag.key as default value to display in PDF (not empty)
-        defaultValue: tag.defaultValue || tag.key || "",
+        // ✅ Use normalized tag.key as default value to display in PDF (not empty)
+        defaultValue: normalizedDefaultValue,
         fontSize: placeholder.fontSize || 12,
         readOnly: tag.readOnly || false,
         multiline: tag.dataType === "textarea",

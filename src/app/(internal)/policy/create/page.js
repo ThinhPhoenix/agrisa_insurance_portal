@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import "./create-policy.css";
 
 import {
@@ -100,16 +100,19 @@ const CreatePolicyPage = () => {
   };
 
   // Handle file upload - Memoized to prevent unnecessary re-renders
-  const handleFileUpload = useCallback((file, url) => {
-    setUploadedFile(file);
-    setFileUrl(url);
+  const handleFileUpload = useCallback(
+    (file, url) => {
+      setUploadedFile(file);
+      setFileUrl(url);
 
-    // ✅ Update tagsData with uploaded file
-    handleTagsDataChange({
-      uploadedFile: file,
-      // Note: modifiedPdfBytes will be set later by TagsTab when tags are applied
-    });
-  }, [handleTagsDataChange]);
+      // ✅ Update tagsData with uploaded file
+      handleTagsDataChange({
+        uploadedFile: file,
+        // Note: modifiedPdfBytes will be set later by TagsTab when tags are applied
+      });
+    },
+    [handleTagsDataChange]
+  );
 
   // Handle file remove - Memoized to prevent unnecessary re-renders
   const handleFileRemove = useCallback(() => {
@@ -120,10 +123,14 @@ const CreatePolicyPage = () => {
     // Clear detected placeholders
     setDetectedPlaceholders([]);
 
-    // ✅ Clear file data from tagsData
+    // ✅ CRITICAL: Clear ALL PDF-related data from tagsData
     handleTagsDataChange({
       uploadedFile: null,
       modifiedPdfBytes: null,
+      placeholders: [],
+      mappings: {},
+      documentTags: {},
+      pdfData: null,
     });
 
     // Remove all tags when PDF is deleted to avoid stale mappings

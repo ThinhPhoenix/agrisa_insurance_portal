@@ -247,11 +247,28 @@ export const createAcroFormFields = async (
               }
 
               // Add widget to the page
+              // ✅ Checkbox: Fixed size square (12px), covering the digit (N)
+              const checkboxSize = 15; // Fixed 12px size for checkbox
+
+              // Calculate checkbox position to cover the digit
+              let checkboxX;
+              if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                // Center checkbox over the digit position with right offset
+                const digitCenterX = backgroundX + backgroundWidth / 2;
+                checkboxX = digitCenterX - checkboxSize / 2 + 15; // +5px offset to align center
+              } else {
+                // Fallback: use placeholder center
+                const centerX = x + width / 2;
+                checkboxX = centerX - checkboxSize / 2;
+              }
+
+              const checkboxY = y - checkboxSize / 2 + 2; // +5px to move up (better vertical alignment)
+
               formField.addToPage(page, {
-                x: x,
-                y: y,
-                width: fieldHeight || 12,
-                height: fieldHeight || 12,
+                x: checkboxX,
+                y: checkboxY,
+                width: checkboxSize,
+                height: checkboxSize,
                 backgroundColor: rgb(...backgroundColor),
                 borderColor: rgb(...borderColor),
                 borderWidth: borderWidth,

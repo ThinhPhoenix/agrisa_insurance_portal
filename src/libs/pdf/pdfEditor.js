@@ -387,11 +387,41 @@ export const createFillablePDF = async (
               formField.enableReadOnly();
             }
 
+            // ✅ Checkbox: Fixed size square (12px), covering the digit (N)
+            const checkboxSize = 15; // Fixed 12px size for checkbox
+
+            // Calculate checkbox position to cover the digit
+            let checkboxX;
+            if (backgroundX !== undefined && backgroundWidth !== undefined) {
+              // Center checkbox over the digit position with right offset
+              // backgroundX is the left edge of the digit, backgroundWidth is digit width
+              const digitCenterX = backgroundX + backgroundWidth / 2;
+              checkboxX = digitCenterX - checkboxSize / 2 + 10; // +5px offset to align center
+              console.log(
+                `✅ Checkbox using backgroundX: ${backgroundX}, backgroundWidth: ${backgroundWidth}, digitCenterX: ${digitCenterX}, checkboxX: ${checkboxX}`
+              );
+            } else {
+              // Fallback: use placeholder center
+              const centerX = x + width / 2;
+              checkboxX = centerX - checkboxSize / 2;
+              console.log(
+                `⚠️ Checkbox fallback - using x: ${x}, width: ${width}, centerX: ${centerX}, checkboxX: ${checkboxX}`
+              );
+            }
+
+            const checkboxY = y - checkboxSize / 2 + 2; // +5px to move up (better vertical alignment)
+
+            console.log(
+              `📐 Checkbox "${fieldName}": size=${checkboxSize}, checkboxX=${checkboxX.toFixed(
+                2
+              )}, checkboxY=${checkboxY.toFixed(2)}`
+            );
+
             formField.addToPage(page, {
-              x: x,
-              y: y,
-              width: fieldHeight || 12,
-              height: fieldHeight || 12,
+              x: checkboxX,
+              y: checkboxY,
+              width: checkboxSize,
+              height: checkboxSize,
               backgroundColor: rgb(1, 1, 1),
               borderColor: rgb(0.7, 0.7, 0.7),
               borderWidth: showBorders ? 1 : 0,

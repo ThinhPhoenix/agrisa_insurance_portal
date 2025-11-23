@@ -43,7 +43,7 @@ const FileUploadPreview = forwardRef(({
         openPasteModal: () => handleOpenPasteModal(),
         openFullscreen: () => handleFullscreenOpen(),
 
-        // ✅ NEW: Update with fillable PDF (called from PlaceholderMappingPanel after createFillablePDF)
+        //  NEW: Update with fillable PDF (called from PlaceholderMappingPanel after createFillablePDF)
         updateFillablePDF: async (fillableFile, fillableBytes) => {
             try {
                 // Create new blob URL for fillable PDF
@@ -66,7 +66,7 @@ const FileUploadPreview = forwardRef(({
                     onFileUpload(fillableFile, newUrl);
                 }
 
-                console.log('✅ Fillable PDF updated in FileUploadPreview, iframe will reload');
+                console.log(' Fillable PDF updated in FileUploadPreview, iframe will reload');
 
                 return {
                     success: true,

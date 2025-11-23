@@ -1,7 +1,6 @@
 import {
     CheckCircleOutlined,
     DeleteOutlined,
-    DownloadOutlined,
     ExclamationCircleOutlined,
     InfoCircleOutlined,
     LinkOutlined
@@ -23,7 +22,7 @@ import {
     Typography,
     message
 } from 'antd';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import CustomTable from '../../../custom-table';
 
 const { Text, Title } = Typography;
@@ -93,14 +92,14 @@ const MappingInputCell = memo(({
                 placeholder="Tên trường (key)"
                 value={localKey}
                 onChange={handleKeyChange}
-                style={{ flex: '0 0 28%', minWidth: 100 }}
+                style={{ flex: '1', maxWidth: 150 }}
                 size="middle"
             />
 
             <Select
                 value={localDataType}
                 onChange={handleDataTypeChange}
-                style={{ flex: '1', minWidth: 100 }}
+                style={{ flex: '1', maxWidth: 150 }}
                 size="middle"
                 options={dataTypeOptions}
             />
@@ -113,15 +112,16 @@ MappingInputCell.displayName = 'MappingInputCell';
 /**
  * Panel để map placeholders trong PDF với tags đã tạo
  */
-const PlaceholderMappingPanelComponent = ({
+const PlaceholderMappingPanelComponent = forwardRef(({
     placeholders = [],
     tags = [],
     tagDataTypes = [],
     onCreateTag,
     onMappingChange,
     onExportSchema,
-    filePreviewRef  //  NEW - to call applyReplacements
-}) => {
+    filePreviewRef,  //  NEW - to call applyReplacements
+    onSelectedRowsChange
+}, ref) => {
     // Định nghĩa rõ các loại dữ liệu theo quy định
     const defaultTagDataTypes = [
         { label: 'Chuỗi/Text', value: 'string' },
@@ -229,7 +229,7 @@ const PlaceholderMappingPanelComponent = ({
                 const tag = tagsToUse.find(t => t.id === mappedTagId);
 
                 if (!tag) {
-                    console.warn(`⚠️ Tag not found for id: ${mappedTagId}`);
+                    console.warn(`Tag not found for id: ${mappedTagId}`);
                     return;
                 }
 
@@ -348,7 +348,7 @@ const PlaceholderMappingPanelComponent = ({
 
             if (result.bytes && result.bytes.byteLength > 50 * 1024 * 1024) { // 50MB limit
                 message.warning({
-                    content: `⚠️ PDF sau chỉnh sửa có kích thước lớn (${modifiedSizeMB} MB). Có thể gây lỗi khi gửi. Hãy thử compress PDF gốc trước khi upload.`,
+                    content: ` PDF sau chỉnh sửa có kích thước lớn (${modifiedSizeMB} MB). Có thể gây lỗi khi gửi. Hãy thử compress PDF gốc trước khi upload.`,
                     duration: 8
                 });
             }
@@ -380,10 +380,6 @@ const PlaceholderMappingPanelComponent = ({
     const setTempInput = (id, value) => {
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
-
-    // ❌ REMOVED: checkTextOverflow, applySingleReplacement, handleApplyClick, applySelectedBatch, applyAllMapped
-    // All per-row apply and overflow check logic removed
-    // Only applySelectedFillable (fillable AcroForm creation) is now supported
 
     //  NEW: Delete unmapped placeholder
     const handleDeletePlaceholder = (placeholderId) => {
@@ -431,12 +427,9 @@ const PlaceholderMappingPanelComponent = ({
         }
 
         try {
-            message.loading('Đang tạo fillable PDF cho các vị trí đã chọn...', 0);
-
             // Get current PDF file
             const fileResult = filePreviewRef.current.getCurrentFile();
             if (!fileResult || !fileResult.success || !fileResult.file) {
-                message.destroy();
                 message.error('Không tìm thấy file PDF');
                 return;
             }
@@ -495,7 +488,6 @@ const PlaceholderMappingPanelComponent = ({
             }
 
             if (Object.keys(selectedMappings).length === 0) {
-                message.destroy();
                 message.error('Các vị trí đã chọn chưa có thông tin để map');
                 return;
             }
@@ -505,11 +497,11 @@ const PlaceholderMappingPanelComponent = ({
                 setBatchCreatedTags(prev => [...prev, ...createdTagsInBatch]);
             }
 
-            // ✅ Merge effectiveTags + createdTagsInBatch để tránh race condition
+            //  Merge effectiveTags + createdTagsInBatch để tránh race condition
             const allTagsIncludingNew = [...effectiveTags, ...createdTagsInBatch];
             console.log('🔍 allTagsIncludingNew for fillable PDF:', allTagsIncludingNew);
 
-            // ✅ Create fillable AcroForm fields directly (no text writing layer)
+            //  Create fillable AcroForm fields directly (no text writing layer)
             const result = await createFillablePDFFromMappings(
                 arrayBuffer,   // Original PDF without text modifications
                 selectedPlaceholders,
@@ -523,8 +515,6 @@ const PlaceholderMappingPanelComponent = ({
                     writeTextBeforeField: false,   // No text writing layer
                 }
             );
-
-            message.destroy();
 
             if (result.warnings && result.warnings.length > 0) {
                 Modal.warning({
@@ -544,7 +534,7 @@ const PlaceholderMappingPanelComponent = ({
             // Convert to File object
             const fillableFile = pdfBytesToFile(result.pdfBytes, currentFile.name);
 
-            // ✅ Update FileUploadPreview to show fillable PDF in iframe
+            //  Update FileUploadPreview to show fillable PDF in iframe
             if (filePreviewRef?.current?.updateFillablePDF) {
                 await filePreviewRef.current.updateFillablePDF(fillableFile, result.pdfBytes);
             }
@@ -554,7 +544,7 @@ const PlaceholderMappingPanelComponent = ({
             selectedPlaceholders.forEach(placeholder => {
                 const tagId = selectedMappings[placeholder.id];
                 if (tagId) {
-                    // ✅ FIX: Search in merged tags (including newly created)
+                    //  FIX: Search in merged tags (including newly created)
                     const tag = allTagsIncludingNew.find(t => t.id === tagId);
                     if (tag) {
                         documentTags[tag.key] = tag.dataType || 'string';
@@ -576,93 +566,15 @@ const PlaceholderMappingPanelComponent = ({
             selectedRows.forEach(id => newApplied.add(id));
             setAppliedToPDF(newApplied);
 
-            message.success(`Đã tạo fillable PDF với ${Object.keys(selectedMappings).length} field(s)!`);
-
             // Clear selection after apply
             setSelectedRows([]);
 
         } catch (error) {
-            message.destroy();
             console.error('Error creating fillable PDF:', error);
             message.error(`Lỗi khi tạo fillable PDF: ${error.message}`);
         }
     };
 
-
-    // NEW: Export fillable PDF (download only)
-    const exportFillablePDF = async () => {
-        if (!filePreviewRef?.current?.getCurrentFile) {
-            message.warning('Chức năng xuất PDF chưa sẵn sàng');
-            return;
-        }
-
-        try {
-            message.loading('Đang tạo fillable PDF...', 0);
-
-            // Get current PDF file
-            const fileResult = filePreviewRef.current.getCurrentFile();
-            if (!fileResult || !fileResult.success || !fileResult.file) {
-                message.destroy();
-                message.error('Không tìm thấy file PDF');
-                return;
-            }
-
-            const currentFile = fileResult.file;
-
-            // Read file as ArrayBuffer
-            const arrayBuffer = await currentFile.arrayBuffer();
-
-            // Import the createFillablePDFFromMappings function
-            const { createFillablePDFFromMappings, downloadPDF } = await import('../../../../libs/pdf/pdfEditor');
-
-            if (stats.mapped === 0) {
-                message.destroy();
-                message.error('Chưa có mapping nào để tạo fillable PDF');
-                return;
-            }
-
-            // Create fillable PDF
-            const result = await createFillablePDFFromMappings(
-                arrayBuffer,
-                placeholders,
-                mappings,
-                effectiveTags,
-                {
-                    fillFields: false,        // Don't fill fields with default values
-                    makeFieldsEditable: true, // Make fields editable
-                    showBorders: true,        // Show field borders
-                }
-            );
-
-            message.destroy();
-
-            if (result.warnings && result.warnings.length > 0) {
-                Modal.warning({
-                    title: 'Có một số cảnh báo khi tạo fillable PDF',
-                    content: (
-                        <div>
-                            <ul>
-                                {result.warnings.map((w, i) => (
-                                    <li key={i}>{w.fieldName}: {w.warning}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    ),
-                });
-            }
-
-            // Download the fillable PDF
-            const filename = `fillable_${currentFile.name}`;
-            downloadPDF(result.pdfBytes, filename);
-
-            message.success('Đã tạo và tải xuống fillable PDF thành công!');
-
-        } catch (error) {
-            message.destroy();
-            console.error('Error creating fillable PDF:', error);
-            message.error(`Lỗi khi tạo fillable PDF: ${error.message}`);
-        }
-    };
 
     // Row selection removed - no longer needed with fillable PDF workflow
 
@@ -680,7 +592,7 @@ const PlaceholderMappingPanelComponent = ({
             )
         },
         {
-            title: 'Map với Tag',
+            title: 'Trường thông tin',
             dataIndex: 'mapping',
             key: 'mapping',
             render: (_, record) => {
@@ -835,6 +747,17 @@ const PlaceholderMappingPanelComponent = ({
     // compute horizontal scroll width (fallback)
     const tableX = Math.max(900, columns.reduce((acc, c) => acc + (c.width || 200), 0));
 
+    // Notify parent when selectedRows changes
+    useEffect(() => {
+        onSelectedRowsChange?.(selectedRows.length);
+    }, [selectedRows, onSelectedRowsChange]);
+
+    // Expose methods to parent via ref
+    useImperativeHandle(ref, () => ({
+        applySelectedFillable,
+        selectedRows
+    }));
+
     if (placeholders.length === 0) {
         return (
             <Card>
@@ -864,28 +787,6 @@ const PlaceholderMappingPanelComponent = ({
                     />
                 </Space>
             }
-            extra={
-                <Space>
-                    <Button
-                        type="primary"
-                        icon={<CheckCircleOutlined />}
-                        onClick={applySelectedFillable}
-                        disabled={selectedRows.length === 0}
-                        size="middle"
-                    >
-                        Áp dụng ({selectedRows.length} vị trí)
-                    </Button>
-                    <Button
-                        type="default"
-                        icon={<DownloadOutlined />}
-                        onClick={exportFillablePDF}
-                        disabled={stats.mapped === 0}
-                        size="middle"
-                    >
-                        Tải xuống PDF
-                    </Button>
-                </Space>
-            }
         >
             {/* Info Alert - Rules */}
             <Alert
@@ -899,7 +800,7 @@ const PlaceholderMappingPanelComponent = ({
                             <li><strong>Bước 2:</strong> Tick chọn các vị trí muốn áp dụng (có thể tick nhiều vị trí cùng lúc)</li>
                             <li><strong>Bước 3:</strong> Bấm nút <strong>"Áp dụng"</strong> để tạo fillable PDF cho các vị trí đã chọn</li>
                             <li><strong>Bước 4:</strong> Bấm <strong>"Tải xuống PDF"</strong> để xem trước fillable PDF cuối cùng</li>
-                            <li><Text type="warning">⚠️ Lưu ý:</Text> Checkbox sẽ enable khi đã điền đủ thông tin (key + loại dữ liệu)</li>
+                            <li><Text type="warning">Lưu ý:</Text> Checkbox sẽ mở khi đã điền đủ thông tin (key + loại dữ liệu)</li>
                         </ul>
                     </div>
                 }
@@ -941,7 +842,7 @@ const PlaceholderMappingPanelComponent = ({
                         setSelectedRows(selectedRowKeys);
                     },
                     getCheckboxProps: (record) => {
-                        // ✅ DISABLE khi đã áp dụng vào PDF
+                        //  DISABLE khi đã áp dụng vào PDF
                         if (appliedToPDF.has(record.id)) {
                             return {
                                 disabled: true,
@@ -964,10 +865,8 @@ const PlaceholderMappingPanelComponent = ({
             <Divider />
         </Card>
     );
-};
+});
 
-// OPTIMIZATION: Wrap with memo to prevent unnecessary re-renders
-const PlaceholderMappingPanel = memo(PlaceholderMappingPanelComponent);
-PlaceholderMappingPanel.displayName = 'PlaceholderMappingPanel';
+PlaceholderMappingPanelComponent.displayName = 'PlaceholderMappingPanel';
 
-export default PlaceholderMappingPanel;
+export default PlaceholderMappingPanelComponent;

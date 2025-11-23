@@ -567,6 +567,10 @@ const BasicTabComponent = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabledDate={(current) => {
+                                    // Disable past dates (before today)
+                                    return current && current.isBefore(new Date(), 'day');
+                                }}
                             />
                         </Form.Item>
                     </Col>
@@ -581,6 +585,10 @@ const BasicTabComponent = ({
                                         if (!value) return Promise.resolve();
 
                                         const startDay = getFieldValue('enrollmentStartDay');
+                                        if (!startDay) {
+                                            return Promise.reject(new Error('Vui lòng chọn ngày bắt đầu đăng ký trước'));
+                                        }
+
                                         if (startDay && !value.isAfter(startDay)) {
                                             return Promise.reject(new Error(getBasePolicyError('ENROLLMENT_START_AFTER_END')));
                                         }
@@ -600,12 +608,18 @@ const BasicTabComponent = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabled={!form.getFieldValue('enrollmentStartDay')}
                                 disabledDate={(current) => {
+                                    // Disable past dates (before today)
+                                    if (current && current.isBefore(new Date(), 'day')) {
+                                        return true;
+                                    }
+
                                     const startDay = form.getFieldValue('enrollmentStartDay');
                                     const validFrom = form.getFieldValue('insuranceValidFrom');
 
-                                    // Disable dates before start day
-                                    if (startDay && current && current.isBefore(startDay, 'day')) {
+                                    // Disable dates before or equal to start day
+                                    if (startDay && current && (current.isBefore(startDay, 'day') || current.isSame(startDay, 'day'))) {
                                         return true;
                                     }
 
@@ -626,9 +640,26 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="insuranceValidFrom"
                             label="Bảo hiểm có hiệu lực từ"
-                            tooltip="Khoảng thời gian mà bảo hiểm có hiệu lực - ngày bắt đầu (BẮT BUỘC). Thường sau hoặc bằng ngày kết thúc đăng ký"
+                            tooltip="Khoảng thời gian mà bảo hiểm có hiệu lực - ngày bắt đầu (BẮT BUỘC). Phải sau ngày bắt đầu đăng ký và sau/bằng ngày kết thúc đăng ký"
                             rules={[
-                                { required: true, message: getBasePolicyValidation('INSURANCE_VALID_FROM_REQUIRED') }
+                                { required: true, message: getBasePolicyValidation('INSURANCE_VALID_FROM_REQUIRED') },
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        if (!value) return Promise.resolve();
+
+                                        const enrollmentStartDay = getFieldValue('enrollmentStartDay');
+                                        if (enrollmentStartDay && value.isBefore(enrollmentStartDay, 'day')) {
+                                            return Promise.reject(new Error('Bảo hiểm có hiệu lực từ phải sau ngày bắt đầu đăng ký'));
+                                        }
+
+                                        const enrollmentEndDay = getFieldValue('enrollmentEndDay');
+                                        if (enrollmentEndDay && value.isBefore(enrollmentEndDay, 'day')) {
+                                            return Promise.reject(new Error('Bảo hiểm có hiệu lực từ phải sau hoặc bằng ngày kết thúc đăng ký'));
+                                        }
+
+                                        return Promise.resolve();
+                                    }
+                                })
                             ]}
                         >
                             <DatePicker
@@ -636,6 +667,28 @@ const BasicTabComponent = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabled={!form.getFieldValue('enrollmentEndDay')}
+                                disabledDate={(current) => {
+                                    // Disable past dates (before today)
+                                    if (current && current.isBefore(new Date(), 'day')) {
+                                        return true;
+                                    }
+
+                                    const enrollmentStartDay = form.getFieldValue('enrollmentStartDay');
+                                    const enrollmentEndDay = form.getFieldValue('enrollmentEndDay');
+
+                                    // Disable dates before enrollment start day
+                                    if (enrollmentStartDay && current && (current.isBefore(enrollmentStartDay, 'day') || current.isSame(enrollmentStartDay, 'day'))) {
+                                        return true;
+                                    }
+
+                                    // Disable dates before enrollment end day
+                                    if (enrollmentEndDay && current && current.isBefore(enrollmentEndDay, 'day')) {
+                                        return true;
+                                    }
+
+                                    return false;
+                                }}
                             />
                         </Form.Item>
                     </Col>
@@ -648,11 +701,18 @@ const BasicTabComponent = ({
                                 { required: true, message: getBasePolicyValidation('INSURANCE_VALID_TO_REQUIRED') },
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
+                                        if (!value) return Promise.resolve();
+
                                         const validFrom = getFieldValue('insuranceValidFrom');
-                                        if (!value || !validFrom || value.isAfter(validFrom)) {
-                                            return Promise.resolve();
+                                        if (!validFrom) {
+                                            return Promise.reject(new Error('Vui lòng chọn ngày bắt đầu hiệu lực trước'));
                                         }
-                                        return Promise.reject(new Error(getBasePolicyError('INSURANCE_VALID_FROM_AFTER_TO')));
+
+                                        if (!value.isAfter(validFrom)) {
+                                            return Promise.reject(new Error(getBasePolicyError('INSURANCE_VALID_FROM_AFTER_TO')));
+                                        }
+
+                                        return Promise.resolve();
                                     }
                                 })
                             ]}
@@ -662,7 +722,13 @@ const BasicTabComponent = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
+                                disabled={!form.getFieldValue('insuranceValidFrom')}
                                 disabledDate={(current) => {
+                                    // Disable past dates (before today)
+                                    if (current && current.isBefore(new Date(), 'day')) {
+                                        return true;
+                                    }
+
                                     const validFrom = form.getFieldValue('insuranceValidFrom');
 
                                     // Disable dates before or equal to insurance valid from
@@ -727,6 +793,11 @@ const BasicTabComponent = ({
                                 format="DD/MM/YYYY"
                                 disabled={!form.getFieldValue('insuranceValidTo')}
                                 disabledDate={(current) => {
+                                    // Disable past dates (before today)
+                                    if (current && current.isBefore(new Date(), 'day')) {
+                                        return true;
+                                    }
+
                                     const validTo = form.getFieldValue('insuranceValidTo');
 
                                     // Disable dates before or equal to insurance valid to

@@ -621,7 +621,7 @@ const useCreatePolicy = () => {
 
       const validation = policyStore.validatePayload();
       if (!validation.isValid) {
-        message.error(`Validation failed: ${validation.errors.join(", ")}`);
+        message.error(validation.errors.join(", "));
         return false;
       }
 

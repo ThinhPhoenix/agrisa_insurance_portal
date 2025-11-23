@@ -58,4 +58,8 @@ export const endpoints = {
     update: (id) => `/policy/protected/api/v2/farms/${id}`,
     delete: (id) => `/policy/protected/api/v2/farms/${id}`,
   },
+  profile: {
+    get_partner: (partner_id) =>
+      `/profile/public/api/v1/insurance-partners/${partner_id}`,
+  },
 };

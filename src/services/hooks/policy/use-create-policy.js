@@ -1,11 +1,13 @@
 import mockData from "@/app/(internal)/policy/mock..json";
 import axiosInstance from "@/libs/axios-instance";
+import { getErrorMessage } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";
 import { calculateConditionCost, usePolicyStore } from "@/stores/policy-store";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const TABS = {
+  FAQ: "faq",
   BASIC: "basic",
   CONFIGURATION: "configuration",
   TAGS: "tags",
@@ -36,7 +38,7 @@ const useDebounce = (value, delay) => {
  * Used in: /policy/create page for creating new policies
  */
 const useCreatePolicy = () => {
-  const [currentTab, setCurrentTab] = useState(TABS.BASIC);
+  const [currentTab, setCurrentTab] = useState(TABS.FAQ);
   const validationTimeoutRef = useRef(null);
 
   const [basicData, setBasicData] = useState({
@@ -177,10 +179,26 @@ const useCreatePolicy = () => {
         throw new Error(response.data.message || "Failed to fetch categories");
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to fetch categories";
-      setCategoriesError(errorMessage);
-      message.error(`Lỗi khi tải danh mục: ${errorMessage}`);
+      // Log English error to console for debugging
+      console.error("[fetchCategories] Error:", error);
+
+      // Show Vietnamese error to user
+      let vietnameseError = "Lỗi khi tải danh mục dữ liệu";
+
+      if (error.response?.status === 401) {
+        vietnameseError = getErrorMessage("SESSION_EXPIRED");
+      } else if (error.response?.status === 403) {
+        vietnameseError = getErrorMessage("FORBIDDEN");
+      } else if (error.response?.status === 404) {
+        vietnameseError = getErrorMessage("NOT_FOUND");
+      } else if (error.response?.status >= 500) {
+        vietnameseError = getErrorMessage("SERVER_ERROR");
+      } else if (!error.response) {
+        vietnameseError = getErrorMessage("NETWORK_ERROR");
+      }
+
+      setCategoriesError(vietnameseError);
+      message.error(vietnameseError);
     } finally {
       setCategoriesLoading(false);
     }
@@ -217,10 +235,26 @@ const useCreatePolicy = () => {
         throw new Error(response.data.message || "Failed to fetch tiers");
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to fetch tiers";
-      setTiersError(errorMessage);
-      message.error(`Lỗi khi tải gói dịch vụ: ${errorMessage}`);
+      // Log English error to console for debugging
+      console.error("[fetchTiersByCategory] Error:", error);
+
+      // Show Vietnamese error to user
+      let vietnameseError = "Lỗi khi tải gói dịch vụ";
+
+      if (error.response?.status === 401) {
+        vietnameseError = getErrorMessage("SESSION_EXPIRED");
+      } else if (error.response?.status === 403) {
+        vietnameseError = getErrorMessage("FORBIDDEN");
+      } else if (error.response?.status === 404) {
+        vietnameseError = getErrorMessage("NOT_FOUND");
+      } else if (error.response?.status >= 500) {
+        vietnameseError = getErrorMessage("SERVER_ERROR");
+      } else if (!error.response) {
+        vietnameseError = getErrorMessage("NETWORK_ERROR");
+      }
+
+      setTiersError(vietnameseError);
+      message.error(vietnameseError);
       setTiers([]);
     } finally {
       setTiersLoading(false);
@@ -270,10 +304,26 @@ const useCreatePolicy = () => {
         );
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to fetch data sources";
-      setDataSourcesError(errorMessage);
-      message.error(`Lỗi khi tải nguồn dữ liệu: ${errorMessage}`);
+      // Log English error to console for debugging
+      console.error("[fetchDataSourcesByTier] Error:", error);
+
+      // Show Vietnamese error to user
+      let vietnameseError = "Lỗi khi tải nguồn dữ liệu";
+
+      if (error.response?.status === 401) {
+        vietnameseError = getErrorMessage("SESSION_EXPIRED");
+      } else if (error.response?.status === 403) {
+        vietnameseError = getErrorMessage("FORBIDDEN");
+      } else if (error.response?.status === 404) {
+        vietnameseError = getErrorMessage("NOT_FOUND");
+      } else if (error.response?.status >= 500) {
+        vietnameseError = getErrorMessage("SERVER_ERROR");
+      } else if (!error.response) {
+        vietnameseError = getErrorMessage("NETWORK_ERROR");
+      }
+
+      setDataSourcesError(vietnameseError);
+      message.error(vietnameseError);
       setDataSources([]);
     } finally {
       setDataSourcesLoading(false);
@@ -651,20 +701,29 @@ const useCreatePolicy = () => {
         throw new Error(response.data.message || "Failed to create policy");
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "Có lỗi xảy ra khi tạo policy";
+      // Log English error to console for debugging
+      console.error("[handleCreatePolicy] Error:", error);
 
-      if (error.response?.data?.errors) {
-        const fieldErrors = error.response.data.errors;
-        Object.keys(fieldErrors).forEach((field) => {
-          message.error(`${field}: ${fieldErrors[field]}`);
-        });
-      } else {
-        message.error(errorMessage);
+      // Show Vietnamese error to user
+      let vietnameseError = "Có lỗi xảy ra khi tạo policy";
+
+      if (error.response?.status === 401) {
+        vietnameseError = getErrorMessage("SESSION_EXPIRED");
+      } else if (error.response?.status === 403) {
+        vietnameseError = getErrorMessage("FORBIDDEN");
+      } else if (error.response?.status === 404) {
+        vietnameseError = getErrorMessage("NOT_FOUND");
+      } else if (error.response?.status === 413) {
+        vietnameseError = getErrorMessage("REQUEST_TOO_LARGE");
+      } else if (error.response?.status === 422) {
+        vietnameseError = getErrorMessage("DATA_INVALID");
+      } else if (error.response?.status >= 500) {
+        vietnameseError = getErrorMessage("SERVER_ERROR");
+      } else if (!error.response) {
+        vietnameseError = getErrorMessage("NETWORK_ERROR");
       }
+
+      message.error(vietnameseError);
 
       return false;
     } finally {

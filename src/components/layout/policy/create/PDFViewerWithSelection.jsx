@@ -1,3 +1,6 @@
+import {
+    getPdfError
+} from '@/libs/message';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Input, message, Modal, Space, Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
@@ -163,7 +166,8 @@ const PDFViewerWithSelection = ({
                 setLoading(false); // Finish loading
 
             } catch (error) {
-                message.error('Lỗi khi tải PDF');
+                console.error('[PDFViewer] Error loading PDF:', error);
+                message.error(getPdfError('FILE_CORRUPTED'));
                 setLoading(false);
             }
         };
@@ -207,7 +211,7 @@ const PDFViewerWithSelection = ({
         // Find the page data
         const pageData = renderedPages.find(p => p.pageNum === clickedPage);
         if (!pageData) {
-            message.error('Không tìm thấy trang PDF');
+            message.error(getPdfError('FILE_CORRUPTED'));
             return;
         }
 

@@ -1,4 +1,11 @@
 import {
+    getPdfError,
+    getPdfInfo,
+    getPdfSuccess,
+    getTagsError,
+    getTagsSuccess
+} from '@/libs/message';
+import {
     AimOutlined,
     DeleteOutlined,
     DownloadOutlined,
@@ -90,7 +97,7 @@ const FileUploadPreview = forwardRef(({
 
             try {
                 setAnalyzing(true);
-                message.loading('Đang áp dụng thay đổi vào PDF...', 0);
+                message.loading(getPdfInfo('APPLYING'), 0);
 
                 // Read current file
                 const arrayBuffer = await uploadedFile.arrayBuffer();
@@ -148,7 +155,7 @@ const FileUploadPreview = forwardRef(({
                 setModifiedPdfBytes(modifiedBytes);
 
                 message.destroy();
-                message.success(`Đã áp dụng ${replacements.length} thay đổi vào PDF!`);
+                message.success(getPdfSuccess('APPLIED_TO_PDF'));
 
                 return {
                     success: true,
@@ -158,7 +165,8 @@ const FileUploadPreview = forwardRef(({
                 };
             } catch (error) {
                 message.destroy();
-                message.error(' Lỗi khi chỉnh sửa PDF: ' + error.message);
+                message.error(getPdfError('APPLY_FAILED'));
+                console.error('[FileUploadPreview] PDF apply error:', error);
 
                 return {
                     success: false,
@@ -285,7 +293,7 @@ const FileUploadPreview = forwardRef(({
         if (onFileRemove) {
             onFileRemove();
         }
-        message.success('File đã được xóa');
+        message.success(getPdfSuccess('REMOVED'));
     }, [fileUrl, onFileRemove]);
 
     //  OPTIMIZATION: Memoize analyzePDF to prevent re-creation
@@ -310,7 +318,8 @@ const FileUploadPreview = forwardRef(({
                 }
             }
         } catch (error) {
-            message.error('Không thể phân tích PDF: ' + error.message);
+            console.error('[FileUploadPreview] PDF analysis error:', error);
+            message.error(getPdfError('ANALYSIS_FAILED'));
         } finally {
             setAnalyzing(false);
         }
@@ -333,14 +342,14 @@ const FileUploadPreview = forwardRef(({
             const hasValidMimeType = validMimeTypes.includes(file.type);
 
             if (!hasValidExtension && !hasValidMimeType) {
-                message.error(`File ${file.name} không được hỗ trợ. Chỉ chấp nhận file PDF`);
+                message.error(getPdfError('INVALID_FILE_TYPE'));
                 return false;
             }
 
             // Validate file size (max 10MB)
             const isLt10M = file.size / 1024 / 1024 < 10;
             if (!isLt10M) {
-                message.error('File không được vượt quá 10MB');
+                message.error(getPdfError('FILE_TOO_LARGE', { maxSize: 10 }));
                 return false;
             }
 
@@ -366,7 +375,8 @@ const FileUploadPreview = forwardRef(({
                 // Auto analyze PDF for placeholders
                 analyzePDF(file);
             } catch (error) {
-                message.error('Có lỗi xảy ra khi xử lý file: ' + (error?.message || error));
+                console.error('[FileUploadPreview] File processing error:', error);
+                message.error(getPdfError('UPLOAD_FAILED'));
             } finally {
                 setLoading(false);
                 setUploadProgress(0);
@@ -409,8 +419,9 @@ const FileUploadPreview = forwardRef(({
     };
 
     const onPdfError = () => {
-        setPdfError('Không thể tải PDF. File có thể bị hỏng hoặc không hợp lệ.');
-        message.error('Không thể tải PDF. Vui lòng kiểm tra file.');
+        const errorMsg = getPdfError('FILE_CORRUPTED');
+        setPdfError(errorMsg);
+        message.error(errorMsg);
     };
 
     //  OPTIMIZATION: Memoize fullscreen handlers
@@ -471,10 +482,11 @@ const FileUploadPreview = forwardRef(({
             setFileUrl(newUrl);
 
             message.destroy();
-            message.success(`Đã ghi tag "${tag.key}" vào PDF tại trang ${coordinates.page}`);
+            message.success(getTagsSuccess('MAPPED'));
         } catch (error) {
             message.destroy();
-            message.error(`Lỗi khi ghi tag: ${error.message}`);
+            message.error(getTagsError('CREATION_FAILED'));
+            console.error('[FileUploadPreview] Tag write error:', error);
         }
     };
 
@@ -650,7 +662,7 @@ const FileUploadPreview = forwardRef(({
                                         minHeight: '600px',
                                         border: 'none'
                                     }}
-                                    title="PDF Preview"
+                                    title="Xem trước PDF"
                                     onLoad={onPdfLoad}
                                     onError={onPdfError}
                                 />
@@ -741,7 +753,7 @@ const FileUploadPreview = forwardRef(({
                             height: '100%',
                             border: 'none'
                         }}
-                        title="PDF Fullscreen Preview"
+                        title="Xem toàn màn hình PDF"
                     />
                 )}
             </Modal>

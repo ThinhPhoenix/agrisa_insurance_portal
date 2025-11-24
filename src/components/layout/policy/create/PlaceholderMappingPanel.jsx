@@ -1,4 +1,12 @@
 import {
+    getPdfError,
+    getPdfSuccess,
+    getPdfWarning,
+    getPlaceholderError,
+    getPlaceholderSuccess,
+    getTagsWarning
+} from '@/libs/message';
+import {
     CheckCircleOutlined,
     DeleteOutlined,
     ExclamationCircleOutlined,
@@ -434,7 +442,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 const fileResult = filePreviewRef.current.getOriginalFile();
                 if (!fileResult || !fileResult.success || !fileResult.file) {
                     message.destroy();
-                    message.error('Không tìm thấy file PDF gốc. Vui lòng upload lại file PDF.');
+                    message.error(getPdfError('FILE_NOT_FOUND'));
                     return;
                 }
 
@@ -495,7 +503,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                     }
 
                     message.destroy();
-                    message.success('Đã xóa vị trí và khôi phục PDF gốc');
+                    message.success(getPlaceholderSuccess('DELETED') + ' - ' + getPdfSuccess('REBUILT'));
 
                     // 🆕 Notify parent to remove from placeholders array (AFTER PDF update)
                     if (onDeletePlaceholder) {
@@ -548,7 +556,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                     }
 
                     message.destroy();
-                    message.success('Đã xóa vị trí và rebuild PDF');
+                    message.success(getPlaceholderSuccess('DELETED') + ' - ' + getPdfSuccess('REBUILT'));
 
                     // 🆕 Notify parent to remove from placeholders array (AFTER PDF update)
                     if (onDeletePlaceholder) {
@@ -558,11 +566,11 @@ const PlaceholderMappingPanelComponent = forwardRef(({
 
             } catch (error) {
                 message.destroy();
-                message.error(`Lỗi khi rebuild PDF: ${error.message}`);
-                console.error('Error rebuilding PDF after delete:', error);
+                message.error(getPdfError('REBUILD_FAILED'));
+                console.error('[PlaceholderMapping] Error rebuilding PDF:', error);
             }
         } else {
-            message.success('Đã xóa vị trí placeholder');
+            message.success(getPlaceholderSuccess('DELETED'));
 
             // 🆕 Notify parent to remove from placeholders array (not applied case)
             if (onDeletePlaceholder) {
@@ -600,12 +608,12 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         });
 
         if (selectedRows.length === 0) {
-            message.warning('Vui lòng chọn ít nhất một vị trí để áp dụng');
+            message.warning(getPlaceholderError('NO_PLACEHOLDER_SELECTED'));
             return;
         }
 
         if (!filePreviewRef?.current?.getCurrentFile) {
-            message.warning('Chức năng xuất PDF chưa sẵn sàng');
+            message.warning(getPdfError('PREVIEW_UNAVAILABLE'));
             return;
         }
 
@@ -613,7 +621,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             // Get current PDF file
             const fileResult = filePreviewRef.current.getCurrentFile();
             if (!fileResult || !fileResult.success || !fileResult.file) {
-                message.error('Không tìm thấy file PDF');
+                message.error(getPdfError('FILE_NOT_FOUND'));
                 return;
             }
 
@@ -690,7 +698,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             });
 
             if (Object.keys(selectedMappings).length === 0) {
-                message.error('Các vị trí đã chọn chưa có thông tin để map');
+                message.error(getTagsWarning('NO_MAPPING'));
                 return;
             }
 
@@ -720,7 +728,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
 
             if (result.warnings && result.warnings.length > 0) {
                 Modal.warning({
-                    title: 'Có một số cảnh báo khi tạo fillable PDF',
+                    title: getPdfWarning('MODIFIED_PDF_LARGE').split('.')[0],
                     content: (
                         <div>
                             <ul>
@@ -779,8 +787,8 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             setSelectedRows([]);
 
         } catch (error) {
-            console.error('Error creating fillable PDF:', error);
-            message.error(`Lỗi khi tạo fillable PDF: ${error.message}`);
+            console.error('[PlaceholderMapping] Error creating fillable PDF:', error);
+            message.error(getPdfError('FILLABLE_CREATION_FAILED'));
         }
     };
 
@@ -964,11 +972,11 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         return (
             <Card>
                 <Empty
-                    description="Không có placeholders nào được phát hiện"
+                    description="Không có vị trí nào được phát hiện"
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                 >
                     <Text type="secondary">
-                        Upload file PDF có chứa placeholders dạng (1), (2)... hoặc {'{{key}}'}
+                        Tải lên file PDF có chứa vị trí dạng (1), (2)... hoặc {'{{key}}'}
                     </Text>
                 </Empty>
             </Card>
@@ -980,7 +988,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             title={
                 <Space>
                     <LinkOutlined />
-                    <span>Mapping Placeholders với Tags</span>
+                    <span>Liên kết Vị trí với Trường thông tin</span>
                     <Badge
                         count={`${stats.mapped}/${stats.total}`}
                         style={{
@@ -1000,8 +1008,8 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                         <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
                             <li><strong>Bước 1:</strong> Điền tên trường (key) và chọn loại dữ liệu cho từng vị trí (1), (2)...</li>
                             <li><strong>Bước 2:</strong> Tick chọn các vị trí muốn áp dụng (có thể tick nhiều vị trí cùng lúc)</li>
-                            <li><strong>Bước 3:</strong> Bấm nút <strong>"Áp dụng"</strong> để tạo fillable PDF cho các vị trí đã chọn</li>
-                            <li><strong>Bước 4:</strong> Bấm <strong>"Tải xuống PDF"</strong> để xem trước fillable PDF cuối cùng</li>
+                            <li><strong>Bước 3:</strong> Bấm nút <strong>"Áp dụng"</strong> để tạo PDF có thể điền cho các vị trí đã chọn</li>
+                            <li><strong>Bước 4:</strong> Bấm <strong>"Tải xuống PDF"</strong> để xem trước PDF cuối cùng</li>
                             <li><Text type="warning">Lưu ý:</Text> Checkbox sẽ mở khi đã điền đủ thông tin (key + loại dữ liệu)</li>
                         </ul>
                     </div>

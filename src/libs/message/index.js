@@ -17,14 +17,14 @@ export {
   getSignInSuccess,
   getSignInValidation,
   getSignInWarning,
-  splitAuthMessage,
-  splitSignInMessage,
-  // Backend error mapping helpers
-  mapBackendError,
-  isErrorCode,
   isAccountBlocked,
+  isErrorCode,
   isInvalidCredentials,
   isUserAlreadyExists,
+  // Backend error mapping helpers
+  mapBackendError,
+  splitAuthMessage,
+  splitSignInMessage,
 } from "./auth-message.js";
 export {
   COMMON_MESSAGES,
@@ -39,7 +39,6 @@ export {
   splitMessage,
 } from "./common-message.js";
 export {
-  POLICY_MESSAGES,
   getBasePolicyError,
   getBasePolicyInfo,
   getBasePolicyMessage,
@@ -57,11 +56,33 @@ export {
   getGeneralMessage,
   getGeneralSuccess,
   getGeneralWarning,
+  // PDF helpers
+  getPdfError,
+  getPdfInfo,
+  getPdfMessage,
+  getPdfSuccess,
+  getPdfValidation,
+  getPdfWarning,
+  // Placeholder helpers
+  getPlaceholderError,
+  getPlaceholderInfo,
+  getPlaceholderMessage,
+  getPlaceholderSuccess,
+  getPlaceholderValidation,
+  getPlaceholderWarning,
+  // Tags helpers
+  getTagsError,
+  getTagsInfo,
+  getTagsMessage,
+  getTagsSuccess,
+  getTagsValidation,
+  getTagsWarning,
   getTriggerError,
   getTriggerInfo,
   getTriggerMessage,
   getTriggerSuccess,
   getTriggerValidation,
+  POLICY_MESSAGES,
 } from "./policy-message.js";
 
 // Re-export with clearer names for easier usage
@@ -125,6 +146,27 @@ export const Messages = {
       error: (key, params) => getGeneralError(key, params),
       info: (key, params) => getGeneralInfo(key, params),
       warning: (key, params) => getGeneralWarning(key, params),
+    },
+    pdf: {
+      success: (key, params) => getPdfSuccess(key, params),
+      error: (key, params) => getPdfError(key, params),
+      validation: (key, params) => getPdfValidation(key, params),
+      info: (key, params) => getPdfInfo(key, params),
+      warning: (key, params) => getPdfWarning(key, params),
+    },
+    tags: {
+      success: (key, params) => getTagsSuccess(key, params),
+      error: (key, params) => getTagsError(key, params),
+      validation: (key, params) => getTagsValidation(key, params),
+      info: (key, params) => getTagsInfo(key, params),
+      warning: (key, params) => getTagsWarning(key, params),
+    },
+    placeholder: {
+      success: (key, params) => getPlaceholderSuccess(key, params),
+      error: (key, params) => getPlaceholderError(key, params),
+      validation: (key, params) => getPlaceholderValidation(key, params),
+      info: (key, params) => getPlaceholderInfo(key, params),
+      warning: (key, params) => getPlaceholderWarning(key, params),
     },
   },
 

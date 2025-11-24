@@ -181,7 +181,7 @@ const ConfigurationTabComponent = ({
             min: 1,
             placeholder: '1',
             size: 'large',
-            tooltip: 'Tần suất giám sát (Monitor Interval): Khoảng thời gian định kỳ mà hệ thống sẽ kiểm tra dữ liệu. Ví dụ: giá trị là 1 và đơn vị là ngày nghĩa là hệ thống sẽ kiểm tra dữ liệu mỗi ngày một lần',
+            tooltip: 'Số lần kiểm tra (VD: 1 ngày = kiểm tra mỗi ngày)',
             rules: [
                 { required: true, message: getTriggerValidation('MONITOR_INTERVAL_REQUIRED') },
                 { type: 'number', min: 1, message: getTriggerValidation('MONITOR_INTERVAL_MIN') }
@@ -197,7 +197,7 @@ const ConfigurationTabComponent = ({
             size: 'large',
             optionLabelProp: 'label',
             dropdownStyle: { maxWidth: '300px' },
-            tooltip: 'Đơn vị tần suất (Monitor Frequency Unit): Đơn vị thời gian cho tần suất giám sát (ví dụ: giờ, ngày, tuần)',
+            tooltip: 'Đơn vị thời gian (giờ, ngày, tuần, tháng, năm)',
             options: [
                 { value: 'hour', label: 'giờ', description: 'Giám sát theo giờ' },
                 { value: 'day', label: 'ngày', description: 'Giám sát theo ngày' },
@@ -224,7 +224,7 @@ const ConfigurationTabComponent = ({
             gridColumn: '1',
             placeholder: 'Chọn toán tử',
             size: 'large',
-            tooltip: 'Cách kết hợp nhiều điều kiện khi có nhiều hơn 1 điều kiện. AND = tất cả điều kiện phải đúng mới kích hoạt. OR = chỉ cần một điều kiện đúng là kích hoạt',
+            tooltip: 'AND = tất cả điều kiện phải đúng | OR = 1 điều kiện đúng là đủ',
             options: [
                 { value: 'AND', label: 'AND - Tất cả điều kiện phải đúng' },
                 { value: 'OR', label: 'OR - Một trong các điều kiện đúng' }
@@ -241,7 +241,7 @@ const ConfigurationTabComponent = ({
             rows: 2,
             placeholder: 'Ví dụ: Toàn chu kỳ sinh trưởng lúa (120 ngày)',
             size: 'large',
-            tooltip: 'Mô tả giai đoạn sinh trưởng của cây trồng áp dụng cho chính sách này (tuỳ chọn, tối đa 500 ký tự)',
+            tooltip: 'Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 500 ký tự)',
             showCount: true,
             maxLength: 500
         },
@@ -253,7 +253,7 @@ const ConfigurationTabComponent = ({
             rows: 3,
             placeholder: '[{"start": 1762016400, "end": 1762102800}]',
             size: 'large',
-            tooltip: 'Mảng JSON các khoảng thời gian không giám sát/không bồi thường (Unix timestamps). Mỗi object cần có "start" và "end" (số nguyên Unix epoch). Các khoảng không được trùng lặp',
+            tooltip: 'Các khoảng thời gian tạm dừng giám sát (JSON format với Unix timestamps)',
             showCount: true,
             maxLength: 2000
         }

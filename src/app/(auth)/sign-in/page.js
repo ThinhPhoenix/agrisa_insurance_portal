@@ -3,10 +3,12 @@ import Assets from "@/assets";
 import CustomForm from "@/components/custom-form";
 import { getSignInValidation } from "@/libs/message";
 import { useSignIn } from "@/services/hooks/auth/use-auth";
+import { useAuthStore } from "@/stores/auth-store";
 import { Typography, message } from "antd";
 import { Lock, LogIn, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import "./signin.css";
 
 const { Title, Text } = Typography;
@@ -14,6 +16,20 @@ const { Title, Text } = Typography;
 const SigninPage = () => {
   const { signIn, isLoading } = useSignIn();
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+
+  // Redirect to /policy if already authenticated
+  useEffect(() => {
+    const storedToken =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const hasToken = Boolean(user?.token) || Boolean(storedToken);
+    const hasRoles = Array.isArray(user?.roles) && user.roles.length > 0;
+    const isAuthenticated = hasToken || hasRoles;
+
+    if (isAuthenticated) {
+      router.push("/policy");
+    }
+  }, [user, router]);
 
   const onFinish = async (values) => {
     const result = await signIn({

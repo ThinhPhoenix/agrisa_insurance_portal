@@ -54,6 +54,9 @@ axiosInstance.interceptors.request.use(
 
 import { useAuthStore } from "@/stores/auth-store";
 
+// Track if we've already shown session expiration to prevent duplicates
+let hasShown401Error = false;
+
 axiosInstance.interceptors.response.use(
   (response) => {
     return response;
@@ -61,8 +64,18 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.log(`Unauthorized! Clearing user and redirecting to login.`);
-      const { clearUser } = useAuthStore.getState();
-      clearUser();
+
+      // Only clear user and show error once
+      if (!hasShown401Error) {
+        hasShown401Error = true;
+        const { clearUser } = useAuthStore.getState();
+        clearUser();
+
+        // Reset flag after redirect completes
+        setTimeout(() => {
+          hasShown401Error = false;
+        }, 1000);
+      }
     }
     return Promise.reject(error);
   }

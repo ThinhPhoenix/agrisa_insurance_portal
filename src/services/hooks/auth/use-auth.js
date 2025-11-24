@@ -79,75 +79,74 @@ export const useSignIn = () => {
 
           setUser(userData);
 
-          // After successful sign-in, attempt to fetch full profile (/me)
-          // only if profile info isn't already persisted in localStorage.
-          (async () => {
-            try {
-              const hasProfile =
-                localStorage.getItem("profile_id") ||
-                localStorage.getItem("user_id");
+          // After successful sign-in, fetch full profile (/me) and WAIT for it
+          // This ensures localStorage has user data before redirecting to /policy
+          try {
+            const meRes = await axiosInstance.get(endpoints.auth.auth_me);
+            if (meRes?.data?.success) {
+              const profile = meRes.data.data || {};
 
-              if (!hasProfile) {
-                const meRes = await axiosInstance.get(endpoints.auth.auth_me);
-                if (meRes?.data?.success) {
-                  const profile = meRes.data.data || {};
+              const existingToken =
+                localStorage.getItem("token") || userData.token || null;
+              const existingRefresh =
+                localStorage.getItem("refresh_token") || null;
 
-                  const existingToken =
-                    localStorage.getItem("token") || userData.token || null;
-                  const existingRefresh =
-                    localStorage.getItem("refresh_token") || null;
+              const merged = {
+                ...userData,
+                user_id: profile.user_id || userData.user_id,
+                profile_id: profile.profile_id || null,
+                roles: profile.role_id ? [profile.role_id] : userData.roles,
+                token: existingToken,
+                refresh_token: existingRefresh,
+                profile,
+                user: {
+                  id: profile.user_id || userData.user?.id || null,
+                  email: profile.email || userData.user?.email || null,
+                  full_name:
+                    profile.full_name || userData.user?.full_name || null,
+                  display_name:
+                    profile.display_name ||
+                    userData.user?.display_name ||
+                    null,
+                  primary_phone: profile.primary_phone || null,
+                  partner_id: profile.partner_id || null,
+                  role_id: profile.role_id || null,
+                },
+              };
 
-                  const merged = {
-                    ...userData,
-                    user_id: profile.user_id || userData.user_id,
-                    profile_id: profile.profile_id || null,
-                    roles: profile.role_id ? [profile.role_id] : userData.roles,
-                    token: existingToken,
-                    refresh_token: existingRefresh,
-                    profile,
-                    user: {
-                      id: profile.user_id || userData.user?.id || null,
-                      email: profile.email || userData.user?.email || null,
-                      full_name:
-                        profile.full_name || userData.user?.full_name || null,
-                      display_name:
-                        profile.display_name ||
-                        userData.user?.display_name ||
-                        null,
-                      primary_phone: profile.primary_phone || null,
-                      partner_id: profile.partner_id || null,
-                      role_id: profile.role_id || null,
-                    },
-                  };
+              try {
+                if (merged.token)
+                  localStorage.setItem("token", merged.token);
+                if (merged.refresh_token)
+                  localStorage.setItem(
+                    "refresh_token",
+                    merged.refresh_token
+                  );
 
-                  try {
-                    if (merged.token)
-                      localStorage.setItem("token", merged.token);
-                    if (merged.refresh_token)
-                      localStorage.setItem(
-                        "refresh_token",
-                        merged.refresh_token
-                      );
-
-                    // Persist the full /me payload under `me`
-                    localStorage.setItem("me", JSON.stringify(profile));
-                  } catch (e) {
-                    console.warn(
-                      "Could not persist profile to localStorage after sign-in:",
-                      e?.message
-                    );
-                  }
-
-                  // update store with merged data
-                  setUser(merged);
-                }
+                // Persist the full /me payload under `me`
+                localStorage.setItem("me", JSON.stringify(profile));
+              } catch (e) {
+                console.warn(
+                  "Could not persist profile to localStorage after sign-in:",
+                  e?.message
+                );
               }
-            } catch (e) {
-              // Non-fatal: profile fetch failed — keep sign-in success
-              console.warn("Post-login /me fetch failed:", e?.message || e);
-            }
-          })();
 
+              // update store with merged data
+              setUser(merged);
+
+              return {
+                success: true,
+                message: getSignInSuccess("LOGIN_SUCCESS"),
+                data: merged,
+              };
+            }
+          } catch (e) {
+            // Non-fatal: profile fetch failed — keep sign-in success with basic userData
+            console.warn("Post-login /me fetch failed:", e?.message || e);
+          }
+
+          // Fallback: return success with basic userData if /me fails
           return {
             success: true,
             message: getSignInSuccess("LOGIN_SUCCESS"),
@@ -333,7 +332,7 @@ export const useSignOut = () => {
       console.warn("Sign-out API failed:", error.message);
       // Continue anyway - clear local data
     } finally {
-      clearUser();
+      clearUser(true); // Pass true to indicate manual logout
       setLoading(false);
     }
 

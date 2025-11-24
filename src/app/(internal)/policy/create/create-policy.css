@@ -1,8 +1,112 @@
 /* Create Policy Page - Simple Clean Style */
 
+/* ============================================
+   TAB BAR - SIMPLE & RESPONSIVE
+   ============================================ */
+
+/* Tab bar container */
+.ant-tabs-nav {
+  margin-bottom: 0 !important;
+}
+
+.ant-tabs-nav-wrap {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent !important;
+}
+
+/* Webkit scrollbar styling */
+.ant-tabs-nav-wrap::-webkit-scrollbar {
+  height: 3px !important;
+}
+
+.ant-tabs-nav-wrap::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.ant-tabs-nav-wrap::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15) !important;
+  border-radius: 2px !important;
+}
+
+.ant-tabs-nav-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Tab items - simple design */
+.ant-tabs-tab {
+  padding: 12px 20px !important;
+  margin: 0 !important;
+  transition: color 0.2s ease !important;
+}
+
+/* Active tab - simple underline */
+.ant-tabs-tab-active {
+  font-weight: 500 !important;
+}
+
 /* Tab content styling */
 .ant-tabs-content-holder {
   padding: 24px !important;
+}
+
+/* More dropdown button - simple */
+.ant-tabs-nav-more {
+  padding: 12px !important;
+}
+
+/* Smooth scroll */
+.ant-tabs-nav-wrap {
+  scroll-behavior: smooth !important;
+}
+
+/* Responsive: Show only icons on smaller screens */
+@media (max-width: 1400px) {
+  /* Hide text, keep only icons */
+  .ant-tabs-tab .ant-space-item:not(:first-child) {
+    display: none !important;
+  }
+
+  /* Center the tabs */
+  .ant-tabs-nav-list {
+    justify-content: center !important;
+  }
+
+  /* Add background when showing only icons */
+  .ant-tabs-tab {
+    padding: 12px 16px !important;
+    background: #f5f5f5 !important;
+    border-radius: 0 !important;
+  }
+
+  .ant-tabs-tab:not(.ant-tabs-tab-active):hover {
+    background: #d4e8d4 !important;
+  }
+
+  .ant-tabs-tab-active {
+    background: #2d5f3f !important;
+    color: #fff !important;
+  }
+
+  .ant-tabs-tab-active .anticon {
+    color: #fff !important;
+  }
+
+  /* Icon size */
+  .ant-tabs-tab .anticon {
+    font-size: 18px !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .ant-tabs-tab {
+    padding: 10px 14px !important;
+  }
+
+  .ant-tabs-tab .anticon {
+    font-size: 16px !important;
+  }
 }
 
 /* Form styling */

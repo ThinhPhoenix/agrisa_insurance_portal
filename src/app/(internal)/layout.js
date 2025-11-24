@@ -1,18 +1,22 @@
 "use client";
 import CustomHeader from "@/components/custom-header";
 import CustomSidebar from "@/components/custom-sidebar";
+import { getErrorMessage } from "@/libs/message/common-message";
 import { useAuthStore } from "@/stores/auth-store";
+import { message } from "antd";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function InternalLayoutFlexbox({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [hasShownError, setHasShownError] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
 
   // Subscribe to the whole user object to avoid creating a new selector object each render
   const user = useAuthStore((s) => s.user);
+  const isManualLogout = useAuthStore((s) => s.isManualLogout);
 
   useEffect(() => {
     // Prevent redirect loop when already on sign-in page
@@ -29,6 +33,13 @@ export default function InternalLayoutFlexbox({ children }) {
 
     // Only redirect if we're not already on the sign-in page and not authenticated
     if (!isAuthenticated && pathname && pathname !== "/sign-in") {
+      // Show Vietnamese error message for session expiration only once
+      // BUT NOT if user manually logged out
+      if (!hasShownError && !isManualLogout) {
+        message.error(getErrorMessage("SESSION_EXPIRED"));
+        setHasShownError(true);
+      }
+
       // Prevent trying to push the same route repeatedly
       try {
         router.push("/sign-in");
@@ -39,7 +50,7 @@ export default function InternalLayoutFlexbox({ children }) {
         console.warn("Navigation to /sign-in failed:", e);
       }
     }
-  }, [user, pathname, router]);
+  }, [user, pathname, router, hasShownError, isManualLogout]);
 
   return (
     <div className="flex h-screen overflow-hidden">

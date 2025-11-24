@@ -11,16 +11,18 @@ import {
   ExclamationCircleOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
+  QuestionCircleOutlined,
   SettingOutlined,
   TagOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Row, Space, Tabs, Typography } from "antd";
+import { Alert, Button, Card, Col, Row, Space, Tabs, Tooltip, Typography } from "antd";
 import { useRouter } from "next/navigation";
 
 // Components - Lazy loaded for code splitting
 import BasicTab from "@/components/layout/policy/create/BasicTab";
 import ConfigurationTab from "@/components/layout/policy/create/ConfigurationTab";
 import EstimatedCosts from "@/components/layout/policy/create/EstimatedCosts";
+import FAQTab from "@/components/layout/policy/create/FAQTab";
 import FileUploadPreview from "@/components/layout/policy/create/FileUploadPreview";
 import ReviewTab from "@/components/layout/policy/create/ReviewTab";
 import TagsTab from "@/components/layout/policy/create/TagsTab";
@@ -242,10 +244,24 @@ const CreatePolicyPage = () => {
   // Tabs configuration
   const tabItems = [
     {
+      key: TABS.FAQ,
+      label: (
+        <Space>
+          <Tooltip title="FAQ/Hướng dẫn" placement="bottom">
+            <QuestionCircleOutlined />
+          </Tooltip>
+          <span>FAQ/Hướng dẫn</span>
+        </Space>
+      ),
+      children: <FAQTab />,
+    },
+    {
       key: TABS.BASIC,
       label: (
         <Space>
-          <InfoCircleOutlined />
+          <Tooltip title="Thông tin Cơ bản" placement="bottom">
+            <InfoCircleOutlined />
+          </Tooltip>
           <span>Thông tin Cơ bản</span>
           {isTabCompleted(TABS.BASIC) ? (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
@@ -279,7 +295,9 @@ const CreatePolicyPage = () => {
       key: TABS.CONFIGURATION,
       label: (
         <Space>
-          <SettingOutlined />
+          <Tooltip title="Cấu hình nâng cao" placement="bottom">
+            <SettingOutlined />
+          </Tooltip>
           <span>Cấu hình nâng cao</span>
           {isTabCompleted(TABS.CONFIGURATION) ? (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
@@ -306,7 +324,9 @@ const CreatePolicyPage = () => {
       key: TABS.TAGS,
       label: (
         <Space>
-          <TagOutlined />
+          <Tooltip title="Tài liệu & Trường thông tin" placement="bottom">
+            <TagOutlined />
+          </Tooltip>
           <span>Tài liệu & Trường thông tin</span>
           {isTabCompleted(TABS.TAGS) && (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
@@ -343,7 +363,9 @@ const CreatePolicyPage = () => {
       key: TABS.REVIEW,
       label: (
         <Space>
-          <FileTextOutlined />
+          <Tooltip title="Xem lại & Tạo" placement="bottom">
+            <FileTextOutlined />
+          </Tooltip>
           <span>Xem lại & Tạo</span>
           {isTabCompleted(TABS.REVIEW) ? (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
@@ -402,6 +424,19 @@ const CreatePolicyPage = () => {
               onChange={handleTabChange}
               items={tabItems}
               size="large"
+              type="card"
+              tabBarGutter={8}
+              tabBarStyle={{
+                marginBottom: 0,
+                paddingLeft: 8,
+                paddingRight: 8,
+              }}
+              moreIcon={
+                <Space>
+                  <span>Thêm</span>
+                  <InfoCircleOutlined />
+                </Space>
+              }
             />
           </Card>
         </Col>

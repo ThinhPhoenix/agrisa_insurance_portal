@@ -553,10 +553,36 @@ const useCreatePolicy = () => {
   }, []);
 
   const handleRemoveTag = useCallback((id) => {
-    setTagsData((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((tag) => tag.id !== id),
-    }));
+    setTagsData((prev) => {
+      // Find the tag being removed to get its key
+      const tagToRemove = prev.tags.find((tag) => tag.id === id);
+
+      // Filter out the tag from tags array
+      const updatedTags = prev.tags.filter((tag) => tag.id !== id);
+
+      // ✅ FIX: Also remove from documentTagsObject if it exists
+      const updatedDocumentTags = { ...prev.documentTagsObject };
+      if (tagToRemove && tagToRemove.key && updatedDocumentTags[tagToRemove.key]) {
+        delete updatedDocumentTags[tagToRemove.key];
+        console.log(`🗑️ [handleRemoveTag] Removed tag "${tagToRemove.key}" from documentTagsObject`);
+      }
+
+      // ✅ FIX: Also remove from mappings if this tag was mapped to any placeholder
+      const updatedMappings = { ...prev.mappings };
+      Object.keys(updatedMappings).forEach((placeholderId) => {
+        if (updatedMappings[placeholderId] === id) {
+          delete updatedMappings[placeholderId];
+          console.log(`🗑️ [handleRemoveTag] Removed mapping for placeholder ${placeholderId} (was mapped to deleted tag)`);
+        }
+      });
+
+      return {
+        ...prev,
+        tags: updatedTags,
+        documentTagsObject: updatedDocumentTags,
+        mappings: updatedMappings,
+      };
+    });
   }, []);
 
   const handleUpdateTag = useCallback((id, updates) => {
@@ -691,7 +717,7 @@ const useCreatePolicy = () => {
       );
 
       if (response.data.success) {
-        message.success("Base Policy đã được tạo thành công!");
+        message.success("Chính sách bảo hiểm đã được tạo thành công!");
 
         // Reset store data but don't reset UI state yet to allow redirect to complete
         policyStore.resetPolicyData();
@@ -705,7 +731,7 @@ const useCreatePolicy = () => {
       console.error("[handleCreatePolicy] Error:", error);
 
       // Show Vietnamese error to user
-      let vietnameseError = "Có lỗi xảy ra khi tạo policy";
+      let vietnameseError = "Có lỗi xảy ra khi tạo chính sách bảo hiểm";
 
       if (error.response?.status === 401) {
         vietnameseError = getErrorMessage("SESSION_EXPIRED");

@@ -524,21 +524,22 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                     });
 
                     // ✅ CRITICAL: Rebuild fillable PDF
-                    // Only remove text for remaining placeholders (not deleted ones)
-                    // Deleted placeholders will show original text again
+                    // Need to remove text for ALL original placeholders (including deleted)
+                    // to ensure deleted form fields don't remain on PDF
                     const result = await createFillablePDFFromMappings(
                         arrayBuffer,
-                        remainingPlaceholders, // Only create form fields for these
+                        remainingPlaceholders, // Only create form fields for remaining placeholders
                         remainingMappings,
                         allTagsIncludingNew,
                         {
                             fillFields: true,
                             makeFieldsEditable: true,
                             showBorders: true,
-                            removeOriginalText: true, // Only removes text for placeholders WITH mappings
+                            removeOriginalText: true,
                             writeTextBeforeField: false,
-                            // ❌ DON'T pass allPlaceholders - we want deleted placeholder text to show again
-                            // allPlaceholders: allPlaceholdersBeforeDelete,
+                            // ✅ FIX: Pass ALL placeholders (including deleted) to remove their text
+                            // This ensures deleted placeholders have their text removed so form fields are gone
+                            allPlaceholders: placeholders // ALL placeholders before delete
                         }
                     );
 
@@ -578,23 +579,26 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             }
         }
 
-        // Notify parent
+
         if (onMappingChange) {
             const documentTags = {};
-            sortedPlaceholders.forEach(placeholder => {
-                if (placeholder.id === placeholderId) return; // Skip deleted
 
+            // Use placeholders array and explicitly filter out the deleted one
+            const remainingPlaceholders = placeholders.filter(p => p.id !== placeholderId);
+
+            remainingPlaceholders.forEach(placeholder => {
                 const mappedTagId = newMappings[placeholder.id];
-                if (!mappedTagId) return;
+                if (!mappedTagId) return; // Skip unmapped placeholders
 
                 const tag = effectiveTags.find(t => t.id === mappedTagId);
-                if (!tag) return;
+                if (!tag) return; // Skip if tag not found
 
                 documentTags[tag.key] = tag.dataType || 'string';
             });
 
             onMappingChange(newMappings, {
-                documentTagsObject: documentTags
+                documentTagsObject: documentTags,
+                shouldOverwriteDocumentTags: true // ✅ Flag: overwrite instead of merge when deleting
             });
         }
     };

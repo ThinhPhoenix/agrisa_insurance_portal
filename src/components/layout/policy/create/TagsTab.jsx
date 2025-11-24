@@ -738,13 +738,22 @@ const TagsTabComponent = ({
 
                                 // Only update fields that exist in pdfData (avoid overwriting with undefined)
                                 if (pdfData) {
-                                    //  FIX: MERGE documentTagsObject instead of overwriting
-                                    // This preserves previously mapped tags when adding new ones
+                                    // ✅ FIX: Check shouldOverwriteDocumentTags flag
+                                    // - If flag is true (from delete operation): OVERWRITE to remove deleted tags
+                                    // - Otherwise (from apply operation): MERGE to preserve existing tags
                                     if (pdfData.documentTagsObject !== undefined) {
-                                        updates.documentTagsObject = {
-                                            ...prev.documentTagsObject,
-                                            ...pdfData.documentTagsObject
-                                        };
+                                        if (pdfData.shouldOverwriteDocumentTags) {
+                                            // Overwrite completely (for delete operations)
+                                            updates.documentTagsObject = pdfData.documentTagsObject;
+                                            console.log('🔄 OVERWRITE documentTagsObject (delete operation):', pdfData.documentTagsObject);
+                                        } else {
+                                            // Merge (for apply operations - preserve existing tags)
+                                            updates.documentTagsObject = {
+                                                ...prev.documentTagsObject,
+                                                ...pdfData.documentTagsObject
+                                            };
+                                            console.log('🔄 MERGE documentTagsObject (apply operation):', updates.documentTagsObject);
+                                        }
                                     }
                                     if (pdfData.modifiedPdfBytes !== undefined) {
                                         updates.modifiedPdfBytes = pdfData.modifiedPdfBytes;

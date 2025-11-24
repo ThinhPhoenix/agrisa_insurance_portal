@@ -14,7 +14,6 @@ let cachedFontBytes = null;
 let cachedFontkitModule = null;
 
 /**
- * ✨ SMART REPLACEMENT ALGORITHM
  * Calculate optimal replacement pattern with dynamic underscores and adaptive font scaling
  *
  * @param {string} originalText - Original placeholder text (e.g., "____(1)____")
@@ -134,7 +133,7 @@ const embedVietnameseFont = async (pdfDoc) => {
       // Use CDN with FULL Vietnamese charset (not subset)
       // Noto Sans has complete Vietnamese Unicode support
       const fontUrl =
-        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf";
+        "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf";
 
       const fontResponse = await fetch(fontUrl);
 
@@ -169,7 +168,7 @@ const embedVietnameseFont = async (pdfDoc) => {
       // Check if we have cached TTF font
       if (!cachedFontBytes || cachedFontBytes.byteLength < 100000) {
         const ttfFontUrl =
-          "https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Regular.ttf";
+          "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf";
 
         const ttfResponse = await fetch(ttfFontUrl);
         if (!ttfResponse.ok)
@@ -373,6 +372,35 @@ export const createFillablePDF = async (
             backgroundWidth,
           } = field;
 
+          // ✅ NEW: Handle special case - remove text only (no form field creation)
+          if (fieldType === "__remove_text_only__") {
+            if (
+              removeOriginalText &&
+              backgroundX !== undefined &&
+              backgroundWidth !== undefined
+            ) {
+              // Draw white rectangle over original placeholder text
+              const rectX = backgroundX;
+              const rectWidth = backgroundWidth;
+              const rectY = y - fontSize * 0.35;
+              const rectHeight = fontSize * 1.5;
+
+              page.drawRectangle({
+                x: rectX,
+                y: rectY,
+                width: rectWidth,
+                height: rectHeight,
+                color: rgb(1, 1, 1), // white
+                opacity: 1,
+              });
+
+              console.log(
+                `🗑️ Removed text for placeholder: ${fieldName} at page ${pageNum}`
+              );
+            }
+            continue; // Skip form field creation
+          }
+
           // Create form field based on type
           let formField;
 
@@ -387,32 +415,62 @@ export const createFillablePDF = async (
               formField.enableReadOnly();
             }
 
-            // ✅ Checkbox: Fixed size square (12px), covering the digit (N)
-            const checkboxSize = 15; // Fixed 12px size for checkbox
+            // ✅ NEW LOGIC: Checkbox size based on field width
+            // Default checkbox size is 15px
+            // If field width < 15px, use old logic (centered on field)
+            // If field width >= 15px, make checkbox square with side = field width
+            const defaultCheckboxSize = 15;
+            let actualCheckboxSize;
+            let checkboxX, checkboxY;
 
-            // Calculate checkbox position to cover the digit
-            let checkboxX;
-            if (backgroundX !== undefined && backgroundWidth !== undefined) {
-              // Center checkbox over the digit position with right offset
-              // backgroundX is the left edge of the digit, backgroundWidth is digit width
-              const digitCenterX = backgroundX + backgroundWidth / 2;
-              checkboxX = digitCenterX - checkboxSize / 2 + 10; // +5px offset to align center
-              console.log(
-                `✅ Checkbox using backgroundX: ${backgroundX}, backgroundWidth: ${backgroundWidth}, digitCenterX: ${digitCenterX}, checkboxX: ${checkboxX}`
-              );
+            // Determine field width (use backgroundWidth if available, otherwise use width)
+            const effectiveFieldWidth =
+              backgroundX !== undefined && backgroundWidth !== undefined
+                ? backgroundWidth
+                : width;
+
+            if (effectiveFieldWidth < defaultCheckboxSize) {
+              // Case 1: Field is smaller than default checkbox -> use old centered logic
+              actualCheckboxSize = defaultCheckboxSize;
+
+              if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                // Center checkbox over the digit position
+                const digitCenterX = backgroundX + backgroundWidth / 2;
+                checkboxX = digitCenterX - actualCheckboxSize / 2;
+                console.log(
+                  `✅ Checkbox (small field) using backgroundX: ${backgroundX}, backgroundWidth: ${backgroundWidth}, checkboxX: ${checkboxX}`
+                );
+              } else {
+                // Fallback: use placeholder center
+                const centerX = x + width / 2;
+                checkboxX = centerX - actualCheckboxSize / 2;
+                console.log(
+                  `⚠️ Checkbox (small field) fallback - using x: ${x}, width: ${width}, checkboxX: ${checkboxX}`
+                );
+              }
             } else {
-              // Fallback: use placeholder center
-              const centerX = x + width / 2;
-              checkboxX = centerX - checkboxSize / 2;
-              console.log(
-                `⚠️ Checkbox fallback - using x: ${x}, width: ${width}, centerX: ${centerX}, checkboxX: ${checkboxX}`
-              );
+              // Case 2: Field is larger than or equal to default checkbox -> make square checkbox = field width
+              actualCheckboxSize = effectiveFieldWidth;
+
+              if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                // Position checkbox at the start of background
+                checkboxX = backgroundX;
+                console.log(
+                  `✅ Checkbox (large field) using backgroundX: ${backgroundX}, size: ${actualCheckboxSize}`
+                );
+              } else {
+                // Fallback: use placeholder start
+                checkboxX = x;
+                console.log(
+                  `⚠️ Checkbox (large field) fallback - using x: ${x}, size: ${actualCheckboxSize}`
+                );
+              }
             }
 
-            const checkboxY = y - checkboxSize / 2 + 2; // +5px to move up (better vertical alignment)
+            checkboxY = y - actualCheckboxSize / 2 + 2; // Adjust for vertical alignment
 
             console.log(
-              `📐 Checkbox "${fieldName}": size=${checkboxSize}, checkboxX=${checkboxX.toFixed(
+              `📐 Checkbox "${fieldName}": size=${actualCheckboxSize}, checkboxX=${checkboxX.toFixed(
                 2
               )}, checkboxY=${checkboxY.toFixed(2)}`
             );
@@ -420,8 +478,8 @@ export const createFillablePDF = async (
             formField.addToPage(page, {
               x: checkboxX,
               y: checkboxY,
-              width: checkboxSize,
-              height: checkboxSize,
+              width: actualCheckboxSize,
+              height: actualCheckboxSize,
               backgroundColor: rgb(1, 1, 1),
               borderColor: rgb(0.7, 0.7, 0.7),
               borderWidth: showBorders ? 1 : 0,
@@ -433,54 +491,41 @@ export const createFillablePDF = async (
             // ✅ Reduce font size to avoid overlapping when multiple fields are close
             const reducedFontSize = fontSize * 0.85; // 85% of original font size
 
-            // ✅ CRITICAL: Set default appearance with Vietnamese font BEFORE setText
-            // This prevents WinAnsi encoding error
+            // ✅ CRITICAL: Embed Vietnamese font into form resources and set as field font
+            // This allows Vietnamese text to be rendered properly in form fields
             try {
-              // Get the acroField to set /DA manually
-              const acroField = formField.acroField;
-              const fontKey = "F1"; // Standard font key in resources
+              // Get font name from embedded font
+              const fontName = font.name;
+              const fontRef = pdfDoc.context.getObjectRef(font.ref);
 
-              // Set /DA (Default Appearance) string manually
-              // Format: /FontKey FontSize Tf r g b rg
-              // Use reduced font size to prevent overlap
+              // Add font to AcroForm's default resources
+              const acroForm = pdfDoc.catalog.lookup(
+                pdfDoc.context.obj("AcroForm")
+              );
+              if (acroForm) {
+                const dr = acroForm.get(pdfDoc.context.obj("DR"));
+                const fontDict = dr?.get(pdfDoc.context.obj("Font"));
+                if (fontDict) {
+                  fontDict.set(pdfDoc.context.obj(fontName), fontRef);
+                }
+              }
+
+              // Set Default Appearance with embedded font
+              const acroField = formField.acroField;
               acroField.setDefaultAppearance(
-                `/${fontKey} ${reducedFontSize} Tf 0 0 0 rg`
+                `/${fontName} ${reducedFontSize} Tf 0 0 0 rg`
               );
             } catch (daError) {
               console.warn(
-                `⚠️ Could not set /DA for ${fieldName}:`,
+                `⚠️ Could not set Vietnamese font for ${fieldName}:`,
                 daError.message
               );
             }
 
-            // ✅ Set field value with ASCII-safe identifier (no Vietnamese chars)
-            // Field value is used by BE to identify which field to fill
-            // This is the pre-filled value visible in the PDF form
+            // ⚠️ CRITICAL: DO NOT call setText() before addToPage()
+            // setText() stores text but addToPage() will try to render it with WinAnsi
+            // We will set the value AFTER addToPage using low-level PDF API
             const textValue = fillFields ? defaultValue || fieldName : "";
-            if (textValue) {
-              try {
-                // Convert Vietnamese to ASCII-safe identifier for /V field
-                // Example: "mã hồ sơ" → "ma_ho_so" or use field index
-                const asciiSafeValue = textValue
-                  .normalize("NFD")
-                  .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-                  .replace(/đ/g, "d")
-                  .replace(/Đ/g, "D")
-                  .replace(/\s+/g, "_") // Replace spaces with underscore
-                  .toLowerCase();
-
-                formField.setText(asciiSafeValue);
-                console.log(
-                  `✍️ Pre-filled field "${fieldName}" with ASCII-safe: "${asciiSafeValue}"`
-                );
-              } catch (setTextError) {
-                console.warn(
-                  `⚠️ Could not set text for ${fieldName}:`,
-                  setTextError.message
-                );
-                // Continue without text - field structure still valid
-              }
-            }
 
             // Set multiline/readonly BEFORE adding to page
             if (multiline) {
@@ -491,52 +536,98 @@ export const createFillablePDF = async (
               formField.enableReadOnly();
             }
 
-            // ✅ CALCULATE field dimensions based on TAG TEXT WIDTH
-            const tagText = fillFields ? defaultValue : fieldName;
-            const tagTextWidth = font.widthOfTextAtSize(tagText, fontSize);
-
-            // Calculate center X for field positioning
-            let centerX;
-            if (backgroundX !== undefined && backgroundWidth !== undefined) {
-              const digitCenter = backgroundX + backgroundWidth / 2;
-              const offsetAdjustment = 8;
-              centerX = digitCenter + offsetAdjustment;
-            } else {
-              centerX = x + width / 2;
-            }
-
-            // Calculate text X position (center alignment)
-            const textX = centerX - tagTextWidth / 2;
-
-            // Field dimensions based on tag text width
-            const fieldX = textX - 2; // Add 2px padding on left
-            const fieldWidth = tagTextWidth + 4; // Add 2px padding each side
+            // ✅ NEW LOGIC: Use full placeholder width (from start to end of field space)
+            // The placeholder x and width already represent the full field area
+            // (from first dot/underscore to last dot/underscore)
+            // This gives us 99% coverage of the field space with no padding
+            const fieldX = x;
+            const fieldWidth = width;
             const fieldY = y - reducedFontSize * 0.3; // Position field at text baseline
             const fieldHeightCalculated = reducedFontSize * 1.2; // Field height 1.2x reduced font size
 
             console.log(`📐 Field dimensions for "${fieldName}":`, {
-              tagTextWidth: tagTextWidth.toFixed(2),
               fieldX: fieldX.toFixed(2),
               fieldWidth: fieldWidth.toFixed(2),
               fieldY: fieldY.toFixed(2),
               fieldHeight: fieldHeightCalculated.toFixed(2),
               fontSize: reducedFontSize.toFixed(2),
             });
-
-            // Add to page (will use /DA we set above, no auto-appearance generation)
-            formField.addToPage(page, {
-              x: fieldX,
-              y: fieldY,
-              width: fieldWidth, // ✅ Width matches tag text width
-              height: fieldHeightCalculated,
-              textColor: rgb(0, 0, 0),
-              backgroundColor: rgb(1, 1, 1, 0), // ✅ Transparent background (don't cover text)
-              borderColor: rgb(0.7, 0.7, 0.7),
-              borderWidth: showBorders ? 1 : 0,
+            console.log(`📦 Placeholder data received for "${fieldName}":`, {
+              originalX: x,
+              originalWidth: width,
+              backgroundX: backgroundX,
+              backgroundWidth: backgroundWidth,
             });
 
+            // ✅ CRITICAL: Add to page WITHOUT appearance options to prevent auto-generation
+            // This avoids the WinAnsi encoding error when pdf-lib tries to render text
+            // The /DA string we set earlier will be used by PDF readers instead
+            try {
+              // Use minimal options to avoid triggering appearance generation
+              formField.addToPage(page, {
+                x: fieldX,
+                y: fieldY,
+                width: fieldWidth,
+                height: fieldHeightCalculated,
+                // ⚠️ Don't specify textColor - it triggers appearance generation
+                // backgroundColor: rgb(1, 1, 1, 0), // Skip to avoid appearance gen
+                // borderColor: rgb(0.7, 0.7, 0.7),  // Skip to avoid appearance gen
+                // borderWidth: showBorders ? 1 : 0,  // Skip to avoid appearance gen
+              });
+
+              // ✅ Set field value AFTER addToPage using low-level API
+              // This sets the /V (Value) entry without triggering appearance generation
+              if (textValue && fillFields) {
+                try {
+                  const acroField = formField.acroField;
+                  // ✅ CRITICAL: Normalize Vietnamese text to NFC (composed form)
+                  const normalizedText = textValue.normalize("NFC");
+
+                  // ✅ Encode as UTF-16BE with BOM for proper Unicode support in PDF
+                  // PDF spec: Text strings can be PDFDocEncoding or UTF-16BE (with BOM: 0xFEFF)
+                  const utf16Bytes = new Uint8Array([0xfe, 0xff]); // BOM
+                  const encoder = new TextEncoder();
+
+                  // Convert to UTF-16BE manually
+                  let utf16String = "\uFEFF"; // BOM character
+                  for (let i = 0; i < normalizedText.length; i++) {
+                    const code = normalizedText.charCodeAt(i);
+                    utf16String += String.fromCharCode(code);
+                  }
+
+                  // Use PDFHexString for UTF-16BE encoding
+                  const { PDFHexString } = await import("pdf-lib");
+
+                  // Convert text to UTF-16BE hex string
+                  let hexStr = "FEFF"; // BOM in hex
+                  for (let i = 0; i < normalizedText.length; i++) {
+                    const code = normalizedText.charCodeAt(i);
+                    hexStr += code.toString(16).padStart(4, "0").toUpperCase();
+                  }
+
+                  const pdfHexString = PDFHexString.of(hexStr);
+                  acroField.dict.set(pdfDoc.context.obj("V"), pdfHexString);
+
+                  console.log(
+                    `✍️ Set Vietnamese value (UTF-16BE) for "${fieldName}": "${normalizedText}"`
+                  );
+                } catch (setValueError) {
+                  console.warn(
+                    `⚠️ Could not set value for ${fieldName}:`,
+                    setValueError.message
+                  );
+                }
+              }
+            } catch (addError) {
+              console.error(
+                `❌ Failed to add field to page: ${fieldName}`,
+                addError
+              );
+              throw addError;
+            }
+
             // ❌ Don't call updateAppearances() - it will try to render with WinAnsi
-            // Field value uses ASCII-safe identifier, PDF reader will handle appearance
+            // Field value is set directly in /V, PDF reader will render using /DA font
           }
 
           console.log(
@@ -579,10 +670,11 @@ export const createFillablePDF = async (
  * Create fillable PDF from placeholder mappings
  *
  * @param {ArrayBuffer} pdfArrayBuffer - PDF gốc
- * @param {Array} placeholders - Placeholders from detector
+ * @param {Array} placeholders - Placeholders from detector (chỉ placeholders cần tạo form field)
  * @param {Object} mappings - Mapping object { placeholder_id: tag_id }
  * @param {Array} tags - Tag definitions
  * @param {Object} options - Options
+ *   - allPlaceholders: Array - TẤT CẢ placeholders cần xóa text (bao gồm cả deleted), nếu không cung cấp sẽ dùng `placeholders`
  * @returns {Promise<{pdfBytes: Uint8Array, warnings: Array}>}
  */
 export const createFillablePDFFromMappings = async (
@@ -593,6 +685,11 @@ export const createFillablePDFFromMappings = async (
   options = {}
 ) => {
   try {
+    // ✅ NEW: Hỗ trợ xóa text của TẤT CẢ placeholders (bao gồm cả deleted)
+    // Nếu options.allPlaceholders được cung cấp, dùng nó để xóa text
+    // Nếu không, mặc định xóa text của placeholders có mapping
+    const placeholdersToRemoveText = options.allPlaceholders || placeholders;
+
     // Convert placeholders + mappings to field definitions
     const fieldDefinitions = [];
 
@@ -603,6 +700,14 @@ export const createFillablePDFFromMappings = async (
       const tag = tags.find((t) => t.id === tagId);
       if (!tag) return;
 
+      // ✅ Normalize all Vietnamese text to NFC (composed form) to prevent decomposed characters
+      const normalizedKey = (tag.key || "").normalize("NFC");
+      const normalizedDefaultValue = (
+        tag.defaultValue ||
+        tag.key ||
+        ""
+      ).normalize("NFC");
+
       const fieldDef = {
         page: placeholder.page,
         x: placeholder.x,
@@ -611,10 +716,10 @@ export const createFillablePDFFromMappings = async (
         height: placeholder.height,
         backgroundX: placeholder.backgroundX,
         backgroundWidth: placeholder.backgroundWidth,
-        fieldName: tag.key,
+        fieldName: normalizedKey,
         fieldType: mapDataTypeToFieldType(tag.dataType),
-        // ✅ Use tag.key as default value to display in PDF (not empty)
-        defaultValue: tag.defaultValue || tag.key || "",
+        // ✅ Use normalized tag.key as default value to display in PDF (not empty)
+        defaultValue: normalizedDefaultValue,
         fontSize: placeholder.fontSize || 12,
         readOnly: tag.readOnly || false,
         multiline: tag.dataType === "textarea",
@@ -622,6 +727,44 @@ export const createFillablePDFFromMappings = async (
 
       fieldDefinitions.push(fieldDef);
     });
+
+    // ✅ NEW: Thêm placeholders cần xóa text (không tạo form field) vào fieldDefinitions
+    // Với marker để chỉ xóa text, không tạo field
+    if (options.removeOriginalText !== false) {
+      // Add all placeholders to remove text (những placeholder không có mapping)
+      const removeTextCount = placeholdersToRemoveText.filter(
+        (p) => !mappings[p.id]
+      ).length;
+
+      console.log(
+        `🗑️ Will remove text for ${removeTextCount} placeholders without form fields (out of ${placeholdersToRemoveText.length} total)`
+      );
+
+      placeholdersToRemoveText.forEach((placeholder) => {
+        const tagId = mappings[placeholder.id];
+        if (tagId) return; // Skip placeholders đã có mapping (đã được thêm ở trên)
+
+        // Thêm marker để chỉ xóa text (không tạo form field)
+        const removeTextMarker = {
+          page: placeholder.page,
+          backgroundX: placeholder.backgroundX,
+          backgroundWidth: placeholder.backgroundWidth,
+          x: placeholder.x,
+          y: placeholder.y,
+          width: placeholder.width,
+          height: placeholder.height,
+          fontSize: placeholder.fontSize || 12,
+          fieldName: `__remove_text_${placeholder.id}__`, // Marker name
+          fieldType: "__remove_text_only__", // Special type
+        };
+
+        console.log(
+          `🗑️ Adding remove-text marker for placeholder: ${placeholder.original} (id: ${placeholder.id})`
+        );
+
+        fieldDefinitions.push(removeTextMarker);
+      });
+    }
 
     return await createFillablePDF(pdfArrayBuffer, fieldDefinitions, options);
   } catch (error) {

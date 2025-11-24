@@ -1,16 +1,12 @@
 import {
     AimOutlined,
-    CopyOutlined,
     DeleteOutlined,
     DownloadOutlined,
     EyeOutlined,
-    FileSearchOutlined,
     UploadOutlined
 } from '@ant-design/icons';
 import {
-    Alert,
     Button,
-    Input,
     message,
     Modal,
     Progress,
@@ -40,37 +36,41 @@ const FileUploadPreview = forwardRef(({
     fileUrl: fileUrlProp = null
 }, ref) => {
     useImperativeHandle(ref, () => ({
-        openPasteModal: () => handleOpenPasteModal(),
         openFullscreen: () => handleFullscreenOpen(),
 
         //  NEW: Update with fillable PDF (called from PlaceholderMappingPanel after createFillablePDF)
         updateFillablePDF: async (fillableFile, fillableBytes) => {
             try {
-                // Create new blob URL for fillable PDF
-                const newUrl = URL.createObjectURL(fillableFile);
+                console.log('🔄 updateFillablePDF called with file:', fillableFile.name, fillableFile.size);
 
-                // Cleanup old URL
+                // Cleanup old URL first
                 if (fileUrl) {
-                    setTimeout(() => {
-                        URL.revokeObjectURL(fileUrl);
-                    }, 500);
+                    console.log('🗑️ Revoking old URL:', fileUrl);
+                    URL.revokeObjectURL(fileUrl);
                 }
+
+                // Create new blob URL for fillable PDF with cache-busting timestamp
+                const blob = new Blob([fillableFile], { type: 'application/pdf' });
+                const newUrl = URL.createObjectURL(blob);
+                const urlWithTimestamp = `${newUrl}#t=${Date.now()}`; // Add timestamp to force reload
+                console.log('🆕 Created new URL:', urlWithTimestamp);
 
                 // Update state to show fillable PDF in iframe
                 setUploadedFile(fillableFile);
-                setFileUrl(newUrl);
+                setFileUrl(urlWithTimestamp);
                 setModifiedPdfBytes(fillableBytes);
+                setIframeKey(Date.now()); // 🆕 Force iframe to reload
 
                 // Notify parent
                 if (onFileUpload) {
-                    onFileUpload(fillableFile, newUrl);
+                    onFileUpload(fillableFile, urlWithTimestamp);
                 }
 
-                console.log(' Fillable PDF updated in FileUploadPreview, iframe will reload');
+                console.log('✅ Fillable PDF updated in FileUploadPreview, iframe will reload with key:', Date.now());
 
                 return {
                     success: true,
-                    url: newUrl,
+                    url: urlWithTimestamp,
                     file: fillableFile
                 };
             } catch (error) {
@@ -183,12 +183,29 @@ const FileUploadPreview = forwardRef(({
                 file: uploadedFile,
                 url: fileUrl
             };
+        },
+
+        // 🆕 Get original unmodified file (for rebuild after delete)
+        getOriginalFile: () => {
+            if (!originalFile) {
+                return {
+                    success: false,
+                    error: 'No original file available'
+                };
+            }
+
+            return {
+                success: true,
+                file: originalFile
+            };
         }
     }));
 
     const [uploadedFile, setUploadedFile] = useState(null);
+    const [originalFile, setOriginalFile] = useState(null); // Store original unmodified PDF
     const [fileUrl, setFileUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [iframeKey, setIframeKey] = useState(Date.now()); // 🆕 Force iframe reload
 
     //  Sync fileUrlProp from parent into local state
     useEffect(() => {
@@ -201,8 +218,6 @@ const FileUploadPreview = forwardRef(({
     const [fullscreenVisible, setFullscreenVisible] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
     const [placeholders, setPlaceholders] = useState([]);
-    const [pasteTextModalVisible, setPasteTextModalVisible] = useState(false);
-    const [pastedText, setPastedText] = useState('');
     const [isPlacementMode, setIsPlacementMode] = useState(false);
     const [modifiedText, setModifiedText] = useState(null);
     const [modifiedTextUrl, setModifiedTextUrl] = useState(null);
@@ -224,10 +239,31 @@ const FileUploadPreview = forwardRef(({
         if (uploadedFileProp) {
             // parent has a file; adopt it
             setUploadedFile(uploadedFileProp);
+
+            // ✅ CRITICAL FIX: Only set originalFile if it's not already set
+            // originalFile should NEVER be updated after initial upload
+            // because it must remain the TRUE original PDF (not fillable PDF)
+            setOriginalFile(prev => {
+                if (!prev) {
+                    console.log('📦 Setting originalFile from parent (first time):', {
+                        name: uploadedFileProp.name,
+                        size: uploadedFileProp.size
+                    });
+                    return uploadedFileProp;
+                } else {
+                    console.log('⏭️ Skipping originalFile update - already set:', {
+                        original: { name: prev.name, size: prev.size },
+                        newFile: { name: uploadedFileProp.name, size: uploadedFileProp.size }
+                    });
+                    return prev; // Keep original
+                }
+            });
+
             setFileUrl(fileUrlProp);
         } else {
             // parent cleared file
             setUploadedFile(null);
+            setOriginalFile(null);
             setFileUrl(null);
             setPlaceholders([]);
             setPdfError(null);
@@ -242,6 +278,7 @@ const FileUploadPreview = forwardRef(({
             URL.revokeObjectURL(fileUrl);
         }
         setUploadedFile(null);
+        setOriginalFile(null); // Clear original file
         setFileUrl(null);
         setPdfError(null);
         setPlaceholders([]);
@@ -314,6 +351,7 @@ const FileUploadPreview = forwardRef(({
                 const url = URL.createObjectURL(file);
                 setFileUrl(url);
                 setUploadedFile(file);
+                setOriginalFile(file); // 🆕 Store original unmodified PDF
 
                 // Convert file to base64 and log the string (data URL)
                 try {
@@ -353,47 +391,6 @@ const FileUploadPreview = forwardRef(({
         }
     }), [analyzePDF, onFileUpload, onFileRemove, fileUrl]);
 
-    // Handle paste text from PDF
-    const handleOpenPasteModal = () => {
-        setPasteTextModalVisible(true);
-        setPastedText('');
-    };
-
-    const handlePasteTextSubmit = () => {
-        if (!pastedText.trim()) {
-            message.warning('Vui lòng paste nội dung PDF vào ô text');
-            return;
-        }
-
-        setAnalyzing(true);
-        setPasteTextModalVisible(false);
-
-        try {
-            // Detect placeholders from pasted text
-            const { detectPlaceholders } = require('../../../../libs/pdf/PDFPlaceholderDetector');
-            const detectedPlaceholders = detectPlaceholders(pastedText);
-
-            setPlaceholders(detectedPlaceholders);
-
-            if (detectedPlaceholders.length > 0) {
-                message.success(`Tìm thấy ${detectedPlaceholders.length} placeholders!`);
-
-                // Notify parent
-                if (onPlaceholdersDetected) {
-                    onPlaceholdersDetected(detectedPlaceholders);
-                }
-            } else {
-                message.warning('Không tìm thấy placeholder nào. Vui lòng kiểm tra format: (1), (2)...');
-            }
-        } catch (error) {
-            message.error('Lỗi khi phân tích text: ' + error.message);
-        } finally {
-            setAnalyzing(false);
-        }
-    };
-
-    // Note: mapping and modified-text generation moved to TagsTab; preview only handles file display and placeholder detection
-
     //  OPTIMIZATION: Memoize handleDownloadFile
     const handleDownloadFile = useCallback(() => {
         if (fileUrl && uploadedFile) {
@@ -428,7 +425,8 @@ const FileUploadPreview = forwardRef(({
     //  OPTIMIZATION: Memoize placement mode handlers
     const handleEnterPlacementMode = useCallback(() => {
         setIsPlacementMode(true);
-        message.info('Chế độ đặt tag: Click vào vị trí trong PDF để đặt tag');
+        setFullscreenVisible(true); // Auto-open fullscreen for better drag selection
+        message.info('Chế độ quét: Kéo chuột để chọn vùng field trên PDF', 4);
     }, []);
 
     const handleExitPlacementMode = useCallback(() => {
@@ -549,15 +547,6 @@ const FileUploadPreview = forwardRef(({
 
                     <div style={{ marginLeft: 'auto' }}>
                         <Space>
-                            <Tooltip title="Paste text từ PDF">
-                                <Button
-                                    type="default"
-                                    icon={<CopyOutlined />}
-                                    onClick={handleOpenPasteModal}
-                                    size="small"
-                                />
-                            </Tooltip>
-
                             <Tooltip title={isPlacementMode ? "Thoát chế độ đặt tag" : "Đặt tag thủ công (Click vào PDF)"}>
                                 <Button
                                     type={isPlacementMode ? "primary" : "default"}
@@ -653,7 +642,7 @@ const FileUploadPreview = forwardRef(({
                                 />
                             ) : (
                                 <iframe
-                                    key={`${fileUrl}-${Date.now()}`}
+                                    key={`pdf-${iframeKey}`}
                                     src={`${fileUrl}#toolbar=0`}
                                     style={{
                                         width: '100%',
@@ -700,74 +689,62 @@ const FileUploadPreview = forwardRef(({
             {/* Fullscreen Modal */}
             <Modal
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <EyeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
-                        <span>{uploadedFile?.name} - Xem toàn màn hình</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <EyeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                            <span>{uploadedFile?.name} - {isPlacementMode ? 'Chế độ quét' : 'Xem toàn màn hình'}</span>
+                        </div>
+                        {isPlacementMode && (
+                            <Button
+                                type="primary"
+                                danger
+                                onClick={handleExitPlacementMode}
+                            >
+                                Thoát chế độ quét
+                            </Button>
+                        )}
                     </div>
                 }
                 open={fullscreenVisible}
-                onCancel={handleFullscreenClose}
+                onCancel={() => {
+                    handleFullscreenClose();
+                    if (isPlacementMode) {
+                        handleExitPlacementMode();
+                    }
+                }}
                 footer={null}
                 width="95vw"
                 style={{ top: 20, padding: 0 }}
                 styles={{ body: { height: '90vh', padding: 0 } }}
                 centered
-                destroyOnHidden
+                destroyOnClose
             >
-                <iframe
-                    key={fileUrl}
-                    src={fileUrl}
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        border: 'none'
-                    }}
-                    title="PDF Fullscreen Preview"
-                />
+                {isPlacementMode ? (
+                    <PDFViewerWithSelection
+                        pdfUrl={fileUrl}
+                        tags={tags}
+                        onTagPlaced={handleTagPlaced}
+                        isPlacementMode={isPlacementMode}
+                        onExitPlacementMode={() => {
+                            handleExitPlacementMode();
+                            handleFullscreenClose();
+                        }}
+                        onCreatePlaceholder={onCreatePlaceholder}
+                        placeholders={placeholders}
+                    />
+                ) : (
+                    <iframe
+                        key={`pdf-fullscreen-${iframeKey}`}
+                        src={fileUrl}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none'
+                        }}
+                        title="PDF Fullscreen Preview"
+                    />
+                )}
             </Modal>
-
-            {/* Paste Text Modal */}
-            <Modal
-                title={
-                    <Space>
-                        <CopyOutlined style={{ color: '#1890ff' }} />
-                        <span>Paste nội dung từ PDF</span>
-                    </Space>
-                }
-                open={pasteTextModalVisible}
-                onCancel={() => setPasteTextModalVisible(false)}
-                onOk={handlePasteTextSubmit}
-                okText="Phát hiện Placeholders"
-                cancelText="Hủy"
-                width={800}
-                okButtonProps={{ icon: <FileSearchOutlined /> }}
-            >
-                <Alert
-                    message="Hướng dẫn"
-                    description={
-                        <div>
-                            <p>1. Mở file PDF trong trình xem PDF (browser hoặc Adobe Reader)</p>
-                            <p>2. Chọn toàn bộ nội dung (Ctrl+A) và copy (Ctrl+C)</p>
-                            <p>3. Paste vào ô bên dưới (Ctrl+V)</p>
-                            <p>4. Hệ thống sẽ tự động tìm các placeholders dạng: <code>(1)</code>, <code>(2)</code>, <code>{'{{key}}'}</code></p>
-                        </div>
-                    }
-                    type="info"
-                    showIcon
-                    style={{ marginBottom: 16 }}
-                />
-                <Input.TextArea
-                    value={pastedText}
-                    onChange={(e) => setPastedText(e.target.value)}
-                    placeholder="Paste nội dung PDF vào đây...&#10;&#10;Ví dụ:&#10;Họ và tên: ...................(1)...................&#10;Ngày sinh: ...................(2)...................&#10;Địa chỉ: ...................(3)..................."
-                    rows={15}
-                    style={{ fontFamily: 'monospace', fontSize: '13px' }}
-                />
-                <div style={{ marginTop: 12, color: '#666', fontSize: '12px' }}>
-                    💡 Tip: Placeholders phải có format đúng: <code>(1)</code>, <code>(2)</code>... hoặc <code>{'{{name}}'}</code>
-                </div>
-            </Modal>
-
         </>
     );
 });

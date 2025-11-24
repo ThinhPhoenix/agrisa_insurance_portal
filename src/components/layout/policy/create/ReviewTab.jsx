@@ -150,11 +150,6 @@ const ReviewTabComponent = ({
             key: 'key',
         },
         {
-            title: 'Giá trị',
-            dataIndex: 'value',
-            key: 'value',
-        },
-        {
             title: 'Loại dữ liệu',
             dataIndex: 'dataTypeLabel',
             key: 'dataTypeLabel',
@@ -497,50 +492,6 @@ const ReviewTabComponent = ({
                     </Card>
                 )}
 
-                {/* Tags Table (for reference) */}
-                {tagsData.tags.length > 0 && (
-                    <Card
-                        title={`Tags đã tạo (${tagsData.tags.length})`}
-                        className="review-section"
-                        style={{ marginTop: 16 }}
-                    >
-                        <Alert
-                            message="Danh sách tags đã tạo (chỉ tham khảo)"
-                            type="info"
-                            showIcon
-                            style={{ marginBottom: 12 }}
-                        />
-                        <Table
-                            columns={tagColumns}
-                            dataSource={tagsData.tags}
-                            rowKey="id"
-                            pagination={false}
-                            size="small"
-                        />
-                    </Card>
-                )}
-
-                {/* Tags Table (for reference) */}
-                {tagsData.tags.length > 0 && (
-                    <Card
-                        title={`Trường thông tin đã tạo (${tagsData.tags.length})`}
-                        className="review-section"
-                    >
-                        <Alert
-                            message="Danh sách trường thông tin đã tạo (chỉ tham khảo)"
-                            type="info"
-                            showIcon
-                            style={{ marginBottom: 12 }}
-                        />
-                        <Table
-                            columns={tagColumns}
-                            dataSource={tagsData.tags}
-                            rowKey="id"
-                            pagination={false}
-                            size="small"
-                        />
-                    </Card>
-                )}
             </Space>
         </div>
     );

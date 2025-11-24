@@ -76,6 +76,15 @@ const BasicTabComponent = ({
             updates.status = 'draft';
         }
 
+        // Always set premium and payout per hectare to true
+        if (basicData.isPerHectare !== true) {
+            updates.isPerHectare = true;
+        }
+
+        if (basicData.isPayoutPerHectare !== true) {
+            updates.isPayoutPerHectare = true;
+        }
+
         if (Object.keys(updates).length > 0) {
             onDataChange({
                 ...basicData,
@@ -239,7 +248,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="productName"
                             label="Tên Sản phẩm"
-                            tooltip="Tên sản phẩm hiển thị, ví dụ: Bảo hiểm lúa mùa đông 2025"
+                            tooltip="Tên hiển thị (VD: Bảo hiểm lúa mùa đông 2025)"
                             rules={[
                                 { required: true, message: getBasePolicyError('PRODUCT_NAME_REQUIRED') },
                                 { min: 3, message: getBasePolicyValidation('PRODUCT_NAME_MIN_LENGTH') }
@@ -255,7 +264,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="productCode"
                             label="Mã Sản phẩm"
-                            tooltip="Mã định danh duy nhất cho sản phẩm (chỉ chữ cái, số và dấu gạch dưới). Tự động chuyển thành chữ hoa"
+                            tooltip="Mã duy nhất (chữ, số, _ - tự động viết hoa)"
                             rules={[
                                 { required: true, message: getBasePolicyError('PRODUCT_CODE_REQUIRED') },
                                 {
@@ -279,7 +288,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="productDescription"
                             label="Mô tả sản phẩm"
-                            tooltip="Mô tả chi tiết sản phẩm bảo hiểm (tuỳ chọn)"
+                            tooltip="Mô tả ngắn gọn về sản phẩm (không bắt buộc)"
                         >
                             <Input.TextArea
                                 placeholder="Nhập mô tả sản phẩm"
@@ -292,7 +301,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="cropType"
                             label="Loại Cây trồng"
-                            tooltip="Loại cây trồng áp dụng (BẮT BUỘC)"
+                            tooltip="Chọn loại cây trồng được bảo hiểm"
                             rules={[
                                 { required: true, message: 'Vui lòng chọn loại cây trồng!' }
                             ]}
@@ -319,11 +328,11 @@ const BasicTabComponent = ({
                 </Row>
 
                 <Row gutter={24}>
-                    <Col span={8}>
+                    <Col span={12}>
                         <Form.Item
                             name="coverageCurrency"
                             label="Đơn vị tiền tệ"
-                            tooltip="Mã tiền tệ theo chuẩn ISO (3 ký tự)"
+                            tooltip="Đồng tiền sử dụng (VND, USD, EUR)"
                             rules={[
                                 { required: true, message: getBasePolicyError('COVERAGE_CURRENCY_REQUIRED') },
                                 { len: 3, message: getBasePolicyError('CURRENCY_INVALID') }
@@ -339,11 +348,11 @@ const BasicTabComponent = ({
                             </Select>
                         </Form.Item>
                     </Col>
-                    <Col span={8}>
+                    <Col span={12}>
                         <Form.Item
                             name="coverageDurationDays"
                             label="Thời hạn bảo hiểm (ngày)"
-                            tooltip="Số ngày bảo hiểm bao phủ cho mỗi hợp đồng (ví dụ: 120 ngày cho chu kỳ lúa mùa đông)"
+                            tooltip="Số ngày hợp đồng có hiệu lực (VD: 120 ngày)"
                             rules={[
                                 { required: true, message: getBasePolicyError('COVERAGE_DURATION_INVALID') },
                                 { type: 'number', min: 1, message: getBasePolicyValidation('COVERAGE_DURATION_MIN') }
@@ -357,19 +366,6 @@ const BasicTabComponent = ({
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={8}>
-                        <Form.Item
-                            name="isPerHectare"
-                            label="Tính phí theo Hecta"
-                            tooltip="Tính phí theo Hecta (Is Per Hectare): Nếu bật, phí bảo hiểm sẽ được tính bằng cách nhân đơn giá với tổng diện tích (hecta) mà người dùng đăng ký"
-                            rules={[{ required: true, message: getBasePolicyValidation('IS_PER_HECTARE_REQUIRED') }]}
-                        >
-                            <Select size="large" placeholder="Chọn">
-                                <Option value={true}>Có (theo hectare)</Option>
-                                <Option value={false}>Không (cố định)</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
                 </Row>
 
                 <Row gutter={24}>
@@ -377,7 +373,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="premiumBaseRate"
                             label="Tỷ lệ phí cơ bản"
-                            tooltip="Tỷ lệ phí bảo hiểm cơ bản (VND/ha hoặc hệ số nhân - multiplier). Bắt buộc nếu không có phí cố định"
+                            tooltip="Hệ số tính phí (phải > 0 nếu không dùng phí cố định)"
                             rules={[
                                 { required: true, message: getBasePolicyError('PREMIUM_BASE_RATE_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('PREMIUM_BASE_RATE_NEGATIVE') }
@@ -396,7 +392,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="fixPremiumAmount"
                             label="Phí bảo hiểm cố định"
-                            tooltip="Phí bảo hiểm cố định (Fixed Premium Amount): Một số tiền phí bảo hiểm được ấn định trước cho hợp đồng, không cần qua các bước tính toán động (BẮT BUỘC)"
+                            tooltip="Số tiền phí cố định cho hợp đồng (không tính toán)"
                             rules={[
                                 { required: true, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_NEGATIVE') }
@@ -417,7 +413,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="maxPremiumPaymentProlong"
                             label="Gia hạn thanh toán (ngày)"
-                            tooltip="Thời gian (ngày) tối đa được gia hạn việc thanh toán phí bảo hiểm (premium) - không ảnh hưởng công thức tính, chỉ tác động quy trình thanh toán (workflow)"
+                            tooltip="Số ngày tối đa cho phép trả chậm phí"
                             rules={[
                                 { type: 'number', min: 0, message: 'Phải >= 0' }
                             ]}
@@ -437,7 +433,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="cancelPremiumRate"
                             label="Tỷ lệ phí khi hủy hợp đồng"
-                            tooltip="Tỷ lệ phí khi hủy hợp đồng (Cancel Premium Rate): Quy định tỷ lệ phí bảo hiểm được áp dụng khi hợp đồng bị hủy trước hạn. Tỷ lệ này có thể là phần trăm phí được hoàn lại cho người dùng hoặc phần trăm phí bị giữ lại, tùy theo quy định của sản phẩm. Giá trị từ 0 đến 1 (ví dụ: 0.8 = 80%)"
+                            tooltip="Tỷ lệ hoàn phí khi hủy sớm (0-1, VD: 0.8 = hoàn 80%)"
                             rules={[
                                 { type: 'number', min: 0, max: 1, message: getBasePolicyError('CANCEL_PREMIUM_RATE_INVALID') }
                             ]}
@@ -457,24 +453,11 @@ const BasicTabComponent = ({
                 <Divider orientation="left">Cấu hình Chi trả (Payout)</Divider>
 
                 <Row gutter={24}>
-                    <Col span={8}>
-                        <Form.Item
-                            name="isPayoutPerHectare"
-                            label="Bồi thường theo Hecta"
-                            tooltip="Bồi thường theo Hecta (Is Payout Per Hectare?): Nếu bật, số tiền bồi thường sẽ được tính bằng cách nhân mức bồi thường cơ bản với tổng diện tích (hecta) đã đăng ký"
-                            rules={[{ required: true, message: getBasePolicyValidation('IS_PAYOUT_PER_HECTARE_REQUIRED') }]}
-                        >
-                            <Select size="large" placeholder="Chọn">
-                                <Option value={true}>Có (theo hectare)</Option>
-                                <Option value={false}>Không (cố định)</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col span={8}>
+                    <Col span={12}>
                         <Form.Item
                             name="payoutBaseRate"
                             label="Tỷ lệ bồi thường cơ bản"
-                            tooltip="Tỷ lệ bồi thường cơ bản (Payout Base Rate): Tỷ lệ phần trăm (ví dụ: 0.75 tương đương 75%) của một giá trị cơ sở (như tổng thiệt hại hoặc chi phí cơ sở) sẽ được dùng để tính ra số tiền bồi thường cuối cùng. BẮT BUỘC"
+                            tooltip="Hệ số tính bồi thường (phải > 0, VD: 0.75 = 75%)"
                             rules={[
                                 { required: true, message: getBasePolicyError('PAYOUT_BASE_RATE_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_BASE_RATE_NEGATIVE') }
@@ -489,11 +472,11 @@ const BasicTabComponent = ({
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={8}>
+                    <Col span={12}>
                         <Form.Item
                             name="fixPayoutAmount"
                             label="Số tiền bồi thường cố định"
-                            tooltip="Số tiền bồi thường cố định (Fixed Payout Amount): Một số tiền bồi thường được ấn định trước sẽ được chi trả khi điều kiện bảo hiểm xảy ra, thay vì tính toán động (BẮT BUỘC)"
+                            tooltip="Số tiền bồi thường cố định khi xảy ra sự cố"
                             rules={[
                                 { required: true, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_NEGATIVE') }
@@ -517,7 +500,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="payoutCap"
                             label="Trần bồi thường"
-                            tooltip="Trần bồi thường (Payout Cap): Mức bồi thường tối đa mà một hợp đồng có thể nhận được, dù cho kết quả tính toán thực tế có thể cao hơn"
+                            tooltip="Số tiền bồi thường tối đa cho một hợp đồng"
                             rules={[
                                 { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_CAP_NEGATIVE') }
                             ]}
@@ -537,7 +520,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="overThresholdMultiplier"
                             label="Hệ số vượt ngưỡng"
-                            tooltip="Hệ số vượt ngưỡng (Over Threshold Multiplier): Một hệ số nhân bổ sung, làm tăng số tiền bồi thường khi mức độ nghiêm trọng của sự kiện vượt xa giá trị ngưỡng đã định. Ví dụ: 2.0 = nhân đôi số tiền bồi thường. Mặc định: 1.0 (100%)"
+                            tooltip="Hệ số nhân khi vượt ngưỡng (phải > 0, mặc định: 1.0)"
                             rules={[
                                 { type: 'number', min: 0, message: getBasePolicyError('OVER_THRESHOLD_MULTIPLIER_NEGATIVE') }
                             ]}
@@ -560,7 +543,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="enrollmentStartDay"
                             label="Ngày bắt đầu đăng ký"
-                            tooltip="Thời điểm bắt đầu cho phép đăng ký tham gia (tuỳ chọn). Thường trước ngày bắt đầu hiệu lực bảo hiểm"
+                            tooltip="Ngày mở đăng ký (trước ngày hiệu lực)"
                         >
                             <DatePicker
                                 placeholder="Chọn ngày bắt đầu đăng ký"
@@ -578,7 +561,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="enrollmentEndDay"
                             label="Ngày kết thúc đăng ký"
-                            tooltip="Thời điểm kết thúc cho phép đăng ký tham gia (tuỳ chọn). Phải sau ngày bắt đầu đăng ký và trước/bằng ngày bắt đầu hiệu lực bảo hiểm"
+                            tooltip="Ngày đóng đăng ký (trước/bằng ngày hiệu lực)"
                             rules={[
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
@@ -640,7 +623,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="insuranceValidFrom"
                             label="Bảo hiểm có hiệu lực từ"
-                            tooltip="Khoảng thời gian mà bảo hiểm có hiệu lực - ngày bắt đầu (BẮT BUỘC). Phải sau ngày bắt đầu đăng ký và sau/bằng ngày kết thúc đăng ký"
+                            tooltip="Ngày bắt đầu bảo hiểm (bắt buộc)"
                             rules={[
                                 { required: true, message: getBasePolicyValidation('INSURANCE_VALID_FROM_REQUIRED') },
                                 ({ getFieldValue }) => ({
@@ -696,7 +679,7 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="insuranceValidTo"
                             label="Bảo hiểm có hiệu lực đến"
-                            tooltip="Khoảng thời gian mà bảo hiểm có hiệu lực - ngày kết thúc (BẮT BUỘC). Phải sau ngày bắt đầu hiệu lực"
+                            tooltip="Ngày kết thúc bảo hiểm (bắt buộc)"
                             rules={[
                                 { required: true, message: getBasePolicyValidation('INSURANCE_VALID_TO_REQUIRED') },
                                 ({ getFieldValue }) => ({
@@ -955,7 +938,9 @@ const BasicTabComponent = ({
                                     optionLabelProp="label"
                                     loading={dataSourcesLoading}
                                 >
-                                    {dataSources.map(source => (
+                                    {dataSources.filter(source =>
+                                        !basicData.selectedDataSources.some(selected => selected.id === source.id)
+                                    ).map(source => (
                                         <Option key={source.id} value={source.id} label={source.label}>
                                             <Tooltip
                                                 title={

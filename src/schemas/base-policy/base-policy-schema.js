@@ -69,7 +69,7 @@ export const basePolicySchema = z
       .number({
         invalid_type_error: getBasePolicyError("PREMIUM_BASE_RATE_NEGATIVE"),
       })
-      .min(0, getBasePolicyError("PREMIUM_BASE_RATE_NEGATIVE")),
+      .nonnegative(getBasePolicyError("PREMIUM_BASE_RATE_NEGATIVE")),
 
     isPayoutPerHectare: z.boolean({
       required_error: getBasePolicyValidation("IS_PAYOUT_PER_HECTARE_REQUIRED"),
@@ -83,7 +83,9 @@ export const basePolicySchema = z
         required_error: getBasePolicyError("PAYOUT_BASE_RATE_REQUIRED"),
         invalid_type_error: getBasePolicyError("PAYOUT_BASE_RATE_NEGATIVE"),
       })
-      .min(0, getBasePolicyError("PAYOUT_BASE_RATE_NEGATIVE")),
+      .refine((val) => val > 0, {
+        message: getBasePolicyError("PAYOUT_BASE_RATE_MUST_POSITIVE"),
+      }),
 
     insuranceValidFrom: z
       .any({
@@ -126,7 +128,12 @@ export const basePolicySchema = z
 
     overThresholdMultiplier: z
       .number()
-      .min(0, getBasePolicyError("OVER_THRESHOLD_MULTIPLIER_NEGATIVE"))
+      .refine(
+        (val) => val === null || val === undefined || val > 0,
+        {
+          message: getBasePolicyError("OVER_THRESHOLD_MULTIPLIER_MUST_POSITIVE"),
+        }
+      )
       .optional()
       .nullable(),
 
@@ -177,7 +184,7 @@ export const basePolicySchema = z
       return true;
     },
     {
-      message: getBasePolicyError("PREMIUM_BASE_RATE_REQUIRED"),
+      message: getBasePolicyError("PREMIUM_BASE_RATE_MUST_POSITIVE"),
       path: ["premiumBaseRate"],
     }
   )

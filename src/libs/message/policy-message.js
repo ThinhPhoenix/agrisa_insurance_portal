@@ -25,6 +25,7 @@ export const POLICY_MESSAGES = {
       FIX_PREMIUM_AMOUNT_REQUIRED: "Vui lòng nhập phí bảo hiểm cố định!",
       FIX_PREMIUM_AMOUNT_NEGATIVE: "Phí bảo hiểm cố định không được âm!",
       PREMIUM_BASE_RATE_NEGATIVE: "Tỷ lệ phí cơ bản không được âm!",
+      PREMIUM_BASE_RATE_MUST_POSITIVE: "Tỷ lệ phí cơ bản phải lớn hơn 0!",
       PREMIUM_BASE_RATE_REQUIRED:
         "Vui lòng nhập tỷ lệ phí cơ bản khi không có phí cố định!",
 
@@ -32,9 +33,12 @@ export const POLICY_MESSAGES = {
       FIX_PAYOUT_AMOUNT_REQUIRED: "Vui lòng nhập số tiền bồi thường cố định!",
       FIX_PAYOUT_AMOUNT_NEGATIVE: "Số tiền chi trả cố định không được âm!",
       PAYOUT_BASE_RATE_NEGATIVE: "Tỷ lệ chi trả cơ bản không được âm!",
+      PAYOUT_BASE_RATE_MUST_POSITIVE: "Tỷ lệ chi trả cơ bản phải lớn hơn 0!",
       PAYOUT_BASE_RATE_REQUIRED: "Vui lòng nhập tỷ lệ chi trả cơ bản!",
       OVER_THRESHOLD_MULTIPLIER_NEGATIVE:
         "Hệ số nhân vượt ngưỡng không được âm!",
+      OVER_THRESHOLD_MULTIPLIER_MUST_POSITIVE:
+        "Hệ số nhân vượt ngưỡng phải lớn hơn 0!",
       PAYOUT_CAP_NEGATIVE: "Giới hạn chi trả tối đa không được âm!",
 
       // Status validation
@@ -155,7 +159,9 @@ export const POLICY_MESSAGES = {
       VALIDATION_WINDOW_DAYS_INVALID: "Cửa sổ kiểm tra phải lớn hơn 0 ngày!",
       BASE_COST_NEGATIVE: "Chi phí cơ sở không được âm!",
       CATEGORY_MULTIPLIER_INVALID: "Hệ số nhóm phải lớn hơn 0!",
+      CATEGORY_MULTIPLIER_MUST_POSITIVE: "Hệ số nhóm phải lớn hơn 0!",
       TIER_MULTIPLIER_INVALID: "Hệ số tier phải lớn hơn 0!",
+      TIER_MULTIPLIER_MUST_POSITIVE: "Hệ số tier phải lớn hơn 0!",
       CALCULATED_COST_NEGATIVE: "Chi phí đã tính không được âm!",
 
       // Data source validation errors

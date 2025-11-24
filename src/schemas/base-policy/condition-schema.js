@@ -136,13 +136,23 @@ export const conditionSchema = z
 
     categoryMultiplier: z
       .number()
-      .min(0, getConditionError("CATEGORY_MULTIPLIER_INVALID"))
+      .refine(
+        (val) => val === null || val === undefined || val > 0,
+        {
+          message: getConditionError("CATEGORY_MULTIPLIER_MUST_POSITIVE"),
+        }
+      )
       .optional()
       .nullable(),
 
     tierMultiplier: z
       .number()
-      .min(0, getConditionError("TIER_MULTIPLIER_INVALID"))
+      .refine(
+        (val) => val === null || val === undefined || val > 0,
+        {
+          message: getConditionError("TIER_MULTIPLIER_MUST_POSITIVE"),
+        }
+      )
       .optional()
       .nullable(),
 

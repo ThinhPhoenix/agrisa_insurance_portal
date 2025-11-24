@@ -105,7 +105,7 @@ const CreatePolicyPage = () => {
       setUploadedFile(file);
       setFileUrl(url);
 
-      // ✅ Update tagsData with uploaded file
+      //  Update tagsData with uploaded file
       handleTagsDataChange({
         uploadedFile: file,
         // Note: modifiedPdfBytes will be set later by TagsTab when tags are applied
@@ -123,7 +123,7 @@ const CreatePolicyPage = () => {
     // Clear detected placeholders
     setDetectedPlaceholders([]);
 
-    // ✅ CRITICAL: Clear ALL PDF-related data from tagsData
+    //  CRITICAL: Clear ALL PDF-related data from tagsData
     handleTagsDataChange({
       uploadedFile: null,
       modifiedPdfBytes: null,
@@ -160,7 +160,7 @@ const CreatePolicyPage = () => {
     setDetectedPlaceholders(placeholders || []);
   }, []);
 
-  // ✅ NEW: Handle manual placeholder creation from click-to-place - Memoized
+  //  NEW: Handle manual placeholder creation from click-to-place - Memoized
   const handleCreatePlaceholder = useCallback((newPlaceholder) => {
     console.log("📍 Adding manual placeholder to list:", newPlaceholder);
     setDetectedPlaceholders((prev) => [...prev, newPlaceholder]);

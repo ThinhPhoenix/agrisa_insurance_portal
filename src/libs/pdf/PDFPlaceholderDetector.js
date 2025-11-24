@@ -284,7 +284,126 @@ export const extractTextFromPDF = async (file) => {
               continue;
             }
 
-            const fullWidth = endX2 - startX;
+            // ✅ NEW: Find field START by scanning BACKWARD from digit position
+            // Find the CLOSEST colon before the digit, then first separator after that colon
+            let fieldStartX = startX;
+            let closestColonX = -1;
+            let closestColonEndX = -1;
+
+            // Step 1: Find closest colon BEFORE the digit
+            for (const nearItem of nearbyItems) {
+              const itemText = nearItem.str || "";
+              const itemX = nearItem.transform[4];
+              const itemWidth = nearItem.width || 0;
+              const itemEndX = itemX + itemWidth;
+
+              // Only look at items BEFORE the digit
+              if (itemEndX >= digitPositionX) continue;
+
+              // Check if this item contains a colon
+              if (itemText.includes(":")) {
+                const colonIndex = itemText.indexOf(":");
+                const charWidth = itemWidth / itemText.length;
+                const colonX = itemX + (colonIndex * charWidth);
+
+                // Track the closest colon (rightmost one before digit)
+                if (colonX < digitPositionX && colonX > closestColonX) {
+                  closestColonX = colonX;
+                  closestColonEndX = colonX + charWidth;
+                }
+              }
+            }
+
+            // Step 2: Find first separator after the closest colon
+            if (closestColonEndX !== -1) {
+              fieldStartX = closestColonEndX; // Default: start right after colon
+
+              for (const nearItem of nearbyItems) {
+                const itemText = nearItem.str || "";
+                const itemX = nearItem.transform[4];
+                const itemWidth = nearItem.width || 0;
+
+                // Look for items AFTER the colon but BEFORE the digit
+                if (itemX < closestColonEndX) continue;
+                if (itemX >= digitPositionX) break;
+
+                // Found first separator after colon
+                if (/[._…]/.test(itemText)) {
+                  fieldStartX = itemX;
+                  break;
+                }
+              }
+            }
+
+            // ✅ NEW: Find field END by scanning FORWARD from digit position
+            // Stop when: (1) next colon found (next field), or (2) non-separator text after separators
+            let fieldEndX = endX2;
+            let lastSeparatorEndX = -1;
+            let inSeparatorZone = false;
+
+            // Start scanning from digit position forward
+            for (const nearItem of nearbyItems) {
+              const itemText = nearItem.str || "";
+              const itemX = nearItem.transform[4];
+              const itemWidth = nearItem.width || 0;
+
+              // Skip items before the number
+              if (itemX < digitPositionX) continue;
+
+              const trimmedText = itemText.trim();
+
+              // Skip pure whitespace
+              if (trimmedText === "") continue;
+
+              // Check if this contains a colon - next field's label
+              if (trimmedText.includes(":")) {
+                // Found next field's label - end field at last separator
+                if (lastSeparatorEndX !== -1) {
+                  fieldEndX = lastSeparatorEndX;
+                } else {
+                  // No separators found after digit, use position before colon
+                  const colonIndex = trimmedText.indexOf(":");
+                  const charWidth = itemWidth / trimmedText.length;
+                  fieldEndX = itemX + (colonIndex * charWidth);
+                }
+                break;
+              }
+
+              // Check if this is a pure separator
+              if (/^[._…]+$/.test(trimmedText)) {
+                // This is a separator
+                lastSeparatorEndX = itemX + itemWidth;
+                inSeparatorZone = true;
+                continue;
+              }
+
+              // Non-separator found after separator zone
+              if (inSeparatorZone && !/[._…]/.test(trimmedText)) {
+                // Pure non-separator after separators - field ends at last separator
+                if (lastSeparatorEndX !== -1) {
+                  fieldEndX = lastSeparatorEndX;
+                }
+                break;
+              }
+            }
+
+            // If loop completed without finding end, use last separator
+            if (fieldEndX === endX2 && lastSeparatorEndX !== -1) {
+              fieldEndX = lastSeparatorEndX;
+            }
+
+            const fullWidth = fieldEndX - fieldStartX;
+
+            // 🔍 DEBUG: Log boundary detection for split items
+            console.log(`🎯 SPLIT (${numValue}) boundaries:`, {
+              fullText: combinedText.substring(0, 60),
+              startX: startX.toFixed(2),
+              endX2: endX2.toFixed(2),
+              fieldStartX: fieldStartX.toFixed(2),
+              fieldEndX: fieldEndX.toFixed(2),
+              fullWidth: fullWidth.toFixed(2),
+              digitPositionX: digitPositionX.toFixed(2),
+            });
 
             placeholders.push({
               id: `placeholder_${placeholders.length + 1}`,
@@ -293,9 +412,9 @@ export const extractTextFromPDF = async (file) => {
               extractedKey: numValue.toString(),
               type: "numbered",
               page: pageNum,
-              x: startX,
+              x: fieldStartX, // ✅ Start of field (after label/colon)
               y: y,
-              width: fullWidth,
+              width: fullWidth, // ✅ Width of field only (excluding label)
               backgroundX: digitPositionX, // ✅ EXACT position of digits only
               backgroundWidth: digitWidth, // ✅ EXACT width of digits only
               height: height,
@@ -427,9 +546,6 @@ export const extractTextFromPDF = async (file) => {
             continue;
           }
 
-          // Calculate full width
-          const fullWidth = endX - startX;
-
           // 🎯 CRITICAL: Extract ONLY digit position (ignore parentheses and dots)
           // Example: "...(2)..." - we only want position of "2"
           // Handle spaces in numbers: "(2 6)" -> find position of "2" or "26"
@@ -468,10 +584,130 @@ export const extractTextFromPDF = async (file) => {
                 charWidth: charWidth.toFixed(2),
                 exactNumberX: exactNumberX.toFixed(2),
                 exactNumberWidth: exactNumberWidth.toFixed(2),
-                fullWidth: fullWidth.toFixed(2),
               }
             );
           }
+
+          // ✅ NEW: Find field START by scanning BACKWARD from digit position
+          // Find the CLOSEST colon before the digit, then first separator after that colon
+          let fieldStartX = startX;
+          let closestColonX = -1;
+          let closestColonEndX = -1;
+
+          // Step 1: Find closest colon BEFORE the digit
+          for (const nearItem of nearbyItems) {
+            const itemText = nearItem.str || "";
+            const itemX = nearItem.transform[4];
+            const itemWidth = nearItem.width || 0;
+            const itemEndX = itemX + itemWidth;
+
+            // Only look at items BEFORE the digit
+            if (itemEndX >= exactNumberX) continue;
+
+            // Check if this item contains a colon
+            if (itemText.includes(":")) {
+              const colonIndex = itemText.indexOf(":");
+              const charWidth = itemWidth / itemText.length;
+              const colonX = itemX + (colonIndex * charWidth);
+
+              // Track the closest colon (rightmost one before digit)
+              if (colonX < exactNumberX && colonX > closestColonX) {
+                closestColonX = colonX;
+                closestColonEndX = colonX + charWidth;
+              }
+            }
+          }
+
+          // Step 2: Find first separator after the closest colon
+          if (closestColonEndX !== -1) {
+            fieldStartX = closestColonEndX; // Default: start right after colon
+
+            for (const nearItem of nearbyItems) {
+              const itemText = nearItem.str || "";
+              const itemX = nearItem.transform[4];
+              const itemWidth = nearItem.width || 0;
+
+              // Look for items AFTER the colon but BEFORE the digit
+              if (itemX < closestColonEndX) continue;
+              if (itemX >= exactNumberX) break;
+
+              // Found first separator after colon
+              if (/[._…]/.test(itemText)) {
+                fieldStartX = itemX;
+                break;
+              }
+            }
+          }
+
+          // ✅ NEW: Find field END by scanning FORWARD from digit position
+          // Stop when: (1) next colon found (next field), or (2) non-separator text after separators
+          let fieldEndX = endX;
+          let lastSeparatorEndX = -1;
+          let inSeparatorZone = false;
+
+          // Start scanning from digit position forward
+          for (const nearItem of nearbyItems) {
+            const itemText = nearItem.str || "";
+            const itemX = nearItem.transform[4];
+            const itemWidth = nearItem.width || 0;
+
+            // Skip items before the number
+            if (itemX < exactNumberX) continue;
+
+            const trimmedText = itemText.trim();
+
+            // Skip pure whitespace
+            if (trimmedText === "") continue;
+
+            // Check if this contains a colon - next field's label
+            if (trimmedText.includes(":")) {
+              // Found next field's label - end field at last separator
+              if (lastSeparatorEndX !== -1) {
+                fieldEndX = lastSeparatorEndX;
+              } else {
+                // No separators found after digit, use position before colon
+                const colonIndex = trimmedText.indexOf(":");
+                const charWidth = itemWidth / trimmedText.length;
+                fieldEndX = itemX + (colonIndex * charWidth);
+              }
+              break;
+            }
+
+            // Check if this is a pure separator
+            if (/^[._…]+$/.test(trimmedText)) {
+              // This is a separator
+              lastSeparatorEndX = itemX + itemWidth;
+              inSeparatorZone = true;
+              continue;
+            }
+
+            // Non-separator found after separator zone
+            if (inSeparatorZone && !/[._…]/.test(trimmedText)) {
+              // Pure non-separator after separators - field ends at last separator
+              if (lastSeparatorEndX !== -1) {
+                fieldEndX = lastSeparatorEndX;
+              }
+              break;
+            }
+          }
+
+          // If loop completed without finding end, use last separator
+          if (fieldEndX === endX && lastSeparatorEndX !== -1) {
+            fieldEndX = lastSeparatorEndX;
+          }
+
+          const fullWidth = fieldEndX - fieldStartX;
+
+          // 🔍 DEBUG: Log boundary detection for single items
+          console.log(`🎯 SINGLE (${cleanedNum}) boundaries:`, {
+            fullText: combinedText.substring(0, 60),
+            startX: startX.toFixed(2),
+            endX: endX.toFixed(2),
+            fieldStartX: fieldStartX.toFixed(2),
+            fieldEndX: fieldEndX.toFixed(2),
+            fullWidth: fullWidth.toFixed(2),
+            exactNumberX: exactNumberX.toFixed(2),
+          });
 
           placeholders.push({
             id: `placeholder_${placeholders.length + 1}`,
@@ -480,9 +716,9 @@ export const extractTextFromPDF = async (file) => {
             extractedKey: cleanedNum, // Use cleaned number without spaces
             type: "numbered",
             page: pageNum,
-            x: startX,
+            x: fieldStartX, // ✅ Start of field (after label/colon)
             y: y,
-            width: fullWidth,
+            width: fullWidth, // ✅ Width of field only (excluding label)
             backgroundX: exactNumberX, // ✅ Only digit X
             backgroundWidth: exactNumberWidth, // ✅ Only digit width
             height: height,

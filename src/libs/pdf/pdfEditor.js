@@ -387,32 +387,61 @@ export const createFillablePDF = async (
               formField.enableReadOnly();
             }
 
-            // ✅ Checkbox: Fixed size square (12px), covering the digit (N)
-            const checkboxSize = 15; // Fixed 12px size for checkbox
+            // ✅ NEW LOGIC: Checkbox size based on field width
+            // Default checkbox size is 15px
+            // If field width < 15px, use old logic (centered on field)
+            // If field width >= 15px, make checkbox square with side = field width
+            const defaultCheckboxSize = 15;
+            let actualCheckboxSize;
+            let checkboxX, checkboxY;
 
-            // Calculate checkbox position to cover the digit
-            let checkboxX;
-            if (backgroundX !== undefined && backgroundWidth !== undefined) {
-              // Center checkbox over the digit position with right offset
-              // backgroundX is the left edge of the digit, backgroundWidth is digit width
-              const digitCenterX = backgroundX + backgroundWidth / 2;
-              checkboxX = digitCenterX - checkboxSize / 2 + 10; // +5px offset to align center
-              console.log(
-                `✅ Checkbox using backgroundX: ${backgroundX}, backgroundWidth: ${backgroundWidth}, digitCenterX: ${digitCenterX}, checkboxX: ${checkboxX}`
-              );
+            // Determine field width (use backgroundWidth if available, otherwise use width)
+            const effectiveFieldWidth = (backgroundX !== undefined && backgroundWidth !== undefined)
+              ? backgroundWidth
+              : width;
+
+            if (effectiveFieldWidth < defaultCheckboxSize) {
+              // Case 1: Field is smaller than default checkbox -> use old centered logic
+              actualCheckboxSize = defaultCheckboxSize;
+
+              if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                // Center checkbox over the digit position
+                const digitCenterX = backgroundX + backgroundWidth / 2;
+                checkboxX = digitCenterX - actualCheckboxSize / 2;
+                console.log(
+                  `✅ Checkbox (small field) using backgroundX: ${backgroundX}, backgroundWidth: ${backgroundWidth}, checkboxX: ${checkboxX}`
+                );
+              } else {
+                // Fallback: use placeholder center
+                const centerX = x + width / 2;
+                checkboxX = centerX - actualCheckboxSize / 2;
+                console.log(
+                  `⚠️ Checkbox (small field) fallback - using x: ${x}, width: ${width}, checkboxX: ${checkboxX}`
+                );
+              }
             } else {
-              // Fallback: use placeholder center
-              const centerX = x + width / 2;
-              checkboxX = centerX - checkboxSize / 2;
-              console.log(
-                `⚠️ Checkbox fallback - using x: ${x}, width: ${width}, centerX: ${centerX}, checkboxX: ${checkboxX}`
-              );
+              // Case 2: Field is larger than or equal to default checkbox -> make square checkbox = field width
+              actualCheckboxSize = effectiveFieldWidth;
+
+              if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                // Position checkbox at the start of background
+                checkboxX = backgroundX;
+                console.log(
+                  `✅ Checkbox (large field) using backgroundX: ${backgroundX}, size: ${actualCheckboxSize}`
+                );
+              } else {
+                // Fallback: use placeholder start
+                checkboxX = x;
+                console.log(
+                  `⚠️ Checkbox (large field) fallback - using x: ${x}, size: ${actualCheckboxSize}`
+                );
+              }
             }
 
-            const checkboxY = y - checkboxSize / 2 + 2; // +5px to move up (better vertical alignment)
+            checkboxY = y - actualCheckboxSize / 2 + 2; // Adjust for vertical alignment
 
             console.log(
-              `📐 Checkbox "${fieldName}": size=${checkboxSize}, checkboxX=${checkboxX.toFixed(
+              `📐 Checkbox "${fieldName}": size=${actualCheckboxSize}, checkboxX=${checkboxX.toFixed(
                 2
               )}, checkboxY=${checkboxY.toFixed(2)}`
             );
@@ -420,8 +449,8 @@ export const createFillablePDF = async (
             formField.addToPage(page, {
               x: checkboxX,
               y: checkboxY,
-              width: checkboxSize,
-              height: checkboxSize,
+              width: actualCheckboxSize,
+              height: actualCheckboxSize,
               backgroundColor: rgb(1, 1, 1),
               borderColor: rgb(0.7, 0.7, 0.7),
               borderWidth: showBorders ? 1 : 0,
@@ -476,31 +505,16 @@ export const createFillablePDF = async (
               formField.enableReadOnly();
             }
 
-            // ✅ CALCULATE field dimensions based on TAG TEXT WIDTH
-            const tagText = fillFields ? defaultValue : fieldName;
-            const tagTextWidth = font.widthOfTextAtSize(tagText, fontSize);
-
-            // Calculate center X for field positioning
-            let centerX;
-            if (backgroundX !== undefined && backgroundWidth !== undefined) {
-              const digitCenter = backgroundX + backgroundWidth / 2;
-              const offsetAdjustment = 8;
-              centerX = digitCenter + offsetAdjustment;
-            } else {
-              centerX = x + width / 2;
-            }
-
-            // Calculate text X position (center alignment)
-            const textX = centerX - tagTextWidth / 2;
-
-            // Field dimensions based on tag text width
-            const fieldX = textX - 2; // Add 2px padding on left
-            const fieldWidth = tagTextWidth + 4; // Add 2px padding each side
+            // ✅ NEW LOGIC: Use full placeholder width (from start to end of field space)
+            // The placeholder x and width already represent the full field area
+            // (from first dot/underscore to last dot/underscore)
+            // This gives us 99% coverage of the field space with no padding
+            const fieldX = x;
+            const fieldWidth = width;
             const fieldY = y - reducedFontSize * 0.3; // Position field at text baseline
             const fieldHeightCalculated = reducedFontSize * 1.2; // Field height 1.2x reduced font size
 
             console.log(`📐 Field dimensions for "${fieldName}":`, {
-              tagTextWidth: tagTextWidth.toFixed(2),
               fieldX: fieldX.toFixed(2),
               fieldWidth: fieldWidth.toFixed(2),
               fieldY: fieldY.toFixed(2),

@@ -246,13 +246,22 @@ export const createAcroFormFields = async (
                 formField.enableRequired();
               }
 
+              // ✅ NEW LOGIC: Use full placeholder width (from start to end of field space)
+              // The placeholder x and width already represent the full field area
+              // (from first dot/underscore to last dot/underscore)
+              // This gives us 99% coverage of the field space with no padding
+              const fieldX = x;
+              const fieldWidth = width;
+              const fieldY = y - fontSize * 0.35; // Adjust for baseline
+              const fieldHeightCalculated = fieldHeight || fontSize * 1.5;
+
               // Add widget (visual appearance) to the page
               // ✅ Use minimal options to avoid triggering WinAnsi appearance generation
               formField.addToPage(page, {
-                x: x,
-                y: y - fontSize * 0.35, // Adjust for baseline
-                width: width,
-                height: fieldHeight || fontSize * 1.5,
+                x: fieldX,
+                y: fieldY,
+                width: fieldWidth,
+                height: fieldHeightCalculated,
                 // Skip appearance options to avoid WinAnsi encoding errors
               });
 
@@ -290,29 +299,52 @@ export const createAcroFormFields = async (
                 formField.enableReadOnly();
               }
 
-              // Add widget to the page
-              // ✅ Checkbox: Fixed size square (12px), covering the digit (N)
-              const checkboxSize = 15; // Fixed 12px size for checkbox
+              // ✅ NEW LOGIC: Checkbox size based on field width
+              // Default checkbox size is 15px
+              // If field width < 15px, use old logic (centered on field)
+              // If field width >= 15px, make checkbox square with side = field width
+              const defaultCheckboxSize = 15;
+              let actualCheckboxSize;
+              let checkboxX, checkboxY;
 
-              // Calculate checkbox position to cover the digit
-              let checkboxX;
-              if (backgroundX !== undefined && backgroundWidth !== undefined) {
-                // Center checkbox over the digit position with right offset
-                const digitCenterX = backgroundX + backgroundWidth / 2;
-                checkboxX = digitCenterX - checkboxSize / 2 + 15; // +5px offset to align center
+              // Determine field width (use backgroundWidth if available, otherwise use width)
+              const effectiveFieldWidth = (backgroundX !== undefined && backgroundWidth !== undefined)
+                ? backgroundWidth
+                : width;
+
+              if (effectiveFieldWidth < defaultCheckboxSize) {
+                // Case 1: Field is smaller than default checkbox -> use old centered logic
+                actualCheckboxSize = defaultCheckboxSize;
+
+                if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                  // Center checkbox over the digit position
+                  const digitCenterX = backgroundX + backgroundWidth / 2;
+                  checkboxX = digitCenterX - actualCheckboxSize / 2;
+                } else {
+                  // Fallback: use placeholder center
+                  const centerX = x + width / 2;
+                  checkboxX = centerX - actualCheckboxSize / 2;
+                }
               } else {
-                // Fallback: use placeholder center
-                const centerX = x + width / 2;
-                checkboxX = centerX - checkboxSize / 2;
+                // Case 2: Field is larger than or equal to default checkbox -> make square checkbox = field width
+                actualCheckboxSize = effectiveFieldWidth;
+
+                if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                  // Position checkbox at the start of background
+                  checkboxX = backgroundX;
+                } else {
+                  // Fallback: use placeholder start
+                  checkboxX = x;
+                }
               }
 
-              const checkboxY = y - checkboxSize / 2 + 2; // +5px to move up (better vertical alignment)
+              checkboxY = y - actualCheckboxSize / 2 + 2; // Adjust for vertical alignment
 
               formField.addToPage(page, {
                 x: checkboxX,
                 y: checkboxY,
-                width: checkboxSize,
-                height: checkboxSize,
+                width: actualCheckboxSize,
+                height: actualCheckboxSize,
                 backgroundColor: rgb(...backgroundColor),
                 borderColor: rgb(...borderColor),
                 borderWidth: borderWidth,
@@ -380,12 +412,18 @@ export const createAcroFormFields = async (
 
               const defaultText = fillFields ? defaultValue : "";
 
+              // ✅ NEW LOGIC: Use full placeholder width for default case too
+              const defaultFieldX = x;
+              const defaultFieldWidth = width;
+              const defaultFieldY = y;
+              const defaultFieldHeightCalculated = fieldHeight || fontSize * 1.5;
+
               // ✅ Add without appearance options for default case too
               formField.addToPage(page, {
-                x: x,
-                y: y,
-                width: width,
-                height: fieldHeight || fontSize * 1.5,
+                x: defaultFieldX,
+                y: defaultFieldY,
+                width: defaultFieldWidth,
+                height: defaultFieldHeightCalculated,
               });
 
               // ✅ Set Vietnamese text AFTER addToPage

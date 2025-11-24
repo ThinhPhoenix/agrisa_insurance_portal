@@ -1,13 +1,22 @@
-import React from 'react';
-import { Typography, Collapse, Card, Divider, Table, Tag, Space } from 'antd';
 import {
-    QuestionCircleOutlined,
-    InfoCircleOutlined,
+    BarChartOutlined,
+    BulbOutlined,
     CalculatorOutlined,
+    CalendarOutlined,
     DollarOutlined,
+    EditOutlined,
+    EnvironmentOutlined,
+    FileTextOutlined,
+    InfoCircleOutlined,
+    LinkOutlined,
+    QuestionCircleOutlined,
+    SearchOutlined,
+    SettingOutlined,
+    TagOutlined,
     ThunderboltOutlined,
-    FileTextOutlined
+    WarningOutlined
 } from '@ant-design/icons';
+import { Card, Collapse, Divider, Space, Table, Tag, Typography } from 'antd';
 
 const { Title, Text, Paragraph } = Typography;
 const { Panel } = Collapse;
@@ -361,7 +370,7 @@ const FAQTab = () => {
                             }
                             key="3"
                         >
-                            <Title level={5}>📋 Thông tin sản phẩm</Title>
+                            <Title level={5}><InfoCircleOutlined /> Thông tin sản phẩm</Title>
                             <Table
                                 dataSource={basicFieldsData}
                                 columns={basicFieldsColumns}
@@ -372,7 +381,7 @@ const FAQTab = () => {
 
                             <Divider />
 
-                            <Title level={5}>💰 Cấu hình Phí bảo hiểm (Premium)</Title>
+                            <Title level={5}><DollarOutlined /> Cấu hình Phí bảo hiểm (Premium)</Title>
                             <Table
                                 dataSource={premiumFieldsData}
                                 columns={basicFieldsColumns}
@@ -383,7 +392,7 @@ const FAQTab = () => {
 
                             <Divider />
 
-                            <Title level={5}>💵 Cấu hình Bồi thường (Payout)</Title>
+                            <Title level={5}><DollarOutlined /> Cấu hình Bồi thường (Payout)</Title>
                             <Table
                                 dataSource={payoutFieldsData}
                                 columns={basicFieldsColumns}
@@ -438,7 +447,7 @@ const FAQTab = () => {
 
                             <Divider />
 
-                            <Title level={5}>📊 Ví dụ cụ thể</Title>
+                            <Title level={5}><BarChartOutlined /> Ví dụ cụ thể</Title>
                             <Paragraph>
                                 <Text strong>Ví dụ 1:</Text> Phí cố định
                             </Paragraph>
@@ -475,7 +484,7 @@ const FAQTab = () => {
                                 Trigger bao gồm:
                             </Paragraph>
 
-                            <Title level={5}>⚙️ Các trường trong Trigger</Title>
+                            <Title level={5}><SettingOutlined /> Các trường trong Trigger</Title>
                             <Table
                                 dataSource={triggerFieldsData}
                                 columns={triggerConditionColumns}
@@ -491,7 +500,7 @@ const FAQTab = () => {
                                 nhiều conditions, và chúng được kết hợp bằng toán tử logic (AND/OR).
                             </Paragraph>
 
-                            <Title level={5}>🔍 Các trường trong Condition</Title>
+                            <Title level={5}><SearchOutlined /> Các trường trong Condition</Title>
                             <Table
                                 dataSource={conditionFieldsData}
                                 columns={triggerConditionColumns}
@@ -502,7 +511,7 @@ const FAQTab = () => {
 
                             <Divider />
 
-                            <Title level={5}>📊 Ví dụ cụ thể</Title>
+                            <Title level={5}><BarChartOutlined /> Ví dụ cụ thể</Title>
                             <Paragraph>
                                 <Text strong>Ví dụ:</Text> Bảo hiểm lúa chống hạn hán và nhiệt độ cao
                             </Paragraph>
@@ -552,7 +561,7 @@ const FAQTab = () => {
                                 Chi phí thực tế sẽ được nhân với các hệ số:
                             </Paragraph>
 
-                            <Title level={5}>🧮 Công thức tính chi phí</Title>
+                            <Title level={5}><CalculatorOutlined /> Công thức tính chi phí</Title>
                             <Paragraph>
                                 <Text code>
                                     Chi phí = Base Cost × Category Multiplier × Tier Multiplier
@@ -575,7 +584,7 @@ const FAQTab = () => {
 
                             <Divider />
 
-                            <Title level={5}>📊 Ví dụ cụ thể</Title>
+                            <Title level={5}><BarChartOutlined /> Ví dụ cụ thể</Title>
                             <Paragraph>
                                 <Text strong>Ví dụ:</Text> Chọn nguồn dữ liệu NASA Rainfall
                             </Paragraph>
@@ -605,7 +614,7 @@ const FAQTab = () => {
                             key="7"
                         >
                             <Paragraph>
-                                <Text strong type="danger">⚠️ Các quy tắc bắt buộc:</Text>
+                                <Text strong type="danger"><WarningOutlined /> Các quy tắc bắt buộc:</Text>
                             </Paragraph>
                             <ul>
                                 <li>
@@ -633,7 +642,7 @@ const FAQTab = () => {
                             <Divider />
 
                             <Paragraph>
-                                <Text strong>📅 Thời gian:</Text>
+                                <Text strong><CalendarOutlined /> Thời gian:</Text>
                             </Paragraph>
                             <ul>
                                 <li>Ngày kết thúc đăng ký phải trước hoặc bằng ngày bắt đầu hiệu lực bảo hiểm</li>
@@ -644,7 +653,7 @@ const FAQTab = () => {
                             <Divider />
 
                             <Paragraph>
-                                <Text strong>💡 Khuyến nghị:</Text>
+                                <Text strong><BulbOutlined /> Khuyến nghị:</Text>
                             </Paragraph>
                             <ul>
                                 <li>Nên nhập đầy đủ mô tả sản phẩm để người dùng dễ hiểu</li>
@@ -654,7 +663,190 @@ const FAQTab = () => {
                             </ul>
                         </Panel>
 
-                        {/* Thuật ngữ tiếng Anh */}
+                        {/* Tab PDF & Tags - Hướng dẫn chi tiết */}
+                        <Panel
+                            header={
+                                <Space>
+                                    <FileTextOutlined style={{ color: '#fa8c16' }} />
+                                    <Text strong>Hướng dẫn xử lý Tài liệu và Trường thông tin</Text>
+                                </Space>
+                            }
+                            key="8"
+                        >
+                            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                                <div>
+                                    <Title level={5}><FileTextOutlined /> 1. Tải lên file PDF mẫu hợp đồng</Title>
+                                    <Paragraph>
+                                        <Text strong>Mục đích:</Text> Tải lên (Upload) file PDF mẫu hợp đồng bảo hiểm để hệ thống tự động phát hiện các vị trí cần điền thông tin.
+                                    </Paragraph>
+                                    <ul>
+                                        <li><strong>Định dạng:</strong> Chỉ chấp nhận file PDF</li>
+                                        <li><strong>Kích thước tối đa:</strong> 10 MB</li>
+                                        <li><strong>Phát hiện tự động:</strong> Hệ thống sẽ tìm các vị trí cần điền (Placeholder) dạng (1), (2), (3)...</li>
+                                        <li><strong>Thêm vị trí thủ công:</strong> Có thể kéo thả trên PDF để chọn vùng và tạo vị trí mới</li>
+                                    </ul>
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><EnvironmentOutlined /> 2. Vị trí cần điền (Placeholder)</Title>
+                                    <Paragraph>
+                                        <Text strong>Khái niệm:</Text> Vị trí cần điền (Placeholder) là các vùng trên PDF sẽ được điền thông tin khi tạo hợp đồng.
+                                    </Paragraph>
+                                    <Table
+                                        dataSource={[
+                                            {
+                                                key: '1',
+                                                field: 'Vị trí cần điền',
+                                                englishTerm: 'Placeholder',
+                                                description: 'Vùng trên PDF sẽ được điền thông tin (VD: họ tên, CMND)',
+                                                example: '(1), (2), (3)...'
+                                            },
+                                            {
+                                                key: '2',
+                                                field: 'Tự động phát hiện',
+                                                englishTerm: 'Auto-detection',
+                                                description: 'Hệ thống tự động tìm vị trí có số trong ngoặc đơn',
+                                                example: 'Tìm (1), (2) trong PDF'
+                                            },
+                                            {
+                                                key: '3',
+                                                field: 'Đặt thủ công',
+                                                englishTerm: 'Manual Placement',
+                                                description: 'Kéo thả trên PDF để chọn vùng và nhập số vị trí',
+                                                example: 'Kéo chọn vùng → Nhập (4)'
+                                            },
+                                        ]}
+                                        columns={[
+                                            { title: 'Tên trường', dataIndex: 'field', key: 'field', width: '25%', render: (text) => <Text strong>{text}</Text> },
+                                            { title: 'Thuật ngữ Anh', dataIndex: 'englishTerm', key: 'englishTerm', width: '20%', render: (text) => <Tag color="orange">{text}</Tag> },
+                                            { title: 'Giải thích', dataIndex: 'description', key: 'description', width: '35%' },
+                                            { title: 'Ví dụ', dataIndex: 'example', key: 'example', width: '20%', render: (text) => <Text code>{text}</Text> },
+                                        ]}
+                                        pagination={false}
+                                        size="small"
+                                        bordered
+                                    />
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><TagOutlined /> 3. Trường thông tin (Tags)</Title>
+                                    <Paragraph>
+                                        <Text strong>Khái niệm:</Text> Trường thông tin (Tag) là các trường dữ liệu cần thiết cho hợp đồng (họ tên, CMND, địa chỉ...).
+                                    </Paragraph>
+                                    <Table
+                                        dataSource={[
+                                            {
+                                                key: '1',
+                                                field: 'Tên trường',
+                                                englishTerm: 'key',
+                                                description: 'Tên định danh của trường, chỉ chứa chữ thường và dấu gạch dưới',
+                                                example: 'họ và tên, số điện thoại',
+                                                required: 'Có'
+                                            },
+                                            {
+                                                key: '2',
+                                                field: 'Loại dữ liệu',
+                                                englishTerm: 'dataType',
+                                                description: 'Kiểu dữ liệu của trường để hệ thống validate đúng',
+                                                example: 'string, integer, date, textarea',
+                                                required: 'Có'
+                                            },
+                                            {
+                                                key: '3',
+                                                field: 'Giá trị mặc định',
+                                                englishTerm: 'value',
+                                                description: 'Giá trị mẫu hoặc mặc định (có thể để trống)',
+                                                example: 'Nguyễn Văn A, 01/01/1990',
+                                                required: 'Không'
+                                            },
+                                        ]}
+                                        columns={basicFieldsColumns}
+                                        pagination={false}
+                                        size="small"
+                                        bordered
+                                    />
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><LinkOutlined /> 4. Liên kết vị trí với trường thông tin (Mapping)</Title>
+                                    <Paragraph>
+                                        <Text strong>Quy trình:</Text> Liên kết (Mapping) mỗi vị trí cần điền với một trường thông tin để hệ thống biết điền dữ liệu gì vào đâu.
+                                    </Paragraph>
+                                    <ol style={{ lineHeight: '2' }}>
+                                        <li><strong>Bước 1 - Nhập thông tin:</strong> Điền <Text code>key</Text> (tên trường) và chọn <Text code>dataType</Text> (loại dữ liệu) cho mỗi vị trí</li>
+                                        <li><strong>Bước 2 - Chọn vị trí:</strong> Tick chọn các vị trí muốn áp dụng (có thể chọn nhiều cùng lúc)</li>
+                                        <li><strong>Bước 3 - Áp dụng:</strong> Bấm nút <Tag color="blue">Áp dụng</Tag> để tạo PDF có thể điền (Fillable PDF)</li>
+                                        <li><strong>Bước 4 - Xem trước:</strong> Bấm <Tag color="green">Tải xuống PDF</Tag> để xem kết quả cuối cùng</li>
+                                    </ol>
+                                    <Paragraph type="warning">
+                                        <InfoCircleOutlined /> <strong>Lưu ý:</strong> Checkbox chỉ mở khi đã điền đủ key + dataType cho vị trí đó.
+                                    </Paragraph>
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><EditOutlined /> 5. PDF có thể điền (Fillable PDF)</Title>
+                                    <Paragraph>
+                                        <Text strong>Khái niệm:</Text> PDF có thể điền (Fillable PDF) là file PDF có các ô nhập liệu (Form Fields) mà hệ thống backend có thể tự động điền thông tin vào.
+                                    </Paragraph>
+                                    <ul>
+                                        <li><strong>Ô nhập liệu (AcroForm Fields):</strong> Các ô input được tạo trên PDF tại vị trí đã chọn</li>
+                                        <li><strong>Có thể chỉnh sửa (Editable):</strong> Backend có thể điền dữ liệu vào các ô này</li>
+                                        <li><strong>Viền hiển thị (Borders):</strong> Hiển thị viền để dễ nhận biết vị trí ô nhập</li>
+                                        <li><strong>Xóa text gốc:</strong> Text placeholder ban đầu (như (1), (2)) sẽ bị xóa đi</li>
+                                    </ul>
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><BarChartOutlined /> 6. Các loại dữ liệu (Data Types)</Title>
+                                    <Table
+                                        dataSource={[
+                                            { key: '1', field: 'Chuỗi/Text', englishTerm: 'string', example: 'Nguyễn Văn A, TP.HCM', validation: 'Không giới hạn' },
+                                            { key: '2', field: 'Văn bản dài', englishTerm: 'textarea', example: 'Địa chỉ chi tiết...', validation: 'Nhiều dòng' },
+                                            { key: '3', field: 'Số nguyên', englishTerm: 'integer', example: '25, 100, 1990', validation: 'Chỉ số nguyên' },
+                                            { key: '4', field: 'Số thực', englishTerm: 'float', example: '3.14, 99.9', validation: 'Số có dấu phẩy' },
+                                            { key: '5', field: 'Ngày tháng', englishTerm: 'date', example: '01/01/2025', validation: 'Định dạng ngày' },
+                                            { key: '6', field: 'Ngày giờ', englishTerm: 'datetime', example: '01/01/2025 14:30', validation: 'Ngày + giờ' },
+                                            { key: '7', field: 'Giờ phút', englishTerm: 'time', example: '14:30', validation: 'Chỉ giờ' },
+                                        ]}
+                                        columns={[
+                                            { title: 'Loại dữ liệu', dataIndex: 'field', key: 'field', width: '20%', render: (text) => <Text strong>{text}</Text> },
+                                            { title: 'Thuật ngữ Anh', dataIndex: 'englishTerm', key: 'englishTerm', width: '15%', render: (text) => <Tag color="purple">{text}</Tag> },
+                                            { title: 'Ví dụ', dataIndex: 'example', key: 'example', width: '30%' },
+                                            { title: 'Quy tắc', dataIndex: 'validation', key: 'validation', width: '35%', render: (text) => <Text type="secondary">{text}</Text> },
+                                        ]}
+                                        pagination={false}
+                                        size="small"
+                                        bordered
+                                    />
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><BulbOutlined /> 7. Lời khuyên khi sử dụng</Title>
+                                    <ul style={{ lineHeight: '2' }}>
+                                        <li>✅ Đặt tên trường ngắn gọn, dễ hiểu: <Text code>họ và tên</Text> thay vì <Text code>hvt</Text></li>
+                                        <li>✅ Chọn loại dữ liệu (Data Type) chính xác để hệ thống kiểm tra đúng</li>
+                                        <li>✅ Xem trước PDF trước khi hoàn tất</li>
+                                        <li>✅ Xóa các vị trí không cần thiết để giảm dung lượng PDF</li>
+                                        <li>❌ Tránh đặt tên trường có dấu tiếng Việt hoặc ký tự đặc biệt</li>
+                                        <li>❌ Không liên kết nhiều vị trí vào cùng một trường thông tin</li>
+                                        <li>❌ Không để trùng số vị trí (1), (2)...</li>
+                                    </ul>
+                                </div>
+                            </Space>
+                        </Panel>
+
                         <Panel
                             header={
                                 <Space>
@@ -662,7 +854,7 @@ const FAQTab = () => {
                                     <Text strong>Bảng thuật ngữ tiếng Anh - tiếng Việt</Text>
                                 </Space>
                             }
-                            key="8"
+                            key="9"
                         >
                             <Table
                                 dataSource={[

@@ -209,6 +209,147 @@ export const POLICY_MESSAGES = {
     },
   },
 
+  // PDF & DOCUMENT MESSAGES
+  PDF: {
+    SUCCESS: {
+      UPLOADED: "Tải tài liệu PDF thành công!",
+      ANALYZED: "Phân tích tài liệu PDF thành công!",
+      PLACEHOLDER_DETECTED: "Phát hiện {count} vị trí cần điền trong PDF!",
+      FILLABLE_CREATED: "Tạo PDF có thể điền thành công!",
+      APPLIED_TO_PDF: "Áp dụng thay đổi vào PDF thành công!",
+      DOWNLOADED: "Tải xuống PDF thành công!",
+      REMOVED: "Xóa tài liệu thành công!",
+      REBUILT: "Rebuild PDF thành công!",
+    },
+
+    ERROR: {
+      UPLOAD_FAILED: "Tải lên PDF thất bại. Vui lòng thử lại!",
+      FILE_TOO_LARGE:
+        "File PDF quá lớn! Vui lòng chọn file nhỏ hơn {maxSize}MB.",
+      INVALID_FILE_TYPE: "Chỉ chấp nhận file PDF!",
+      FILE_CORRUPTED: "File PDF bị lỗi hoặc không đọc được!",
+      ANALYSIS_FAILED: "Phân tích PDF thất bại. Vui lòng kiểm tra file!",
+      NO_PLACEHOLDER_FOUND: "Không tìm thấy vị trí cần điền trong PDF!",
+      FILLABLE_CREATION_FAILED: "Không thể tạo PDF có thể điền!",
+      APPLY_FAILED: "Áp dụng thay đổi vào PDF thất bại!",
+      FONT_LOAD_FAILED: "Không thể tải font tiếng Việt cho PDF!",
+      REBUILD_FAILED: "Tải lai PDF thất bại!",
+      FILE_NOT_FOUND: "Không tìm thấy file PDF!",
+      PREVIEW_UNAVAILABLE: "Chức năng xem trước chưa sẵn sàng!",
+    },
+
+    VALIDATION: {
+      FILE_REQUIRED: "Vui lòng chọn file PDF!",
+      POSITION_REQUIRED: "Vui lòng chọn vị trí trên PDF!",
+      POSITION_DUPLICATE: "Vị trí này đã tồn tại!",
+    },
+
+    INFO: {
+      UPLOADING: "Đang tải lên PDF...",
+      ANALYZING: "Đang phân tích PDF...",
+      CREATING_FILLABLE: "Đang tạo PDF có thể điền...",
+      APPLYING: "Đang áp dụng thay đổi...",
+      REBUILDING: "Đang rebuild PDF...",
+      PROCESSING: "Đang xử lý PDF...",
+    },
+
+    WARNING: {
+      SIZE_WARNING:
+        "PDF sau chỉnh sửa có kích thước lớn ({size} MB). Có thể gây lỗi khi gửi!",
+      COMPRESS_RECOMMENDED: "Nên nén PDF gốc trước khi upload!",
+      NO_FILE: "Chưa có file PDF nào được tải lên!",
+      MODIFIED_PDF_LARGE: "PDF đã chỉnh sửa có kích thước lớn hơn bình thường!",
+    },
+  },
+
+  // TAGS & PLACEHOLDERS MESSAGES
+  TAGS: {
+    SUCCESS: {
+      ADDED: "Thêm trường thông tin thành công!",
+      UPDATED: "Cập nhật trường thông tin thành công!",
+      REMOVED: "Xóa trường thông tin thành công!",
+      MAPPED: "Map trường thông tin thành công!",
+      BATCH_CREATED: "Tạo {count} trường thông tin thành công!",
+      APPLIED: "Áp dụng {count} trường thành công!",
+    },
+
+    ERROR: {
+      KEY_REQUIRED: "Vui lòng nhập tên trường (key)!",
+      KEY_DUPLICATE: "Tên trường này đã tồn tại!",
+      KEY_INVALID_FORMAT:
+        "Tên trường chỉ chứa chữ, số và dấu gạch dưới, bắt đầu bằng chữ!",
+      DATA_TYPE_REQUIRED: "Vui lòng chọn loại dữ liệu!",
+      VALUE_INVALID: "Giá trị không hợp lệ cho loại dữ liệu này!",
+      SELECT_OPTIONS_REQUIRED: "Phải có ít nhất 2 tùy chọn cho loại select!",
+      TAG_NOT_FOUND: "Không tìm thấy trường thông tin!",
+      CREATION_FAILED: "Tạo trường thông tin thất bại!",
+    },
+
+    VALIDATION: {
+      KEY_MIN_LENGTH: "Tên trường phải có ít nhất 2 ký tự!",
+      KEY_MAX_LENGTH: "Tên trường không được vượt quá 50 ký tự!",
+      KEY_FORMAT: "Tên trường chỉ chứa chữ thường, số và dấu gạch dưới!",
+      VALUE_REQUIRED: "Vui lòng nhập giá trị!",
+      INTEGER_REQUIRED: "Giá trị phải là số nguyên!",
+      DECIMAL_REQUIRED: "Giá trị phải là số thực!",
+      DATE_REQUIRED: "Vui lòng chọn ngày!",
+    },
+
+    INFO: {
+      ADDING: "Đang thêm trường thông tin...",
+      UPDATING: "Đang cập nhật...",
+      MAPPING: "Đang map với vị trí PDF...",
+      TOTAL_TAGS: "Tổng số trường: {count}",
+    },
+
+    WARNING: {
+      NO_TAGS: "Chưa có trường thông tin nào được tạo!",
+      NO_MAPPING: "Chưa có mapping nào để áp dụng!",
+      UNMAPPED_PLACEHOLDERS: "Còn {count} vị trí chưa được map!",
+    },
+  },
+
+  // PLACEHOLDER MESSAGES
+  PLACEHOLDER: {
+    SUCCESS: {
+      CREATED: "Tạo vị trí placeholder thành công!",
+      DELETED: "Xóa vị trí placeholder thành công!",
+      MAPPED: "Map placeholder với tag thành công!",
+      APPLIED_TO_PDF: "Áp dụng vào PDF thành công!",
+    },
+
+    ERROR: {
+      POSITION_REQUIRED: "Vui lòng nhập số vị trí!",
+      POSITION_INVALID: "Số vị trí không hợp lệ!",
+      POSITION_DUPLICATE: "Vị trí ({position}) đã tồn tại!",
+      NO_SELECTION: "Vui lòng chọn vùng trên PDF!",
+      MAPPING_FAILED: "Map placeholder thất bại!",
+      DELETE_FAILED: "Xóa placeholder thất bại!",
+      NO_PLACEHOLDER_SELECTED: "Vui lòng chọn ít nhất một vị trí!",
+    },
+
+    VALIDATION: {
+      POSITION_MIN: "Số vị trí phải lớn hơn 0!",
+      POSITION_FORMAT: "Vui lòng nhập số nguyên dương!",
+      AREA_REQUIRED: "Vui lòng kéo thả để chọn vùng trên PDF!",
+    },
+
+    INFO: {
+      DRAG_TO_SELECT: "Kéo thả trên PDF để chọn vùng placeholder...",
+      ENTER_POSITION: "Nhập số vị trí cho placeholder...",
+      CREATING: "Đang tạo placeholder...",
+      DELETING: "Đang xóa placeholder...",
+      TOTAL_MAPPED: "{mapped}/{total} vị trí đã được map",
+      TOTAL_APPLIED: "{applied}/{total} vị trí đã được áp dụng",
+    },
+
+    WARNING: {
+      WILL_REBUILD_PDF: "Xóa vị trí này sẽ rebuild PDF. Bạn có chắc không?",
+      ALREADY_APPLIED: "Vị trí này đã được áp dụng vào PDF!",
+      NO_TAG_MAPPED: "Vị trí này chưa được map với tag nào!",
+    },
+  },
+
   // GENERAL MESSAGES
   GENERAL: {
     SUCCESS: {
@@ -344,6 +485,87 @@ export const getConditionInfo = (key, params = {}) =>
   getConditionMessage("INFO", key, params);
 export const getConditionWarning = (key, params = {}) =>
   getConditionMessage("WARNING", key, params);
+
+// PDF helpers
+export const getPdfMessage = (type, key, params = {}) => {
+  const category = POLICY_MESSAGES.PDF[type];
+  if (!category || !category[key]) {
+    return `PDF message not found: PDF.${type}.${key}`;
+  }
+
+  let message = category[key];
+
+  Object.keys(params).forEach((param) => {
+    message = message.replace(new RegExp(`{${param}}`, "g"), params[param]);
+  });
+
+  return message;
+};
+
+export const getPdfSuccess = (key, params = {}) =>
+  getPdfMessage("SUCCESS", key, params);
+export const getPdfError = (key, params = {}) =>
+  getPdfMessage("ERROR", key, params);
+export const getPdfValidation = (key, params = {}) =>
+  getPdfMessage("VALIDATION", key, params);
+export const getPdfInfo = (key, params = {}) =>
+  getPdfMessage("INFO", key, params);
+export const getPdfWarning = (key, params = {}) =>
+  getPdfMessage("WARNING", key, params);
+
+// Tags helpers
+export const getTagsMessage = (type, key, params = {}) => {
+  const category = POLICY_MESSAGES.TAGS[type];
+  if (!category || !category[key]) {
+    return `Tags message not found: TAGS.${type}.${key}`;
+  }
+
+  let message = category[key];
+
+  Object.keys(params).forEach((param) => {
+    message = message.replace(new RegExp(`{${param}}`, "g"), params[param]);
+  });
+
+  return message;
+};
+
+export const getTagsSuccess = (key, params = {}) =>
+  getTagsMessage("SUCCESS", key, params);
+export const getTagsError = (key, params = {}) =>
+  getTagsMessage("ERROR", key, params);
+export const getTagsValidation = (key, params = {}) =>
+  getTagsMessage("VALIDATION", key, params);
+export const getTagsInfo = (key, params = {}) =>
+  getTagsMessage("INFO", key, params);
+export const getTagsWarning = (key, params = {}) =>
+  getTagsMessage("WARNING", key, params);
+
+// Placeholder helpers
+export const getPlaceholderMessage = (type, key, params = {}) => {
+  const category = POLICY_MESSAGES.PLACEHOLDER[type];
+  if (!category || !category[key]) {
+    return `Placeholder message not found: PLACEHOLDER.${type}.${key}`;
+  }
+
+  let message = category[key];
+
+  Object.keys(params).forEach((param) => {
+    message = message.replace(new RegExp(`{${param}}`, "g"), params[param]);
+  });
+
+  return message;
+};
+
+export const getPlaceholderSuccess = (key, params = {}) =>
+  getPlaceholderMessage("SUCCESS", key, params);
+export const getPlaceholderError = (key, params = {}) =>
+  getPlaceholderMessage("ERROR", key, params);
+export const getPlaceholderValidation = (key, params = {}) =>
+  getPlaceholderMessage("VALIDATION", key, params);
+export const getPlaceholderInfo = (key, params = {}) =>
+  getPlaceholderMessage("INFO", key, params);
+export const getPlaceholderWarning = (key, params = {}) =>
+  getPlaceholderMessage("WARNING", key, params);
 
 // General helpers
 export const getGeneralMessage = (type, key, params = {}) => {

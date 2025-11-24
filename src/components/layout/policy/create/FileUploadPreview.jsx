@@ -41,31 +41,36 @@ const FileUploadPreview = forwardRef(({
         //  NEW: Update with fillable PDF (called from PlaceholderMappingPanel after createFillablePDF)
         updateFillablePDF: async (fillableFile, fillableBytes) => {
             try {
-                // Create new blob URL for fillable PDF
-                const newUrl = URL.createObjectURL(fillableFile);
+                console.log('🔄 updateFillablePDF called with file:', fillableFile.name, fillableFile.size);
 
-                // Cleanup old URL
+                // Cleanup old URL first
                 if (fileUrl) {
-                    setTimeout(() => {
-                        URL.revokeObjectURL(fileUrl);
-                    }, 500);
+                    console.log('🗑️ Revoking old URL:', fileUrl);
+                    URL.revokeObjectURL(fileUrl);
                 }
+
+                // Create new blob URL for fillable PDF with cache-busting timestamp
+                const blob = new Blob([fillableFile], { type: 'application/pdf' });
+                const newUrl = URL.createObjectURL(blob);
+                const urlWithTimestamp = `${newUrl}#t=${Date.now()}`; // Add timestamp to force reload
+                console.log('🆕 Created new URL:', urlWithTimestamp);
 
                 // Update state to show fillable PDF in iframe
                 setUploadedFile(fillableFile);
-                setFileUrl(newUrl);
+                setFileUrl(urlWithTimestamp);
                 setModifiedPdfBytes(fillableBytes);
+                setIframeKey(Date.now()); // 🆕 Force iframe to reload
 
                 // Notify parent
                 if (onFileUpload) {
-                    onFileUpload(fillableFile, newUrl);
+                    onFileUpload(fillableFile, urlWithTimestamp);
                 }
 
-                console.log(' Fillable PDF updated in FileUploadPreview, iframe will reload');
+                console.log('✅ Fillable PDF updated in FileUploadPreview, iframe will reload with key:', Date.now());
 
                 return {
                     success: true,
-                    url: newUrl,
+                    url: urlWithTimestamp,
                     file: fillableFile
                 };
             } catch (error) {
@@ -178,12 +183,29 @@ const FileUploadPreview = forwardRef(({
                 file: uploadedFile,
                 url: fileUrl
             };
+        },
+
+        // 🆕 Get original unmodified file (for rebuild after delete)
+        getOriginalFile: () => {
+            if (!originalFile) {
+                return {
+                    success: false,
+                    error: 'No original file available'
+                };
+            }
+
+            return {
+                success: true,
+                file: originalFile
+            };
         }
     }));
 
     const [uploadedFile, setUploadedFile] = useState(null);
+    const [originalFile, setOriginalFile] = useState(null); // Store original unmodified PDF
     const [fileUrl, setFileUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [iframeKey, setIframeKey] = useState(Date.now()); // 🆕 Force iframe reload
 
     //  Sync fileUrlProp from parent into local state
     useEffect(() => {
@@ -217,10 +239,31 @@ const FileUploadPreview = forwardRef(({
         if (uploadedFileProp) {
             // parent has a file; adopt it
             setUploadedFile(uploadedFileProp);
+
+            // ✅ CRITICAL FIX: Only set originalFile if it's not already set
+            // originalFile should NEVER be updated after initial upload
+            // because it must remain the TRUE original PDF (not fillable PDF)
+            setOriginalFile(prev => {
+                if (!prev) {
+                    console.log('📦 Setting originalFile from parent (first time):', {
+                        name: uploadedFileProp.name,
+                        size: uploadedFileProp.size
+                    });
+                    return uploadedFileProp;
+                } else {
+                    console.log('⏭️ Skipping originalFile update - already set:', {
+                        original: { name: prev.name, size: prev.size },
+                        newFile: { name: uploadedFileProp.name, size: uploadedFileProp.size }
+                    });
+                    return prev; // Keep original
+                }
+            });
+
             setFileUrl(fileUrlProp);
         } else {
             // parent cleared file
             setUploadedFile(null);
+            setOriginalFile(null);
             setFileUrl(null);
             setPlaceholders([]);
             setPdfError(null);
@@ -235,6 +278,7 @@ const FileUploadPreview = forwardRef(({
             URL.revokeObjectURL(fileUrl);
         }
         setUploadedFile(null);
+        setOriginalFile(null); // Clear original file
         setFileUrl(null);
         setPdfError(null);
         setPlaceholders([]);
@@ -307,6 +351,7 @@ const FileUploadPreview = forwardRef(({
                 const url = URL.createObjectURL(file);
                 setFileUrl(url);
                 setUploadedFile(file);
+                setOriginalFile(file); // 🆕 Store original unmodified PDF
 
                 // Convert file to base64 and log the string (data URL)
                 try {
@@ -597,7 +642,7 @@ const FileUploadPreview = forwardRef(({
                                 />
                             ) : (
                                 <iframe
-                                    key={`${fileUrl}-${Date.now()}`}
+                                    key={`pdf-${iframeKey}`}
                                     src={`${fileUrl}#toolbar=0`}
                                     style={{
                                         width: '100%',
@@ -689,7 +734,7 @@ const FileUploadPreview = forwardRef(({
                     />
                 ) : (
                     <iframe
-                        key={fileUrl}
+                        key={`pdf-fullscreen-${iframeKey}`}
                         src={fileUrl}
                         style={{
                             width: '100%',

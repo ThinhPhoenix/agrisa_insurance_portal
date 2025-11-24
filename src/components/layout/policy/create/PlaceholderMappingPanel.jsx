@@ -120,7 +120,8 @@ const PlaceholderMappingPanelComponent = forwardRef(({
     onMappingChange,
     onExportSchema,
     filePreviewRef,  //  NEW - to call applyReplacements
-    onSelectedRowsChange
+    onSelectedRowsChange,
+    onDeletePlaceholder  // 🆕 Callback to notify parent to remove placeholder
 }, ref) => {
     // Định nghĩa rõ các loại dữ liệu theo quy định
     const defaultTagDataTypes = [
@@ -151,6 +152,23 @@ const PlaceholderMappingPanelComponent = forwardRef(({
     const [selectedRows, setSelectedRows] = useState([]); // Track selected placeholders
     const [appliedToPDF, setAppliedToPDF] = useState(new Set()); // Track which placeholders are applied to PDF
     const [batchCreatedTags, setBatchCreatedTags] = useState([]); // Track tags created during batch operations
+
+    // 🔍 Debug: Track component lifecycle
+    useEffect(() => {
+        console.log('🎬 PlaceholderMappingPanel MOUNTED');
+        return () => {
+            console.log('💀 PlaceholderMappingPanel UNMOUNTED');
+        };
+    }, []);
+
+    // 🔍 Debug: Track mappings state changes
+    useEffect(() => {
+        console.log('🗺️ Mappings state changed:', {
+            keys: Object.keys(mappings),
+            count: Object.keys(mappings).length,
+            mappings
+        });
+    }, [mappings]);
 
     //  Use tags directly from parent - no need for local cache
     // Parent state (use-policy.js) is the single source of truth
@@ -381,15 +399,177 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
 
-    //  NEW: Delete unmapped placeholder
-    const handleDeletePlaceholder = (placeholderId) => {
+    //  NEW: Delete placeholder and rebuild PDF if already applied
+    const handleDeletePlaceholder = async (placeholderId) => {
+        const wasApplied = appliedToPDF.has(placeholderId);
+
+        console.log('🗑️ handleDeletePlaceholder:', {
+            placeholderId,
+            wasApplied,
+            appliedToPDFBefore: Array.from(appliedToPDF),
+            mappingsBefore: mappings,
+            mappingsKeys: Object.keys(mappings)
+        });
+
         // Remove from mappings
         const newMappings = { ...mappings };
         delete newMappings[placeholderId];
         setMappings(newMappings);
 
+        // Remove from applied set
+        const newApplied = new Set(appliedToPDF);
+        newApplied.delete(placeholderId);
+        setAppliedToPDF(newApplied);
+
         // Remove from selection
         setSelectedRows(prev => prev.filter(id => id !== placeholderId));
+
+        // ✅ If was applied to PDF, need to rebuild PDF without this placeholder
+        if (wasApplied && filePreviewRef?.current?.getOriginalFile) {
+            try {
+                console.log('🔨 Starting rebuild process...');
+                message.loading('Đang rebuild PDF...', 0);
+
+                // Get ORIGINAL PDF file (before any modifications)
+                const fileResult = filePreviewRef.current.getOriginalFile();
+                if (!fileResult || !fileResult.success || !fileResult.file) {
+                    message.destroy();
+                    message.error('Không tìm thấy file PDF gốc. Vui lòng upload lại file PDF.');
+                    return;
+                }
+
+                const originalFile = fileResult.file;
+                const arrayBuffer = await originalFile.arrayBuffer();
+
+                // Import function
+                const { createFillablePDFFromMappings, pdfBytesToFile } = await import('../../../../libs/pdf/pdfEditor');
+
+                // ✅ Keep original placeholders list (including deleted) for text removal
+                const allPlaceholdersBeforeDelete = [...placeholders];
+
+                // ✅ FIX: Keep ALL placeholders except deleted one for form field creation
+                const remainingPlaceholders = placeholders.filter(p => p.id !== placeholderId);
+
+                // ✅ CRITICAL FIX: Build mappings for ALL remaining APPLIED placeholders
+                // This ensures Form 1, 2, 3 applied → Delete Form 2 → Rebuild with Form 1 + 3
+                const remainingMappings = {};
+                remainingPlaceholders.forEach(p => {
+                    // Include if: placeholder was applied before delete (check original appliedToPDF)
+                    // AND is not the deleted one AND has mapping
+                    if (appliedToPDF.has(p.id) && p.id !== placeholderId && newMappings[p.id]) {
+                        remainingMappings[p.id] = newMappings[p.id];
+                    }
+                });
+
+                console.log('🔍 Rebuild analysis:', {
+                    deletedId: placeholderId,
+                    totalPlaceholders: placeholders.length,
+                    remainingPlaceholdersCount: remainingPlaceholders.length,
+                    appliedBeforeDelete: Array.from(appliedToPDF),
+                    newAppliedSet: Array.from(newApplied),
+                    allMappingsKeys: Object.keys(newMappings),
+                    remainingAppliedMappingsKeys: Object.keys(remainingMappings),
+                    remainingMappings: remainingMappings,
+                    willRebuild: Object.keys(remainingMappings).length > 0 ? 'YES - with remaining fields' : 'NO - revert to original'
+                });
+
+                if (Object.keys(remainingMappings).length === 0) {
+                    // No more applied placeholders, revert to original PDF
+                    console.log('✅ No remaining mappings, reverting to original PDF');
+                    console.log('📦 Original file info:', {
+                        name: originalFile.name,
+                        size: originalFile.size,
+                        type: originalFile.type
+                    });
+
+                    // ✅ CRITICAL FIX: Create a completely fresh File from arrayBuffer
+                    // to ensure we're reverting to TRUE original (not fillable PDF)
+                    const freshOriginalFile = new File([arrayBuffer], originalFile.name, {
+                        type: 'application/pdf',
+                        lastModified: Date.now()
+                    });
+
+                    // Reload original PDF
+                    if (filePreviewRef?.current?.updateFillablePDF) {
+                        console.log('📄 Calling updateFillablePDF with fresh original file');
+                        // Use fresh file from original arrayBuffer
+                        await filePreviewRef.current.updateFillablePDF(freshOriginalFile, new Uint8Array(arrayBuffer));
+                        console.log('✅ updateFillablePDF completed');
+                    }
+
+                    message.destroy();
+                    message.success('Đã xóa vị trí và khôi phục PDF gốc');
+
+                    // 🆕 Notify parent to remove from placeholders array (AFTER PDF update)
+                    if (onDeletePlaceholder) {
+                        onDeletePlaceholder(placeholderId);
+                    }
+                } else {
+                    // Rebuild PDF with remaining applied placeholders only
+                    // Note: remainingMappings already built above with only applied placeholders
+
+                    // Merge effectiveTags + batchCreatedTags
+                    const allTagsIncludingNew = [...effectiveTags, ...batchCreatedTags];
+
+                    console.log('🔨 Rebuilding PDF with:', {
+                        totalPlaceholders: remainingPlaceholders.length,
+                        appliedPlaceholders: Object.keys(remainingMappings).length,
+                        remainingMappings: remainingMappings,
+                        deletedId: placeholderId
+                    });
+
+                    // ✅ CRITICAL: Rebuild fillable PDF with ALL original placeholders to remove text
+                    // but only create form fields for remaining applied placeholders
+                    const result = await createFillablePDFFromMappings(
+                        arrayBuffer,
+                        remainingPlaceholders, // Only create form fields for these
+                        remainingMappings,
+                        allTagsIncludingNew,
+                        {
+                            fillFields: true,
+                            makeFieldsEditable: true,
+                            showBorders: true,
+                            removeOriginalText: true,
+                            writeTextBeforeField: false,
+                            allPlaceholders: allPlaceholdersBeforeDelete, // ✅ NEW: Remove text for ALL original placeholders (including deleted)
+                        }
+                    );
+
+                    console.log('✅ createFillablePDFFromMappings completed, pdfBytes length:', result.pdfBytes?.length);
+
+                    // Convert to File
+                    const fillableFile = pdfBytesToFile(result.pdfBytes, originalFile.name);
+                    console.log('📄 Converted to file:', fillableFile.name, fillableFile.size);
+
+                    // Update preview
+                    if (filePreviewRef?.current?.updateFillablePDF) {
+                        console.log('📄 Calling updateFillablePDF with rebuilt PDF');
+                        await filePreviewRef.current.updateFillablePDF(fillableFile, result.pdfBytes);
+                        console.log('✅ updateFillablePDF completed');
+                    }
+
+                    message.destroy();
+                    message.success('Đã xóa vị trí và rebuild PDF');
+
+                    // 🆕 Notify parent to remove from placeholders array (AFTER PDF update)
+                    if (onDeletePlaceholder) {
+                        onDeletePlaceholder(placeholderId);
+                    }
+                }
+
+            } catch (error) {
+                message.destroy();
+                message.error(`Lỗi khi rebuild PDF: ${error.message}`);
+                console.error('Error rebuilding PDF after delete:', error);
+            }
+        } else {
+            message.success('Đã xóa vị trí placeholder');
+
+            // 🆕 Notify parent to remove from placeholders array (not applied case)
+            if (onDeletePlaceholder) {
+                onDeletePlaceholder(placeholderId);
+            }
+        }
 
         // Notify parent
         if (onMappingChange) {
@@ -410,12 +590,16 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 documentTagsObject: documentTags
             });
         }
-
-        message.success('Đã xóa vị trí placeholder');
     };
 
     // NEW: Apply selected fillable fields only
     const applySelectedFillable = async () => {
+        console.log('🔧 applySelectedFillable called:', {
+            selectedRows,
+            currentMappings: mappings,
+            currentMappingsKeys: Object.keys(mappings)
+        });
+
         if (selectedRows.length === 0) {
             message.warning('Vui lòng chọn ít nhất một vị trí để áp dụng');
             return;
@@ -552,9 +736,25 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 }
             });
 
+            // ✅ CRITICAL FIX: Build updated mappings including newly created ones
+            // Because handleMapPlaceholder updates state, but we're still in the same render
+            // so `mappings` variable holds OLD value
+            const updatedMappings = { ...mappings };
+            for (const rowId of selectedRows) {
+                if (selectedMappings[rowId]) {
+                    updatedMappings[rowId] = selectedMappings[rowId];
+                }
+            }
+
+            console.log('📦 Final mappings to send to parent:', {
+                oldMappings: Object.keys(mappings),
+                updatedMappings: Object.keys(updatedMappings),
+                selectedMappings: Object.keys(selectedMappings)
+            });
+
             // Notify parent to update state with fillable PDF
             if (onMappingChange) {
-                onMappingChange(mappings, {
+                onMappingChange(updatedMappings, {
                     documentTagsObject: documentTags,
                     modifiedPdfBytes: result.pdfBytes,
                     uploadedFile: fillableFile,
@@ -706,31 +906,24 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 const isApplied = appliedToPDF.has(record.id);
                 const isMapped = !!mappings[record.id];
 
-                // Can only delete if not applied to PDF yet
+                // Build appropriate warning message
+                let description = "Bạn có chắc muốn xóa vị trí này?";
                 if (isApplied) {
-                    return (
-                        <Tooltip title="Không thể xóa vị trí đã áp dụng vào PDF">
-                            <Button
-                                type="text"
-                                icon={<DeleteOutlined />}
-                                disabled
-                                danger
-                                size="small"
-                            />
-                        </Tooltip>
-                    );
+                    description = "Vị trí này đã được áp dụng vào PDF. Xóa sẽ rebuild PDF và loại bỏ form field này. Bạn có chắc muốn xóa?";
+                } else if (isMapped) {
+                    description = "Vị trí này đã được map. Bạn có chắc muốn xóa?";
                 }
 
                 return (
                     <Popconfirm
                         title="Xóa vị trí placeholder?"
-                        description={isMapped ? "Vị trí này đã được map. Bạn có chắc muốn xóa?" : "Bạn có chắc muốn xóa vị trí này?"}
+                        description={description}
                         onConfirm={() => handleDeletePlaceholder(record.id)}
                         okText="Xóa"
                         cancelText="Hủy"
                         okButtonProps={{ danger: true }}
                     >
-                        <Tooltip title="Xóa vị trí placeholder">
+                        <Tooltip title={isApplied ? "Xóa và rebuild PDF" : "Xóa vị trí placeholder"}>
                             <Button
                                 type="text"
                                 icon={<DeleteOutlined />}

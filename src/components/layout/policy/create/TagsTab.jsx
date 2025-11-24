@@ -46,6 +46,7 @@ const TagsTabComponent = ({
     onOpenPaste,
     onOpenFullscreen,
     placeholders = [],
+    onDeletePlaceholder,  // 🆕 Handler to delete placeholder from parent state
     filePreviewRef  //  NEW - receive from parent to pass down to PlaceholderMappingPanel
 }) => {
     const [tagForm] = Form.useForm();
@@ -703,6 +704,24 @@ const TagsTabComponent = ({
                             console.log('🔍 TagsTab - calling onAddTag...');
                             onAddTag(tag);
                             console.log('🔍 TagsTab - onAddTag called, current tagsData.tags:', tagsData.tags);
+                        }}
+                        onDeletePlaceholder={(placeholderId) => {
+                            console.log('🗑️ TagsTab - onDeletePlaceholder called with id:', placeholderId);
+
+                            // Call parent handler to remove from detectedPlaceholders state
+                            if (onDeletePlaceholder) {
+                                onDeletePlaceholder(placeholderId);
+                            }
+
+                            // Also update tagsData to sync placeholders (optional, for backward compatibility)
+                            onDataChange && onDataChange((prev) => {
+                                const updatedPlaceholders = (prev.placeholders || []).filter(p => p.id !== placeholderId);
+                                console.log('🗑️ TagsTab - Updated tagsData.placeholders:', updatedPlaceholders.length);
+                                return {
+                                    ...prev,
+                                    placeholders: updatedPlaceholders
+                                };
+                            });
                         }}
                         onMappingChange={(mappings, pdfData) => {
                             console.log('🔍 TagsTab - onMappingChange called with:', { mappings, pdfData });

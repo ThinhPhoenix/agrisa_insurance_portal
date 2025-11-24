@@ -95,12 +95,25 @@ const PDFViewerWithSelection = ({
 
                 setRenderedPages(pages);
 
+                // Track render tasks to cancel them if component unmounts
+                const renderTasks = new Map();
+
                 // ✅ OPTIMIZATION: Render initial pages first, then lazy-load remaining
                 setTimeout(() => {
                     pages.forEach(({ pageNum, page, viewport, isRendered }) => {
                         const canvas = canvasRefs.current[pageNum];
                         if (canvas && isRendered) {
                             const context = canvas.getContext('2d', { alpha: false }); // Disable alpha for better performance
+
+                            // Cancel any existing render task for this canvas
+                            const existingTask = renderTasks.get(pageNum);
+                            if (existingTask) {
+                                try {
+                                    existingTask.cancel();
+                                } catch (e) {
+                                    // Ignore cancel errors
+                                }
+                            }
 
                             // Clear canvas first to avoid "multiple render" error
                             context.clearRect(0, 0, canvas.width, canvas.height);
@@ -109,7 +122,8 @@ const PDFViewerWithSelection = ({
                                 canvasContext: context,
                                 viewport: viewport
                             };
-                            page.render(renderContext);
+                            const renderTask = page.render(renderContext);
+                            renderTasks.set(pageNum, renderTask);
                         }
                     });
 
@@ -121,12 +135,24 @@ const PDFViewerWithSelection = ({
                                     const canvas = canvasRefs.current[pageNum];
                                     if (canvas) {
                                         const context = canvas.getContext('2d', { alpha: false });
+
+                                        // Cancel any existing render task for this canvas
+                                        const existingTask = renderTasks.get(pageNum);
+                                        if (existingTask) {
+                                            try {
+                                                existingTask.cancel();
+                                            } catch (e) {
+                                                // Ignore cancel errors
+                                            }
+                                        }
+
                                         context.clearRect(0, 0, canvas.width, canvas.height);
                                         const renderContext = {
                                             canvasContext: context,
                                             viewport: viewport
                                         };
-                                        page.render(renderContext);
+                                        const renderTask = page.render(renderContext);
+                                        renderTasks.set(pageNum, renderTask);
                                     }
                                 }
                             });

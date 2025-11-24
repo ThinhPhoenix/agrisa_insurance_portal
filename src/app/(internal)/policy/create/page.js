@@ -166,6 +166,14 @@ const CreatePolicyPage = () => {
     setDetectedPlaceholders((prev) => [...prev, newPlaceholder]);
   }, []);
 
+  // 🆕 Handle placeholder deletion
+  const handleDeletePlaceholder = useCallback((placeholderId) => {
+    console.log("🗑️ Deleting placeholder from list:", placeholderId);
+    setDetectedPlaceholders((prev) =>
+      prev.filter((p) => p.id !== placeholderId)
+    );
+  }, []);
+
   // Get current step index
   const getCurrentStepIndex = () => {
     const tabs = Object.values(TABS);
@@ -326,6 +334,7 @@ const CreatePolicyPage = () => {
             filePreviewRef.current.openFullscreen()
           }
           placeholders={detectedPlaceholders}
+          onDeletePlaceholder={handleDeletePlaceholder}
           filePreviewRef={filePreviewRef}
         />
       ),

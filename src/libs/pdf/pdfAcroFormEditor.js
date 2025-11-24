@@ -33,8 +33,9 @@ const embedVietnameseFont = async (pdfDoc) => {
   try {
     // ✅ Check cache first
     if (!cachedFontBytes) {
+      // DejaVu Sans font supports Vietnamese and has good Unicode coverage
       const fontUrl =
-        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf";
+        "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf";
 
       const fontResponse = await fetch(fontUrl);
 
@@ -45,6 +46,9 @@ const embedVietnameseFont = async (pdfDoc) => {
       }
 
       cachedFontBytes = await fontResponse.arrayBuffer();
+      console.log("✅ Font downloaded and cached:", fontUrl);
+    } else {
+      console.log("✅ Using cached font from previous load");
     }
 
     let customFont;
@@ -58,6 +62,7 @@ const embedVietnameseFont = async (pdfDoc) => {
 
       pdfDoc.registerFontkit(cachedFontkitModule);
       customFont = await pdfDoc.embedFont(cachedFontBytes);
+      console.log("✅ Custom font embedded successfully:", customFont.name);
     } catch (fontkitError) {
       console.warn("Fontkit not available, using fallback");
       customFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -126,6 +131,11 @@ export const createAcroFormFields = async (
 
     // Embed Vietnamese-compatible font
     const font = await embedVietnameseFont(pdfDoc);
+    console.log("🔤 Embedded font for PDF:", {
+      fontName: font.name,
+      fontRef: font.ref?.toString(),
+      isCached: cachedFontBytes !== null,
+    });
 
     // Get or create the form
     const form = pdfDoc.getForm();
@@ -209,11 +219,20 @@ export const createAcroFormFields = async (
                 const fontName = font.name;
                 const fontRef = pdfDoc.context.getObjectRef(font.ref);
 
+                console.log("📝 Setting font for field:", {
+                  fieldName,
+                  fontName,
+                  fontRef: fontRef?.toString(),
+                  fontSize,
+                });
+
                 // Add font to AcroForm's default resources
-                const acroForm = pdfDoc.catalog.lookup(pdfDoc.context.obj('AcroForm'));
+                const acroForm = pdfDoc.catalog.lookup(
+                  pdfDoc.context.obj("AcroForm")
+                );
                 if (acroForm) {
-                  const dr = acroForm.get(pdfDoc.context.obj('DR'));
-                  const fontDict = dr?.get(pdfDoc.context.obj('Font'));
+                  const dr = acroForm.get(pdfDoc.context.obj("DR"));
+                  const fontDict = dr?.get(pdfDoc.context.obj("Font"));
                   if (fontDict) {
                     fontDict.set(pdfDoc.context.obj(fontName), fontRef);
                   }
@@ -221,9 +240,13 @@ export const createAcroFormFields = async (
 
                 // Set Default Appearance with embedded font
                 const acroField = formField.acroField;
-                acroField.setDefaultAppearance(
-                  `/${fontName} ${fontSize} Tf 0 0 0 rg`
-                );
+                const appearanceString = `/${fontName} ${fontSize} Tf 0 0 0 rg`;
+                acroField.setDefaultAppearance(appearanceString);
+
+                console.log("✅ Default appearance set:", {
+                  fieldName,
+                  appearanceString,
+                });
               } catch (fontError) {
                 console.warn(
                   `⚠️ Could not set Vietnamese font for ${fieldName}:`,
@@ -270,12 +293,14 @@ export const createAcroFormFields = async (
                 try {
                   const acroField = formField.acroField;
                   // ✅ Normalize to NFC to prevent decomposed characters
-                  const normalizedText = textValue.normalize('NFC');
-                  acroField.dict.set(
-                    pdfDoc.context.obj('V'),
-                    pdfDoc.context.obj(normalizedText)
+                  const normalizedText = textValue.normalize("NFC");
+                  const pdfString = pdfDoc.context.obj(normalizedText);
+                  acroField.dict.set(pdfDoc.context.obj("V"), pdfString);
+                  console.log(
+                    `✍️ Set Vietnamese value (${
+                      pdfString?.constructor?.name || typeof pdfString
+                    }) for '${fieldName}': '${normalizedText}' - Font in default appearance: ${fontName}`
                   );
-                  console.log(`✍️ Set Vietnamese value: "${fieldName}" = "${normalizedText}"`);
                 } catch (setValueError) {
                   console.warn(
                     `⚠️ Could not set value for ${fieldName}:`,
@@ -308,15 +333,19 @@ export const createAcroFormFields = async (
               let checkboxX, checkboxY;
 
               // Determine field width (use backgroundWidth if available, otherwise use width)
-              const effectiveFieldWidth = (backgroundX !== undefined && backgroundWidth !== undefined)
-                ? backgroundWidth
-                : width;
+              const effectiveFieldWidth =
+                backgroundX !== undefined && backgroundWidth !== undefined
+                  ? backgroundWidth
+                  : width;
 
               if (effectiveFieldWidth < defaultCheckboxSize) {
                 // Case 1: Field is smaller than default checkbox -> use old centered logic
                 actualCheckboxSize = defaultCheckboxSize;
 
-                if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                if (
+                  backgroundX !== undefined &&
+                  backgroundWidth !== undefined
+                ) {
                   // Center checkbox over the digit position
                   const digitCenterX = backgroundX + backgroundWidth / 2;
                   checkboxX = digitCenterX - actualCheckboxSize / 2;
@@ -329,7 +358,10 @@ export const createAcroFormFields = async (
                 // Case 2: Field is larger than or equal to default checkbox -> make square checkbox = field width
                 actualCheckboxSize = effectiveFieldWidth;
 
-                if (backgroundX !== undefined && backgroundWidth !== undefined) {
+                if (
+                  backgroundX !== undefined &&
+                  backgroundWidth !== undefined
+                ) {
                   // Position checkbox at the start of background
                   checkboxX = backgroundX;
                 } else {
@@ -393,10 +425,12 @@ export const createAcroFormFields = async (
                 const fontName = font.name;
                 const fontRef = pdfDoc.context.getObjectRef(font.ref);
 
-                const acroForm = pdfDoc.catalog.lookup(pdfDoc.context.obj('AcroForm'));
+                const acroForm = pdfDoc.catalog.lookup(
+                  pdfDoc.context.obj("AcroForm")
+                );
                 if (acroForm) {
-                  const dr = acroForm.get(pdfDoc.context.obj('DR'));
-                  const fontDict = dr?.get(pdfDoc.context.obj('Font'));
+                  const dr = acroForm.get(pdfDoc.context.obj("DR"));
+                  const fontDict = dr?.get(pdfDoc.context.obj("Font"));
                   if (fontDict) {
                     fontDict.set(pdfDoc.context.obj(fontName), fontRef);
                   }
@@ -416,7 +450,8 @@ export const createAcroFormFields = async (
               const defaultFieldX = x;
               const defaultFieldWidth = width;
               const defaultFieldY = y;
-              const defaultFieldHeightCalculated = fieldHeight || fontSize * 1.5;
+              const defaultFieldHeightCalculated =
+                fieldHeight || fontSize * 1.5;
 
               // ✅ Add without appearance options for default case too
               formField.addToPage(page, {
@@ -431,10 +466,13 @@ export const createAcroFormFields = async (
                 try {
                   const acroField = formField.acroField;
                   // ✅ Normalize to NFC
-                  const normalizedText = defaultText.normalize('NFC');
+                  const normalizedText = defaultText.normalize("NFC");
                   acroField.dict.set(
-                    pdfDoc.context.obj('V'),
+                    pdfDoc.context.obj("V"),
                     pdfDoc.context.obj(normalizedText)
+                  );
+                  console.log(
+                    `✍️ Set Vietnamese value: "${fieldName}" = "${normalizedText}" using font: ${fontName}`
                   );
                 } catch (err) {
                   console.warn(`⚠️ Failed to set value for ${fieldName}`);
@@ -514,8 +552,8 @@ export const createFillablePDFFromMappings = async (
       if (!tag) return;
 
       // ✅ Normalize all Vietnamese text to NFC (composed form)
-      const normalizedKey = (tag.key || "").normalize('NFC');
-      const normalizedDefaultValue = (tag.defaultValue || "").normalize('NFC');
+      const normalizedKey = (tag.key || "").normalize("NFC");
+      const normalizedDefaultValue = (tag.defaultValue || "").normalize("NFC");
 
       // Map tag to field definition
       const fieldDef = {

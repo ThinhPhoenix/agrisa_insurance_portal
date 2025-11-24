@@ -85,6 +85,8 @@ const useCreatePolicy = () => {
     uploadedFile: null,
     modifiedPdfBytes: null,
     documentTagsObject: {},
+    placeholders: [], // 🆕 Store placeholders
+    mappings: {}, // 🆕 Store mappings
   });
 
   const [validationStatus, setValidationStatus] = useState({

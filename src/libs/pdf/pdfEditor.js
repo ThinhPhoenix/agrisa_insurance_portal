@@ -14,7 +14,6 @@ let cachedFontBytes = null;
 let cachedFontkitModule = null;
 
 /**
- * ✨ SMART REPLACEMENT ALGORITHM
  * Calculate optimal replacement pattern with dynamic underscores and adaptive font scaling
  *
  * @param {string} originalText - Original placeholder text (e.g., "____(1)____")
@@ -134,7 +133,7 @@ const embedVietnameseFont = async (pdfDoc) => {
       // Use CDN with FULL Vietnamese charset (not subset)
       // Noto Sans has complete Vietnamese Unicode support
       const fontUrl =
-        "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf";
+        "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf";
 
       const fontResponse = await fetch(fontUrl);
 
@@ -169,7 +168,7 @@ const embedVietnameseFont = async (pdfDoc) => {
       // Check if we have cached TTF font
       if (!cachedFontBytes || cachedFontBytes.byteLength < 100000) {
         const ttfFontUrl =
-          "https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Regular.ttf";
+          "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf";
 
         const ttfResponse = await fetch(ttfFontUrl);
         if (!ttfResponse.ok)
@@ -373,6 +372,35 @@ export const createFillablePDF = async (
             backgroundWidth,
           } = field;
 
+          // ✅ NEW: Handle special case - remove text only (no form field creation)
+          if (fieldType === "__remove_text_only__") {
+            if (
+              removeOriginalText &&
+              backgroundX !== undefined &&
+              backgroundWidth !== undefined
+            ) {
+              // Draw white rectangle over original placeholder text
+              const rectX = backgroundX;
+              const rectWidth = backgroundWidth;
+              const rectY = y - fontSize * 0.35;
+              const rectHeight = fontSize * 1.5;
+
+              page.drawRectangle({
+                x: rectX,
+                y: rectY,
+                width: rectWidth,
+                height: rectHeight,
+                color: rgb(1, 1, 1), // white
+                opacity: 1,
+              });
+
+              console.log(
+                `🗑️ Removed text for placeholder: ${fieldName} at page ${pageNum}`
+              );
+            }
+            continue; // Skip form field creation
+          }
+
           // Create form field based on type
           let formField;
 
@@ -396,9 +424,10 @@ export const createFillablePDF = async (
             let checkboxX, checkboxY;
 
             // Determine field width (use backgroundWidth if available, otherwise use width)
-            const effectiveFieldWidth = (backgroundX !== undefined && backgroundWidth !== undefined)
-              ? backgroundWidth
-              : width;
+            const effectiveFieldWidth =
+              backgroundX !== undefined && backgroundWidth !== undefined
+                ? backgroundWidth
+                : width;
 
             if (effectiveFieldWidth < defaultCheckboxSize) {
               // Case 1: Field is smaller than default checkbox -> use old centered logic
@@ -470,10 +499,12 @@ export const createFillablePDF = async (
               const fontRef = pdfDoc.context.getObjectRef(font.ref);
 
               // Add font to AcroForm's default resources
-              const acroForm = pdfDoc.catalog.lookup(pdfDoc.context.obj('AcroForm'));
+              const acroForm = pdfDoc.catalog.lookup(
+                pdfDoc.context.obj("AcroForm")
+              );
               if (acroForm) {
-                const dr = acroForm.get(pdfDoc.context.obj('DR'));
-                const fontDict = dr?.get(pdfDoc.context.obj('Font'));
+                const dr = acroForm.get(pdfDoc.context.obj("DR"));
+                const fontDict = dr?.get(pdfDoc.context.obj("Font"));
                 if (fontDict) {
                   fontDict.set(pdfDoc.context.obj(fontName), fontRef);
                 }
@@ -550,32 +581,32 @@ export const createFillablePDF = async (
                 try {
                   const acroField = formField.acroField;
                   // ✅ CRITICAL: Normalize Vietnamese text to NFC (composed form)
-                  const normalizedText = textValue.normalize('NFC');
+                  const normalizedText = textValue.normalize("NFC");
 
                   // ✅ Encode as UTF-16BE with BOM for proper Unicode support in PDF
                   // PDF spec: Text strings can be PDFDocEncoding or UTF-16BE (with BOM: 0xFEFF)
-                  const utf16Bytes = new Uint8Array([0xFE, 0xFF]); // BOM
+                  const utf16Bytes = new Uint8Array([0xfe, 0xff]); // BOM
                   const encoder = new TextEncoder();
 
                   // Convert to UTF-16BE manually
-                  let utf16String = '\uFEFF'; // BOM character
+                  let utf16String = "\uFEFF"; // BOM character
                   for (let i = 0; i < normalizedText.length; i++) {
                     const code = normalizedText.charCodeAt(i);
                     utf16String += String.fromCharCode(code);
                   }
 
                   // Use PDFHexString for UTF-16BE encoding
-                  const { PDFHexString } = await import('pdf-lib');
+                  const { PDFHexString } = await import("pdf-lib");
 
                   // Convert text to UTF-16BE hex string
-                  let hexStr = 'FEFF'; // BOM in hex
+                  let hexStr = "FEFF"; // BOM in hex
                   for (let i = 0; i < normalizedText.length; i++) {
                     const code = normalizedText.charCodeAt(i);
-                    hexStr += code.toString(16).padStart(4, '0').toUpperCase();
+                    hexStr += code.toString(16).padStart(4, "0").toUpperCase();
                   }
 
                   const pdfHexString = PDFHexString.of(hexStr);
-                  acroField.dict.set(pdfDoc.context.obj('V'), pdfHexString);
+                  acroField.dict.set(pdfDoc.context.obj("V"), pdfHexString);
 
                   console.log(
                     `✍️ Set Vietnamese value (UTF-16BE) for "${fieldName}": "${normalizedText}"`
@@ -639,10 +670,11 @@ export const createFillablePDF = async (
  * Create fillable PDF from placeholder mappings
  *
  * @param {ArrayBuffer} pdfArrayBuffer - PDF gốc
- * @param {Array} placeholders - Placeholders from detector
+ * @param {Array} placeholders - Placeholders from detector (chỉ placeholders cần tạo form field)
  * @param {Object} mappings - Mapping object { placeholder_id: tag_id }
  * @param {Array} tags - Tag definitions
  * @param {Object} options - Options
+ *   - allPlaceholders: Array - TẤT CẢ placeholders cần xóa text (bao gồm cả deleted), nếu không cung cấp sẽ dùng `placeholders`
  * @returns {Promise<{pdfBytes: Uint8Array, warnings: Array}>}
  */
 export const createFillablePDFFromMappings = async (
@@ -653,6 +685,11 @@ export const createFillablePDFFromMappings = async (
   options = {}
 ) => {
   try {
+    // ✅ NEW: Hỗ trợ xóa text của TẤT CẢ placeholders (bao gồm cả deleted)
+    // Nếu options.allPlaceholders được cung cấp, dùng nó để xóa text
+    // Nếu không, mặc định xóa text của placeholders có mapping
+    const placeholdersToRemoveText = options.allPlaceholders || placeholders;
+
     // Convert placeholders + mappings to field definitions
     const fieldDefinitions = [];
 
@@ -664,8 +701,12 @@ export const createFillablePDFFromMappings = async (
       if (!tag) return;
 
       // ✅ Normalize all Vietnamese text to NFC (composed form) to prevent decomposed characters
-      const normalizedKey = (tag.key || "").normalize('NFC');
-      const normalizedDefaultValue = (tag.defaultValue || tag.key || "").normalize('NFC');
+      const normalizedKey = (tag.key || "").normalize("NFC");
+      const normalizedDefaultValue = (
+        tag.defaultValue ||
+        tag.key ||
+        ""
+      ).normalize("NFC");
 
       const fieldDef = {
         page: placeholder.page,
@@ -686,6 +727,44 @@ export const createFillablePDFFromMappings = async (
 
       fieldDefinitions.push(fieldDef);
     });
+
+    // ✅ NEW: Thêm placeholders cần xóa text (không tạo form field) vào fieldDefinitions
+    // Với marker để chỉ xóa text, không tạo field
+    if (options.removeOriginalText !== false) {
+      // Add all placeholders to remove text (những placeholder không có mapping)
+      const removeTextCount = placeholdersToRemoveText.filter(
+        (p) => !mappings[p.id]
+      ).length;
+
+      console.log(
+        `🗑️ Will remove text for ${removeTextCount} placeholders without form fields (out of ${placeholdersToRemoveText.length} total)`
+      );
+
+      placeholdersToRemoveText.forEach((placeholder) => {
+        const tagId = mappings[placeholder.id];
+        if (tagId) return; // Skip placeholders đã có mapping (đã được thêm ở trên)
+
+        // Thêm marker để chỉ xóa text (không tạo form field)
+        const removeTextMarker = {
+          page: placeholder.page,
+          backgroundX: placeholder.backgroundX,
+          backgroundWidth: placeholder.backgroundWidth,
+          x: placeholder.x,
+          y: placeholder.y,
+          width: placeholder.width,
+          height: placeholder.height,
+          fontSize: placeholder.fontSize || 12,
+          fieldName: `__remove_text_${placeholder.id}__`, // Marker name
+          fieldType: "__remove_text_only__", // Special type
+        };
+
+        console.log(
+          `🗑️ Adding remove-text marker for placeholder: ${placeholder.original} (id: ${placeholder.id})`
+        );
+
+        fieldDefinitions.push(removeTextMarker);
+      });
+    }
 
     return await createFillablePDF(pdfArrayBuffer, fieldDefinitions, options);
   } catch (error) {

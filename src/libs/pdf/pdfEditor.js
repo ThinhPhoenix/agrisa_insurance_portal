@@ -521,6 +521,12 @@ export const createFillablePDF = async (
               fieldHeight: fieldHeightCalculated.toFixed(2),
               fontSize: reducedFontSize.toFixed(2),
             });
+            console.log(`📦 Placeholder data received for "${fieldName}":`, {
+              originalX: x,
+              originalWidth: width,
+              backgroundX: backgroundX,
+              backgroundWidth: backgroundWidth,
+            });
 
             // ✅ CRITICAL: Add to page WITHOUT appearance options to prevent auto-generation
             // This avoids the WinAnsi encoding error when pdf-lib tries to render text

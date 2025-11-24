@@ -1,10 +1,11 @@
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Button, Input, message, Modal, Space } from 'antd';
+import { Button, Input, message, Modal, Space, Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * PDF Viewer with click-to-place tag functionality using PDF.js directly
- * User clicks on PDF -> See marker circle -> Confirm -> Choose tag -> Insert at clicked position
+ * PDF Viewer with drag-to-select field functionality using PDF.js directly
+ * User drags across PDF to select field area -> See rectangle outline -> Confirm -> Enter position number -> Create placeholder
+ * Field width is captured from drag selection (startX to endX), height is fixed like auto-detection
  */
 const PDFViewerWithSelection = ({
     pdfUrl,
@@ -21,19 +22,27 @@ const PDFViewerWithSelection = ({
     const [nextPlaceholderNum, setNextPlaceholderNum] = useState(1); // Auto-increment placeholder number
     const [positionModalVisible, setPositionModalVisible] = useState(false);
     const [positionValue, setPositionValue] = useState('');
+    const [loading, setLoading] = useState(true); // Loading state for PDF
     const containerRef = useRef(null);
     const canvasRefs = useRef({});
+
+    // NEW: Drag selection state
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState(null);
+    const [dragEnd, setDragEnd] = useState(null);
 
     useEffect(() => {
         if (!pdfUrl) return;
 
         const loadPdf = async () => {
+            setLoading(true); // Start loading
             try {
-                // Load PDF.js from CDN if not already loaded
+                // ✅ OPTIMIZATION: Load PDF.js from CDN if not already loaded
                 if (!window.pdfjsLib) {
                     const script = document.createElement('script');
                     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js';
                     script.async = true;
+                    script.defer = true; // Defer loading for better performance
                     document.body.appendChild(script);
 
                     await new Promise((resolve, reject) => {
@@ -46,7 +55,15 @@ const PDFViewerWithSelection = ({
                 }
 
                 const pdfjsLib = window.pdfjsLib;
-                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+
+                // ✅ OPTIMIZATION: Use caching to speed up repeated loads
+                const loadingTask = pdfjsLib.getDocument({
+                    url: pdfUrl,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/cmaps/',
+                    cMapPacked: true,
+                    disableAutoFetch: false, // Enable progressive loading
+                    disableStream: false // Enable streaming for faster loading
+                });
                 const pdfDoc = await loadingTask.promise;
 
                 setNumPages(pdfDoc.numPages);
@@ -57,8 +74,10 @@ const PDFViewerWithSelection = ({
                 const containerWidth = containerRef.current?.parentElement?.clientWidth || 800;
                 const cssScale = Math.min(1.0, containerWidth / baseViewport.width);
 
-                // Render all pages with scale 1.0 but store cssScale
+                // ✅ OPTIMIZATION: Lazy load pages (render only first 3 pages initially)
                 const pages = [];
+                const maxInitialPages = Math.min(3, pdfDoc.numPages);
+
                 for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                     const page = await pdfDoc.getPage(pageNum);
                     const viewport = page.getViewport({ scale: 1.0 });
@@ -69,18 +88,19 @@ const PDFViewerWithSelection = ({
                         viewport,
                         width: viewport.width,
                         height: viewport.height,
-                        cssScale // Store for coordinate conversion
+                        cssScale, // Store for coordinate conversion
+                        isRendered: pageNum <= maxInitialPages // Mark initial pages for rendering
                     });
                 }
 
                 setRenderedPages(pages);
 
-                // Render to canvases after state update
+                // ✅ OPTIMIZATION: Render initial pages first, then lazy-load remaining
                 setTimeout(() => {
-                    pages.forEach(({ pageNum, page, viewport }) => {
+                    pages.forEach(({ pageNum, page, viewport, isRendered }) => {
                         const canvas = canvasRefs.current[pageNum];
-                        if (canvas) {
-                            const context = canvas.getContext('2d');
+                        if (canvas && isRendered) {
+                            const context = canvas.getContext('2d', { alpha: false }); // Disable alpha for better performance
 
                             // Clear canvas first to avoid "multiple render" error
                             context.clearRect(0, 0, canvas.width, canvas.height);
@@ -92,17 +112,41 @@ const PDFViewerWithSelection = ({
                             page.render(renderContext);
                         }
                     });
-                }, 100);
+
+                    // Lazy-load remaining pages after a delay
+                    if (pdfDoc.numPages > maxInitialPages) {
+                        setTimeout(() => {
+                            pages.forEach(({ pageNum, page, viewport, isRendered }) => {
+                                if (!isRendered) {
+                                    const canvas = canvasRefs.current[pageNum];
+                                    if (canvas) {
+                                        const context = canvas.getContext('2d', { alpha: false });
+                                        context.clearRect(0, 0, canvas.width, canvas.height);
+                                        const renderContext = {
+                                            canvasContext: context,
+                                            viewport: viewport
+                                        };
+                                        page.render(renderContext);
+                                    }
+                                }
+                            });
+                        }, 500); // Delay lazy-loading by 500ms
+                    }
+                }, 50); // Reduced from 100ms to 50ms for faster initial render
+
+                setLoading(false); // Finish loading
 
             } catch (error) {
                 message.error('Lỗi khi tải PDF');
+                setLoading(false);
             }
         };
 
         loadPdf();
     }, [pdfUrl]);
 
-    const handlePdfClick = async (e) => {
+    // NEW: Handle mouse down to start drag selection
+    const handleMouseDown = async (e) => {
         if (!isPlacementMode) return;
 
         // Get scroll offsets
@@ -168,22 +212,139 @@ const PDFViewerWithSelection = ({
         const pdfYFromTop = canvasClickY / pageData.cssScale;
         let pdfY = pageData.viewport.height - pdfYFromTop;
 
-        // Fine-tune adjustment based on testing
-        // Auto-detect uses left edge of text, manual placement tends to be ~50px to the right
-        // Adjust X to match auto-detect behavior
-        pdfX = pdfX - 50; // Move 50px to the left to match auto-detect
-        pdfY = pdfY - 4;  // Small Y adjustment
-
-        // Set clicked position with marker
-        // Store absolute position within container (including scroll)
-        setClickedPosition({
-            screenX: clickX, // Absolute position in container
+        // Store drag start position
+        setIsDragging(true);
+        setDragStart({
+            screenX: clickX,
             screenY: clickY,
             pdfX,
             pdfY,
             page: clickedPage,
-            viewport: pageData.viewport
+            viewport: pageData.viewport,
+            canvasRect,
+            cssScale: pageData.cssScale
         });
+        setDragEnd(null);
+    };
+
+    // NEW: Handle mouse move during drag
+    const handleMouseMove = (e) => {
+        if (!isDragging || !dragStart) return;
+
+        // Get scroll offsets
+        const scrollContainer = containerRef.current.parentElement;
+        const scrollX = scrollContainer.scrollLeft;
+        const scrollY = scrollContainer.scrollTop;
+
+        // Get current position
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const currentX = e.clientX - containerRect.left + scrollX;
+        const currentY = e.clientY - containerRect.top + scrollY;
+
+        // ✅ FIX: Recalculate canvas rect dynamically (handles fullscreen vs component view)
+        const canvas = canvasRefs.current[dragStart.page];
+        const canvasRect = canvas?.getBoundingClientRect();
+        if (!canvasRect) return;
+
+        // Calculate PDF coordinates for current position
+        const canvasCurrentX = e.clientX - canvasRect.left;
+        const canvasCurrentY = e.clientY - canvasRect.top;
+
+        const pdfCurrentX = canvasCurrentX / dragStart.cssScale;
+        const pdfYFromTop = canvasCurrentY / dragStart.cssScale;
+        const pdfCurrentY = dragStart.viewport.height - pdfYFromTop;
+
+        setDragEnd({
+            screenX: currentX,
+            screenY: currentY,
+            pdfX: pdfCurrentX,
+            pdfY: pdfCurrentY
+        });
+    };
+
+    // NEW: Handle mouse up to complete drag selection
+    const handleMouseUp = (e) => {
+        if (!isDragging || !dragStart) return;
+
+        // Get final position
+        const scrollContainer = containerRef.current.parentElement;
+        const scrollX = scrollContainer.scrollLeft;
+        const scrollY = scrollContainer.scrollTop;
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const endX = e.clientX - containerRect.left + scrollX;
+        const endY = e.clientY - containerRect.top + scrollY;
+
+        // ✅ FIX: Recalculate canvas rect dynamically (handles fullscreen vs component view)
+        const canvas = canvasRefs.current[dragStart.page];
+        const canvasRect = canvas?.getBoundingClientRect();
+        if (!canvasRect) {
+            setIsDragging(false);
+            setDragStart(null);
+            setDragEnd(null);
+            return;
+        }
+
+        // Calculate PDF coordinates
+        const canvasEndX = e.clientX - canvasRect.left;
+        const canvasEndY = e.clientY - canvasRect.top;
+
+        const pdfEndX = canvasEndX / dragStart.cssScale;
+        const pdfYFromTop = canvasEndY / dragStart.cssScale;
+        const pdfEndY = dragStart.viewport.height - pdfYFromTop;
+
+        // Calculate field dimensions (both width AND height from drag)
+        const fieldStartX = Math.min(dragStart.pdfX, pdfEndX);
+        const fieldEndX = Math.max(dragStart.pdfX, pdfEndX);
+        const fieldWidth = fieldEndX - fieldStartX;
+
+        // Calculate height from drag selection (Y distance)
+        const fieldStartY = Math.min(dragStart.pdfY, pdfEndY);
+        const fieldEndY = Math.max(dragStart.pdfY, pdfEndY);
+        const fieldHeight = fieldEndY - fieldStartY;
+
+        // Minimum dimension checks
+        if (fieldWidth < 20) {
+            message.warning('Vùng chọn quá hẹp. Vui lòng kéo rộng hơn.');
+            setIsDragging(false);
+            setDragStart(null);
+            setDragEnd(null);
+            return;
+        }
+
+        if (fieldHeight < 8) {
+            message.warning('Vùng chọn quá thấp. Vui lòng kéo cao hơn.');
+            setIsDragging(false);
+            setDragStart(null);
+            setDragEnd(null);
+            return;
+        }
+
+        // Use center position (both X and Y)
+        const centerY = (fieldStartY + fieldEndY) / 2;
+
+        // Calculate fontSize based on height (reverse of auto-detection formula: height = fontSize * 1.2)
+        const fontSize = fieldHeight / 1.2;
+
+        // Store selected field area
+        setClickedPosition({
+            screenX: Math.min(dragStart.screenX, endX),
+            screenY: Math.min(dragStart.screenY, endY),
+            screenWidth: Math.abs(endX - dragStart.screenX),
+            screenHeight: Math.abs(endY - dragStart.screenY),
+            pdfX: fieldStartX,
+            pdfY: centerY,
+            pdfWidth: fieldWidth,
+            pdfHeight: fieldHeight, // Dynamic height from drag
+            fontSize: fontSize, // Dynamic fontSize calculated from height
+            page: dragStart.page,
+            viewport: dragStart.viewport
+        });
+
+        // Reset drag state
+        setIsDragging(false);
+        setDragStart(null);
+        setDragEnd(null);
     };
 
     const handleConfirmPosition = () => {
@@ -218,9 +379,11 @@ const PDFViewerWithSelection = ({
             page: clickedPosition.page,
             x: clickedPosition.pdfX,
             y: clickedPosition.pdfY,
-            width: 100,
-            height: 10,
-            fontSize: 10,
+            width: clickedPosition.pdfWidth, // Dynamic width from drag
+            height: clickedPosition.pdfHeight, // Dynamic height from drag
+            backgroundX: clickedPosition.pdfX, // Full field area
+            backgroundWidth: clickedPosition.pdfWidth,
+            fontSize: clickedPosition.fontSize, // Dynamic fontSize calculated from height
             isManual: true // Mark as manual for different color
         };
 
@@ -257,7 +420,9 @@ const PDFViewerWithSelection = ({
         }}>
             <div
                 ref={containerRef}
-                onClick={handlePdfClick}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
                 style={{
                     cursor: isPlacementMode ? 'crosshair' : 'default',
                     position: 'relative',
@@ -269,9 +434,22 @@ const PDFViewerWithSelection = ({
                     alignItems: 'center' // Center PDF like iframe
                 }}
             >
-                {renderedPages.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: 'white' }}>
-                        Đang tải PDF...
+                {loading ? (
+                    <div style={{
+                        padding: '60px',
+                        textAlign: 'center',
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '16px'
+                    }}>
+                        <Spin size="large" />
+                        <div style={{ color: '#666' }}>Đang tải PDF...</div>
+                    </div>
+                ) : renderedPages.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                        Không thể tải PDF
                     </div>
                 ) : (
                     renderedPages.map(({ pageNum, width, height, cssScale }) => {
@@ -298,18 +476,34 @@ const PDFViewerWithSelection = ({
                     })
                 )}
 
-                {/* Marker circle at clicked position - FIXED within container */}
-                {clickedPosition && (
+                {/* Show drag selection rectangle */}
+                {isDragging && dragStart && dragEnd && (
                     <div
                         style={{
                             position: 'absolute',
-                            left: `${clickedPosition.screenX - 8}px`,
-                            top: `${clickedPosition.screenY - 8}px`,
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
+                            left: `${Math.min(dragStart.screenX, dragEnd.screenX)}px`,
+                            top: `${Math.min(dragStart.screenY, dragEnd.screenY)}px`,
+                            width: `${Math.abs(dragEnd.screenX - dragStart.screenX)}px`,
+                            height: `${Math.abs(dragEnd.screenY - dragStart.screenY)}px`,
+                            border: '2px dashed #1890ff',
+                            background: 'rgba(24, 144, 255, 0.1)',
+                            pointerEvents: 'none',
+                            zIndex: 998
+                        }}
+                    />
+                )}
+
+                {/* Show selected field area after drag complete */}
+                {clickedPosition && clickedPosition.screenWidth && (
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: `${clickedPosition.screenX}px`,
+                            top: `${clickedPosition.screenY}px`,
+                            width: `${clickedPosition.screenWidth}px`,
+                            height: `${clickedPosition.screenHeight}px`,
                             border: '3px solid #ff4d4f',
-                            background: 'rgba(255, 77, 79, 0.3)',
+                            background: 'rgba(255, 77, 79, 0.2)',
                             pointerEvents: 'none',
                             animation: 'pulse 1.5s ease-in-out infinite',
                             zIndex: 999,
@@ -319,13 +513,13 @@ const PDFViewerWithSelection = ({
                     />
                 )}
 
-                {/* Confirm/Cancel buttons - positioned below marker, FIXED */}
+                {/* Confirm/Cancel buttons - positioned below selected area */}
                 {clickedPosition && (
                     <div
                         style={{
                             position: 'absolute',
-                            left: `${clickedPosition.screenX - 70}px`,
-                            top: `${clickedPosition.screenY + 25}px`,
+                            left: `${clickedPosition.screenX}px`,
+                            top: `${clickedPosition.screenY + (clickedPosition.screenHeight || 20) + 10}px`,
                             zIndex: 1000,
                             background: 'white',
                             padding: '8px',

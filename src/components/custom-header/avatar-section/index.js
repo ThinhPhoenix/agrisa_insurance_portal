@@ -1,15 +1,15 @@
-import { Avatar, Badge, Button, Dropdown, Empty, Typography } from "antd";
+import { useSignOut } from "@/services/hooks/auth/use-auth";
+import { Avatar, Badge, Button, Dropdown, Empty, Typography, message } from "antd";
 import { Bell, LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useSignOut } from "@/services/hooks/auth/use-auth";
 import notificationData from "../notification-mock-data.json";
 
 const { Text } = Typography;
 
 export default function AvatarSection({ isMobile }) {
   const router = useRouter();
-  const { signOut } = useSignOut();
+  const { signOut, isLoading: isLoggingOut } = useSignOut();
   const [notifications, setNotifications] = useState(notificationData);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -69,83 +69,110 @@ export default function AvatarSection({ isMobile }) {
     }
   };
 
-  const notificationItems = notifications.length === 0 ? [] : [
-    {
-      key: "header",
-      type: "group",
-      label: (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "8px 0",
-          }}
-        >
-          <Text strong>Thông báo</Text>
-          {unreadCount > 0 && (
-            <Text
-              style={{
-                fontSize: 12,
-                color: "#1677ff",
-                cursor: "pointer",
-              }}
-              onClick={handleMarkAllAsRead}
-            >
-              Đánh dấu tất cả đã đọc
-            </Text>
-          )}
-        </div>
-      ),
-    },
-    {
-      type: "divider",
-    },
-    ...notifications.map((item) => ({
-      key: item.id,
-      label: (
-        <div
-          onClick={() => handleMarkAsRead(item.id)}
-          style={{
-            padding: "8px",
-            cursor: "pointer",
-            backgroundColor: item.read ? "transparent" : getTypeColor(item.type),
-            borderLeft: item.read ? "none" : `3px solid ${getTypeBorderColor(item.type)}`,
-            borderRadius: "4px",
-            marginBottom: "4px",
-            transition: "all 0.2s",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-            <Text strong style={{ fontSize: 13 }}>
-              {item.title}
-            </Text>
-            {!item.read && (
+  const notificationItems =
+    notifications.length === 0
+      ? []
+      : [
+          {
+            key: "header",
+            type: "group",
+            label: (
               <div
                 style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  backgroundColor: "#1677ff",
-                  marginTop: 4,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "8px 0",
                 }}
-              />
-            )}
-          </div>
-          <Text style={{ fontSize: 12, color: "#8c8c8c", display: "block", marginBottom: 4 }}>
-            {item.description}
-          </Text>
-          <Text style={{ fontSize: 11, color: "#bfbfbf" }}>
-            {formatTimestamp(item.timestamp)}
-          </Text>
-        </div>
-      ),
-    })),
-  ];
+              >
+                <Text strong>Thông báo</Text>
+                {unreadCount > 0 && (
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#1677ff",
+                      cursor: "pointer",
+                    }}
+                    onClick={handleMarkAllAsRead}
+                  >
+                    Đánh dấu tất cả đã đọc
+                  </Text>
+                )}
+              </div>
+            ),
+          },
+          {
+            type: "divider",
+          },
+          ...notifications.map((item) => ({
+            key: item.id,
+            label: (
+              <div
+                onClick={() => handleMarkAsRead(item.id)}
+                style={{
+                  padding: "8px",
+                  cursor: "pointer",
+                  backgroundColor: item.read
+                    ? "transparent"
+                    : getTypeColor(item.type),
+                  borderLeft: item.read
+                    ? "none"
+                    : `3px solid ${getTypeBorderColor(item.type)}`,
+                  borderRadius: "4px",
+                  marginBottom: "4px",
+                  transition: "all 0.2s",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: 4,
+                  }}
+                >
+                  <Text strong style={{ fontSize: 13 }}>
+                    {item.title}
+                  </Text>
+                  {!item.read && (
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        backgroundColor: "#1677ff",
+                        marginTop: 4,
+                      }}
+                    />
+                  )}
+                </div>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#8c8c8c",
+                    display: "block",
+                    marginBottom: 4,
+                  }}
+                >
+                  {item.description}
+                </Text>
+                <Text style={{ fontSize: 11, color: "#bfbfbf" }}>
+                  {formatTimestamp(item.timestamp)}
+                </Text>
+              </div>
+            ),
+          })),
+        ];
 
   const handleLogout = async () => {
-    await signOut();
-    router.push("/sign-in");
+    try {
+      const result = await signOut();
+      if (result.success) {
+        message.success(result.message);
+        router.push("/sign-in");
+      }
+    } catch (error) {
+      message.error("Đăng xuất thất bại. Vui lòng thử lại!");
+    }
   };
 
   const avatarMenuItems = [
@@ -154,7 +181,7 @@ export default function AvatarSection({ isMobile }) {
       label: (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <User size={16} />
-          <span>Xem profile</span>
+          <span>Xem hồ sơ</span>
         </div>
       ),
       onClick: () => router.push("/profile"),
@@ -171,6 +198,7 @@ export default function AvatarSection({ isMobile }) {
         </div>
       ),
       onClick: handleLogout,
+      disabled: isLoggingOut,
       danger: true,
     },
   ];
@@ -214,7 +242,11 @@ export default function AvatarSection({ isMobile }) {
           </Badge>
         </div>
       </Dropdown>
-      <Dropdown menu={{ items: avatarMenuItems }} placement="bottomRight" trigger={["click"]}>
+      <Dropdown
+        menu={{ items: avatarMenuItems }}
+        placement="bottomRight"
+        trigger={["click"]}
+      >
         <Avatar
           size={32}
           src="https://www.baovietnhantho.com.vn/storage/8f698cfe-2689-4637-bee7-62e592122dee/c/tap-doan-bao-viet-large.jpg"

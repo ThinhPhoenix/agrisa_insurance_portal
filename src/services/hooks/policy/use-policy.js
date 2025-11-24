@@ -1,5 +1,6 @@
 import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
+import { useAuthStore } from "@/stores/auth-store";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -244,17 +245,53 @@ const usePolicy = () => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchPolicies();
-  }, [fetchPolicies]);
+  // Get user from store to trigger fetch when user is ready
+  const user = useAuthStore((s) => s.user);
 
+  // Fetch all data in parallel when user is available
   useEffect(() => {
-    fetchActivePolicies();
-  }, [fetchActivePolicies]);
+    const fetchAllData = async () => {
+      // Wait for user data from store OR localStorage
+      let userId = user?.user_id || user?.profile?.user_id;
 
-  useEffect(() => {
-    fetchPolicyCounts();
-  }, [fetchPolicyCounts]);
+      // Fallback to localStorage if store doesn't have user yet
+      if (!userId) {
+        const meData = localStorage.getItem("me");
+        if (!meData) {
+          console.log("⏳ Waiting for user data...");
+          return; // Don't set error, just wait for next render
+        }
+
+        try {
+          const userData = JSON.parse(meData);
+          userId = userData?.user_id || userData?.partner_id;
+        } catch (error) {
+          setPoliciesError("Failed to parse user data");
+          setActivePoliciesError("Failed to parse user data");
+          return;
+        }
+      }
+
+      if (!userId) {
+        setPoliciesError("User ID not found in user data");
+        setActivePoliciesError("User ID not found in user data");
+        return;
+      }
+
+      console.log("✅ User data ready, fetching policies for userId:", userId);
+
+      // Fetch all APIs in parallel with independent error handling
+      // Each function manages its own loading state internally
+      await Promise.allSettled([
+        fetchPoliciesByProvider(userId),
+        fetchActivePoliciesByProvider(userId),
+        fetchPolicyCounts(),
+      ]);
+    };
+
+    fetchAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // Re-run when user changes
 
   return {
     policies,

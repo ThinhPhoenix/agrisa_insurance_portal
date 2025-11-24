@@ -444,9 +444,6 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 // Import function
                 const { createFillablePDFFromMappings, pdfBytesToFile } = await import('../../../../libs/pdf/pdfEditor');
 
-                // ✅ Keep original placeholders list (including deleted) for text removal
-                const allPlaceholdersBeforeDelete = [...placeholders];
-
                 // ✅ FIX: Keep ALL placeholders except deleted one for form field creation
                 const remainingPlaceholders = placeholders.filter(p => p.id !== placeholderId);
 
@@ -518,8 +515,9 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                         deletedId: placeholderId
                     });
 
-                    // ✅ CRITICAL: Rebuild fillable PDF with ALL original placeholders to remove text
-                    // but only create form fields for remaining applied placeholders
+                    // ✅ CRITICAL: Rebuild fillable PDF
+                    // Only remove text for remaining placeholders (not deleted ones)
+                    // Deleted placeholders will show original text again
                     const result = await createFillablePDFFromMappings(
                         arrayBuffer,
                         remainingPlaceholders, // Only create form fields for these
@@ -529,9 +527,10 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                             fillFields: true,
                             makeFieldsEditable: true,
                             showBorders: true,
-                            removeOriginalText: true,
+                            removeOriginalText: true, // Only removes text for placeholders WITH mappings
                             writeTextBeforeField: false,
-                            allPlaceholders: allPlaceholdersBeforeDelete, // ✅ NEW: Remove text for ALL original placeholders (including deleted)
+                            // ❌ DON'T pass allPlaceholders - we want deleted placeholder text to show again
+                            // allPlaceholders: allPlaceholdersBeforeDelete,
                         }
                     );
 
@@ -661,8 +660,9 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                         onCreateTag(tag);
                     }
 
-                    // Map placeholder
-                    handleMapPlaceholder(rowId, newId, tag);
+                    // ❌ DON'T call handleMapPlaceholder here - it updates state in loop
+                    // We'll update all mappings at once later
+                    // handleMapPlaceholder(rowId, newId, tag);
 
                     createdTagsInBatch.push(tag);
                     tagId = newId;
@@ -670,6 +670,24 @@ const PlaceholderMappingPanelComponent = forwardRef(({
 
                 selectedMappings[rowId] = tagId;
             }
+
+            // ✅ CRITICAL FIX: Update mappings state ONCE with all new mappings
+            // Build complete updated mappings object
+            const updatedMappingsForState = { ...mappings };
+            for (const rowId of selectedRows) {
+                if (selectedMappings[rowId]) {
+                    updatedMappingsForState[rowId] = selectedMappings[rowId];
+                }
+            }
+
+            // Update state once (React will batch this)
+            setMappings(updatedMappingsForState);
+
+            console.log('🔄 Updated mappings state:', {
+                oldKeys: Object.keys(mappings),
+                newKeys: Object.keys(updatedMappingsForState),
+                selectedKeys: Object.keys(selectedMappings)
+            });
 
             if (Object.keys(selectedMappings).length === 0) {
                 message.error('Các vị trí đã chọn chưa có thông tin để map');
@@ -736,25 +754,16 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 }
             });
 
-            // ✅ CRITICAL FIX: Build updated mappings including newly created ones
-            // Because handleMapPlaceholder updates state, but we're still in the same render
-            // so `mappings` variable holds OLD value
-            const updatedMappings = { ...mappings };
-            for (const rowId of selectedRows) {
-                if (selectedMappings[rowId]) {
-                    updatedMappings[rowId] = selectedMappings[rowId];
-                }
-            }
-
             console.log('📦 Final mappings to send to parent:', {
                 oldMappings: Object.keys(mappings),
-                updatedMappings: Object.keys(updatedMappings),
+                updatedMappingsForState: Object.keys(updatedMappingsForState),
                 selectedMappings: Object.keys(selectedMappings)
             });
 
             // Notify parent to update state with fillable PDF
+            // Use updatedMappingsForState (already built above)
             if (onMappingChange) {
-                onMappingChange(updatedMappings, {
+                onMappingChange(updatedMappingsForState, {
                     documentTagsObject: documentTags,
                     modifiedPdfBytes: result.pdfBytes,
                     uploadedFile: fillableFile,

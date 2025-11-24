@@ -374,14 +374,12 @@ export const createFillablePDF = async (
 
           // ✅ NEW: Handle special case - remove text only (no form field creation)
           if (fieldType === "__remove_text_only__") {
-            if (
-              removeOriginalText &&
-              backgroundX !== undefined &&
-              backgroundWidth !== undefined
-            ) {
-              // Draw white rectangle over original placeholder text
-              const rectX = backgroundX;
-              const rectWidth = backgroundWidth;
+            if (removeOriginalText) {
+              // ✅ CRITICAL: Draw white rectangle over ENTIRE field area
+              // Not just the number background, but all dots/underscores too
+              // This removes: "...........(1)............" completely
+              const rectX = x; // Start from field start
+              const rectWidth = width; // Cover entire field width
               const rectY = y - fontSize * 0.35;
               const rectHeight = fontSize * 1.5;
 
@@ -395,7 +393,9 @@ export const createFillablePDF = async (
               });
 
               console.log(
-                `🗑️ Removed text for placeholder: ${fieldName} at page ${pageNum}`
+                `🗑️ Removed ENTIRE field text for placeholder: ${fieldName} at page ${pageNum} (x=${rectX.toFixed(
+                  2
+                )}, width=${rectWidth.toFixed(2)})`
               );
             }
             continue; // Skip form field creation

@@ -1,6 +1,5 @@
 "use client";
 
-import { CustomForm } from "@/components/custom-form";
 import ErrorResult from "@/components/error-result";
 import OpenStreetMapWithPolygon from "@/components/map-polygon";
 import { getApprovalError, getApprovalInfo } from "@/libs/message";
@@ -13,10 +12,8 @@ import {
   Col,
   Descriptions,
   Divider,
-  Form,
   Image,
   Layout,
-  Modal,
   Pagination,
   Row,
   Space,
@@ -25,117 +22,20 @@ import {
   Typography,
 } from "antd";
 import { useParams, useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import "../approval.css";
+import { useState } from "react";
+import "../../approval/approval.css";
 
 const { Title, Text } = Typography;
 
-export default function InsurancePolicyDetailPage() {
+export default function ActivePolicyDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const {
-    policy,
-    farm,
-    farmAnalysis,
-    loading,
-    accessDenied,
-    submitUnderwriting,
-  } = useInsurancePolicyDetail(params.id);
-  const [decisionModalVisible, setDecisionModalVisible] = useState(false);
-  const [decisionType, setDecisionType] = useState(null); // 'approve' or 'reject'
-  const [submitting, setSubmitting] = useState(false);
-  const [form] = Form.useForm();
-  const formRef = useRef();
+  const { policy, farm, farmAnalysis, loading, accessDenied } =
+    useInsurancePolicyDetail(params.id);
 
   // Pagination state for photos
   const [currentPhotoPage, setCurrentPhotoPage] = useState(1);
   const photosPerPage = 12;
-
-  const handleDecision = (type) => {
-    setDecisionType(type);
-    setDecisionModalVisible(true);
-  };
-
-  const handleDecisionSubmit = async (values) => {
-    setSubmitting(true);
-    try {
-      // Build underwriting request based on decision type
-      const underwritingData = {
-        underwriting_status:
-          decisionType === "approve" ? "approved" : "rejected",
-        recommendations: {
-          risk_level: "low",
-          suggested_premium_adjustment: 0,
-        },
-        reason:
-          decisionType === "approve"
-            ? values.note ||
-              "All documentation verified and risk assessment completed"
-            : values.reason || getApprovalError("REASON_REQUIRED"),
-        reason_evidence: {
-          documents_verified: decisionType === "approve",
-          risk_score: decisionType === "approve" ? 25 : 75,
-          fraud_check: decisionType === "approve" ? "passed" : "failed",
-        },
-        validation_notes:
-          decisionType === "approve"
-            ? values.note ||
-              "Policy meets all underwriting criteria. Approved for activation."
-            : values.reason,
-      };
-
-      // Submit underwriting decision
-      const result = await submitUnderwriting(underwritingData);
-
-      if (result.success) {
-        setDecisionModalVisible(false);
-        form.resetFields();
-        // Redirect back to list after short delay
-        setTimeout(() => {
-          router.push("/policy/approval");
-        }, 1500);
-      }
-    } catch (error) {
-      console.error("Error submitting decision:", error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleFormSubmit = async () => {
-    try {
-      const values = await formRef.current?.validateFields();
-      if (values) {
-        await handleDecisionSubmit(values);
-      }
-    } catch (error) {
-      console.log("Validation failed:", error);
-    }
-  };
-
-  const getDecisionFormFields = () => {
-    const baseFields = [];
-
-    if (decisionType === "approve") {
-      baseFields.push({
-        name: "note",
-        label: "Ghi chú duyệt",
-        type: "textarea",
-        placeholder: "Nhập ghi chú (nếu có)",
-        required: false,
-      });
-    } else if (decisionType === "reject") {
-      baseFields.push({
-        name: "reason",
-        label: "Lý do từ chối",
-        type: "textarea",
-        placeholder: "Nhập lý do từ chối đơn bảo hiểm",
-        required: true,
-      });
-    }
-
-    return baseFields;
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -182,7 +82,7 @@ export default function InsurancePolicyDetailPage() {
       <ErrorResult
         status="403"
         subTitle={getErrorMessage("FORBIDDEN")}
-        backUrl="/policy/approval"
+        backUrl="/policy/active"
         backText="Quay lại danh sách"
       />
     );
@@ -194,7 +94,7 @@ export default function InsurancePolicyDetailPage() {
       <ErrorResult
         status="404"
         subTitle={getApprovalError("POLICY_NOT_FOUND")}
-        backUrl="/policy/approval"
+        backUrl="/policy/active"
         backText="Quay lại danh sách"
       />
     );
@@ -249,9 +149,7 @@ export default function InsurancePolicyDetailPage() {
                     </Descriptions.Item>
                     <Descriptions.Item label="Trạng thái">
                       <Tag color={getStatusColor(policy.status)}>
-                        {policy.status === "pending_review"
-                          ? "Chờ duyệt"
-                          : policy.status === "active"
+                        {policy.status === "active"
                           ? "Đang hoạt động"
                           : policy.status}
                       </Tag>
@@ -416,8 +314,6 @@ export default function InsurancePolicyDetailPage() {
                         >
                           <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
                             <div className="relative pt-[75%]">
-                              {" "}
-                              {/* 4:3 Aspect Ratio */}
                               <div className="absolute inset-0">
                                 <Image
                                   width="100%"
@@ -502,63 +398,10 @@ export default function InsurancePolicyDetailPage() {
         <Divider />
 
         <Space className="application-actions">
-          <Button onClick={() => router.push("/policy/approval")}>
+          <Button onClick={() => router.push("/policy/active")}>
             Quay lại
           </Button>
-          <Button danger onClick={() => handleDecision("reject")}>
-            Từ chối đơn
-          </Button>
-          <Button type="primary" onClick={() => handleDecision("approve")}>
-            Chấp thuận đơn
-          </Button>
         </Space>
-
-        <Modal
-          title={
-            decisionType === "approve"
-              ? "Chấp thuận đơn bảo hiểm"
-              : "Từ chối đơn bảo hiểm"
-          }
-          open={decisionModalVisible}
-          onCancel={() => {
-            if (!submitting) {
-              setDecisionModalVisible(false);
-              form.resetFields();
-            }
-          }}
-          footer={[
-            <Button
-              key="cancel"
-              onClick={() => {
-                setDecisionModalVisible(false);
-                form.resetFields();
-              }}
-              disabled={submitting}
-            >
-              Hủy
-            </Button>,
-            <Button
-              key="submit"
-              type="primary"
-              onClick={handleFormSubmit}
-              loading={submitting}
-              disabled={submitting}
-            >
-              Xác nhận
-            </Button>,
-          ]}
-          width={600}
-          closable={!submitting}
-          maskClosable={!submitting}
-        >
-          <CustomForm
-            ref={formRef}
-            fields={getDecisionFormFields()}
-            onSubmit={handleDecisionSubmit}
-            gridColumns="1fr"
-            gap="16px"
-          />
-        </Modal>
       </div>
     </div>
   );

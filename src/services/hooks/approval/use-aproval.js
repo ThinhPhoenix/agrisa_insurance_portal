@@ -1,7 +1,9 @@
 "use client";
 
 import axiosInstance from "@/libs/axios-instance";
+import { getApprovalError, getApprovalSuccess } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";
+import { useTableData } from "@/services/hooks/common/use-table-data";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -65,7 +67,7 @@ export function useApplications() {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch applications";
       setError(errorMessage);
-      message.error(`Lỗi khi tải danh sách đơn đăng ký: ${errorMessage}`);
+      message.error(getApprovalError("LOAD_LIST_FAILED"));
       setApplications([]);
     } finally {
       setLoading(false);
@@ -198,7 +200,7 @@ export function useApplicationDetail(id) {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch application detail";
       setError(errorMessage);
-      message.error(`Lỗi khi tải chi tiết đơn đăng ký: ${errorMessage}`);
+      message.error(getApprovalError("LOAD_FAILED"));
       setApplication(null);
     } finally {
       setLoading(false);
@@ -253,10 +255,6 @@ export function useApplicationDetail(id) {
 
 // Hook for insurance policies list
 export function useInsurancePolicies() {
-  const [searchText, setSearchText] = useState("");
-  const [filters, setFilters] = useState({
-    status: null,
-  });
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -265,11 +263,14 @@ export function useInsurancePolicies() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get(
-        endpoints.policy.read_partner.list
-      );
+      const response = await axiosInstance.get(endpoints.policy.policy.list);
       if (response.data.success) {
-        setPolicies(response.data.data.policies || []);
+        // Filter only pending_review policies for approval page
+        const allPolicies = response.data.data.policies || [];
+        const pendingPolicies = allPolicies.filter(
+          (policy) => policy.status === "pending_review"
+        );
+        setPolicies(pendingPolicies);
       } else {
         throw new Error(response.data.message || "Failed to fetch policies");
       }
@@ -278,7 +279,7 @@ export function useInsurancePolicies() {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch policies";
       setError(errorMessage);
-      message.error(`Lỗi khi tải danh sách bảo hiểm: ${errorMessage}`);
+      message.error(getApprovalError("LOAD_LIST_FAILED"));
       setPolicies([]);
     } finally {
       setLoading(false);
@@ -289,51 +290,20 @@ export function useInsurancePolicies() {
     fetchPolicies();
   }, [fetchPolicies]);
 
-  const filteredData = useMemo(() => {
-    return policies.filter((item) => {
-      const matchesSearch =
-        item?.policy_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item?.farmer_id?.toLowerCase().includes(searchText.toLowerCase());
-
-      const matchesStatus = !filters.status || item.status === filters.status;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [policies, searchText, filters]);
-
-  const handleSearch = (value) => {
-    setSearchText(value);
-  };
-
-  const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleFormSubmit = (values) => {
-    setSearchText(values.search || "");
-    setFilters({
-      status: values.status || null,
-    });
-  };
-
-  const handleClearFilters = () => {
-    setSearchText("");
-    setFilters({
-      status: null,
-    });
-  };
+  // Use the reusable table data hook
+  const tableData = useTableData(policies, {
+    searchFields: ["policy_number", "farmer_id"],
+    defaultFilters: {},
+    pageSize: 10,
+  });
 
   return {
-    filteredData,
+    ...tableData,
     loading,
     error,
-    searchText,
-    filters,
-    handleSearch,
-    handleFilterChange,
-    handleFormSubmit,
-    handleClearFilters,
     refetch: fetchPolicies,
+    // Keep original data for calculations
+    allPolicies: policies,
   };
 }
 
@@ -341,25 +311,54 @@ export function useInsurancePolicies() {
 export function useInsurancePolicyDetail(id) {
   const [policy, setPolicy] = useState(null);
   const [farm, setFarm] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading = true
   const [error, setError] = useState(null);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const fetchPolicyDetail = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
     setError(null);
+    setAccessDenied(false);
     try {
+      // Get user profile from localStorage
+      let userProfile = null;
+      try {
+        const meData = localStorage.getItem("me");
+        if (meData) {
+          userProfile = JSON.parse(meData);
+        }
+      } catch (e) {
+        console.error("Failed to parse user profile:", e);
+      }
+
       // 1. Fetch Policy Detail
       const policyResponse = await axiosInstance.get(
-        endpoints.policy.read_partner.detail(id)
+        endpoints.policy.policy.detail(id)
       );
 
       if (policyResponse.data.success) {
         const policyData = policyResponse.data.data;
+
+        // 2. Validate access: check if insurance_provider_id matches user's user_id
+        if (
+          userProfile &&
+          userProfile.user_id &&
+          policyData.insurance_provider_id !== userProfile.user_id
+        ) {
+          setAccessDenied(true);
+          setError(getApprovalError("UNAUTHORIZED_ACCESS"));
+          message.error(getApprovalError("UNAUTHORIZED_ACCESS"));
+          setPolicy(null);
+          setFarm(null);
+          setLoading(false);
+          return;
+        }
+
         setPolicy(policyData);
 
-        // 2. Fetch Farm Detail if farm_id exists
+        // 3. Fetch Farm Detail if farm_id exists
         if (policyData.farm_id) {
           const farmResponse = await axiosInstance.get(
             endpoints.applications.detail(policyData.farm_id)
@@ -378,7 +377,7 @@ export function useInsurancePolicyDetail(id) {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch policy detail";
       setError(errorMessage);
-      message.error(`Lỗi khi tải chi tiết bảo hiểm: ${errorMessage}`);
+      message.error(getApprovalError("LOAD_FAILED"));
       setPolicy(null);
       setFarm(null);
     } finally {
@@ -421,6 +420,42 @@ export function useInsurancePolicyDetail(id) {
     };
   }, [farm]);
 
+  // Underwriting function (approve/reject)
+  const submitUnderwriting = useCallback(
+    async (underwritingData) => {
+      if (!id) return { success: false, message: "Policy ID is required" };
+
+      try {
+        const response = await axiosInstance.post(
+          endpoints.policy.policy.underwriting(id),
+          underwritingData
+        );
+
+        if (response.data.success) {
+          const successMessage =
+            underwritingData.underwriting_status === "approved"
+              ? getApprovalSuccess("APPROVED")
+              : getApprovalSuccess("REJECTED");
+          message.success(successMessage);
+          return { success: true, message: successMessage };
+        } else {
+          throw new Error(
+            response.data.message || "Failed to submit underwriting"
+          );
+        }
+      } catch (error) {
+        console.error("Error submitting underwriting:", error);
+        const errorMessage =
+          underwritingData.underwriting_status === "approved"
+            ? getApprovalError("APPROVE_FAILED")
+            : getApprovalError("REJECT_FAILED");
+        message.error(errorMessage);
+        return { success: false, message: errorMessage };
+      }
+    },
+    [id]
+  );
+
   return {
     policy,
     farm,
@@ -428,6 +463,8 @@ export function useInsurancePolicyDetail(id) {
     farmAnalysis,
     loading,
     error,
+    accessDenied,
+    submitUnderwriting,
     refetch: fetchPolicyDetail,
   };
 }

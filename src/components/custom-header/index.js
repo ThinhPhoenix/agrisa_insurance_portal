@@ -35,11 +35,14 @@ export default function CustomHeader() {
 
       if (menuItem) {
         foundItems.push(menuItem);
-        // Don't allow clicking on parent items that only have children (no actual page)
-        // Only the last item or items without children should be clickable
+        // Don't allow clicking on:
+        // 1. Parent items that only have children (no actual page)
+        // 2. Last item in breadcrumb (current page)
+        // 3. Items with disableBreadcrumbLink flag (require query params or special handling)
         const isLastItem = i === segments.length - 1;
         const hasChildren = menuItem.children && menuItem.children.length > 0;
-        const href = isLastItem || hasChildren ? undefined : currentPath;
+        const isDisabled = menuItem.disableBreadcrumbLink === true;
+        const href = isLastItem || hasChildren || isDisabled ? undefined : currentPath;
         items.push({
           title: menuItem.label,
           href,

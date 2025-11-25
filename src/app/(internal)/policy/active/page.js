@@ -4,7 +4,7 @@ import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { getApprovalInfo } from "@/libs/message";
-import { useInsurancePolicies } from "@/services/hooks/approval/use-aproval";
+import { useActivePolicies } from "@/services/hooks/policy/use-active-policies";
 import {
   CheckCircleOutlined,
   DownloadOutlined,
@@ -18,21 +18,20 @@ import {
 import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useState } from "react";
-import "./approval.css";
+import "../approval/approval.css";
 
 const { Title, Text } = Typography;
 
-export default function InsuranceApprovalPage() {
+export default function ActivePoliciesPage() {
   const {
     paginatedData,
     allPolicies,
     searchText,
-    filters,
     handleFormSubmit,
     handleClearFilters,
     paginationConfig,
     loading,
-  } = useInsurancePolicies();
+  } = useActivePolicies();
 
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
@@ -45,13 +44,13 @@ export default function InsuranceApprovalPage() {
   // Calculate summary stats using allPolicies (unpaginated)
   const summaryStats = {
     totalPolicies: allPolicies.length,
-    pendingReview: allPolicies.filter((p) => p.status === "pending_review")
-      .length,
-    underwritingPending: allPolicies.filter(
-      (p) => p.underwriting_status === "pending"
-    ).length,
+    activePolicies: allPolicies.filter((p) => p.status === "active").length,
     totalPremium: allPolicies.reduce(
       (sum, p) => sum + (p.total_farmer_premium || 0),
+      0
+    ),
+    totalCoverage: allPolicies.reduce(
+      (sum, p) => sum + (p.coverage_amount || 0),
       0
     ),
   };
@@ -110,13 +109,20 @@ export default function InsuranceApprovalPage() {
           color={getStatusColor(record.status)}
           className="insurance-status-tag"
         >
-          {record.status === "pending_review"
-            ? "Chờ duyệt"
-            : record.status === "active"
-            ? "Đang hoạt động"
-            : record.status}
+          {record.status === "active" ? "Đang hoạt động" : record.status}
         </Tag>
       ),
+    },
+    {
+      title: "Số tiền bảo hiểm",
+      dataIndex: "coverage_amount",
+      key: "coverage_amount",
+      width: 150,
+      render: (val) =>
+        new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(val),
     },
     {
       title: "Phí bảo hiểm",
@@ -143,13 +149,28 @@ export default function InsuranceApprovalPage() {
       ),
     },
     {
+      title: "Ngày kết thúc",
+      dataIndex: "coverage_end_date",
+      key: "coverage_end_date",
+      width: 120,
+      render: (_, record) => (
+        <div className="insurance-statistics">
+          <div className="insurance-stat-item">
+            {new Date(record.coverage_end_date * 1000).toLocaleDateString(
+              "vi-VN"
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
       title: "Hành động",
       key: "action",
       fixed: "right",
       width: 100,
       render: (_, record) => (
         <div className="insurance-actions-cell">
-          <Link href={`/policy/policy-detail?id=${record.id}&type=approval`}>
+          <Link href={`/policy/policy-detail?id=${record.id}&type=active`}>
             <Button
               type="dashed"
               size="small"
@@ -164,7 +185,7 @@ export default function InsuranceApprovalPage() {
     },
   ];
 
-  // Search fields
+  // Search fields - no status filter needed as we already filter active policies
   const searchFields = [
     {
       name: "search",
@@ -210,10 +231,10 @@ export default function InsuranceApprovalPage() {
         <div className="insurance-header">
           <div>
             <Title level={2} className="insurance-title">
-              Duyệt Đơn Bảo Hiểm
+              Đơn Bảo Hiểm Đang Hoạt Động
             </Title>
             <Text className="insurance-subtitle">
-              Xem xét và phê duyệt các đơn đăng ký bảo hiểm nông nghiệp
+              Quản lý và theo dõi các đơn bảo hiểm nông nghiệp đang hoạt động
             </Text>
           </div>
         </div>
@@ -228,7 +249,9 @@ export default function InsuranceApprovalPage() {
               <div className="insurance-summary-value-compact">
                 {summaryStats.totalPolicies}
               </div>
-              <div className="insurance-summary-label-compact">Tổng đơn</div>
+              <div className="insurance-summary-label-compact">
+                Tổng đơn hoạt động
+              </div>
             </div>
           </div>
 
@@ -238,9 +261,11 @@ export default function InsuranceApprovalPage() {
             </div>
             <div className="insurance-summary-content">
               <div className="insurance-summary-value-compact">
-                {summaryStats.pendingReview}
+                {summaryStats.activePolicies}
               </div>
-              <div className="insurance-summary-label-compact">Chờ duyệt</div>
+              <div className="insurance-summary-label-compact">
+                Đang hiệu lực
+              </div>
             </div>
           </div>
 
@@ -250,10 +275,14 @@ export default function InsuranceApprovalPage() {
             </div>
             <div className="insurance-summary-content">
               <div className="insurance-summary-value-compact">
-                {summaryStats.underwritingPending}
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                  maximumFractionDigits: 0,
+                }).format(summaryStats.totalCoverage)}
               </div>
               <div className="insurance-summary-label-compact">
-                Chờ thẩm định
+                Tổng số tiền BH
               </div>
             </div>
           </div>
@@ -292,7 +321,7 @@ export default function InsuranceApprovalPage() {
                     <div className="space-y-4">
                       <CustomForm
                         fields={searchFields}
-                        gridColumns="1fr 1fr 1fr 1fr"
+                        gridColumns="1fr 1fr 1fr"
                         gap="16px"
                         onSubmit={handleFormSubmitWrapper}
                       />
@@ -307,9 +336,6 @@ export default function InsuranceApprovalPage() {
         {/* Table */}
         <div className="insurance-table-wrapper">
           <div className="flex justify-start items-center gap-2 mb-2">
-            {/* <Button type="primary" icon={<SafetyOutlined />}>
-              Duyệt hàng loạt
-            </Button> */}
             <Button icon={<DownloadOutlined />}>Xuất excel</Button>
             <Button icon={<DownloadOutlined />}>Xuất báo cáo</Button>
             <SelectedColumn

@@ -54,7 +54,7 @@ const PolicyDetailPage = ({ params }) => {
     const loadPolicyDetail = async () => {
       if (!params.id) {
         message.error("ID chính sách không hợp lệ");
-        router.push("/policy");
+        router.push("/policy/base-policy");
         return;
       }
 
@@ -62,7 +62,7 @@ const PolicyDetailPage = ({ params }) => {
       const meData = localStorage.getItem("me");
       if (!meData) {
         message.error("Không tìm thấy thông tin người dùng");
-        router.push("/policy");
+        router.push("/policy/base-policy");
         return;
       }
 
@@ -73,7 +73,7 @@ const PolicyDetailPage = ({ params }) => {
 
         if (!userId) {
           message.error("Không tìm thấy User ID trong thông tin người dùng");
-          router.push("/policy");
+          router.push("/policy/base-policy");
           return;
         }
 
@@ -97,7 +97,7 @@ const PolicyDetailPage = ({ params }) => {
 
         if (!policyData) {
           message.error("Không tìm thấy chính sách");
-          router.push("/policy");
+          router.push("/policy/base-policy");
           return;
         }
 
@@ -110,13 +110,13 @@ const PolicyDetailPage = ({ params }) => {
           message.error(
             "Bạn không có quyền truy cập chính sách này. Vi phạm bảo mật!"
           );
-          router.push("/policy");
+          router.push("/policy/base-policy");
           return;
         }
       } catch (error) {
         console.error("❌ Error loading policy detail:", error);
         message.error("Có lỗi xảy ra khi tải thông tin chính sách");
-        router.push("/policy");
+        router.push("/policy/base-policy");
       }
     };
 
@@ -258,7 +258,7 @@ const PolicyDetailPage = ({ params }) => {
   };
 
   const handleBack = () => {
-    router.push("/policy");
+    router.push("/policy/base-policy");
   };
 
   const getStatusTag = (status) => {

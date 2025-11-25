@@ -44,10 +44,12 @@ export const endpoints = {
       get_count_by_status: (status) =>
         `/policy/protected/api/v2/base-policies/count/status/${status}`,
     },
-    read_partner: {
+    policy: {
       list: "/policy/protected/api/v2/policies/read-partner/list",
       detail: (id) =>
         `/policy/protected/api/v2/policies/read-partner/detail/${id}`,
+      underwriting: (policy_id) =>
+        `/policy/protected/api/v2/policies/create-partner/underwriting/${policy_id}`,
     },
   },
   applications: {
@@ -61,5 +63,17 @@ export const endpoints = {
   profile: {
     get_partner: (partner_id) =>
       `/profile/public/api/v1/insurance-partners/${partner_id}`,
+  },
+  riskAnalysis: {
+    by_policy: (policy_id) =>
+      `/policy/protected/api/v2/risk-analysis/read-partner/by-policy/${policy_id}`,
+  },
+  monitoring: {
+    data: (farm_id, parameter_name) =>
+      `/policy/protected/api/v2/policies/read-partner/monitoring-data/${farm_id}/${parameter_name}`,
+  },
+  dataSources: {
+    detail: (data_source_id) =>
+      `/policy/protected/api/v2/data-sources/${data_source_id}`,
   },
 };

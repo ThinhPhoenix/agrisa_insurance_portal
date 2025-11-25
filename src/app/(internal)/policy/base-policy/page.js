@@ -314,7 +314,7 @@ export default function PolicyPage() {
       width: 150,
       render: (_, record) => (
         <div className="policy-actions-cell">
-          <Link href={`/policy/${record.id}`}>
+          <Link href={`/policy/base-policy/${record.id}`}>
             <Button
               type="dashed"
               size="small"
@@ -520,7 +520,7 @@ export default function PolicyPage() {
           {/* Table */}
           <div>
             <div className="flex justify-start items-center gap-2 mb-2">
-              <Link href="/policy/create">
+              <Link href="/policy/base-policy/create">
                 <Button type="primary" icon={<SafetyOutlined />}>
                   Tạo mới
                 </Button>

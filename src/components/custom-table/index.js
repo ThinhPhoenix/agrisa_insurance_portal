@@ -34,16 +34,18 @@ const CustomTable = ({
         rowSelection={rowSelection}
         rowKey={rowKey}
         pagination={
-          pagination
-            ? {
+          pagination === false
+            ? false
+            : typeof pagination === "object"
+            ? { ...pagination, position: ["bottomCenter"] }
+            : {
                 pageSize: 10,
                 showSizeChanger: true,
                 pageSizeOptions: pageSizeOptions,
                 showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} items`,
+                  `${range[0]}-${range[1]} của ${total} mục`,
                 position: ["bottomCenter"],
               }
-            : false
         }
         {...restProps}
       />

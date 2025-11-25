@@ -1,4 +1,4 @@
-import mockData from "@/app/(internal)/policy/mock..json";
+import mockData from "@/app/(internal)/policy/base-policy/mock..json";
 import axiosInstance from "@/libs/axios-instance";
 import { getErrorMessage } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";

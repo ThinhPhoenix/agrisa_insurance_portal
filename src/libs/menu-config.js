@@ -6,6 +6,12 @@ export const sidebarMenuItems = [
       { key: "policy/base-policy", label: "Danh sách bảo hiểm" },
       { key: "policy/approval", label: "Duyệt đơn đăng ký" },
       { key: "policy/active", label: "Đơn đang hoạt động" },
+      {
+        key: "policy/policy-detail",
+        label: "Chi tiết đơn bảo hiểm",
+        hideInMenu: true, // Ẩn trong sidebar
+        disableBreadcrumbLink: true, // Vô hiệu hóa link trong breadcrumb (vì cần query params)
+      },
     ],
   },
   {

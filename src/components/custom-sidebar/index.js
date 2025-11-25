@@ -16,8 +16,17 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-// Map central menu config to AntD menu items and attach icons
-const items = sidebarMenuItems.map((item) => ({
+// Filter out items with hideInMenu flag and map to AntD menu items with icons
+const filterMenuItems = (items) => {
+  return items
+    .filter(item => !item.hideInMenu)
+    .map(item => ({
+      ...item,
+      children: item.children ? filterMenuItems(item.children) : undefined,
+    }));
+};
+
+const items = filterMenuItems(sidebarMenuItems).map((item) => ({
   ...item,
   icon: getIconForKey(item.key),
 }));

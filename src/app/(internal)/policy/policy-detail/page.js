@@ -53,7 +53,7 @@ import {
   Tooltip,
 } from "chart.js";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../approval/approval.css";
 
 // Register ChartJS components
@@ -121,6 +121,47 @@ export default function PolicyDetailPage() {
   // Pagination state for photos
   const [currentPhotoPage, setCurrentPhotoPage] = useState(1);
   const photosPerPage = 12;
+
+  // Data source names mapping
+  const [dataSourceNames, setDataSourceNames] = useState({});
+
+  // Fetch data source names when basePolicy is loaded
+  useEffect(() => {
+    const fetchDataSourceNames = async () => {
+      if (!basePolicy?.triggers) return;
+
+      const uniqueDataSourceIds = new Set();
+      basePolicy.triggers.forEach((trigger) => {
+        trigger.conditions?.forEach((condition) => {
+          if (condition.data_source_id) {
+            uniqueDataSourceIds.add(condition.data_source_id);
+          }
+        });
+      });
+
+      const names = {};
+      await Promise.all(
+        Array.from(uniqueDataSourceIds).map(async (dataSourceId) => {
+          try {
+            const response = await axiosInstance.get(
+              endpoints.dataSources.detail(dataSourceId)
+            );
+            if (response.data.success) {
+              const source = response.data.data;
+              names[dataSourceId] = source.display_name_vi || source.parameter_name || dataSourceId;
+            }
+          } catch (error) {
+            console.error(`Error fetching data source ${dataSourceId}:`, error);
+            names[dataSourceId] = dataSourceId; // Fallback to ID
+          }
+        })
+      );
+
+      setDataSourceNames(names);
+    };
+
+    fetchDataSourceNames();
+  }, [basePolicy]);
 
   const handleDecision = (type) => {
     setDecisionType(type);
@@ -651,6 +692,15 @@ export default function PolicyDetailPage() {
                               dataIndex: "data_source_id",
                               key: "data_source",
                               ellipsis: true,
+                              render: (dataSourceId) => (
+                                <span>
+                                  {dataSourceNames[dataSourceId] || (
+                                    <Text type="secondary" className="text-xs">
+                                      Đang tải...
+                                    </Text>
+                                  )}
+                                </span>
+                              ),
                             },
                             {
                               title: "Toán tử",

@@ -39,6 +39,12 @@ export {
   splitMessage,
 } from "./common-message.js";
 export {
+  // Approval helpers
+  getApprovalError,
+  getApprovalInfo,
+  getApprovalMessage,
+  getApprovalSuccess,
+  getApprovalWarning,
   getBasePolicyError,
   getBasePolicyInfo,
   getBasePolicyMessage,
@@ -121,6 +127,12 @@ export const Messages = {
 
   // Policy specific messages
   policy: {
+    approval: {
+      success: (key, params) => getApprovalSuccess(key, params),
+      error: (key, params) => getApprovalError(key, params),
+      info: (key, params) => getApprovalInfo(key, params),
+      warning: (key, params) => getApprovalWarning(key, params),
+    },
     basePolicy: {
       success: (key, params) => getBasePolicySuccess(key, params),
       error: (key, params) => getBasePolicyError(key, params),

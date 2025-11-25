@@ -400,6 +400,39 @@ export const POLICY_MESSAGES = {
       CONFIRM_DELETE: "Bạn có chắc chắn muốn xóa?",
     },
   },
+
+  // APPROVAL & UNDERWRITING MESSAGES
+  APPROVAL: {
+    SUCCESS: {
+      APPROVED: "Chấp thuận đơn bảo hiểm thành công!",
+      REJECTED: "Từ chối đơn bảo hiểm thành công!",
+      POLICY_LOADED: "Tải thông tin đơn bảo hiểm thành công!",
+    },
+
+    ERROR: {
+      LOAD_FAILED: "Không thể tải thông tin đơn bảo hiểm!",
+      LOAD_LIST_FAILED: "Không thể tải danh sách đơn bảo hiểm!",
+      APPROVE_FAILED: "Chấp thuận đơn bảo hiểm thất bại!",
+      REJECT_FAILED: "Từ chối đơn bảo hiểm thất bại!",
+      UNAUTHORIZED_ACCESS: "Truy cập bị từ chối!",
+      POLICY_NOT_FOUND: "Không tìm thấy đơn bảo hiểm!",
+      FARM_NOT_FOUND: "Không tìm thấy thông tin trang trại!",
+      INVALID_STATUS: "Trạng thái đơn bảo hiểm không hợp lệ!",
+      REASON_REQUIRED: "Vui lòng nhập lý do từ chối!",
+    },
+
+    INFO: {
+      LOADING_POLICY: "Đang tải thông tin đơn bảo hiểm...",
+      LOADING_LIST: "Đang tải danh sách đơn bảo hiểm...",
+      PROCESSING_APPROVAL: "Đang xử lý chấp thuận...",
+      PROCESSING_REJECTION: "Đang xử lý từ chối...",
+    },
+
+    WARNING: {
+      CONFIRM_APPROVE: "Bạn có chắc chắn muốn chấp thuận đơn bảo hiểm này?",
+      CONFIRM_REJECT: "Bạn có chắc chắn muốn từ chối đơn bảo hiểm này?",
+    },
+  },
 };
 
 /**
@@ -591,6 +624,31 @@ export const getGeneralInfo = (key, params = {}) =>
   getGeneralMessage("INFO", key, params);
 export const getGeneralWarning = (key, params = {}) =>
   getGeneralMessage("WARNING", key, params);
+
+// Approval helpers
+export const getApprovalMessage = (type, key, params = {}) => {
+  const category = POLICY_MESSAGES.APPROVAL[type];
+  if (!category || !category[key]) {
+    return `Approval message not found: APPROVAL.${type}.${key}`;
+  }
+
+  let message = category[key];
+
+  Object.keys(params).forEach((param) => {
+    message = message.replace(new RegExp(`{${param}}`, "g"), params[param]);
+  });
+
+  return message;
+};
+
+export const getApprovalSuccess = (key, params = {}) =>
+  getApprovalMessage("SUCCESS", key, params);
+export const getApprovalError = (key, params = {}) =>
+  getApprovalMessage("ERROR", key, params);
+export const getApprovalInfo = (key, params = {}) =>
+  getApprovalMessage("INFO", key, params);
+export const getApprovalWarning = (key, params = {}) =>
+  getApprovalMessage("WARNING", key, params);
 
 // Default export
 export default POLICY_MESSAGES;

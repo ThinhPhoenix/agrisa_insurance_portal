@@ -1,6 +1,12 @@
 "use client";
 
 import axiosInstance from "@/libs/axios-instance";
+import {
+  getApprovalError,
+  getApprovalInfo,
+  getApprovalSuccess,
+} from "@/libs/message";
+import { getErrorMessage } from "@/libs/message/common-message";
 import { endpoints } from "@/services/endpoints";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -65,7 +71,7 @@ export function useApplications() {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch applications";
       setError(errorMessage);
-      message.error(`Lỗi khi tải danh sách đơn đăng ký: ${errorMessage}`);
+      message.error(getApprovalError("LOAD_LIST_FAILED"));
       setApplications([]);
     } finally {
       setLoading(false);
@@ -198,7 +204,7 @@ export function useApplicationDetail(id) {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch application detail";
       setError(errorMessage);
-      message.error(`Lỗi khi tải chi tiết đơn đăng ký: ${errorMessage}`);
+      message.error(getApprovalError("LOAD_FAILED"));
       setApplication(null);
     } finally {
       setLoading(false);
@@ -278,7 +284,7 @@ export function useInsurancePolicies() {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch policies";
       setError(errorMessage);
-      message.error(`Lỗi khi tải danh sách bảo hiểm: ${errorMessage}`);
+      message.error(getApprovalError("LOAD_LIST_FAILED"));
       setPolicies([]);
     } finally {
       setLoading(false);
@@ -341,15 +347,28 @@ export function useInsurancePolicies() {
 export function useInsurancePolicyDetail(id) {
   const [policy, setPolicy] = useState(null);
   const [farm, setFarm] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading = true
   const [error, setError] = useState(null);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const fetchPolicyDetail = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
     setError(null);
+    setAccessDenied(false);
     try {
+      // Get user profile from localStorage
+      let userProfile = null;
+      try {
+        const meData = localStorage.getItem("me");
+        if (meData) {
+          userProfile = JSON.parse(meData);
+        }
+      } catch (e) {
+        console.error("Failed to parse user profile:", e);
+      }
+
       // 1. Fetch Policy Detail
       const policyResponse = await axiosInstance.get(
         endpoints.policy.read_partner.detail(id)
@@ -357,9 +376,25 @@ export function useInsurancePolicyDetail(id) {
 
       if (policyResponse.data.success) {
         const policyData = policyResponse.data.data;
+
+        // 2. Validate access: check if insurance_provider_id matches user's user_id
+        if (
+          userProfile &&
+          userProfile.user_id &&
+          policyData.insurance_provider_id !== userProfile.user_id
+        ) {
+          setAccessDenied(true);
+          setError(getApprovalError("UNAUTHORIZED_ACCESS"));
+          message.error(getApprovalError("UNAUTHORIZED_ACCESS"));
+          setPolicy(null);
+          setFarm(null);
+          setLoading(false);
+          return;
+        }
+
         setPolicy(policyData);
 
-        // 2. Fetch Farm Detail if farm_id exists
+        // 3. Fetch Farm Detail if farm_id exists
         if (policyData.farm_id) {
           const farmResponse = await axiosInstance.get(
             endpoints.applications.detail(policyData.farm_id)
@@ -378,7 +413,7 @@ export function useInsurancePolicyDetail(id) {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch policy detail";
       setError(errorMessage);
-      message.error(`Lỗi khi tải chi tiết bảo hiểm: ${errorMessage}`);
+      message.error(getApprovalError("LOAD_FAILED"));
       setPolicy(null);
       setFarm(null);
     } finally {
@@ -421,6 +456,42 @@ export function useInsurancePolicyDetail(id) {
     };
   }, [farm]);
 
+  // Underwriting function (approve/reject)
+  const submitUnderwriting = useCallback(
+    async (underwritingData) => {
+      if (!id) return { success: false, message: "Policy ID is required" };
+
+      try {
+        const response = await axiosInstance.post(
+          endpoints.policy.create_partner.underwriting(id),
+          underwritingData
+        );
+
+        if (response.data.success) {
+          const successMessage =
+            underwritingData.underwriting_status === "approved"
+              ? getApprovalSuccess("APPROVED")
+              : getApprovalSuccess("REJECTED");
+          message.success(successMessage);
+          return { success: true, message: successMessage };
+        } else {
+          throw new Error(
+            response.data.message || "Failed to submit underwriting"
+          );
+        }
+      } catch (error) {
+        console.error("Error submitting underwriting:", error);
+        const errorMessage =
+          underwritingData.underwriting_status === "approved"
+            ? getApprovalError("APPROVE_FAILED")
+            : getApprovalError("REJECT_FAILED");
+        message.error(errorMessage);
+        return { success: false, message: errorMessage };
+      }
+    },
+    [id]
+  );
+
   return {
     policy,
     farm,
@@ -428,6 +499,8 @@ export function useInsurancePolicyDetail(id) {
     farmAnalysis,
     loading,
     error,
+    accessDenied,
+    submitUnderwriting,
     refetch: fetchPolicyDetail,
   };
 }

@@ -1,7 +1,10 @@
 "use client";
 
 import { CustomForm } from "@/components/custom-form";
+import ErrorResult from "@/components/error-result";
 import OpenStreetMapWithPolygon from "@/components/map-polygon";
+import { getApprovalError, getApprovalInfo } from "@/libs/message";
+import { getErrorMessage } from "@/libs/message/common-message";
 import { useInsurancePolicyDetail } from "@/services/hooks/approval/use-aproval";
 import { DownloadOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import {
@@ -12,33 +15,35 @@ import {
   Divider,
   Form,
   Image,
-  Input,
   Layout,
   Modal,
   Pagination,
   Row,
-  Select,
   Space,
   Spin,
   Tag,
   Typography,
-  message,
 } from "antd";
 import { useParams, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import "../approval.css";
 
 const { Title, Text } = Typography;
-const { Option } = Select;
-const { TextArea } = Input;
 
 export default function InsurancePolicyDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { policy, farm, satelliteData, farmAnalysis, loading } =
-    useInsurancePolicyDetail(params.id);
+  const {
+    policy,
+    farm,
+    farmAnalysis,
+    loading,
+    accessDenied,
+    submitUnderwriting,
+  } = useInsurancePolicyDetail(params.id);
   const [decisionModalVisible, setDecisionModalVisible] = useState(false);
   const [decisionType, setDecisionType] = useState(null); // 'approve' or 'reject'
+  const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
   const formRef = useRef();
 
@@ -51,24 +56,57 @@ export default function InsurancePolicyDetailPage() {
     setDecisionModalVisible(true);
   };
 
-  const handleDecisionSubmit = (values) => {
-    // Simulate API call
-    message.success(
-      `${
-        decisionType === "approve" ? "Chấp thuận" : "Từ chối"
-      } đơn bảo hiểm thành công!`
-    );
-    setDecisionModalVisible(false);
-    form.resetFields();
-    // Redirect back to list
-    router.push("/policy/approval");
+  const handleDecisionSubmit = async (values) => {
+    setSubmitting(true);
+    try {
+      // Build underwriting request based on decision type
+      const underwritingData = {
+        underwriting_status:
+          decisionType === "approve" ? "approved" : "rejected",
+        recommendations: {
+          risk_level: "low",
+          suggested_premium_adjustment: 0,
+        },
+        reason:
+          decisionType === "approve"
+            ? values.note ||
+              "All documentation verified and risk assessment completed"
+            : values.reason || getApprovalError("REASON_REQUIRED"),
+        reason_evidence: {
+          documents_verified: decisionType === "approve",
+          risk_score: decisionType === "approve" ? 25 : 75,
+          fraud_check: decisionType === "approve" ? "passed" : "failed",
+        },
+        validation_notes:
+          decisionType === "approve"
+            ? values.note ||
+              "Policy meets all underwriting criteria. Approved for activation."
+            : values.reason,
+      };
+
+      // Submit underwriting decision
+      const result = await submitUnderwriting(underwritingData);
+
+      if (result.success) {
+        setDecisionModalVisible(false);
+        form.resetFields();
+        // Redirect back to list after short delay
+        setTimeout(() => {
+          router.push("/policy/approval");
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Error submitting decision:", error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleFormSubmit = async () => {
     try {
       const values = await formRef.current?.validateFields();
       if (values) {
-        handleDecisionSubmit(values);
+        await handleDecisionSubmit(values);
       }
     } catch (error) {
       console.log("Validation failed:", error);
@@ -130,11 +168,35 @@ export default function InsurancePolicyDetailPage() {
     setCurrentPhotoPage(page);
   };
 
-  if (loading || !policy) {
+  if (loading) {
     return (
       <Layout.Content className="application-loading">
-        <Spin size="large" tip="Đang tải thông tin đơn bảo hiểm..." />
+        <Spin size="large" tip={getApprovalInfo("LOADING_POLICY")} />
       </Layout.Content>
+    );
+  }
+
+  // Show access denied message if validation failed
+  if (accessDenied) {
+    return (
+      <ErrorResult
+        status="403"
+        subTitle={getErrorMessage("FORBIDDEN")}
+        backUrl="/policy/approval"
+        backText="Quay lại danh sách"
+      />
+    );
+  }
+
+  // Show not found if policy doesn't exist after loading
+  if (!policy) {
+    return (
+      <ErrorResult
+        status="404"
+        subTitle={getApprovalError("POLICY_NOT_FOUND")}
+        backUrl="/policy/approval"
+        backText="Quay lại danh sách"
+      />
     );
   }
 
@@ -419,10 +481,10 @@ export default function InsurancePolicyDetailPage() {
               <Col xs={24} sm={12} md={8}>
                 <Card
                   size="small"
-                  className="application-doc-card border border-gray-200"
-                  // onClick={() =>
-                  //   window.open(policy.signed_policy_document_url, "_blank")
-                  // }
+                  className="application-doc-card border border-gray-200 cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() =>
+                    window.open(policy.signed_policy_document_url, "_blank")
+                  }
                 >
                   <div className="application-doc-content">
                     <DownloadOutlined className="application-doc-icon" />
@@ -458,16 +520,36 @@ export default function InsurancePolicyDetailPage() {
               : "Từ chối đơn bảo hiểm"
           }
           open={decisionModalVisible}
-          onCancel={() => setDecisionModalVisible(false)}
+          onCancel={() => {
+            if (!submitting) {
+              setDecisionModalVisible(false);
+              form.resetFields();
+            }
+          }}
           footer={[
-            <Button key="cancel" onClick={() => setDecisionModalVisible(false)}>
+            <Button
+              key="cancel"
+              onClick={() => {
+                setDecisionModalVisible(false);
+                form.resetFields();
+              }}
+              disabled={submitting}
+            >
               Hủy
             </Button>,
-            <Button key="submit" type="primary" onClick={handleFormSubmit}>
+            <Button
+              key="submit"
+              type="primary"
+              onClick={handleFormSubmit}
+              loading={submitting}
+              disabled={submitting}
+            >
               Xác nhận
             </Button>,
           ]}
           width={600}
+          closable={!submitting}
+          maskClosable={!submitting}
         >
           <CustomForm
             ref={formRef}

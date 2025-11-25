@@ -49,6 +49,10 @@ export const endpoints = {
       detail: (id) =>
         `/policy/protected/api/v2/policies/read-partner/detail/${id}`,
     },
+    create_partner: {
+      underwriting: (policy_id) =>
+        `/policy/protected/api/v2/policies/create-partner/underwriting/${policy_id}`,
+    },
   },
   applications: {
     list: "/policy/protected/api/v2/farms",

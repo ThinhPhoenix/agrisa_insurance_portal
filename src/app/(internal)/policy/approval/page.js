@@ -3,6 +3,7 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
+import { getApprovalInfo } from "@/libs/message";
 import { useInsurancePolicies } from "@/services/hooks/approval/use-aproval";
 import {
   CheckCircleOutlined,
@@ -19,6 +20,7 @@ import {
   Collapse,
   Layout,
   Space,
+  Spin,
   Tag,
   Typography,
 } from "antd";
@@ -209,6 +211,16 @@ export default function InsuranceApprovalPage() {
     },
   ];
 
+  if (loading) {
+    return (
+      <Layout.Content className="insurance-content">
+        <div className="flex justify-center items-center h-96">
+          <Spin size="large" tip={getApprovalInfo("LOADING_LIST")} />
+        </div>
+      </Layout.Content>
+    );
+  }
+
   return (
     <Layout.Content className="insurance-content">
       <div className="insurance-space">
@@ -330,7 +342,6 @@ export default function InsuranceApprovalPage() {
             dataSource={filteredData}
             visibleColumns={visibleColumns}
             rowKey="id"
-            loading={loading}
             scroll={{ x: 800 }}
             pagination={{
               total: filteredData.length,

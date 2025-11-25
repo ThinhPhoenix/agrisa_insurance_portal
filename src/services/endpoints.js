@@ -44,12 +44,10 @@ export const endpoints = {
       get_count_by_status: (status) =>
         `/policy/protected/api/v2/base-policies/count/status/${status}`,
     },
-    read_partner: {
+    policy: {
       list: "/policy/protected/api/v2/policies/read-partner/list",
       detail: (id) =>
         `/policy/protected/api/v2/policies/read-partner/detail/${id}`,
-    },
-    create_partner: {
       underwriting: (policy_id) =>
         `/policy/protected/api/v2/policies/create-partner/underwriting/${policy_id}`,
     },

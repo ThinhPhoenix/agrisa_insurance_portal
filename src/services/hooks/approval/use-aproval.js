@@ -271,11 +271,14 @@ export function useInsurancePolicies() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get(
-        endpoints.policy.read_partner.list
-      );
+      const response = await axiosInstance.get(endpoints.policy.policy.list);
       if (response.data.success) {
-        setPolicies(response.data.data.policies || []);
+        // Filter only pending_review policies for approval page
+        const allPolicies = response.data.data.policies || [];
+        const pendingPolicies = allPolicies.filter(
+          (policy) => policy.status === "pending_review"
+        );
+        setPolicies(pendingPolicies);
       } else {
         throw new Error(response.data.message || "Failed to fetch policies");
       }
@@ -371,7 +374,7 @@ export function useInsurancePolicyDetail(id) {
 
       // 1. Fetch Policy Detail
       const policyResponse = await axiosInstance.get(
-        endpoints.policy.read_partner.detail(id)
+        endpoints.policy.policy.detail(id)
       );
 
       if (policyResponse.data.success) {
@@ -463,7 +466,7 @@ export function useInsurancePolicyDetail(id) {
 
       try {
         const response = await axiosInstance.post(
-          endpoints.policy.create_partner.underwriting(id),
+          endpoints.policy.policy.underwriting(id),
           underwritingData
         );
 

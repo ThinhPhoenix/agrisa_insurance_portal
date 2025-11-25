@@ -15,7 +15,17 @@ import {
   SettingOutlined,
   TagOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Row, Space, Tabs, Tooltip, Typography } from "antd";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Row,
+  Space,
+  Tabs,
+  Tooltip,
+  Typography,
+} from "antd";
 import { useRouter } from "next/navigation";
 
 // Components - Lazy loaded for code splitting
@@ -98,7 +108,7 @@ const CreatePolicyPage = () => {
 
   // Handle cancel
   const handleCancel = () => {
-    router.push("/policy");
+    router.push("/policy/base-policy");
   };
 
   // Handle file upload - Memoized to prevent unnecessary re-renders

@@ -3,8 +3,9 @@ export const sidebarMenuItems = [
     key: "policy",
     label: "Quản lý bảo hiểm",
     children: [
-      { key: "policy", label: "Danh sách bảo hiểm" },
+      { key: "policy/base-policy", label: "Danh sách bảo hiểm" },
       { key: "policy/approval", label: "Duyệt đơn đăng ký" },
+      { key: "policy/active", label: "Đơn đang hoạt động" },
     ],
   },
   {
@@ -49,4 +50,5 @@ export const labelTranslations = {
   Create: "Tạo mới",
   Edit: "Chỉnh sửa",
   Profile: "Hồ sơ",
+  BasePolicy: "Chính sách bảo hiểm",
 };

@@ -27,7 +27,7 @@ const SigninPage = () => {
     const isAuthenticated = hasToken || hasRoles;
 
     if (isAuthenticated) {
-      router.push("/policy");
+      router.push("/policy/approval");
     }
   }, [user, router]);
 

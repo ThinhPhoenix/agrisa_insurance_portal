@@ -43,7 +43,7 @@ const CustomTable = ({
                 showSizeChanger: true,
                 pageSizeOptions: pageSizeOptions,
                 showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} items`,
+                  `${range[0]}-${range[1]} của ${total} mục`,
                 position: ["bottomCenter"],
               }
         }

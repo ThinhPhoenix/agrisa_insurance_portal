@@ -170,7 +170,7 @@ export default function ActivePoliciesPage() {
       width: 100,
       render: (_, record) => (
         <div className="insurance-actions-cell">
-          <Link href={`/policy/active/${record.id}`}>
+          <Link href={`/policy/policy-detail?id=${record.id}&type=active`}>
             <Button
               type="dashed"
               size="small"

@@ -39,7 +39,7 @@ const SigninPage = () => {
 
     if (result.success) {
       message.success(result.message);
-      router.push("/policy");
+      router.push("/policy/approval");
     } else {
       message.error(result.message);
     }

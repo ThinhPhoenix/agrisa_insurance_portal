@@ -149,7 +149,7 @@ export default function InsuranceApprovalPage() {
       width: 100,
       render: (_, record) => (
         <div className="insurance-actions-cell">
-          <Link href={`/policy/approval/${record.id}`}>
+          <Link href={`/policy/policy-detail?id=${record.id}&type=approval`}>
             <Button
               type="dashed"
               size="small"

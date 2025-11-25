@@ -15,15 +15,7 @@ import {
   SearchOutlined,
   StarOutlined,
 } from "@ant-design/icons";
-import {
-  Button,
-  Collapse,
-  Layout,
-  Space,
-  Spin,
-  Tag,
-  Typography,
-} from "antd";
+import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useState } from "react";
 import "../approval/approval.css";
@@ -32,10 +24,12 @@ const { Title, Text } = Typography;
 
 export default function ActivePoliciesPage() {
   const {
-    filteredData,
+    paginatedData,
+    allPolicies,
     searchText,
     handleFormSubmit,
     handleClearFilters,
+    paginationConfig,
     loading,
   } = useActivePolicies();
 
@@ -47,15 +41,15 @@ export default function ActivePoliciesPage() {
     "created_at",
   ]);
 
-  // Calculate summary stats
+  // Calculate summary stats using allPolicies (unpaginated)
   const summaryStats = {
-    totalPolicies: filteredData.length,
-    activePolicies: filteredData.filter((p) => p.status === "active").length,
-    totalPremium: filteredData.reduce(
+    totalPolicies: allPolicies.length,
+    activePolicies: allPolicies.filter((p) => p.status === "active").length,
+    totalPremium: allPolicies.reduce(
       (sum, p) => sum + (p.total_farmer_premium || 0),
       0
     ),
-    totalCoverage: filteredData.reduce(
+    totalCoverage: allPolicies.reduce(
       (sum, p) => sum + (p.coverage_amount || 0),
       0
     ),
@@ -115,9 +109,7 @@ export default function ActivePoliciesPage() {
           color={getStatusColor(record.status)}
           className="insurance-status-tag"
         >
-          {record.status === "active"
-            ? "Đang hoạt động"
-            : record.status}
+          {record.status === "active" ? "Đang hoạt động" : record.status}
         </Tag>
       ),
     },
@@ -193,7 +185,7 @@ export default function ActivePoliciesPage() {
     },
   ];
 
-  // Search fields
+  // Search fields - no status filter needed as we already filter active policies
   const searchFields = [
     {
       name: "search",
@@ -355,18 +347,11 @@ export default function ActivePoliciesPage() {
 
           <CustomTable
             columns={columns}
-            dataSource={filteredData}
+            dataSource={paginatedData}
             visibleColumns={visibleColumns}
             rowKey="id"
             scroll={{ x: 800 }}
-            pagination={{
-              total: filteredData.length,
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} của ${total} đơn bảo hiểm`,
-            }}
+            pagination={paginationConfig}
           />
         </div>
       </div>

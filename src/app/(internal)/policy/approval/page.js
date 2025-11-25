@@ -15,15 +15,7 @@ import {
   SearchOutlined,
   StarOutlined,
 } from "@ant-design/icons";
-import {
-  Button,
-  Collapse,
-  Layout,
-  Space,
-  Spin,
-  Tag,
-  Typography,
-} from "antd";
+import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useState } from "react";
 import "./approval.css";
@@ -32,11 +24,13 @@ const { Title, Text } = Typography;
 
 export default function InsuranceApprovalPage() {
   const {
-    filteredData,
+    paginatedData,
+    allPolicies,
     searchText,
     filters,
     handleFormSubmit,
     handleClearFilters,
+    paginationConfig,
     loading,
   } = useInsurancePolicies();
 
@@ -48,15 +42,15 @@ export default function InsuranceApprovalPage() {
     "created_at",
   ]);
 
-  // Calculate summary stats
+  // Calculate summary stats using allPolicies (unpaginated)
   const summaryStats = {
-    totalPolicies: filteredData.length,
-    pendingReview: filteredData.filter((p) => p.status === "pending_review")
+    totalPolicies: allPolicies.length,
+    pendingReview: allPolicies.filter((p) => p.status === "pending_review")
       .length,
-    underwritingPending: filteredData.filter(
+    underwritingPending: allPolicies.filter(
       (p) => p.underwriting_status === "pending"
     ).length,
-    totalPremium: filteredData.reduce(
+    totalPremium: allPolicies.reduce(
       (sum, p) => sum + (p.total_farmer_premium || 0),
       0
     ),
@@ -178,18 +172,6 @@ export default function InsuranceApprovalPage() {
       type: "input",
       placeholder: "Tìm theo số HĐ hoặc mã nông dân...",
       value: searchText,
-    },
-    {
-      name: "status",
-      label: "Trạng thái",
-      type: "combobox",
-      placeholder: "Chọn trạng thái",
-      options: [
-        { label: "Chờ duyệt", value: "pending_review" },
-        { label: "Đang hoạt động", value: "active" },
-        { label: "Từ chối", value: "rejected" },
-      ],
-      value: filters.status,
     },
     {
       name: "searchButton",
@@ -339,18 +321,11 @@ export default function InsuranceApprovalPage() {
 
           <CustomTable
             columns={columns}
-            dataSource={filteredData}
+            dataSource={paginatedData}
             visibleColumns={visibleColumns}
             rowKey="id"
             scroll={{ x: 800 }}
-            pagination={{
-              total: filteredData.length,
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} của ${total} đơn đăng ký`,
-            }}
+            pagination={paginationConfig}
           />
         </div>
       </div>

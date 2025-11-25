@@ -1,17 +1,14 @@
 "use client";
 
 import axiosInstance from "@/libs/axios-instance";
-import { getApprovalError, getApprovalInfo } from "@/libs/message";
+import { getApprovalError } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";
+import { useTableData } from "@/services/hooks/common/use-table-data";
 import { message } from "antd";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // Hook for active insurance policies list
 export function useActivePolicies() {
-  const [searchText, setSearchText] = useState("");
-  const [filters, setFilters] = useState({
-    status: null,
-  });
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -47,36 +44,19 @@ export function useActivePolicies() {
     fetchPolicies();
   }, [fetchPolicies]);
 
-  const filteredData = useMemo(() => {
-    return policies.filter((item) => {
-      const matchesSearch =
-        item?.policy_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item?.farmer_id?.toLowerCase().includes(searchText.toLowerCase());
-
-      return matchesSearch;
-    });
-  }, [policies, searchText]);
-
-  const handleSearch = (value) => {
-    setSearchText(value);
-  };
-
-  const handleFormSubmit = (values) => {
-    setSearchText(values.search || "");
-  };
-
-  const handleClearFilters = () => {
-    setSearchText("");
-  };
+  // Use the reusable table data hook
+  const tableData = useTableData(policies, {
+    searchFields: ["policy_number", "farmer_id"],
+    defaultFilters: {},
+    pageSize: 10,
+  });
 
   return {
-    filteredData,
+    ...tableData,
     loading,
     error,
-    searchText,
-    handleSearch,
-    handleFormSubmit,
-    handleClearFilters,
     refetch: fetchPolicies,
+    // Keep original data for calculations
+    allPolicies: policies,
   };
 }

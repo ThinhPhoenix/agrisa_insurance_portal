@@ -1,13 +1,9 @@
 "use client";
 
 import axiosInstance from "@/libs/axios-instance";
-import {
-  getApprovalError,
-  getApprovalInfo,
-  getApprovalSuccess,
-} from "@/libs/message";
-import { getErrorMessage } from "@/libs/message/common-message";
+import { getApprovalError, getApprovalSuccess } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";
+import { useTableData } from "@/services/hooks/common/use-table-data";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -259,10 +255,6 @@ export function useApplicationDetail(id) {
 
 // Hook for insurance policies list
 export function useInsurancePolicies() {
-  const [searchText, setSearchText] = useState("");
-  const [filters, setFilters] = useState({
-    status: null,
-  });
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -298,51 +290,20 @@ export function useInsurancePolicies() {
     fetchPolicies();
   }, [fetchPolicies]);
 
-  const filteredData = useMemo(() => {
-    return policies.filter((item) => {
-      const matchesSearch =
-        item?.policy_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item?.farmer_id?.toLowerCase().includes(searchText.toLowerCase());
-
-      const matchesStatus = !filters.status || item.status === filters.status;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [policies, searchText, filters]);
-
-  const handleSearch = (value) => {
-    setSearchText(value);
-  };
-
-  const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleFormSubmit = (values) => {
-    setSearchText(values.search || "");
-    setFilters({
-      status: values.status || null,
-    });
-  };
-
-  const handleClearFilters = () => {
-    setSearchText("");
-    setFilters({
-      status: null,
-    });
-  };
+  // Use the reusable table data hook
+  const tableData = useTableData(policies, {
+    searchFields: ["policy_number", "farmer_id"],
+    defaultFilters: {},
+    pageSize: 10,
+  });
 
   return {
-    filteredData,
+    ...tableData,
     loading,
     error,
-    searchText,
-    filters,
-    handleSearch,
-    handleFilterChange,
-    handleFormSubmit,
-    handleClearFilters,
     refetch: fetchPolicies,
+    // Keep original data for calculations
+    allPolicies: policies,
   };
 }
 

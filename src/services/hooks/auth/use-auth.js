@@ -11,7 +11,7 @@ import signInRequestSchema from "@/schemas/sign-in-request-schema";
 import signUpRequestSchema from "@/schemas/sign-up-request-schema";
 import { endpoints } from "@/services/endpoints";
 import { useAuthStore } from "@/stores/auth-store";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 const handleError = (error) => {
   // Use the new mapBackendError function to get Vietnamese messages
@@ -21,12 +21,17 @@ const handleError = (error) => {
 
 export const useSignIn = () => {
   const [error, setError] = useState(null);
+  const hasShownMeErrorRef = useRef(false);
   const {
     setUser,
     setLoading,
     setError: setStoreError,
     isLoading,
   } = useAuthStore();
+
+  // DEBUG MODE: Set to false to COMPLETELY skip /me API call after sign-in
+  // (useful when BE /me is broken and you need to bypass it entirely)
+  const DEBUG_ENABLE_ME_CHECK = false;
 
   const signIn = useCallback(
     async (credentials) => {
@@ -79,6 +84,28 @@ export const useSignIn = () => {
 
           setUser(userData);
 
+          // DEBUG MODE: Skip /me check if disabled
+          if (!DEBUG_ENABLE_ME_CHECK) {
+            console.log(
+              "🔧 DEBUG: /me check disabled. Skipping profile fetch."
+            );
+
+            // Store token without profile
+            try {
+              if (userData.token) localStorage.setItem("token", userData.token);
+              if (userData.refresh_token)
+                localStorage.setItem("refresh_token", userData.refresh_token);
+            } catch (storageErr) {
+              console.warn("Could not persist token:", storageErr?.message);
+            }
+
+            return {
+              success: true,
+              message: getSignInSuccess("LOGIN_SUCCESS"),
+              data: userData,
+            };
+          }
+
           // After successful sign-in, fetch full profile (/me) and WAIT for it
           // This ensures localStorage has user data before redirecting to /policy
           try {
@@ -105,9 +132,7 @@ export const useSignIn = () => {
                   full_name:
                     profile.full_name || userData.user?.full_name || null,
                   display_name:
-                    profile.display_name ||
-                    userData.user?.display_name ||
-                    null,
+                    profile.display_name || userData.user?.display_name || null,
                   primary_phone: profile.primary_phone || null,
                   partner_id: profile.partner_id || null,
                   role_id: profile.role_id || null,
@@ -115,13 +140,9 @@ export const useSignIn = () => {
               };
 
               try {
-                if (merged.token)
-                  localStorage.setItem("token", merged.token);
+                if (merged.token) localStorage.setItem("token", merged.token);
                 if (merged.refresh_token)
-                  localStorage.setItem(
-                    "refresh_token",
-                    merged.refresh_token
-                  );
+                  localStorage.setItem("refresh_token", merged.refresh_token);
 
                 // Persist the full /me payload under `me`
                 localStorage.setItem("me", JSON.stringify(profile));
@@ -142,7 +163,9 @@ export const useSignIn = () => {
               };
             } else {
               // /me returned success: false - invalid response
-              throw new Error(meRes?.data?.message || "Failed to fetch user profile");
+              throw new Error(
+                meRes?.data?.message || "Failed to fetch user profile"
+              );
             }
           } catch (e) {
             // FATAL: profile fetch failed - clear token and return error
@@ -152,12 +175,16 @@ export const useSignIn = () => {
             localStorage.removeItem("token");
             localStorage.removeItem("refresh_token");
 
-            // Map backend error to Vietnamese message
-            const mappedError = mapBackendError(e);
-            const errorMsg = mappedError?.message || "Tài khoản không hợp lệ. Vui lòng liên hệ quản trị viên.";
+            // Fixed error message for /me failure
+            const errorMsg =
+              "Không thể lấy thông tin tài khoản. Vui lòng liên hệ quản trị viên.";
 
-            setError(errorMsg);
-            setStoreError(errorMsg);
+            // Only set error once
+            if (!hasShownMeErrorRef.current) {
+              setError(errorMsg);
+              setStoreError(errorMsg);
+              hasShownMeErrorRef.current = true;
+            }
 
             return {
               success: false,

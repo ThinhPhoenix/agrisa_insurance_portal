@@ -23,6 +23,10 @@ export default function InternalLayoutFlexbox({ children }) {
   const isManualLogout = useAuthStore((s) => s.isManualLogout);
   const setUser = useAuthStore((s) => s.setUser);
 
+  // DEBUG MODE: Set to false to COMPLETELY skip /me API call on layout mount
+  // (useful when BE /me is broken and you need to bypass token verification entirely)
+  const DEBUG_ENABLE_ME_CHECK = false;
+
   useEffect(() => {
     // Prevent redirect loop when already on sign-in page
     if (!pathname || pathname.startsWith("/sign-in")) {
@@ -45,6 +49,15 @@ export default function InternalLayoutFlexbox({ children }) {
           hasShownErrorRef.current = true;
         }
         router.push("/sign-in");
+        return;
+      }
+
+      // DEBUG MODE: Skip /me check if disabled
+      if (!DEBUG_ENABLE_ME_CHECK) {
+        console.log(
+          "🔧 DEBUG: /me check disabled in layout. Allowing access with token only."
+        );
+        setIsAuthChecking(false);
         return;
       }
 

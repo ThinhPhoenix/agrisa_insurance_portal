@@ -140,18 +140,30 @@ export const useSignIn = () => {
                 message: getSignInSuccess("LOGIN_SUCCESS"),
                 data: merged,
               };
+            } else {
+              // /me returned success: false - invalid response
+              throw new Error(meRes?.data?.message || "Failed to fetch user profile");
             }
           } catch (e) {
-            // Non-fatal: profile fetch failed — keep sign-in success with basic userData
-            console.warn("Post-login /me fetch failed:", e?.message || e);
-          }
+            // FATAL: profile fetch failed - clear token and return error
+            console.error("Post-login /me fetch failed:", e?.message || e);
 
-          // Fallback: return success with basic userData if /me fails
-          return {
-            success: true,
-            message: getSignInSuccess("LOGIN_SUCCESS"),
-            data: userData,
-          };
+            // Clear the token since we can't get user profile
+            localStorage.removeItem("token");
+            localStorage.removeItem("refresh_token");
+
+            // Map backend error to Vietnamese message
+            const mappedError = mapBackendError(e);
+            const errorMsg = mappedError?.message || "Tài khoản không hợp lệ. Vui lòng liên hệ quản trị viên.";
+
+            setError(errorMsg);
+            setStoreError(errorMsg);
+
+            return {
+              success: false,
+              message: errorMsg,
+            };
+          }
         } else {
           throw new Error(
             response.data.message || getSignInError("INVALID_CREDENTIALS")

@@ -118,6 +118,8 @@ export const AUTH_MESSAGES = {
       INTERNAL_ERROR:
         "Lỗi hệ thống. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
       NOT_IMPLEMENTED: "Tính năng này chưa được phát hành.",
+      NOT_FOUND: "Tài khoản không hợp lệ. Vui lòng liên hệ quản trị viên.",
+      PROFILE_NOT_FOUND: "Không tìm thấy thông tin người dùng. Vui lòng liên hệ quản trị viên.",
 
       // Account status errors
       ACCOUNT_NOT_VERIFIED:
@@ -371,6 +373,11 @@ const ERROR_MESSAGE_PATTERNS = {
   registration_failed: {
     patterns: ["Registration failed", "Đăng ký thất bại"],
     code: "INTERNAL_ERROR",
+  },
+  // Database errors
+  not_found: {
+    patterns: ["sql: no rows", "not found", "no rows in result set"],
+    code: "NOT_FOUND",
   },
 };
 

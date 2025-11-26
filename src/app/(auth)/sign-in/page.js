@@ -1,5 +1,6 @@
 "use client";
 import Assets from "@/assets";
+import AuthLoading from "@/components/auth-loading";
 import CustomForm from "@/components/custom-form";
 import { getSignInValidation } from "@/libs/message";
 import { useSignIn } from "@/services/hooks/auth/use-auth";
@@ -8,7 +9,7 @@ import { Typography, message } from "antd";
 import { Lock, LogIn, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./signin.css";
 
 const { Title, Text } = Typography;
@@ -17,6 +18,7 @@ const SigninPage = () => {
   const { signIn, isLoading } = useSignIn();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Redirect to /policy if already authenticated
   useEffect(() => {
@@ -28,8 +30,16 @@ const SigninPage = () => {
 
     if (isAuthenticated) {
       router.push("/policy/approval");
+    } else {
+      // Auth check complete, show sign-in form
+      setIsAuthChecking(false);
     }
   }, [user, router]);
+
+  // Show loading screen while checking authentication to prevent form flashing
+  if (isAuthChecking) {
+    return <AuthLoading />;
+  }
 
   const onFinish = async (values) => {
     const result = await signIn({

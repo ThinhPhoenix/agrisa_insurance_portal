@@ -52,16 +52,8 @@ export default function InternalLayoutFlexbox({ children }) {
         return;
       }
 
-      // DEBUG MODE: Skip /me check if disabled
-      if (!DEBUG_ENABLE_ME_CHECK) {
-        console.log(
-          "🔧 DEBUG: /me check disabled in layout. Allowing access with token only."
-        );
-        setIsAuthChecking(false);
-        return;
-      }
-
-      // Have token - verify it with API before rendering content
+      // ALWAYS verify token with /me API
+      // DEBUG_ENABLE_ME_CHECK controls whether to block on error or not
       isVerifying.current = true;
       try {
         const response = await axiosInstance.get(endpoints.auth.auth_me);
@@ -99,8 +91,18 @@ export default function InternalLayoutFlexbox({ children }) {
           throw new Error("Invalid token");
         }
       } catch (error) {
-        // Token invalid or API error - clear token and redirect to sign-in
         console.error("Auth verification failed:", error);
+
+        // DEBUG MODE: If false, bypass /me error and allow access
+        if (!DEBUG_ENABLE_ME_CHECK) {
+          console.warn("🔧 DEBUG: /me failed but bypassing error. Allowing access with existing token.");
+          setIsAuthChecking(false);
+          isVerifying.current = false;
+          return;
+        }
+
+        // PRODUCTION MODE: Block access on /me error
+        console.error("❌ /me failed. Blocking access and redirecting to sign-in.");
 
         // Clear token to prevent infinite redirect loop
         localStorage.removeItem("token");

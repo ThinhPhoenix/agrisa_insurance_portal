@@ -84,30 +84,8 @@ export const useSignIn = () => {
 
           setUser(userData);
 
-          // DEBUG MODE: Skip /me check if disabled
-          if (!DEBUG_ENABLE_ME_CHECK) {
-            console.log(
-              "🔧 DEBUG: /me check disabled. Skipping profile fetch."
-            );
-
-            // Store token without profile
-            try {
-              if (userData.token) localStorage.setItem("token", userData.token);
-              if (userData.refresh_token)
-                localStorage.setItem("refresh_token", userData.refresh_token);
-            } catch (storageErr) {
-              console.warn("Could not persist token:", storageErr?.message);
-            }
-
-            return {
-              success: true,
-              message: getSignInSuccess("LOGIN_SUCCESS"),
-              data: userData,
-            };
-          }
-
-          // After successful sign-in, fetch full profile (/me) and WAIT for it
-          // This ensures localStorage has user data before redirecting to /policy
+          // ALWAYS fetch /me profile after successful sign-in
+          // DEBUG_ENABLE_ME_CHECK controls whether to block on error or not
           try {
             const meRes = await axiosInstance.get(endpoints.auth.auth_me);
             if (meRes?.data?.success) {
@@ -168,8 +146,33 @@ export const useSignIn = () => {
               );
             }
           } catch (e) {
-            // FATAL: profile fetch failed - clear token and return error
             console.error("Post-login /me fetch failed:", e?.message || e);
+
+            // DEBUG MODE: If false, bypass /me error and allow login
+            if (!DEBUG_ENABLE_ME_CHECK) {
+              console.warn("🔧 DEBUG: /me failed but bypassing error. Allowing login with basic data.");
+
+              // Store token without profile
+              try {
+                if (userData.token) localStorage.setItem("token", userData.token);
+                if (userData.refresh_token)
+                  localStorage.setItem("refresh_token", userData.refresh_token);
+              } catch (storageErr) {
+                console.warn("Could not persist token:", storageErr?.message);
+              }
+
+              // Update store with basic userData
+              setUser(userData);
+
+              return {
+                success: true,
+                message: getSignInSuccess("LOGIN_SUCCESS"),
+                data: userData,
+              };
+            }
+
+            // PRODUCTION MODE: Block login on /me error
+            console.error("❌ /me failed. Blocking login.");
 
             // Clear the token since we can't get user profile
             localStorage.removeItem("token");

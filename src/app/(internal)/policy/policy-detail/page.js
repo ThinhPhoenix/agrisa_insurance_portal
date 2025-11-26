@@ -41,6 +41,7 @@ import {
   Typography,
 } from "antd";
 import {
+  ArcElement,
   BarElement,
   CategoryScale,
   Chart as ChartJS,
@@ -58,6 +59,7 @@ import "../approval/approval.css";
 
 // Register ChartJS components
 ChartJS.register(
+  ArcElement,
   CategoryScale,
   LinearScale,
   PointElement,

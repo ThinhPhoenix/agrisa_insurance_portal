@@ -11,7 +11,7 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { Bar, Line } from "react-chartjs-2";
+import { Bar, Line, Pie } from "react-chartjs-2";
 import { useState } from "react";
 import CustomTable from "@/components/custom-table";
 
@@ -139,6 +139,55 @@ export default function MonitoringDataView({ item }) {
     ],
   };
 
+  // Cloud cover chart data
+  const cloudCoverChartData = {
+    labels: chartRecords.map((r) =>
+      new Date(r.measurement_timestamp * 1000).toLocaleDateString("vi-VN", {
+        month: "short",
+        day: "numeric",
+      })
+    ),
+    datasets: [
+      {
+        label: "Mây che phủ (%)",
+        data: chartRecords.map((r) => r.cloud_cover_percentage?.toFixed(1) || 0),
+        borderColor: "rgb(34, 197, 94)",
+        backgroundColor: "rgba(34, 197, 94, 0.1)",
+        tension: 0.4,
+        fill: true,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+      },
+    ],
+  };
+
+  // Data quality pie chart data
+  const qualityColors = {
+    excellent: "rgba(34, 197, 94, 0.8)", // green
+    good: "rgba(59, 130, 246, 0.8)", // blue
+    acceptable: "rgba(251, 146, 60, 0.8)", // orange
+    fair: "rgba(251, 146, 60, 0.8)", // orange
+    poor: "rgba(239, 68, 68, 0.8)", // red
+  };
+
+  const pieChartData = {
+    labels: Object.keys(qualityCount).map((q) => QUALITY_LABELS[q] || q),
+    datasets: [
+      {
+        label: "Số bản ghi",
+        data: Object.values(qualityCount),
+        backgroundColor: Object.keys(qualityCount).map(
+          (q) => qualityColors[q] || "rgba(156, 163, 175, 0.8)"
+        ),
+        borderColor: Object.keys(qualityCount).map((q) => {
+          const bg = qualityColors[q] || "rgba(156, 163, 175, 0.8)";
+          return bg.replace("0.8", "1");
+        }),
+        borderWidth: 2,
+      },
+    ],
+  };
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -173,6 +222,61 @@ export default function MonitoringDataView({ item }) {
       y: {
         beginAtZero: true,
         max: 100,
+      },
+    },
+  };
+
+  const cloudCoverOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return `${context.dataset.label}: ${context.parsed.y}%`;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          callback: function(value) {
+            return value + '%';
+          }
+        }
+      },
+    },
+  };
+
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "right",
+        labels: {
+          padding: 15,
+          font: {
+            size: 12,
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const label = context.label || "";
+            const value = context.parsed || 0;
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${value} bản ghi (${percentage}%)`;
+          },
+        },
       },
     },
   };
@@ -303,22 +407,41 @@ export default function MonitoringDataView({ item }) {
 
       {/* Charts */}
       <Row gutter={[16, 16]} className="mb-4">
-        <Col xs={24} lg={16}>
+        {/* Main trend chart - full width on top */}
+        <Col xs={24}>
           <Card
             size="small"
             title={`Biểu đồ xu hướng ${
               item.dataSource?.display_name_vi || item.parameterName
             } (${chartRecords.length} mẫu gần nhất)`}
           >
-            <div style={{ height: "300px" }}>
+            <div style={{ height: "320px" }}>
               <Line data={lineChartData} options={chartOptions} />
             </div>
           </Card>
         </Col>
-        <Col xs={24} lg={8}>
-          <Card size="small" title={`Độ tin cậy (${chartRecords.length} mẫu gần nhất)`}>
-            <div style={{ height: "300px" }}>
+
+        {/* Three charts in a row below */}
+        <Col xs={24} md={8}>
+          <Card size="small" title={`Độ tin cậy (${chartRecords.length} mẫu)`}>
+            <div style={{ height: "280px" }}>
               <Bar data={confidenceChartData} options={barChartOptions} />
+            </div>
+          </Card>
+        </Col>
+
+        <Col xs={24} md={8}>
+          <Card size="small" title={`Mây che phủ (${chartRecords.length} mẫu)`}>
+            <div style={{ height: "280px" }}>
+              <Line data={cloudCoverChartData} options={cloudCoverOptions} />
+            </div>
+          </Card>
+        </Col>
+
+        <Col xs={24} md={8}>
+          <Card size="small" title="Tỉ trọng chất lượng dữ liệu">
+            <div style={{ height: "280px" }}>
+              <Pie data={pieChartData} options={pieChartOptions} />
             </div>
           </Card>
         </Col>

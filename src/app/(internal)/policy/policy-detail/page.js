@@ -41,6 +41,7 @@ import {
   Typography,
 } from "antd";
 import {
+  ArcElement,
   BarElement,
   CategoryScale,
   Chart as ChartJS,
@@ -58,6 +59,7 @@ import "../approval/approval.css";
 
 // Register ChartJS components
 ChartJS.register(
+  ArcElement,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -327,8 +329,9 @@ export default function PolicyDetailPage() {
     {
       key: "basic",
       label: (
-        <span>
-          <FileTextOutlined /> Thông tin cơ bản
+        <span className="flex items-center gap-2">
+          <FileTextOutlined />
+          <span className="hidden sm:inline">Thông tin cơ bản</span>
         </span>
       ),
       children: (
@@ -449,8 +452,9 @@ export default function PolicyDetailPage() {
     {
       key: "basePolicy",
       label: (
-        <span>
-          <SafetyOutlined /> Thông tin gói bảo hiểm
+        <span className="flex items-center gap-2">
+          <SafetyOutlined />
+          <span className="hidden sm:inline">Thông tin gói bảo hiểm</span>
         </span>
       ),
       children: basePolicy ? (
@@ -888,8 +892,9 @@ export default function PolicyDetailPage() {
     {
       key: "map",
       label: (
-        <span>
-          <EnvironmentOutlined /> Bản đồ
+        <span className="flex items-center gap-2">
+          <EnvironmentOutlined />
+          <span className="hidden sm:inline">Bản đồ</span>
         </span>
       ),
       children: (
@@ -910,8 +915,9 @@ export default function PolicyDetailPage() {
     {
       key: "images",
       label: (
-        <span>
-          <FileTextOutlined /> Hình ảnh bằng chứng
+        <span className="flex items-center gap-2">
+          <FileTextOutlined />
+          <span className="hidden sm:inline">Hình ảnh bằng chứng</span>
         </span>
       ),
       children: (
@@ -1014,8 +1020,9 @@ export default function PolicyDetailPage() {
     {
       key: "monitoring",
       label: (
-        <span>
-          <LineChartOutlined /> Dữ liệu giám sát
+        <span className="flex items-center gap-2">
+          <LineChartOutlined />
+          <span className="hidden sm:inline">Dữ liệu giám sát</span>
         </span>
       ),
       children: (
@@ -1057,8 +1064,9 @@ export default function PolicyDetailPage() {
     {
       key: "risk",
       label: (
-        <span>
-          <WarningOutlined /> Phân tích rủi ro
+        <span className="flex items-center gap-2">
+          <WarningOutlined />
+          <span className="hidden sm:inline">Phân tích rủi ro</span>
         </span>
       ),
       children: (

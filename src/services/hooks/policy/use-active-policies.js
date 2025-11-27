@@ -19,10 +19,13 @@ export function useActivePolicies() {
     try {
       const response = await axiosInstance.get(endpoints.policy.policy.list);
       if (response.data.success) {
-        // Filter only active policies
         const allPolicies = response.data.data.policies || [];
+
+        // Filter policies for active page:
+        // Only: status === "active" + underwriting_status === "approved" (đã thanh toán, đang hoạt động)
         const activePolicies = allPolicies.filter(
-          (policy) => policy.status === "active"
+          (policy) =>
+            policy.status === "active" && policy.underwriting_status === "approved"
         );
         setPolicies(activePolicies);
       } else {

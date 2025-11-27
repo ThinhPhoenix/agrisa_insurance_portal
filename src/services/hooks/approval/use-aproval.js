@@ -265,12 +265,17 @@ export function useInsurancePolicies() {
     try {
       const response = await axiosInstance.get(endpoints.policy.policy.list);
       if (response.data.success) {
-        // Filter only pending_review policies for approval page
         const allPolicies = response.data.data.policies || [];
-        const pendingPolicies = allPolicies.filter(
-          (policy) => policy.status === "pending_review"
+
+        // Filter policies for approval page:
+        // 1. status === "pending_review" (chờ partner duyệt)
+        // 2. status === "active" + underwriting_status === "pending" (đã duyệt, chờ farmer thanh toán)
+        const approvalPolicies = allPolicies.filter(
+          (policy) =>
+            policy.status === "pending_review" ||
+            (policy.status === "active" && policy.underwriting_status === "pending")
         );
-        setPolicies(pendingPolicies);
+        setPolicies(approvalPolicies);
       } else {
         throw new Error(response.data.message || "Failed to fetch policies");
       }

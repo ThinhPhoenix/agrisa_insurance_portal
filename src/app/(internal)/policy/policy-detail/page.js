@@ -295,6 +295,15 @@ export default function PolicyDetailPage() {
     setCurrentPhotoPage(page);
   };
 
+  // Handle access denied - redirect to list page
+  // IMPORTANT: useEffect must be called before any conditional returns
+  useEffect(() => {
+    if (accessDenied) {
+      message.error("Bạn không có quyền truy cập chính sách này. Vi phạm bảo mật!");
+      router.push(`/policy/${pageType}`);
+    }
+  }, [accessDenied, pageType, router]);
+
   if (loading) {
     return (
       <Layout.Content className="application-loading">

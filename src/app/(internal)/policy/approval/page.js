@@ -39,6 +39,7 @@ export default function InsuranceApprovalPage() {
     "policy_number",
     "farmer_id",
     "status",
+    "underwriting_status",
     "created_at",
   ]);
 
@@ -66,7 +67,7 @@ export default function InsuranceApprovalPage() {
     handleClearFilters();
   };
 
-  // Get status color
+  // Get status color for policy status
   const getStatusColor = (status) => {
     switch (status) {
       case "pending_review":
@@ -77,6 +78,34 @@ export default function InsuranceApprovalPage() {
         return "red";
       default:
         return "default";
+    }
+  };
+
+  // Get underwriting status color
+  const getUnderwritingStatusColor = (underwritingStatus) => {
+    switch (underwritingStatus) {
+      case "pending":
+        return "gold";
+      case "approved":
+        return "green";
+      case "rejected":
+        return "red";
+      default:
+        return "default";
+    }
+  };
+
+  // Get underwriting status text
+  const getUnderwritingStatusText = (underwritingStatus) => {
+    switch (underwritingStatus) {
+      case "pending":
+        return "Chờ thanh toán";
+      case "approved":
+        return "Đã thanh toán";
+      case "rejected":
+        return "Đã từ chối";
+      default:
+        return underwritingStatus;
     }
   };
 
@@ -101,7 +130,7 @@ export default function InsuranceApprovalPage() {
       ),
     },
     {
-      title: "Trạng thái",
+      title: "Trạng thái đơn",
       dataIndex: "status",
       key: "status",
       width: 130,
@@ -113,8 +142,22 @@ export default function InsuranceApprovalPage() {
           {record.status === "pending_review"
             ? "Chờ duyệt"
             : record.status === "active"
-            ? "Đang hoạt động"
+            ? "Đã duyệt"
             : record.status}
+        </Tag>
+      ),
+    },
+    {
+      title: "Trạng thái bảo hiểm",
+      dataIndex: "underwriting_status",
+      key: "underwriting_status",
+      width: 150,
+      render: (_, record) => (
+        <Tag
+          color={getUnderwritingStatusColor(record.underwriting_status)}
+          className="insurance-status-tag"
+        >
+          {getUnderwritingStatusText(record.underwriting_status)}
         </Tag>
       ),
     },

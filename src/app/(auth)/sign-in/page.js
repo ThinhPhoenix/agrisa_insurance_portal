@@ -29,7 +29,7 @@ const SigninPage = () => {
     const isAuthenticated = hasToken || hasRoles;
 
     if (isAuthenticated) {
-      router.push("/policy/approval");
+      router.push("/policy/pending");
     } else {
       // Auth check complete, show sign-in form
       setIsAuthChecking(false);
@@ -49,7 +49,7 @@ const SigninPage = () => {
 
     if (result.success) {
       message.success(result.message);
-      router.push("/policy/approval");
+      router.push("/policy/pending");
     } else {
       message.error(result.message);
     }

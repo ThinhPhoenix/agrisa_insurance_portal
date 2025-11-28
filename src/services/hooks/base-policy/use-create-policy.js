@@ -678,13 +678,15 @@ const useCreatePolicy = () => {
           const meData = localStorage.getItem("me");
           if (meData) {
             const parsed = JSON.parse(meData);
-            // Try partner_id first, fallback to user_id
-            insuranceProviderId = parsed.partner_id || parsed.user_id || "temp_id";
+            // Only use partner_id for creating base policy
+            insuranceProviderId = parsed.partner_id;
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error("Failed to parse user data:", e);
+        }
 
-        if (!insuranceProviderId || insuranceProviderId === "temp_id") {
-          message.error("Không tìm thấy thông tin nhà cung cấp bảo hiểm");
+        if (!insuranceProviderId) {
+          message.error("Chỉ partner mới có thể tạo gói bảo hiểm. Vui lòng đăng nhập với tài khoản partner.");
           setLoading(false);
           return false;
         }

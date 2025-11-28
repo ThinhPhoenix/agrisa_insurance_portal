@@ -4,7 +4,7 @@ import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { getApprovalInfo } from "@/libs/message";
-import { useInsurancePolicies } from "@/services/hooks/policy/use-aproval";
+import { useInsurancePolicies } from "@/services/hooks/policy/use-pending-policies";
 import {
   CheckCircleOutlined,
   DownloadOutlined,
@@ -218,7 +218,7 @@ export default function InsuranceApprovalPage() {
       width: 100,
       render: (_, record) => (
         <div className="insurance-actions-cell">
-          <Link href={`/policy/policy-detail?id=${record.id}&type=approval`}>
+          <Link href={`/policy/policy-detail?id=${record.id}&type=pending`}>
             <Button
               type="dashed"
               size="small"

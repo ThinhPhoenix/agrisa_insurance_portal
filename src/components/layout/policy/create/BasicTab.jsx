@@ -60,13 +60,12 @@ const BasicTabComponent = ({
             updates.coverage_currency = "VND";
         }
 
-        // Auto-fill insurance provider ID from logged-in user (if available)
-        if (!basicData.insuranceProviderId && user?.user_id) {
-            // ⚠️ TODO: Check if user has partner_code/provider_code field
-            // BE spec expects string like "bao-minh-insurance", not UUID
-            updates.insuranceProviderId = user.user_id;
-            console.log("🔍 BasicTab - Set insuranceProviderId from user:", {
-                user_id: user.user_id,
+        // Auto-fill insurance provider ID from logged-in user's partner_id (if available)
+        if (!basicData.insuranceProviderId && user?.partner_id) {
+            // Only use partner_id for creating base policy
+            updates.insuranceProviderId = user.partner_id;
+            console.log("🔍 BasicTab - Set insuranceProviderId from user partner_id:", {
+                partner_id: user.partner_id,
                 full_user: user
             });
         }

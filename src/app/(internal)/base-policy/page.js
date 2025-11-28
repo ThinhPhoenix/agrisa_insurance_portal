@@ -3,7 +3,7 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
-import usePolicy from "@/services/hooks/policy/use-policy";
+import usePolicy from "@/services/hooks/base-policy/use-policy";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -314,7 +314,7 @@ export default function PolicyPage() {
       width: 150,
       render: (_, record) => (
         <div className="policy-actions-cell">
-          <Link href={`/policy/base-policy/${record.id}`}>
+          <Link href={`/base-policy/${record.id}`}>
             <Button
               type="dashed"
               size="small"
@@ -520,7 +520,7 @@ export default function PolicyPage() {
           {/* Table */}
           <div>
             <div className="flex justify-start items-center gap-2 mb-2">
-              <Link href="/policy/base-policy/create">
+              <Link href="/base-policy/create">
                 <Button type="primary" icon={<SafetyOutlined />}>
                   Tạo mới
                 </Button>

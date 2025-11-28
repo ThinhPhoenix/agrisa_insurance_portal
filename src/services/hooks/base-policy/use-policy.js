@@ -91,11 +91,12 @@ const usePolicy = () => {
     if (meData) {
       try {
         const userData = JSON.parse(meData);
-        const partnerId = userData?.partner_id;
-        if (partnerId) {
-          fetchPoliciesByProvider(partnerId);
+        // Try partner_id first, fallback to user_id
+        const providerId = userData?.partner_id || userData?.user_id;
+        if (providerId) {
+          fetchPoliciesByProvider(providerId);
         } else {
-          setPoliciesError("Partner ID not found in user data");
+          setPoliciesError("Provider ID (partner_id or user_id) not found in user data");
         }
       } catch (error) {
         setPoliciesError("Failed to parse user data");
@@ -186,11 +187,12 @@ const usePolicy = () => {
     if (meData) {
       try {
         const userData = JSON.parse(meData);
-        const partnerId = userData?.partner_id;
-        if (partnerId) {
-          fetchActivePoliciesByProvider(partnerId);
+        // Try partner_id first, fallback to user_id
+        const providerId = userData?.partner_id || userData?.user_id;
+        if (providerId) {
+          fetchActivePoliciesByProvider(providerId);
         } else {
-          setActivePoliciesError("Partner ID not found in user data");
+          setActivePoliciesError("Provider ID (partner_id or user_id) not found in user data");
         }
       } catch (error) {
         setActivePoliciesError("Failed to parse user data");
@@ -256,10 +258,11 @@ const usePolicy = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       // Wait for user data from store OR localStorage
-      let partnerId = user?.partner_id || user?.profile?.partner_id;
+      // Try partner_id first, fallback to user_id
+      let providerId = user?.partner_id || user?.profile?.partner_id || user?.user_id;
 
       // Fallback to localStorage if store doesn't have user yet
-      if (!partnerId) {
+      if (!providerId) {
         const meData = localStorage.getItem("me");
         if (!meData) {
           console.log("⏳ Waiting for user data...");
@@ -268,7 +271,8 @@ const usePolicy = () => {
 
         try {
           const userData = JSON.parse(meData);
-          partnerId = userData?.partner_id;
+          // Try partner_id first, fallback to user_id
+          providerId = userData?.partner_id || userData?.user_id;
         } catch (error) {
           setPoliciesError("Failed to parse user data");
           setActivePoliciesError("Failed to parse user data");
@@ -276,19 +280,19 @@ const usePolicy = () => {
         }
       }
 
-      if (!partnerId) {
-        setPoliciesError("Partner ID not found in user data");
-        setActivePoliciesError("Partner ID not found in user data");
+      if (!providerId) {
+        setPoliciesError("Provider ID (partner_id or user_id) not found in user data");
+        setActivePoliciesError("Provider ID (partner_id or user_id) not found in user data");
         return;
       }
 
-      console.log("✅ User data ready, fetching policies for partnerId:", partnerId);
+      console.log("✅ User data ready, fetching policies for providerId:", providerId);
 
       // Fetch all APIs in parallel with independent error handling
       // Each function manages its own loading state internally
       await Promise.allSettled([
-        fetchPoliciesByProvider(partnerId),
-        fetchActivePoliciesByProvider(partnerId),
+        fetchPoliciesByProvider(providerId),
+        fetchActivePoliciesByProvider(providerId),
         fetchPolicyCounts(),
       ]);
     };

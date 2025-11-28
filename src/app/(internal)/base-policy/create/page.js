@@ -38,7 +38,7 @@ import ReviewTab from "@/components/layout/policy/create/ReviewTab";
 import TagsTab from "@/components/layout/policy/create/TagsTab";
 
 // Hook
-import useCreatePolicy from "@/services/hooks/policy/use-create-policy";
+import useCreatePolicy from "@/services/hooks/base-policy/use-create-policy";
 
 const { Title, Text } = Typography;
 
@@ -101,14 +101,14 @@ const CreatePolicyPage = () => {
     if (success) {
       // Wait for success message to be visible before redirecting
       setTimeout(() => {
-        window.location.href = "/policy";
+        window.location.href = "/base-policy";
       }, 1500); // 1.5 seconds delay to show success message
     }
   };
 
   // Handle cancel
   const handleCancel = () => {
-    router.push("/policy/base-policy");
+    router.push("/base-policy");
   };
 
   // Handle file upload - Memoized to prevent unnecessary re-renders

@@ -48,12 +48,16 @@ const useDetailPolicy = () => {
             try {
               const userData = JSON.parse(meData);
               const userId = userData?.user_id;
+              const partnerId = userData?.partner_id;
 
-              if (userId) {
+              if (partnerId || userId) {
                 const policyProviderId =
                   policyData.base_policy?.insurance_provider_id;
 
-                if (policyProviderId !== userId) {
+                const hasAccess =
+                  policyProviderId === partnerId || policyProviderId === userId;
+
+                if (!hasAccess) {
                   setPolicyDetail(null);
                   setPolicyDetailError(
                     "You do not have permission to access this policy"
@@ -94,11 +98,11 @@ const useDetailPolicy = () => {
       if (meData) {
         try {
           const userData = JSON.parse(meData);
-          const providerId = userData?.user_id;
+          const providerId = userData?.partner_id;
           if (providerId) {
             return await fetchPolicyDetailByProvider(providerId, basePolicyId);
           } else {
-            setPolicyDetailError("User ID not found in user data");
+            setPolicyDetailError("Partner ID not found in user data");
             return null;
           }
         } catch (error) {
@@ -145,12 +149,16 @@ const useDetailPolicy = () => {
             try {
               const userData = JSON.parse(meData);
               const userId = userData?.user_id;
+              const partnerId = userData?.partner_id;
 
-              if (userId) {
+              if (partnerId || userId) {
                 const policyProviderId =
                   policyData.base_policy?.insurance_provider_id;
 
-                if (policyProviderId !== userId) {
+                const hasAccess =
+                  policyProviderId === partnerId || policyProviderId === userId;
+
+                if (!hasAccess) {
                   setPolicyDetail(null);
                   setPolicyDetailError(
                     "You do not have permission to access this policy"

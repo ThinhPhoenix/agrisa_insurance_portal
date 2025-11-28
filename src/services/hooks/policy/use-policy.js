@@ -53,11 +53,13 @@ const usePolicy = () => {
           try {
             const userData = JSON.parse(meData);
             const userId = userData?.user_id;
+            const partnerId = userData?.partner_id;
 
-            if (userId) {
-              const filteredPolicies = draftPoliciesData.filter(
-                (policy) => policy.base_policy?.insurance_provider_id === userId
-              );
+            if (partnerId || userId) {
+              const filteredPolicies = draftPoliciesData.filter((policy) => {
+                const providerId = policy.base_policy?.insurance_provider_id;
+                return providerId === partnerId || providerId === userId;
+              });
 
               setPolicies(filteredPolicies);
             } else {
@@ -89,11 +91,11 @@ const usePolicy = () => {
     if (meData) {
       try {
         const userData = JSON.parse(meData);
-        const userId = userData?.user_id || userData?.partner_id;
-        if (userId) {
-          fetchPoliciesByProvider(userId);
+        const partnerId = userData?.partner_id;
+        if (partnerId) {
+          fetchPoliciesByProvider(partnerId);
         } else {
-          setPoliciesError("User ID not found in user data");
+          setPoliciesError("Partner ID not found in user data");
         }
       } catch (error) {
         setPoliciesError("Failed to parse user data");
@@ -133,11 +135,13 @@ const usePolicy = () => {
           try {
             const userData = JSON.parse(meData);
             const userId = userData?.user_id;
+            const partnerId = userData?.partner_id;
 
-            if (userId) {
-              const filteredPolicies = activePoliciesData.filter(
-                (policy) => policy.insurance_provider_id === userId
-              );
+            if (partnerId || userId) {
+              const filteredPolicies = activePoliciesData.filter((policy) => {
+                const providerId = policy.insurance_provider_id;
+                return providerId === partnerId || providerId === userId;
+              });
 
               const transformedPolicies = filteredPolicies.map((policy) => ({
                 base_policy: policy,
@@ -182,11 +186,11 @@ const usePolicy = () => {
     if (meData) {
       try {
         const userData = JSON.parse(meData);
-        const userId = userData?.user_id;
-        if (userId) {
-          fetchActivePoliciesByProvider(userId);
+        const partnerId = userData?.partner_id;
+        if (partnerId) {
+          fetchActivePoliciesByProvider(partnerId);
         } else {
-          setActivePoliciesError("User ID not found in user data");
+          setActivePoliciesError("Partner ID not found in user data");
         }
       } catch (error) {
         setActivePoliciesError("Failed to parse user data");
@@ -252,10 +256,10 @@ const usePolicy = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       // Wait for user data from store OR localStorage
-      let userId = user?.user_id || user?.profile?.user_id;
+      let partnerId = user?.partner_id || user?.profile?.partner_id;
 
       // Fallback to localStorage if store doesn't have user yet
-      if (!userId) {
+      if (!partnerId) {
         const meData = localStorage.getItem("me");
         if (!meData) {
           console.log("⏳ Waiting for user data...");
@@ -264,7 +268,7 @@ const usePolicy = () => {
 
         try {
           const userData = JSON.parse(meData);
-          userId = userData?.user_id || userData?.partner_id;
+          partnerId = userData?.partner_id;
         } catch (error) {
           setPoliciesError("Failed to parse user data");
           setActivePoliciesError("Failed to parse user data");
@@ -272,19 +276,19 @@ const usePolicy = () => {
         }
       }
 
-      if (!userId) {
-        setPoliciesError("User ID not found in user data");
-        setActivePoliciesError("User ID not found in user data");
+      if (!partnerId) {
+        setPoliciesError("Partner ID not found in user data");
+        setActivePoliciesError("Partner ID not found in user data");
         return;
       }
 
-      console.log("✅ User data ready, fetching policies for userId:", userId);
+      console.log("✅ User data ready, fetching policies for partnerId:", partnerId);
 
       // Fetch all APIs in parallel with independent error handling
       // Each function manages its own loading state internally
       await Promise.allSettled([
-        fetchPoliciesByProvider(userId),
-        fetchActivePoliciesByProvider(userId),
+        fetchPoliciesByProvider(partnerId),
+        fetchActivePoliciesByProvider(partnerId),
         fetchPolicyCounts(),
       ]);
     };

@@ -3,7 +3,7 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
-import { useApplications } from "@/services/hooks/approval/use-aproval";
+import { useApplications } from "@/services/hooks/policy/use-aproval";
 import { EyeOutlined, FilterOutlined, SearchOutlined } from "@ant-design/icons";
 import { Button, Collapse, Layout, Select, Space, Tag, Typography } from "antd";
 import { useRouter } from "next/navigation";

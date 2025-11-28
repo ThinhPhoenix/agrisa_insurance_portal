@@ -68,11 +68,12 @@ const PolicyDetailPage = ({ params }) => {
 
       try {
         const userData = JSON.parse(meData);
-        // Use user_id instead of partner_id for consistency
+        // Use partner_id or user_id for policy access (read operation)
         const userId = userData?.user_id;
+        const partnerId = userData?.partner_id;
 
-        if (!userId) {
-          message.error("Không tìm thấy User ID trong thông tin người dùng");
+        if (!partnerId && !userId) {
+          message.error("Không tìm thấy thông tin người dùng hợp lệ");
           router.push("/policy/base-policy");
           return;
         }
@@ -106,7 +107,10 @@ const PolicyDetailPage = ({ params }) => {
         // This is a redundant check that can be removed, but kept for extra safety
         const policyProviderId = policyData.base_policy?.insurance_provider_id;
 
-        if (policyProviderId !== userId) {
+        const hasAccess =
+          policyProviderId === partnerId || policyProviderId === userId;
+
+        if (!hasAccess) {
           message.error(
             "Bạn không có quyền truy cập chính sách này. Vi phạm bảo mật!"
           );

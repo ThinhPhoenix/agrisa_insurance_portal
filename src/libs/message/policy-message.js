@@ -415,10 +415,13 @@ export const POLICY_MESSAGES = {
       APPROVE_FAILED: "Chấp thuận đơn bảo hiểm thất bại!",
       REJECT_FAILED: "Từ chối đơn bảo hiểm thất bại!",
       UNAUTHORIZED_ACCESS: "Truy cập bị từ chối!",
+      UNAUTHORIZED_APPROVE: "Bạn không có quyền duyệt đơn này. Vi phạm bảo mật!",
       POLICY_NOT_FOUND: "Không tìm thấy đơn bảo hiểm!",
       FARM_NOT_FOUND: "Không tìm thấy thông tin trang trại!",
       INVALID_STATUS: "Trạng thái đơn bảo hiểm không hợp lệ!",
       REASON_REQUIRED: "Vui lòng nhập lý do từ chối!",
+      USER_DATA_PARSE_FAILED: "Lỗi xác thực người dùng",
+      USER_DATA_NOT_FOUND: "Không tìm thấy thông tin người dùng",
     },
 
     INFO: {

@@ -269,11 +269,11 @@ export function useInsurancePolicies() {
 
         // Filter policies for approval page:
         // 1. status === "pending_review" (chờ partner duyệt)
-        // 2. status === "active" + underwriting_status === "pending" (đã duyệt, chờ farmer thanh toán)
+        // 2. status === "pending_payment" (đã duyệt, chờ farmer thanh toán)
         const approvalPolicies = allPolicies.filter(
           (policy) =>
             policy.status === "pending_review" ||
-            (policy.status === "active" && policy.underwriting_status === "pending")
+            policy.status === "pending_payment"
         );
         setPolicies(approvalPolicies);
       } else {
@@ -346,15 +346,16 @@ export function useInsurancePolicyDetail(id) {
       if (policyResponse.data.success) {
         const policyData = policyResponse.data.data;
 
-        // 2. Validate access: check if insurance_provider_id matches user's user_id
-        if (
-          userProfile &&
-          userProfile.user_id &&
-          policyData.insurance_provider_id !== userProfile.user_id
-        ) {
+        // 2. Validate access: check if insurance_provider_id matches user's partner_id OR user_id
+        const hasAccess =
+          (userProfile?.partner_id &&
+            policyData.insurance_provider_id === userProfile.partner_id) ||
+          (userProfile?.user_id &&
+            policyData.insurance_provider_id === userProfile.user_id);
+
+        if (userProfile && !hasAccess) {
           setAccessDenied(true);
           setError(getApprovalError("UNAUTHORIZED_ACCESS"));
-          message.error(getApprovalError("UNAUTHORIZED_ACCESS"));
           setPolicy(null);
           setFarm(null);
           setLoading(false);
@@ -382,7 +383,6 @@ export function useInsurancePolicyDetail(id) {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch policy detail";
       setError(errorMessage);
-      message.error(getApprovalError("LOAD_FAILED"));
       setPolicy(null);
       setFarm(null);
     } finally {

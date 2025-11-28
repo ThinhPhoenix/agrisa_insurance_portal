@@ -678,7 +678,7 @@ const useCreatePolicy = () => {
           const meData = localStorage.getItem("me");
           if (meData) {
             const parsed = JSON.parse(meData);
-            insuranceProviderId = parsed.user_id || "temp_id";
+            insuranceProviderId = parsed.partner_id || "temp_id";
           }
         } catch (e) {}
 

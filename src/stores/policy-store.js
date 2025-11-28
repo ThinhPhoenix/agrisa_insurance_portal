@@ -226,7 +226,7 @@ export const usePolicyStore = create((set, get) => ({
     // Build base_policy object
     const base_policy = {
       //  Provider & Product Info
-      insurance_provider_id: basicData.insuranceProviderId || "UCtPr8F7fq",
+      insurance_provider_id: basicData.insuranceProviderId || "tempory_id", // Tempory ID if empty
       product_name: basicData.productName,
       product_code: basicData.productCode,
       product_description: basicData.productDescription || "",

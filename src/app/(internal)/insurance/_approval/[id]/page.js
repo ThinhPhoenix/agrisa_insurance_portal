@@ -2,7 +2,7 @@
 
 import { CustomForm } from "@/components/custom-form";
 import OpenStreetMapWithPolygon from "@/components/map-polygon";
-import { useInsurancePolicyDetail } from "@/services/hooks/approval/use-aproval";
+import { useInsurancePolicyDetail } from "@/services/hooks/policy/use-aproval";
 import { DownloadOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import {
   Button,
@@ -22,7 +22,7 @@ import {
   Spin,
   Tag,
   Typography,
-  message
+  message,
 } from "antd";
 import { useParams, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -79,15 +79,13 @@ export default function InsurancePolicyDetailPage() {
     const baseFields = [];
 
     if (decisionType === "approve") {
-      baseFields.push(
-        {
-          name: "note",
-          label: "Ghi chú duyệt",
-          type: "textarea",
-          placeholder: "Nhập ghi chú (nếu có)",
-          required: false,
-        }
-      );
+      baseFields.push({
+        name: "note",
+        label: "Ghi chú duyệt",
+        type: "textarea",
+        placeholder: "Nhập ghi chú (nếu có)",
+        required: false,
+      });
     } else if (decisionType === "reject") {
       baseFields.push({
         name: "reason",
@@ -125,7 +123,8 @@ export default function InsurancePolicyDetailPage() {
   // Pagination logic
   const indexOfLastPhoto = currentPhotoPage * photosPerPage;
   const indexOfFirstPhoto = indexOfLastPhoto - photosPerPage;
-  const currentPhotos = farm?.farm_photos?.slice(indexOfFirstPhoto, indexOfLastPhoto) || [];
+  const currentPhotos =
+    farm?.farm_photos?.slice(indexOfFirstPhoto, indexOfLastPhoto) || [];
 
   const handlePageChange = (page) => {
     setCurrentPhotoPage(page);
@@ -305,7 +304,13 @@ export default function InsurancePolicyDetailPage() {
                       {farm.land_certificate_url
                         .split("|")
                         .map((url, index) => (
-                          <Col xs={12} sm={8} md={6} lg={4} key={`cert-${index}`}>
+                          <Col
+                            xs={12}
+                            sm={8}
+                            md={6}
+                            lg={4}
+                            key={`cert-${index}`}
+                          >
                             <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                               <Image
                                 width="100%"
@@ -332,16 +337,25 @@ export default function InsurancePolicyDetailPage() {
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <Title level={5} className="mb-0">
-                      Hình ảnh vệ tinh & thực địa ({farm.farm_photos.length} ảnh)
+                      Hình ảnh vệ tinh & thực địa ({farm.farm_photos.length}{" "}
+                      ảnh)
                     </Title>
                   </div>
-                  
+
                   <Image.PreviewGroup>
                     <Row gutter={[16, 16]}>
                       {currentPhotos.map((photo, index) => (
-                        <Col xs={12} sm={8} md={6} lg={4} key={photo.id || index}>
+                        <Col
+                          xs={12}
+                          sm={8}
+                          md={6}
+                          lg={4}
+                          key={photo.id || index}
+                        >
                           <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
-                            <div className="relative pt-[75%]"> {/* 4:3 Aspect Ratio */}
+                            <div className="relative pt-[75%]">
+                              {" "}
+                              {/* 4:3 Aspect Ratio */}
                               <div className="absolute inset-0">
                                 <Image
                                   width="100%"
@@ -355,12 +369,23 @@ export default function InsurancePolicyDetailPage() {
                             </div>
                             <div className="p-2 bg-gray-50 border-t border-gray-100 flex-1">
                               <div className="flex justify-between items-start">
-                                <Tag color={photo.photo_type === 'satellite' ? 'blue' : 'green'} className="mr-0 mb-1 text-[10px]">
-                                  {photo.photo_type === 'satellite' ? 'Vệ tinh' : 'Thực địa'}
+                                <Tag
+                                  color={
+                                    photo.photo_type === "satellite"
+                                      ? "blue"
+                                      : "green"
+                                  }
+                                  className="mr-0 mb-1 text-[10px]"
+                                >
+                                  {photo.photo_type === "satellite"
+                                    ? "Vệ tinh"
+                                    : "Thực địa"}
                                 </Tag>
                               </div>
                               <Text type="secondary" className="text-xs block">
-                                {new Date(photo.taken_at * 1000).toLocaleDateString("vi-VN")}
+                                {new Date(
+                                  photo.taken_at * 1000
+                                ).toLocaleDateString("vi-VN")}
                               </Text>
                             </div>
                           </div>

@@ -3,7 +3,6 @@
 import axiosInstance from "@/libs/axios-instance";
 import { getApprovalError } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";
-import { message } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -47,15 +46,16 @@ export function usePolicyDetail(policyId) {
       if (policyResponse.data.success) {
         const policyData = policyResponse.data.data;
 
-        // Validate access
-        if (
-          userProfile &&
-          userProfile.user_id &&
-          policyData.insurance_provider_id !== userProfile.user_id
-        ) {
+        // Validate access: check if insurance_provider_id matches user's partner_id OR user_id
+        const hasAccess =
+          (userProfile?.partner_id &&
+            policyData.insurance_provider_id === userProfile.partner_id) ||
+          (userProfile?.user_id &&
+            policyData.insurance_provider_id === userProfile.user_id);
+
+        if (userProfile && !hasAccess) {
           setAccessDenied(true);
           setError(getApprovalError("UNAUTHORIZED_ACCESS"));
-          message.error(getApprovalError("UNAUTHORIZED_ACCESS"));
           setLoading(false);
           return;
         }
@@ -77,7 +77,7 @@ export function usePolicyDetail(policyId) {
         }
 
         // 3. Fetch Base Policy Detail
-        if (policyData.base_policy_id && userProfile?.user_id) {
+        if (policyData.base_policy_id && userProfile?.partner_id) {
           try {
             const basePolicyResponse = await axiosInstance.get(
               endpoints.policy.base_policy.get_active_detail(
@@ -242,7 +242,6 @@ export function usePolicyDetail(policyId) {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch policy detail";
       setError(errorMessage);
-      message.error(getApprovalError("LOAD_FAILED"));
     } finally {
       setLoading(false);
     }

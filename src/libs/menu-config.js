@@ -1,16 +1,19 @@
 export const sidebarMenuItems = [
   {
+    key: "base-policy",
+    label: "Quản lý gói bảo hiểm",
+  },
+  {
     key: "policy",
-    label: "Quản lý bảo hiểm",
+    label: "Quản lý đơn bảo hiểm",
     children: [
-      { key: "policy/base-policy", label: "Danh sách bảo hiểm" },
       { key: "policy/approval", label: "Duyệt đơn đăng ký" },
       { key: "policy/active", label: "Đơn đang hoạt động" },
       {
         key: "policy/policy-detail",
         label: "Chi tiết đơn bảo hiểm",
-        hideInMenu: true, // Ẩn trong sidebar
-        disableBreadcrumbLink: true, // Vô hiệu hóa link trong breadcrumb (vì cần query params)
+        hideInMenu: true,
+        disableBreadcrumbLink: true,
       },
     ],
   },

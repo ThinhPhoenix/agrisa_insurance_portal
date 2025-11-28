@@ -69,14 +69,44 @@ export default function ActivePoliciesPage() {
   // Get status color for policy status
   const getStatusColor = (status) => {
     switch (status) {
+      case "draft":
+        return "default";
       case "pending_review":
         return "orange";
+      case "pending_payment":
+        return "gold";
       case "active":
         return "green";
+      case "expired":
+        return "volcano";
+      case "cancelled":
+        return "red";
       case "rejected":
         return "red";
       default:
         return "default";
+    }
+  };
+
+  // Get status text
+  const getStatusText = (status) => {
+    switch (status) {
+      case "draft":
+        return "Bản nháp";
+      case "pending_review":
+        return "Chờ duyệt";
+      case "pending_payment":
+        return "Chờ thanh toán";
+      case "active":
+        return "Đang hoạt động";
+      case "expired":
+        return "Hết hạn";
+      case "cancelled":
+        return "Đã hủy";
+      case "rejected":
+        return "Đã từ chối";
+      default:
+        return status;
     }
   };
 
@@ -98,9 +128,9 @@ export default function ActivePoliciesPage() {
   const getUnderwritingStatusText = (underwritingStatus) => {
     switch (underwritingStatus) {
       case "pending":
-        return "Chờ thanh toán";
+        return "Chờ thẩm định";
       case "approved":
-        return "Đang hoạt động";
+        return "Đã duyệt";
       case "rejected":
         return "Đã từ chối";
       default:
@@ -138,7 +168,7 @@ export default function ActivePoliciesPage() {
           color={getStatusColor(record.status)}
           className="insurance-status-tag"
         >
-          {record.status === "active" ? "Đã duyệt" : record.status}
+          {getStatusText(record.status)}
         </Tag>
       ),
     },

@@ -3,7 +3,7 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
-import { useInsurancePolicies } from "@/services/hooks/approval/use-aproval";
+import { useInsurancePolicies } from "@/services/hooks/policy/use-aproval";
 import {
   CheckCircleOutlined,
   CheckOutlined,
@@ -61,9 +61,8 @@ export default function InsuranceApprovalPage() {
   // Calculate summary stats
   const summaryStats = {
     totalPolicies: filteredData.length,
-    pendingReview: filteredData.filter(
-      (p) => p.status === "pending_review"
-    ).length,
+    pendingReview: filteredData.filter((p) => p.status === "pending_review")
+      .length,
     underwritingPending: filteredData.filter(
       (p) => p.underwriting_status === "pending"
     ).length,
@@ -100,7 +99,9 @@ export default function InsuranceApprovalPage() {
         values.rejectReason
       );
 
-      message.success(`Đã từ chối đơn ${selectedPolicy.policy_number} thành công`);
+      message.success(
+        `Đã từ chối đơn ${selectedPolicy.policy_number} thành công`
+      );
 
       setRejectModalVisible(false);
       setSelectedPolicy(null);
@@ -352,9 +353,7 @@ export default function InsuranceApprovalPage() {
                   maximumFractionDigits: 0,
                 }).format(summaryStats.totalPremium)}
               </div>
-              <div className="insurance-summary-label-compact">
-                Tổng phí BH
-              </div>
+              <div className="insurance-summary-label-compact">Tổng phí BH</div>
             </div>
           </div>
         </div>

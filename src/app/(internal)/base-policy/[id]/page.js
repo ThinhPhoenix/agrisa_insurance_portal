@@ -6,8 +6,8 @@ import {
   CostSummary,
   TagsDetail,
 } from "@/components/layout/policy/detail";
-import useDetailPolicy from "@/services/hooks/policy/use-detail-policy";
-import usePolicy from "@/services/hooks/policy/use-policy";
+import useDetailPolicy from "@/services/hooks/base-policy/use-detail-policy";
+import usePolicy from "@/services/hooks/base-policy/use-policy";
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
@@ -54,7 +54,7 @@ const PolicyDetailPage = ({ params }) => {
     const loadPolicyDetail = async () => {
       if (!params.id) {
         message.error("ID chính sách không hợp lệ");
-        router.push("/policy/base-policy");
+        router.push("/base-policy");
         return;
       }
 
@@ -62,18 +62,19 @@ const PolicyDetailPage = ({ params }) => {
       const meData = localStorage.getItem("me");
       if (!meData) {
         message.error("Không tìm thấy thông tin người dùng");
-        router.push("/policy/base-policy");
+        router.push("/base-policy");
         return;
       }
 
       try {
         const userData = JSON.parse(meData);
-        // Use user_id instead of partner_id for consistency
+        // Use partner_id or user_id for policy access (read operation)
         const userId = userData?.user_id;
+        const partnerId = userData?.partner_id;
 
-        if (!userId) {
-          message.error("Không tìm thấy User ID trong thông tin người dùng");
-          router.push("/policy/base-policy");
+        if (!partnerId && !userId) {
+          message.error("Không tìm thấy thông tin người dùng hợp lệ");
+          router.push("/base-policy");
           return;
         }
 
@@ -97,7 +98,7 @@ const PolicyDetailPage = ({ params }) => {
 
         if (!policyData) {
           message.error("Không tìm thấy chính sách");
-          router.push("/policy/base-policy");
+          router.push("/base-policy");
           return;
         }
 
@@ -106,17 +107,20 @@ const PolicyDetailPage = ({ params }) => {
         // This is a redundant check that can be removed, but kept for extra safety
         const policyProviderId = policyData.base_policy?.insurance_provider_id;
 
-        if (policyProviderId !== userId) {
+        const hasAccess =
+          policyProviderId === partnerId || policyProviderId === userId;
+
+        if (!hasAccess) {
           message.error(
             "Bạn không có quyền truy cập chính sách này. Vi phạm bảo mật!"
           );
-          router.push("/policy/base-policy");
+          router.push("/base-policy");
           return;
         }
       } catch (error) {
         console.error("❌ Error loading policy detail:", error);
         message.error("Có lỗi xảy ra khi tải thông tin chính sách");
-        router.push("/policy/base-policy");
+        router.push("/base-policy");
       }
     };
 
@@ -258,7 +262,7 @@ const PolicyDetailPage = ({ params }) => {
   };
 
   const handleBack = () => {
-    router.push("/policy/base-policy");
+    router.push("/base-policy");
   };
 
   const getStatusTag = (status) => {

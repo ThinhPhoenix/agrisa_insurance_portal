@@ -1,4 +1,4 @@
-import mockData from "@/app/(internal)/policy/base-policy/mock..json";
+import mockData from "@/app/(internal)/base-policy/mock..json";
 import axiosInstance from "@/libs/axios-instance";
 import { getErrorMessage } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";
@@ -678,12 +678,15 @@ const useCreatePolicy = () => {
           const meData = localStorage.getItem("me");
           if (meData) {
             const parsed = JSON.parse(meData);
-            insuranceProviderId = parsed.user_id || "temp_id";
+            // Try partner_id first, fallback to user_id
+            insuranceProviderId = parsed.partner_id || parsed.user_id || "temp_id";
           }
         } catch (e) {}
 
-        if (!insuranceProviderId) {
-          insuranceProviderId = "temp_id";
+        if (!insuranceProviderId || insuranceProviderId === "temp_id") {
+          message.error("Không tìm thấy thông tin nhà cung cấp bảo hiểm");
+          setLoading(false);
+          return false;
         }
       }
 

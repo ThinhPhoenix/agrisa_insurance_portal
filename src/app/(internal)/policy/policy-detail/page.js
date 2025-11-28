@@ -30,6 +30,7 @@ import {
   Form,
   Image,
   Layout,
+  message,
   Modal,
   Pagination,
   Row,
@@ -174,6 +175,28 @@ export default function PolicyDetailPage() {
   const handleDecisionSubmit = async (values) => {
     setSubmitting(true);
     try {
+      // Validate partner_id before submitting
+      const meData = localStorage.getItem("me");
+      if (meData) {
+        try {
+          const userData = JSON.parse(meData);
+          const partnerId = userData?.partner_id;
+
+          if (!partnerId || policy.insurance_provider_id !== partnerId) {
+            message.error(getApprovalError("UNAUTHORIZED_APPROVE"));
+            router.push(`/policy/${pageType}`);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to parse user data:", e);
+          message.error(getApprovalError("USER_DATA_PARSE_FAILED"));
+          return;
+        }
+      } else {
+        message.error(getApprovalError("USER_DATA_NOT_FOUND"));
+        return;
+      }
+
       const underwritingData = {
         underwriting_status:
           decisionType === "approve" ? "approved" : "rejected",
@@ -214,7 +237,12 @@ export default function PolicyDetailPage() {
         form.resetFields();
 
         setTimeout(() => {
-          router.push("/policy/approval");
+          // Redirect to active page if approved, approval page if rejected
+          if (decisionType === "approve") {
+            router.push("/policy/active");
+          } else {
+            router.push("/policy/approval");
+          }
         }, 1500);
       }
     } catch (error) {
@@ -299,7 +327,7 @@ export default function PolicyDetailPage() {
   // IMPORTANT: useEffect must be called before any conditional returns
   useEffect(() => {
     if (accessDenied) {
-      message.error("Bạn không có quyền truy cập chính sách này. Vi phạm bảo mật!");
+      message.error(getApprovalError("UNAUTHORIZED_APPROVE"));
       router.push(`/policy/${pageType}`);
     }
   }, [accessDenied, pageType, router]);

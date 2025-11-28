@@ -4,7 +4,7 @@ import ErrorResult from "@/components/error-result";
 import OpenStreetMapWithPolygon from "@/components/map-polygon";
 import { getApprovalError, getApprovalInfo } from "@/libs/message";
 import { getErrorMessage } from "@/libs/message/common-message";
-import { useInsurancePolicyDetail } from "@/services/hooks/approval/use-aproval";
+import { useInsurancePolicyDetail } from "@/services/hooks/policy/use-aproval";
 import { DownloadOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import {
   Button,

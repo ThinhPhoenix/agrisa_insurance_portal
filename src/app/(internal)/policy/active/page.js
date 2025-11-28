@@ -18,7 +18,7 @@ import {
 import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useState } from "react";
-import "../approval/approval.css";
+import "../policy.css";
 
 const { Title, Text } = Typography;
 

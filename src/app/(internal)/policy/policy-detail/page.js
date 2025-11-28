@@ -56,7 +56,7 @@ import {
 } from "chart.js";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import "../approval/approval.css";
+import "../policy.css";
 
 // Register ChartJS components
 ChartJS.register(
@@ -102,7 +102,7 @@ export default function PolicyDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const policyId = searchParams.get("id");
-  const pageType = searchParams.get("type") || "approval"; // 'approval' or 'active'
+  const pageType = searchParams.get("type") || "pending"; // 'pending' or 'active'
 
   const {
     policy,
@@ -241,7 +241,7 @@ export default function PolicyDetailPage() {
           if (decisionType === "approve") {
             router.push("/policy/active");
           } else {
-            router.push("/policy/approval");
+            router.push("/policy/pending");
           }
         }, 1500);
       }
@@ -2229,7 +2229,7 @@ export default function PolicyDetailPage() {
             <Button onClick={() => router.push(`/policy/${pageType}`)}>
               Quay lại
             </Button>
-            {pageType === "approval" && policy.status === "pending_review" && (
+            {pageType === "pending" && policy.status === "pending_review" && (
               <>
                 <Button danger onClick={() => handleDecision("reject")}>
                   Từ chối đơn

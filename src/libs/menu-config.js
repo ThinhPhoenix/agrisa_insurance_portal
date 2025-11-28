@@ -7,7 +7,7 @@ export const sidebarMenuItems = [
     key: "policy",
     label: "Quản lý đơn bảo hiểm",
     children: [
-      { key: "policy/approval", label: "Duyệt đơn đăng ký" },
+      { key: "policy/pending", label: "Duyệt đơn đăng ký" },
       { key: "policy/active", label: "Đơn đang hoạt động" },
       {
         key: "policy/policy-detail",

@@ -3,7 +3,7 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
-import { useInsurancePolicies } from "@/services/hooks/policy/use-aproval";
+import { useInsurancePolicies } from "@/services/hooks/policy/use-pending-policies";
 import {
   CheckCircleOutlined,
   CheckOutlined,

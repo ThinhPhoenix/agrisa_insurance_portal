@@ -14,6 +14,15 @@ import { getErrorMessage } from "@/libs/message/common-message";
 import { endpoints } from "@/services/endpoints";
 import { usePolicyDetail } from "@/services/hooks/policy/use-policy-detail";
 import {
+  getFactorDescription,
+  getFactorLevel,
+  getFactorType,
+  getRiskTitle,
+  normalizeFraudAssessment,
+  normalizeIdentifiedRisks,
+  normalizeTriggerSimulation,
+} from "@/components/risk-analysis-normalizer";
+import {
   DownloadOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
@@ -1404,24 +1413,16 @@ export default function PolicyDetailPage() {
                                 </Text>
                                 <Collapse
                                   items={Object.entries(
-                                    analysis.identified_risks
+                                    normalizeIdentifiedRisks(
+                                      analysis.identified_risks
+                                    )
                                   ).map(([riskKey, riskData]) => {
-                                    const riskTitleMap = {
-                                      farm_characteristics_risk:
-                                        "Đặc điểm trang trại",
-                                      fraud_risk: "Gian lận",
-                                      historical_performance_risk:
-                                        "Hiệu suất lịch sử",
-                                      trigger_activation_risk:
-                                        "Kích hoạt trigger",
-                                    };
-
                                     return {
                                       key: riskKey,
                                       label: (
                                         <div className="flex justify-between items-center w-full">
                                           <span style={{ fontWeight: 500 }}>
-                                            {riskTitleMap[riskKey] || riskKey}
+                                            {getRiskTitle(riskKey)}
                                           </span>
                                           <Space>
                                             <Tag
@@ -1446,43 +1447,78 @@ export default function PolicyDetailPage() {
                                           {riskData.factors &&
                                           riskData.factors.length > 0 ? (
                                             riskData.factors.map(
-                                              (factor, fIdx) => (
-                                                <Card
-                                                  key={fIdx}
-                                                  size="small"
-                                                  style={{
-                                                    backgroundColor: "#fafafa",
-                                                  }}
-                                                >
-                                                  <Space
-                                                    direction="vertical"
+                                              (factor, fIdx) => {
+                                                const factorLevel =
+                                                  getFactorLevel(
+                                                    factor,
+                                                    riskData.level
+                                                  );
+                                                const factorType =
+                                                  getFactorType(factor);
+                                                const factorDesc =
+                                                  getFactorDescription(factor);
+
+                                                return (
+                                                  <Card
+                                                    key={fIdx}
                                                     size="small"
-                                                    className="w-full"
+                                                    style={{
+                                                      backgroundColor:
+                                                        "#fafafa",
+                                                      borderLeft: `4px solid ${
+                                                        factorLevel ===
+                                                        "critical"
+                                                          ? "#ff4d4f"
+                                                          : factorLevel ===
+                                                            "high"
+                                                          ? "#fa8c16"
+                                                          : factorLevel ===
+                                                            "medium"
+                                                          ? "#faad14"
+                                                          : "#52c41a"
+                                                      }`,
+                                                    }}
                                                   >
-                                                    <div className="flex justify-between items-center">
-                                                      <Tag
-                                                        color={getRiskLevelColor(
-                                                          factor.level
-                                                        )}
-                                                      >
-                                                        {getRiskLevelText(
-                                                          factor.level
-                                                        )}
-                                                      </Tag>
+                                                    <Space
+                                                      direction="vertical"
+                                                      size="small"
+                                                      className="w-full"
+                                                    >
+                                                      <div className="flex justify-between items-start gap-2">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                          <Tag
+                                                            color={getRiskLevelColor(
+                                                              factorLevel
+                                                            )}
+                                                          >
+                                                            {getRiskLevelText(
+                                                              factorLevel
+                                                            )}
+                                                          </Tag>
+                                                          <Text
+                                                            strong
+                                                            className="text-sm"
+                                                          >
+                                                            {factorType}
+                                                          </Text>
+                                                        </div>
+                                                        <Tag color="blue">
+                                                          Điểm: {factor.score}
+                                                        </Tag>
+                                                      </div>
                                                       <Text
-                                                        type="secondary"
-                                                        className="text-xs"
+                                                        style={{
+                                                          whiteSpace:
+                                                            "pre-wrap",
+                                                          lineHeight: "1.6",
+                                                        }}
                                                       >
-                                                        Loại: {factor.type} |
-                                                        Điểm: {factor.score}
+                                                        {factorDesc}
                                                       </Text>
-                                                    </div>
-                                                    <Text>
-                                                      {factor.description}
-                                                    </Text>
-                                                  </Space>
-                                                </Card>
-                                              )
+                                                    </Space>
+                                                  </Card>
+                                                );
+                                              }
                                             )
                                           ) : (
                                             <Text type="secondary">
@@ -1686,22 +1722,75 @@ export default function PolicyDetailPage() {
                           )}
 
                           {/* Trigger Simulation Results */}
-                          {analysis.raw_output?.trigger_simulation_results &&
-                            analysis.raw_output.trigger_simulation_results
-                              .length > 0 && (
-                              <div>
-                                <Text strong className="text-base block mb-3">
-                                  Kết quả mô phỏng trigger
-                                </Text>
-                                <Collapse
-                                  items={analysis.raw_output.trigger_simulation_results.map(
-                                    (trigger, tIdx) => ({
-                                      key: tIdx,
-                                      label: (
-                                        <div className="flex justify-between items-center w-full">
-                                          <span style={{ fontWeight: 500 }}>
-                                            {trigger.parameter_name?.toUpperCase()}
-                                          </span>
+                          {(analysis.raw_output?.trigger_simulation_results ||
+                            analysis.raw_output?.trigger_simulation) && (
+                            <div>
+                              <Text strong className="text-base block mb-3">
+                                Kết quả mô phỏng trigger
+                              </Text>
+                              <Collapse
+                                items={normalizeTriggerSimulation(
+                                  analysis.raw_output
+                                    .trigger_simulation_results ||
+                                    analysis.raw_output.trigger_simulation
+                                ).map((trigger, tIdx) => ({
+                                  key: tIdx,
+                                  label: (
+                                    <div className="flex justify-between items-center w-full">
+                                      <span style={{ fontWeight: 500 }}>
+                                        {trigger.parameter_name?.toUpperCase() ||
+                                          "TRIGGER"}
+                                      </span>
+                                      <Space size="small">
+                                        {trigger.status &&
+                                          trigger.status !== "completed" && (
+                                            <Tag color="orange">
+                                              {trigger.status ===
+                                              "simulation_failed"
+                                                ? "Mô phỏng thất bại"
+                                                : trigger.status}
+                                            </Tag>
+                                          )}
+                                        {trigger.risk_level && (
+                                          <Tag
+                                            color={getRiskLevelColor(
+                                              trigger.risk_level
+                                            )}
+                                          >
+                                            {getRiskLevelText(
+                                              trigger.risk_level
+                                            )}
+                                          </Tag>
+                                        )}
+                                        <Tag
+                                          color={
+                                            trigger.historical_breaches > 0
+                                              ? "red"
+                                              : "green"
+                                          }
+                                        >
+                                          Vi phạm: {trigger.historical_breaches}
+                                        </Tag>
+                                      </Space>
+                                    </div>
+                                  ),
+                                  children: (
+                                    <Space
+                                      direction="vertical"
+                                      size="middle"
+                                      className="w-full"
+                                    >
+                                      <Descriptions
+                                        column={1}
+                                        size="small"
+                                        bordered
+                                      >
+                                        <Descriptions.Item label="Condition ID">
+                                          <Text code>
+                                            {trigger.condition_id}
+                                          </Text>
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Số lần vi phạm lịch sử">
                                           <Tag
                                             color={
                                               trigger.historical_breaches > 0
@@ -1709,162 +1798,171 @@ export default function PolicyDetailPage() {
                                                 : "green"
                                             }
                                           >
-                                            Vi phạm:{" "}
                                             {trigger.historical_breaches}
                                           </Tag>
-                                        </div>
-                                      ),
-                                      children: (
-                                        <Space
-                                          direction="vertical"
-                                          size="middle"
-                                          className="w-full"
-                                        >
-                                          <Descriptions
-                                            column={1}
-                                            size="small"
-                                            bordered
-                                          >
-                                            <Descriptions.Item label="Condition ID">
-                                              <Text code>
-                                                {trigger.condition_id}
-                                              </Text>
-                                            </Descriptions.Item>
-                                            <Descriptions.Item label="Số lần vi phạm lịch sử">
-                                              <Tag
-                                                color={
-                                                  trigger.historical_breaches >
-                                                  0
-                                                    ? "red"
-                                                    : "green"
-                                                }
-                                              >
-                                                {trigger.historical_breaches}
-                                              </Tag>
-                                            </Descriptions.Item>
-                                            <Descriptions.Item label="Khoảng cách đến ngưỡng">
-                                              {trigger.proximity_to_threshold}
-                                            </Descriptions.Item>
-                                            <Descriptions.Item label="Phân tích">
-                                              <Text type="secondary">
-                                                {trigger.analysis}
-                                              </Text>
-                                            </Descriptions.Item>
-                                          </Descriptions>
-
-                                          {trigger.breach_dates &&
-                                            trigger.breach_dates.length > 0 && (
-                                              <div>
-                                                <Text
-                                                  strong
-                                                  className="block mb-2"
-                                                >
-                                                  Ngày vi phạm:
-                                                </Text>
-                                                <Space wrap>
-                                                  {trigger.breach_dates.map(
-                                                    (date, dIdx) => (
-                                                      <Tag
-                                                        key={dIdx}
-                                                        color="red"
-                                                      >
-                                                        {date}
-                                                      </Tag>
-                                                    )
-                                                  )}
-                                                </Space>
-                                              </div>
-                                            )}
-                                        </Space>
-                                      ),
-                                    })
-                                  )}
-                                  defaultActiveKey={analysis.raw_output.trigger_simulation_results.map(
-                                    (_, idx) => idx
-                                  )}
-                                  expandIconPosition="end"
-                                />
-                              </div>
-                            )}
-
-                          {/* Fraud Assessment */}
-                          {analysis.raw_output?.fraud_assessment_details && (
-                            <div>
-                              <Text strong className="text-base block mb-3">
-                                Đánh giá gian lận
-                              </Text>
-                              <Card
-                                size="small"
-                                style={{
-                                  backgroundColor: "#fff1f0",
-                                  borderColor: "#ffccc7",
-                                }}
-                              >
-                                <Space
-                                  direction="vertical"
-                                  size="middle"
-                                  className="w-full"
-                                >
-                                  <div className="flex justify-between items-center">
-                                    <Text strong>
-                                      Mức độ:{" "}
-                                      {getRiskLevelText(
-                                        analysis.raw_output
-                                          .fraud_assessment_details.level
-                                      )}
-                                    </Text>
-                                    <Tag
-                                      color={getRiskLevelColor(
-                                        analysis.raw_output
-                                          .fraud_assessment_details.level
-                                      )}
-                                    >
-                                      Điểm:{" "}
-                                      {
-                                        analysis.raw_output
-                                          .fraud_assessment_details.score
-                                      }
-                                    </Tag>
-                                  </div>
-                                  {analysis.raw_output.fraud_assessment_details
-                                    .indicators_triggered && (
-                                    <div>
-                                      <Text strong className="block mb-2">
-                                        Chỉ số kích hoạt:
-                                      </Text>
-                                      <Space
-                                        direction="vertical"
-                                        size="small"
-                                        className="w-full"
-                                      >
-                                        {analysis.raw_output.fraud_assessment_details.indicators_triggered.map(
-                                          (indicator, iIdx) => (
-                                            <Card
-                                              key={iIdx}
-                                              size="small"
-                                              style={{
-                                                backgroundColor: "#ffffff",
-                                              }}
+                                        </Descriptions.Item>
+                                        {trigger.simulated_breaches !==
+                                          undefined && (
+                                          <Descriptions.Item label="Mô phỏng vi phạm">
+                                            <Tag
+                                              color={
+                                                trigger.simulated_breaches > 0
+                                                  ? "red"
+                                                  : "green"
+                                              }
                                             >
-                                              <Text>
-                                                <WarningOutlined
-                                                  style={{
-                                                    color: "#ff4d4f",
-                                                    marginRight: 8,
-                                                  }}
-                                                />
-                                                {indicator}
-                                              </Text>
-                                            </Card>
-                                          )
+                                              {trigger.simulated_breaches ===
+                                              "Infinite/Guaranteed"
+                                                ? "Vô hạn/Chắc chắn"
+                                                : trigger.simulated_breaches}
+                                            </Tag>
+                                          </Descriptions.Item>
                                         )}
-                                      </Space>
-                                    </div>
-                                  )}
-                                </Space>
-                              </Card>
+                                        <Descriptions.Item label="Khoảng cách đến ngưỡng">
+                                          {trigger.proximity_to_threshold ||
+                                            "N/A"}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Phân tích">
+                                          <Text
+                                            type="secondary"
+                                            style={{
+                                              whiteSpace: "pre-wrap",
+                                              lineHeight: "1.6",
+                                            }}
+                                          >
+                                            {trigger.analysis}
+                                          </Text>
+                                        </Descriptions.Item>
+                                      </Descriptions>
+
+                                      {trigger.breach_dates &&
+                                        trigger.breach_dates.length > 0 && (
+                                          <div>
+                                            <Text strong className="block mb-2">
+                                              Ngày vi phạm:
+                                            </Text>
+                                            <Space wrap>
+                                              {trigger.breach_dates.map(
+                                                (date, dIdx) => (
+                                                  <Tag key={dIdx} color="red">
+                                                    {date}
+                                                  </Tag>
+                                                )
+                                              )}
+                                            </Space>
+                                          </div>
+                                        )}
+                                    </Space>
+                                  ),
+                                }))}
+                                defaultActiveKey={normalizeTriggerSimulation(
+                                  analysis.raw_output
+                                    .trigger_simulation_results ||
+                                    analysis.raw_output.trigger_simulation
+                                ).map((_, idx) => idx)}
+                                expandIconPosition="end"
+                              />
                             </div>
                           )}
+
+                          {/* Fraud Assessment */}
+                          {analysis.raw_output?.fraud_assessment_details &&
+                            (() => {
+                              const fraudAssessment = normalizeFraudAssessment(
+                                analysis.raw_output.fraud_assessment_details
+                              );
+
+                              return (
+                                <div>
+                                  <Text strong className="text-base block mb-3">
+                                    Đánh giá gian lận
+                                  </Text>
+                                  <Card
+                                    size="small"
+                                    style={{
+                                      backgroundColor:
+                                        fraudAssessment.level === "critical"
+                                          ? "#fff1f0"
+                                          : fraudAssessment.level === "high"
+                                          ? "#fff7e6"
+                                          : "#fffbe6",
+                                      borderColor:
+                                        fraudAssessment.level === "critical"
+                                          ? "#ffccc7"
+                                          : fraudAssessment.level === "high"
+                                          ? "#ffd591"
+                                          : "#ffe58f",
+                                      borderLeft: `4px solid ${
+                                        fraudAssessment.level === "critical"
+                                          ? "#ff4d4f"
+                                          : fraudAssessment.level === "high"
+                                          ? "#fa8c16"
+                                          : "#faad14"
+                                      }`,
+                                    }}
+                                  >
+                                    <Space
+                                      direction="vertical"
+                                      size="middle"
+                                      className="w-full"
+                                    >
+                                      <div className="flex justify-between items-center">
+                                        <Text strong>
+                                          Mức độ gian lận:{" "}
+                                          {getRiskLevelText(
+                                            fraudAssessment.level
+                                          )}
+                                        </Text>
+                                        <Tag
+                                          color={getRiskLevelColor(
+                                            fraudAssessment.level
+                                          )}
+                                        >
+                                          Điểm: {fraudAssessment.score}
+                                        </Tag>
+                                      </div>
+                                      {fraudAssessment.indicators_triggered &&
+                                        fraudAssessment.indicators_triggered
+                                          .length > 0 && (
+                                          <div>
+                                            <Text strong className="block mb-2">
+                                              Chỉ số kích hoạt:
+                                            </Text>
+                                            <Space
+                                              direction="vertical"
+                                              size="small"
+                                              className="w-full"
+                                            >
+                                              {fraudAssessment.indicators_triggered.map(
+                                                (indicator, iIdx) => (
+                                                  <Card
+                                                    key={iIdx}
+                                                    size="small"
+                                                    style={{
+                                                      backgroundColor:
+                                                        "#ffffff",
+                                                    }}
+                                                  >
+                                                    <Text>
+                                                      <WarningOutlined
+                                                        style={{
+                                                          color: "#ff4d4f",
+                                                          marginRight: 8,
+                                                        }}
+                                                      />
+                                                      {indicator}
+                                                    </Text>
+                                                  </Card>
+                                                )
+                                              )}
+                                            </Space>
+                                          </div>
+                                        )}
+                                    </Space>
+                                  </Card>
+                                </div>
+                              );
+                            })()}
 
                           {/* Recommendations */}
                           {analysis.recommendations && (

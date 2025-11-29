@@ -246,12 +246,8 @@ export default function PolicyDetailPage() {
         form.resetFields();
 
         setTimeout(() => {
-          // Redirect to active page if approved, approval page if rejected
-          if (decisionType === "approve") {
-            router.push("/policy/active");
-          } else {
-            router.push("/policy/pending");
-          }
+          // Redirect to pending page after approval or rejection
+          router.push("/policy/pending");
         }, 1500);
       }
     } catch (error) {

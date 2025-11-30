@@ -32,12 +32,25 @@ export function normalizeFactor(factor, parentLevel = null) {
 
 /**
  * Normalizes a risk category (e.g., farm_characteristics_risk, fraud_risk)
- * @param {Object} riskData - The risk category object
+ * Handles both AI format (object with factors) and manual format (simple string value)
+ * @param {Object|string} riskData - The risk category object or string value
  * @returns {Object} Normalized risk category
  */
 export function normalizeRiskCategory(riskData) {
   if (!riskData) return null;
 
+  // Handle simple string format from manual assessment (e.g., "high", "moderate", "low")
+  if (typeof riskData === 'string') {
+    return {
+      factors: [],
+      level: riskData,
+      score: 0,
+      _original: riskData,
+      _isManual: true,
+    };
+  }
+
+  // Handle complex object format from AI assessment
   const normalizedFactors = (riskData.factors || []).map((factor) =>
     normalizeFactor(factor, riskData.level)
   );
@@ -47,6 +60,7 @@ export function normalizeRiskCategory(riskData) {
     level: riskData.level || "unknown",
     score: riskData.score || 0,
     _original: riskData,
+    _isManual: false,
   };
 }
 
@@ -161,10 +175,16 @@ export function normalizeFraudAssessment(fraudAssessment) {
  * Risk title mapping for Vietnamese display
  */
 export const RISK_TITLE_MAP = {
+  // AI assessment risks
   farm_characteristics_risk: "Đặc điểm trang trại",
   fraud_risk: "Gian lận",
   historical_performance_risk: "Hiệu suất lịch sử",
   trigger_activation_risk: "Kích hoạt trigger",
+
+  // Manual assessment risks
+  weather_risk: "Rủi ro thời tiết",
+  crop_health: "Sức khỏe cây trồng",
+  historical_claims: "Lịch sử bồi thường",
 };
 
 /**

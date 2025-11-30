@@ -289,10 +289,10 @@ export default function PolicyDetailPage() {
       },
       {
         name: "overall_risk_score",
-        label: "Điểm số rủi ro (0-100)",
+        label: "Điểm số rủi ro (%)",
         type: "number",
         required: false,
-        placeholder: "Nhập điểm số rủi ro",
+        placeholder: "Nhập điểm số rủi ro (0-100)",
         min: 0,
         max: 100,
         step: 0.01,
@@ -401,28 +401,26 @@ export default function PolicyDetailPage() {
         return;
       }
 
+      // Get latest risk analysis for evidence
+      const latestRiskAnalysis = riskAnalysis?.risk_analyses?.[0] || null;
+
       const underwritingData = {
         underwriting_status:
           decisionType === "approve" ? "approved" : "rejected",
         recommendations: {
-          risk_level: "low",
-          suggested_premium_adjustment: 0,
+          suggested_coverage: decisionType === "approve" ? "full" : "none",
+          premium_adjustment: decisionType === "approve" ? "none" : "reject",
         },
         reason:
           decisionType === "approve"
-            ? values.note ||
-              "All documentation verified and risk assessment completed"
+            ? "Policy meets all underwriting criteria. Risk analysis shows acceptable risk levels."
             : values.reason || getApprovalError("REASON_REQUIRED"),
         reason_evidence: {
-          documents_verified: decisionType === "approve",
-          risk_score: decisionType === "approve" ? 25 : 75,
-          fraud_check: decisionType === "approve" ? "passed" : "failed",
+          risk_score: latestRiskAnalysis?.overall_risk_score || 0,
+          risk_level: latestRiskAnalysis?.overall_risk_level || "unknown",
+          farm_history: decisionType === "approve" ? "clean" : "flagged",
         },
-        validation_notes:
-          decisionType === "approve"
-            ? values.note ||
-              "Policy meets all underwriting criteria. Approved for activation."
-            : values.reason,
+        validation_notes: values.validation_notes || "No additional notes",
       };
 
       const response = await axiosInstance.post(
@@ -473,20 +471,32 @@ export default function PolicyDetailPage() {
 
     if (decisionType === "approve") {
       baseFields.push({
-        name: "note",
-        label: "Ghi chú duyệt",
+        name: "validation_notes",
+        label: "Ghi chú xác thực",
         type: "textarea",
-        placeholder: "Nhập ghi chú (nếu có)",
-        required: false,
+        placeholder: "Nhập ghi chú xác thực...\nVí dụ: Đã xác minh tất cả tài liệu. Vị trí trang trại đã được xác nhận. Phân tích rủi ro hoàn tất thành công.",
+        required: true,
+        rows: 4,
       });
     } else if (decisionType === "reject") {
-      baseFields.push({
-        name: "reason",
-        label: "Lý do từ chối",
-        type: "textarea",
-        placeholder: "Nhập lý do từ chối đơn bảo hiểm",
-        required: true,
-      });
+      baseFields.push(
+        {
+          name: "reason",
+          label: "Lý do từ chối",
+          type: "textarea",
+          placeholder: "Nhập lý do từ chối đơn bảo hiểm...",
+          required: true,
+          rows: 3,
+        },
+        {
+          name: "validation_notes",
+          label: "Ghi chú xác thực",
+          type: "textarea",
+          placeholder: "Nhập ghi chú chi tiết...",
+          required: true,
+          rows: 3,
+        }
+      );
     }
 
     return baseFields;
@@ -511,6 +521,80 @@ export default function PolicyDetailPage() {
     if (!url) return "";
     if (url.startsWith("http")) return url;
     return `https://${url}`;
+  };
+
+  // Risk level mapping functions
+  const getRiskLevelColor = (level) => {
+    switch (level?.toLowerCase()) {
+      case "critical":
+        return "red";
+      case "high":
+        return "orange";
+      case "severe":
+        return "red";
+      case "medium":
+        return "gold";
+      case "moderate":
+        return "gold";
+      case "fair":
+        return "gold";
+      case "low":
+        return "green";
+      case "good":
+        return "green";
+      case "excellent":
+        return "blue";
+      case "poor":
+        return "orange";
+      case "unknown":
+        return "default";
+      default:
+        return "default";
+    }
+  };
+
+  const getRiskLevelText = (level) => {
+    switch (level?.toLowerCase()) {
+      case "critical":
+        return "Nghiêm trọng";
+      case "high":
+        return "Cao";
+      case "severe":
+        return "Nghiêm trọng";
+      case "medium":
+        return "Trung bình";
+      case "moderate":
+        return "Trung bình";
+      case "fair":
+        return "Trung bình";
+      case "low":
+        return "Thấp";
+      case "good":
+        return "Tốt";
+      case "excellent":
+        return "Xuất sắc";
+      case "poor":
+        return "Kém";
+      case "unknown":
+        return "Chưa xác định";
+      default:
+        return level;
+    }
+  };
+
+  const getAnalysisTypeText = (type) => {
+    switch (type?.toLowerCase()) {
+      case "ai_model":
+        return "Mô hình AI";
+      case "document_validation":
+        return "Xác thực tài liệu";
+      case "cross_reference":
+        return "Tham chiếu chéo dữ liệu";
+      case "manual":
+        return "Phân tích thủ công";
+      default:
+        return type;
+    }
   };
 
   // Pagination logic
@@ -1387,36 +1471,6 @@ export default function PolicyDetailPage() {
               riskAnalysis.risk_analyses.length > 0 ? (
                 <Space direction="vertical" size="large" className="w-full">
                   {riskAnalysis.risk_analyses.map((analysis, idx) => {
-                    const getRiskLevelColor = (level) => {
-                      switch (level?.toLowerCase()) {
-                        case "critical":
-                          return "red";
-                        case "high":
-                          return "orange";
-                        case "medium":
-                          return "gold";
-                        case "low":
-                          return "green";
-                        default:
-                          return "default";
-                      }
-                    };
-
-                    const getRiskLevelText = (level) => {
-                      switch (level?.toLowerCase()) {
-                        case "critical":
-                          return "Nghiêm trọng";
-                        case "high":
-                          return "Cao";
-                        case "medium":
-                          return "Trung bình";
-                        case "low":
-                          return "Thấp";
-                        default:
-                          return level;
-                      }
-                    };
-
                     const getAnalysisStatusColor = (status) => {
                       switch (status?.toLowerCase()) {
                         case "completed":
@@ -1512,7 +1566,7 @@ export default function PolicyDetailPage() {
                                 label="Loại phân tích"
                                 span={1}
                               >
-                                <Tag color="blue">{analysis.analysis_type}</Tag>
+                                <Tag color="blue">{getAnalysisTypeText(analysis.analysis_type)}</Tag>
                               </Descriptions.Item>
                               <Descriptions.Item
                                 label="Nguồn phân tích"
@@ -1760,6 +1814,10 @@ export default function PolicyDetailPage() {
                                                 );
                                               }
                                             )
+                                          ) : riskData._isManual ? (
+                                            <Text type="secondary">
+                                              Đánh giá thủ công - Mức độ: <Tag color={getRiskLevelColor(riskData.level)}>{getRiskLevelText(riskData.level)}</Tag>
+                                            </Text>
                                           ) : (
                                             <Text type="secondary">
                                               Không có chi tiết
@@ -2638,6 +2696,43 @@ export default function PolicyDetailPage() {
           closable={!submitting}
           maskClosable={!submitting}
         >
+          {/* Risk Analysis Summary */}
+          {riskAnalysis?.risk_analyses?.[0] && (
+            <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f5f5f5' }}>
+              <Space direction="vertical" size="small" className="w-full">
+                <Text strong>Thông tin đánh giá rủi ro:</Text>
+                <div className="flex justify-between">
+                  <Text type="secondary">Loại phân tích:</Text>
+                  <Text strong>
+                    {getAnalysisTypeText(riskAnalysis.risk_analyses[0].analysis_type)}
+                  </Text>
+                </div>
+                <div className="flex justify-between">
+                  <Text type="secondary">Điểm rủi ro:</Text>
+                  <Text strong>
+                    {riskAnalysis.risk_analyses[0].overall_risk_score
+                      ? `${(riskAnalysis.risk_analyses[0].overall_risk_score * 100).toFixed(2)}%`
+                      : '0%'}
+                  </Text>
+                </div>
+                <div className="flex justify-between">
+                  <Text type="secondary">Mức độ rủi ro:</Text>
+                  <Tag color={getRiskLevelColor(riskAnalysis.risk_analyses[0].overall_risk_level)}>
+                    {getRiskLevelText(riskAnalysis.risk_analyses[0].overall_risk_level)}
+                  </Tag>
+                </div>
+                {riskAnalysis.risk_analyses[0].analysis_notes && (
+                  <div>
+                    <Text type="secondary">Ghi chú đánh giá:</Text>
+                    <Text style={{ display: 'block', marginTop: 4, whiteSpace: 'pre-wrap' }}>
+                      {riskAnalysis.risk_analyses[0].analysis_notes}
+                    </Text>
+                  </div>
+                )}
+              </Space>
+            </Card>
+          )}
+
           <CustomForm
             ref={formRef}
             fields={getDecisionFormFields()}

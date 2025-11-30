@@ -76,6 +76,12 @@ export {
   getPlaceholderSuccess,
   getPlaceholderValidation,
   getPlaceholderWarning,
+  // Risk Analysis helpers
+  getRiskAnalysisError,
+  getRiskAnalysisInfo,
+  getRiskAnalysisMessage,
+  getRiskAnalysisSuccess,
+  getRiskAnalysisWarning,
   // Tags helpers
   getTagsError,
   getTagsInfo,
@@ -179,6 +185,12 @@ export const Messages = {
       validation: (key, params) => getPlaceholderValidation(key, params),
       info: (key, params) => getPlaceholderInfo(key, params),
       warning: (key, params) => getPlaceholderWarning(key, params),
+    },
+    riskAnalysis: {
+      success: (key, params) => getRiskAnalysisSuccess(key, params),
+      error: (key, params) => getRiskAnalysisError(key, params),
+      info: (key, params) => getRiskAnalysisInfo(key, params),
+      warning: (key, params) => getRiskAnalysisWarning(key, params),
     },
   },
 

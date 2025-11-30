@@ -251,6 +251,12 @@ export function usePolicyDetail(policyId) {
     fetchPolicyDetail();
   }, [fetchPolicyDetail]);
 
+  // Check if risk analysis exists and has valid data
+  const hasRiskAnalysis =
+    riskAnalysis &&
+    riskAnalysis.risk_analyses &&
+    riskAnalysis.risk_analyses.length > 0;
+
   return {
     policy,
     farm,
@@ -261,5 +267,6 @@ export function usePolicyDetail(policyId) {
     error,
     accessDenied,
     refetch: fetchPolicyDetail,
+    hasRiskAnalysis, // New field to check if risk analysis exists
   };
 }

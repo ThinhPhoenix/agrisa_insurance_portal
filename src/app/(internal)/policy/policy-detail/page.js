@@ -9,10 +9,13 @@ import {
   getApprovalError,
   getApprovalInfo,
   getApprovalSuccess,
+  getApprovalWarning,
+  getRiskAnalysisWarning,
 } from "@/libs/message";
 import { getErrorMessage } from "@/libs/message/common-message";
 import { endpoints } from "@/services/endpoints";
 import { usePolicyDetail } from "@/services/hooks/policy/use-policy-detail";
+import { useAuthStore } from "@/stores/auth-store";
 import {
   getFactorDescription,
   getFactorLevel,
@@ -113,6 +116,8 @@ export default function PolicyDetailPage() {
   const policyId = searchParams.get("id");
   const pageType = searchParams.get("type") || "pending"; // 'pending' or 'active'
 
+  const { user } = useAuthStore();
+
   const {
     policy,
     farm,
@@ -122,6 +127,7 @@ export default function PolicyDetailPage() {
     loading,
     accessDenied,
     refetch,
+    hasRiskAnalysis,
   } = usePolicyDetail(policyId);
 
   const [decisionModalVisible, setDecisionModalVisible] = useState(false);
@@ -129,6 +135,12 @@ export default function PolicyDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
   const formRef = useRef();
+
+  // Risk Analysis modal state
+  const [riskAnalysisModalVisible, setRiskAnalysisModalVisible] =
+    useState(false);
+  const [creatingRiskAnalysis, setCreatingRiskAnalysis] = useState(false);
+  const riskAnalysisFormRef = useRef();
 
   // Pagination state for photos
   const [currentPhotoPage, setCurrentPhotoPage] = useState(1);
@@ -177,8 +189,191 @@ export default function PolicyDetailPage() {
   }, [basePolicy]);
 
   const handleDecision = (type) => {
+    // Check if risk analysis exists before allowing ANY decision (approve or reject)
+    if (!hasRiskAnalysis) {
+      message.warning(getApprovalWarning("NO_RISK_ANALYSIS"));
+      return;
+    }
     setDecisionType(type);
     setDecisionModalVisible(true);
+  };
+
+  const handleCreateRiskAnalysis = () => {
+    setRiskAnalysisModalVisible(true);
+  };
+
+  const handleRiskAnalysisSubmit = async (values) => {
+    setCreatingRiskAnalysis(true);
+    try {
+      // Get partner name from user profile
+      const partnerName = user?.profile?.full_name || user?.user?.full_name || "Đối tác";
+
+      // Build identified_risks object if any field is provided
+      const identifiedRisks = {};
+      if (values.weather_risk) identifiedRisks.weather_risk = values.weather_risk;
+      if (values.crop_health) identifiedRisks.crop_health = values.crop_health;
+      if (values.historical_claims) identifiedRisks.historical_claims = values.historical_claims;
+
+      // Build recommendations object if any field is provided
+      const recommendations = {};
+      if (values.monitoring_frequency) recommendations.monitoring_frequency = values.monitoring_frequency;
+      if (values.suggested_actions) {
+        const actions = values.suggested_actions.split("\n").filter((a) => a.trim());
+        if (actions.length > 0) recommendations.suggested_actions = actions;
+      }
+
+      const requestData = {
+        registered_policy_id: policy.id,
+        analysis_status: "passed", // Always "passed" for manual assessment
+        analysis_type: values.analysis_type,
+        analysis_source: `${partnerName} đánh giá thủ công`,
+        overall_risk_score: values.overall_risk_score
+          ? parseFloat(values.overall_risk_score) / 100
+          : undefined,
+        overall_risk_level: values.overall_risk_level,
+        identified_risks: Object.keys(identifiedRisks).length > 0 ? identifiedRisks : undefined,
+        recommendations: Object.keys(recommendations).length > 0 ? recommendations : undefined,
+        analysis_notes: values.analysis_notes,
+      };
+
+      const response = await axiosInstance.post(
+        endpoints.riskAnalysis.create,
+        requestData
+      );
+
+      if (response.data.success) {
+        message.success("Tạo đánh giá rủi ro thành công!");
+        setRiskAnalysisModalVisible(false);
+        riskAnalysisFormRef.current?.resetFields();
+        // Refresh policy detail to get new risk analysis
+        refetch();
+      }
+    } catch (error) {
+      console.error("Error creating risk analysis:", error);
+      const errorMessage =
+        error.response?.data?.message || "Tạo đánh giá rủi ro thất bại!";
+      message.error(errorMessage);
+    } finally {
+      setCreatingRiskAnalysis(false);
+    }
+  };
+
+  const getRiskAnalysisFormFields = () => {
+    return [
+      {
+        name: "analysis_type",
+        label: "Loại phân tích",
+        type: "select",
+        required: true,
+        placeholder: "Chọn loại phân tích",
+        options: [
+          { value: "manual", label: "Phân tích thủ công" },
+          { value: "document_validation", label: "Xác thực tài liệu" },
+          { value: "cross_reference", label: "Tham chiếu chéo dữ liệu" },
+        ],
+        gridColumn: "1 / 2",
+      },
+      {
+        name: "overall_risk_level",
+        label: "Mức độ rủi ro tổng thể",
+        type: "select",
+        required: true,
+        placeholder: "Chọn mức độ rủi ro",
+        options: [
+          { value: "low", label: "Thấp" },
+          { value: "medium", label: "Trung bình" },
+          { value: "high", label: "Cao" },
+          { value: "critical", label: "Nghiêm trọng" },
+        ],
+        gridColumn: "2 / 3",
+      },
+      {
+        name: "overall_risk_score",
+        label: "Điểm số rủi ro (0-100)",
+        type: "number",
+        required: false,
+        placeholder: "Nhập điểm số rủi ro",
+        min: 0,
+        max: 100,
+        step: 0.01,
+        tooltip: "Điểm số từ 0 (không rủi ro) đến 100 (rủi ro cao nhất)",
+      },
+      {
+        name: "weather_risk",
+        label: "Rủi ro thời tiết",
+        type: "select",
+        required: false,
+        placeholder: "Đánh giá rủi ro thời tiết",
+        options: [
+          { value: "low", label: "Thấp" },
+          { value: "moderate", label: "Trung bình" },
+          { value: "high", label: "Cao" },
+          { value: "severe", label: "Nghiêm trọng" },
+        ],
+        gridColumn: "1 / 2",
+      },
+      {
+        name: "crop_health",
+        label: "Sức khỏe cây trồng",
+        type: "select",
+        required: false,
+        placeholder: "Đánh giá sức khỏe cây trồng",
+        options: [
+          { value: "excellent", label: "Xuất sắc" },
+          { value: "good", label: "Tốt" },
+          { value: "fair", label: "Trung bình" },
+          { value: "poor", label: "Kém" },
+          { value: "unknown", label: "Chưa xác định" },
+        ],
+        gridColumn: "2 / 3",
+      },
+      {
+        name: "historical_claims",
+        label: "Lịch sử bồi thường",
+        type: "select",
+        required: false,
+        placeholder: "Đánh giá lịch sử bồi thường",
+        options: [
+          { value: "low", label: "Thấp" },
+          { value: "moderate", label: "Trung bình" },
+          { value: "high", label: "Cao" },
+          { value: "unknown", label: "Chưa xác định" },
+        ],
+        gridColumn: "1 / 2",
+      },
+      {
+        name: "monitoring_frequency",
+        label: "Tần suất giám sát đề xuất",
+        type: "select",
+        required: false,
+        placeholder: "Chọn tần suất giám sát",
+        options: [
+          { value: "daily", label: "Hàng ngày" },
+          { value: "weekly", label: "Hàng tuần" },
+          { value: "biweekly", label: "2 tuần/lần" },
+          { value: "monthly", label: "Hàng tháng" },
+        ],
+        gridColumn: "2 / 3",
+      },
+      {
+        name: "suggested_actions",
+        label: "Hành động đề xuất",
+        type: "textarea",
+        required: false,
+        placeholder:
+          "Nhập các hành động đề xuất (mỗi hành động một dòng)\nVí dụ:\n- Theo dõi NDVI chặt chẽ\n- Kiểm tra xu hướng lượng mưa\n- Kiểm tra sức khỏe cây trồng hàng tuần",
+        rows: 3,
+      },
+      {
+        name: "analysis_notes",
+        label: "Ghi chú đánh giá",
+        type: "textarea",
+        required: true,
+        placeholder:
+          "Nhập nhận xét chi tiết về đánh giá rủi ro...\nVí dụ: Đơn bảo hiểm cho thấy rủi ro trung bình do xu hướng thời tiết theo mùa. Khuyến nghị giám sát hàng tuần.",
+        rows: 3,
+      },
+    ];
   };
 
   const handleDecisionSubmit = async (values) => {
@@ -1113,13 +1308,62 @@ export default function PolicyDetailPage() {
       ),
       children: (
         <Card>
+          {!hasRiskAnalysis && pageType === "pending" && (
+            <Card
+              type="inner"
+              style={{
+                backgroundColor: "#fff7e6",
+                borderColor: "#ffa940",
+                borderLeft: "4px solid #fa8c16",
+                marginBottom: "16px",
+              }}
+            >
+              <Space direction="vertical" size="small" className="w-full">
+                <div className="flex items-center gap-2">
+                  <WarningOutlined
+                    style={{ color: "#fa8c16", fontSize: "18px" }}
+                  />
+                  <Text strong style={{ color: "#d46b08", fontSize: "16px" }}>
+                    {getRiskAnalysisWarning("NO_RISK_ANALYSIS")}
+                  </Text>
+                </div>
+                <Text type="secondary">
+                  {getRiskAnalysisWarning("NO_RISK_ANALYSIS_DESCRIPTION")}
+                </Text>
+                <Text type="secondary">
+                  {getRiskAnalysisWarning("AUTO_OR_MANUAL")}
+                </Text>
+                <Button
+                  type="primary"
+                  icon={<SafetyOutlined />}
+                  onClick={handleCreateRiskAnalysis}
+                  style={{ marginTop: "8px" }}
+                >
+                  {getRiskAnalysisWarning("CREATE_BUTTON")}
+                </Button>
+              </Space>
+            </Card>
+          )}
+
           {riskAnalysis ? (
             <Space direction="vertical" size="large" className="w-full">
               {/* Summary Section */}
               <div>
-                <Text strong className="text-base block mb-3">
-                  Tổng quan đánh giá rủi ro
-                </Text>
+                <div className="flex justify-between items-center mb-3">
+                  <Text strong className="text-base">
+                    Tổng quan đánh giá rủi ro
+                  </Text>
+                  {pageType === "pending" && (
+                    <Button
+                      type="dashed"
+                      icon={<SafetyOutlined />}
+                      onClick={handleCreateRiskAnalysis}
+                      size="small"
+                    >
+                      Tạo đánh giá thủ công
+                    </Button>
+                  )}
+                </div>
                 <Descriptions
                   column={1}
                   size="small"
@@ -2325,12 +2569,27 @@ export default function PolicyDetailPage() {
             </Button>
             {pageType === "pending" && policy.status === "pending_review" && (
               <>
-                <Button danger onClick={() => handleDecision("reject")}>
+                <Button
+                  danger
+                  onClick={() => handleDecision("reject")}
+                  disabled={!hasRiskAnalysis}
+                  title={
+                    !hasRiskAnalysis
+                      ? getApprovalWarning("DECISION_REQUIRES_RISK_ANALYSIS")
+                      : ""
+                  }
+                >
                   Từ chối đơn
                 </Button>
                 <Button
                   type="primary"
                   onClick={() => handleDecision("approve")}
+                  disabled={!hasRiskAnalysis}
+                  title={
+                    !hasRiskAnalysis
+                      ? getApprovalWarning("DECISION_REQUIRES_RISK_ANALYSIS")
+                      : ""
+                  }
                 >
                   Chấp thuận đơn
                 </Button>
@@ -2384,6 +2643,50 @@ export default function PolicyDetailPage() {
             fields={getDecisionFormFields()}
             onSubmit={handleDecisionSubmit}
             gridColumns="1fr"
+            gap="16px"
+          />
+        </Modal>
+
+        {/* Risk Analysis Creation Modal */}
+        <Modal
+          title="Tạo đánh giá rủi ro thủ công"
+          open={riskAnalysisModalVisible}
+          onCancel={() => {
+            if (!creatingRiskAnalysis) {
+              setRiskAnalysisModalVisible(false);
+              riskAnalysisFormRef.current?.resetFields();
+            }
+          }}
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => {
+                setRiskAnalysisModalVisible(false);
+                riskAnalysisFormRef.current?.resetFields();
+              }}
+              disabled={creatingRiskAnalysis}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              onClick={() => riskAnalysisFormRef.current?.submit()}
+              loading={creatingRiskAnalysis}
+              disabled={creatingRiskAnalysis}
+            >
+              Tạo đánh giá
+            </Button>,
+          ]}
+          width={900}
+          closable={!creatingRiskAnalysis}
+          maskClosable={!creatingRiskAnalysis}
+        >
+          <CustomForm
+            ref={riskAnalysisFormRef}
+            fields={getRiskAnalysisFormFields()}
+            onSubmit={handleRiskAnalysisSubmit}
+            gridColumns="1fr 1fr"
             gap="16px"
           />
         </Modal>

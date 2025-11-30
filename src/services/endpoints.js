@@ -67,6 +67,7 @@ export const endpoints = {
   riskAnalysis: {
     by_policy: (policy_id) =>
       `/policy/protected/api/v2/risk-analysis/read-partner/by-policy/${policy_id}`,
+    create: `/policy/protected/api/v2/risk-analysis/create`,
   },
   monitoring: {
     data: (farm_id, parameter_name) =>

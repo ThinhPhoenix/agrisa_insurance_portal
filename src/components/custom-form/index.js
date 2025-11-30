@@ -39,6 +39,7 @@ export const CustomForm = forwardRef(function CustomForm(
     resetFields: () => form.resetFields(),
     setFieldsValue: (values) => form.setFieldsValue(values),
     getForm: () => form, // Export form instance for Form.useWatch
+    submit: () => form.submit(), // Trigger form submission
   }));
 
   useEffect(() => {

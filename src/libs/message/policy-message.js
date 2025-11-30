@@ -434,6 +434,46 @@ export const POLICY_MESSAGES = {
     WARNING: {
       CONFIRM_APPROVE: "Bạn có chắc chắn muốn chấp thuận đơn bảo hiểm này?",
       CONFIRM_REJECT: "Bạn có chắc chắn muốn từ chối đơn bảo hiểm này?",
+      NO_RISK_ANALYSIS:
+        "Không thể thực hiện quyết định khi chưa có đánh giá rủi ro. Vui lòng tạo ít nhất một bản đánh giá rủi ro trước.",
+      DECISION_REQUIRES_RISK_ANALYSIS:
+        "Cần có ít nhất một bản đánh giá rủi ro để thực hiện quyết định",
+    },
+  },
+
+  // RISK ANALYSIS MESSAGES
+  RISK_ANALYSIS: {
+    SUCCESS: {
+      CREATED: "Tạo đánh giá rủi ro thành công!",
+      UPDATED: "Cập nhật đánh giá rủi ro thành công!",
+      LOADED: "Tải đánh giá rủi ro thành công!",
+    },
+
+    ERROR: {
+      LOAD_FAILED: "Không thể tải đánh giá rủi ro!",
+      CREATE_FAILED: "Tạo đánh giá rủi ro thất bại!",
+      UPDATE_FAILED: "Cập nhật đánh giá rủi ro thất bại!",
+      NOT_FOUND: "Không tìm thấy đánh giá rủi ro!",
+      REGISTERED_POLICY_ID_REQUIRED: "Thiếu mã hợp đồng đã đăng ký!",
+      ANALYSIS_STATUS_REQUIRED: "Vui lòng chọn trạng thái phân tích!",
+      ANALYSIS_TYPE_REQUIRED: "Vui lòng chọn loại phân tích!",
+      INVALID_RISK_SCORE: "Điểm số rủi ro không hợp lệ (phải từ 0-1 hoặc 0-100)!",
+    },
+
+    INFO: {
+      LOADING: "Đang tải đánh giá rủi ro...",
+      CREATING: "Đang tạo đánh giá rủi ro...",
+      PROCESSING: "Đang xử lý đánh giá rủi ro...",
+    },
+
+    WARNING: {
+      NO_RISK_ANALYSIS: "Chưa có đánh giá rủi ro",
+      NO_RISK_ANALYSIS_DESCRIPTION:
+        "Đơn bảo hiểm này chưa có bản đánh giá rủi ro nào. Bạn cần phải có ít nhất một bản đánh giá rủi ro trước khi có thể thực hiện quyết định (chấp thuận hoặc từ chối).",
+      AUTO_OR_MANUAL:
+        "Hệ thống sẽ tự động tạo đánh giá rủi ro bằng AI, hoặc bạn có thể tạo đánh giá rủi ro thủ công ngay bây giờ.",
+      CONFIRM_CREATE: "Bạn có chắc chắn muốn tạo đánh giá rủi ro thủ công?",
+      CREATE_BUTTON: "Tạo đánh giá rủi ro thủ công",
     },
   },
 };
@@ -652,6 +692,31 @@ export const getApprovalInfo = (key, params = {}) =>
   getApprovalMessage("INFO", key, params);
 export const getApprovalWarning = (key, params = {}) =>
   getApprovalMessage("WARNING", key, params);
+
+// Risk Analysis helpers
+export const getRiskAnalysisMessage = (type, key, params = {}) => {
+  const category = POLICY_MESSAGES.RISK_ANALYSIS[type];
+  if (!category || !category[key]) {
+    return `Risk Analysis message not found: RISK_ANALYSIS.${type}.${key}`;
+  }
+
+  let message = category[key];
+
+  Object.keys(params).forEach((param) => {
+    message = message.replace(new RegExp(`{${param}}`, "g"), params[param]);
+  });
+
+  return message;
+};
+
+export const getRiskAnalysisSuccess = (key, params = {}) =>
+  getRiskAnalysisMessage("SUCCESS", key, params);
+export const getRiskAnalysisError = (key, params = {}) =>
+  getRiskAnalysisMessage("ERROR", key, params);
+export const getRiskAnalysisInfo = (key, params = {}) =>
+  getRiskAnalysisMessage("INFO", key, params);
+export const getRiskAnalysisWarning = (key, params = {}) =>
+  getRiskAnalysisMessage("WARNING", key, params);
 
 // Default export
 export default POLICY_MESSAGES;

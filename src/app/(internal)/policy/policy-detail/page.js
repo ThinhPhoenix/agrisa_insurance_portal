@@ -21,8 +21,10 @@ import {
   ImagesTab,
   MonitoringDataTab,
   RiskAnalysisTab,
+  ClaimsTab,
 } from "@/components/layout/policy/detail";
 import {
+  DollarOutlined,
   DownloadOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
@@ -620,6 +622,7 @@ export default function PolicyDetailPage() {
   }
 
 
+  // Build tab items - only show Claims tab for active policies
   const tabItems = [
     {
       key: "basic",
@@ -693,6 +696,24 @@ export default function PolicyDetailPage() {
       ),
     },
   ];
+
+  // Only add Claims tab for active policies (status = active AND underwriting_status = approved)
+  if (
+    pageType === "active" &&
+    policy.status === "active" &&
+    policy.underwriting_status === "approved"
+  ) {
+    tabItems.push({
+      key: "claims",
+      label: (
+        <span className="flex items-center gap-2">
+          <DollarOutlined />
+          <span className="hidden sm:inline">Bồi thường</span>
+        </span>
+      ),
+      children: <ClaimsTab policyId={policyId} />,
+    });
+  }
 
   return (
     <div className="insurance-content">

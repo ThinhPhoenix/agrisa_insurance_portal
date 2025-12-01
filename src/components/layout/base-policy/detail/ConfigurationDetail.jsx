@@ -18,6 +18,42 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
         return mockData.monitoringFrequencies.find(m => m.value === value)?.label || value;
     };
 
+    // Map validation status to Vietnamese
+    const getValidationStatusText = (status) => {
+        const mapping = {
+            'pending': 'Đang chờ xác thực',
+            'passed': 'Đã xác thực',
+            'passed_ai': 'Đã xác thực bởi AI',
+            'failed': 'Xác thực thất bại',
+            'warning': 'Cảnh báo'
+        };
+        return mapping[status] || status;
+    };
+
+    // Get validation status color
+    const getValidationStatusColor = (status) => {
+        const colorMapping = {
+            'pending': 'orange',
+            'passed': 'green',
+            'passed_ai': 'blue',
+            'failed': 'red',
+            'warning': 'gold'
+        };
+        return colorMapping[status] || 'default';
+    };
+
+    // Map monitor frequency unit to Vietnamese
+    const getMonitorFrequencyUnitText = (unit) => {
+        const mapping = {
+            'hour': 'giờ',
+            'day': 'ngày',
+            'week': 'tuần',
+            'month': 'tháng',
+            'year': 'năm'
+        };
+        return mapping[unit] || unit || 'ngày';
+    };
+
     const getDataSourceLabel = (condition) => {
         // Use enriched data from API if available
         if (condition.dataSourceLabel) {
@@ -175,8 +211,8 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     key="monitoring"
                 >
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Khoảng thời gian giám sát">
-                            <Text strong>{policyData.configuration?.monitorInterval} {policyData.configuration?.monitorFrequencyUnit || 'day'}</Text>
+                        <Descriptions.Item label="Tần suất giám sát">
+                            <Text strong>{policyData.configuration?.monitorInterval} {getMonitorFrequencyUnitText(policyData.configuration?.monitorFrequencyUnit)}</Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Giai đoạn sinh trưởng">
                             <Text strong>{policyData.configuration?.growthStage || 'N/A'}</Text>
@@ -303,8 +339,8 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                             <Text code>{policyData.templateDocumentUrl || 'N/A'}</Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Trạng thái xác thực tài liệu">
-                            <Tag color={policyData.documentValidationStatus === 'approved' ? 'green' : 'orange'}>
-                                {policyData.documentValidationStatus || 'pending'}
+                            <Tag color={getValidationStatusColor(policyData.documentValidationStatus || 'pending')}>
+                                {getValidationStatusText(policyData.documentValidationStatus || 'pending')}
                             </Tag>
                         </Descriptions.Item>
                     </Descriptions>

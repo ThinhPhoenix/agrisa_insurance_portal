@@ -106,7 +106,7 @@ const TagsDetail = ({ policyData, mockData }) => {
                                     {getValidationStatusLabel(policyData.documentValidationStatus) || 'chờ duyệt'}
                                 </Tag>
                             </Descriptions.Item>
-                            <Descriptions.Item label="Số lượng tags">
+                            <Descriptions.Item label="Số lượng trường thông tin">
                                 <Text strong>{tags.length}</Text>
                             </Descriptions.Item>
                         </Descriptions>

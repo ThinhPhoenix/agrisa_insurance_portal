@@ -77,4 +77,10 @@ export const endpoints = {
     detail: (data_source_id) =>
       `/policy/protected/api/v2/data-sources/${data_source_id}`,
   },
+  claim: {
+    list: "/policy/protected/api/v2/claims/read-partner/list",
+    detail: (id) => `/policy/protected/api/v2/claims/read-partner/detail/${id}`,
+    byPolicy: (policy_id) =>
+      `/policy/protected/api/v2/claims/read-partner/by-policy/${policy_id}`,
+  },
 };

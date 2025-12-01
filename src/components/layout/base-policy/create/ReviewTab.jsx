@@ -20,6 +20,18 @@ import { memo } from 'react';
 
 const { Title, Text } = Typography;
 
+// Helper function to format epoch timestamp to Vietnamese date
+const formatDate = (timestamp) => {
+    if (!timestamp) return null;
+
+    // Check if timestamp is in seconds (< year 2100 in seconds) or milliseconds
+    const date = timestamp < 5000000000
+        ? new Date(timestamp * 1000)  // Convert seconds to milliseconds
+        : new Date(timestamp);         // Already in milliseconds
+
+    return date.toLocaleDateString('vi-VN');
+};
+
 // ✅ OPTIMIZATION: Memoize ReviewTab to prevent unnecessary re-renders
 const ReviewTabComponent = ({
     basicData,
@@ -314,18 +326,18 @@ const ReviewTabComponent = ({
                         <Descriptions.Item label="Thời gian đăng ký" span={2}>
                             {basicData.enrollmentStartDay && basicData.enrollmentEndDay ? (
                                 <Space>
-                                    <Text>{new Date(basicData.enrollmentStartDay * 1000).toLocaleDateString('vi-VN')}</Text>
+                                    <Text>{formatDate(basicData.enrollmentStartDay)}</Text>
                                     <Text>→</Text>
-                                    <Text>{new Date(basicData.enrollmentEndDay * 1000).toLocaleDateString('vi-VN')}</Text>
+                                    <Text>{formatDate(basicData.enrollmentEndDay)}</Text>
                                 </Space>
                             ) : 'Chưa thiết lập'}
                         </Descriptions.Item>
                         <Descriptions.Item label="Thời gian hiệu lực" span={2}>
                             {basicData.insuranceValidFrom && basicData.insuranceValidTo ? (
                                 <Space>
-                                    <Text strong>{new Date(basicData.insuranceValidFrom * 1000).toLocaleDateString('vi-VN')}</Text>
+                                    <Text strong>{formatDate(basicData.insuranceValidFrom)}</Text>
                                     <Text>→</Text>
-                                    <Text strong>{new Date(basicData.insuranceValidTo * 1000).toLocaleDateString('vi-VN')}</Text>
+                                    <Text strong>{formatDate(basicData.insuranceValidTo)}</Text>
                                 </Space>
                             ) : 'Chưa thiết lập'}
                         </Descriptions.Item>

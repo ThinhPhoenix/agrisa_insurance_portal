@@ -74,6 +74,17 @@ const ReviewTabComponent = ({
     // Conditions summary table columns
     const conditionColumns = [
         {
+            title: '#',
+            dataIndex: 'conditionOrder',
+            key: 'conditionOrder',
+            width: 50,
+            render: (order) => (
+                <Tag color="blue" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                    {order || 1}
+                </Tag>
+            ),
+        },
+        {
             title: 'Nguồn dữ liệu',
             dataIndex: 'dataSourceLabel',
             key: 'dataSourceLabel',
@@ -101,8 +112,9 @@ const ReviewTabComponent = ({
                         {record.includeComponent && (
                             <Tag color="purple" size="small">Bao gồm Component</Tag>
                         )}
-                        <Tag color="blue" size="small">Thứ tự: {record.conditionOrder || 1}</Tag>
-                        <Tag color="green" size="small">Kiểm tra: {record.validationWindowDays || 3} ngày</Tag>
+                        {record.validationWindowDays && (
+                            <Tag color="green" size="small">Kiểm tra: {record.validationWindowDays} ngày</Tag>
+                        )}
                     </Space>
                 </Space>
             ),

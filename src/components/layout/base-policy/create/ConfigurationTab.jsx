@@ -11,6 +11,7 @@ import {
     ClockCircleOutlined,
     DeleteOutlined,
     EditOutlined,
+    HolderOutlined,
     InfoCircleOutlined,
     PlusOutlined,
     SettingOutlined
@@ -32,6 +33,7 @@ import {
     Typography
 } from 'antd';
 import { memo, useRef, useState, useCallback, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
@@ -52,6 +54,15 @@ const ConfigurationTabComponent = ({
     const [editingCondition, setEditingCondition] = useState(null);
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
+
+    // ✅ Filter out data sources that are already used in conditions
+    const unusedDataSources = availableDataSources.filter(dataSource => {
+        // Check if this data source is already used in any condition
+        const isUsed = configurationData.conditions?.some(
+            condition => condition.dataSourceId === dataSource.value
+        );
+        return !isUsed;
+    });
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
@@ -78,6 +89,16 @@ const ConfigurationTabComponent = ({
             // Calculate condition cost
             const calculatedCost = calculateConditionCost(baseCost, categoryMultiplier, tierMultiplier);
 
+            // ✅ AUTO-SET conditionOrder: Set theo thứ tự thêm của user
+            // Nếu đang edit, giữ nguyên order cũ
+            // Nếu thêm mới, set order = số lượng conditions hiện tại + 1
+            let conditionOrder;
+            if (editingCondition) {
+                conditionOrder = editingCondition.conditionOrder;
+            } else {
+                conditionOrder = (configurationData.conditions?.length || 0) + 1;
+            }
+
             const condition = {
                 // ✅ Core condition fields (from form)
                 dataSourceId: values.dataSourceId, // REQUIRED - UUID from API
@@ -91,7 +112,7 @@ const ConfigurationTabComponent = ({
                 baselineWindowDays: values.baselineWindowDays || null,
                 baselineFunction: values.baselineFunction || null,
                 validationWindowDays: values.validationWindowDays || null,
-                conditionOrder: values.conditionOrder || null,
+                conditionOrder, // ✅ AUTO-SET theo thứ tự thêm
 
                 // ✅ Display labels (for UI table)
                 id: editingCondition?.id || Date.now().toString(),
@@ -131,6 +152,37 @@ const ConfigurationTabComponent = ({
     const handleCancelEdit = () => {
         setEditingCondition(null);
         conditionForm.resetFields();
+    };
+
+    // ✅ Handle drag end - Reorder conditions and update conditionOrder
+    const handleDragEnd = (result) => {
+        if (!result.destination) {
+            return;
+        }
+
+        const sourceIndex = result.source.index;
+        const destIndex = result.destination.index;
+
+        if (sourceIndex === destIndex) {
+            return;
+        }
+
+        // Reorder array
+        const newConditions = Array.from(configurationData.conditions);
+        const [removed] = newConditions.splice(sourceIndex, 1);
+        newConditions.splice(destIndex, 0, removed);
+
+        // Update conditionOrder for all conditions based on new position
+        const updatedConditions = newConditions.map((condition, index) => ({
+            ...condition,
+            conditionOrder: index + 1
+        }));
+
+        // Update parent state
+        onDataChange({
+            ...configurationData,
+            conditions: updatedConditions
+        });
     };
 
     // Helper function to render select option with tooltip
@@ -244,19 +296,9 @@ const ConfigurationTabComponent = ({
             tooltip: 'Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 500 ký tự)',
             showCount: true,
             maxLength: 500
-        },
-        {
-            name: 'blackoutPeriods',
-            label: 'Khoảng thời gian không giám sát (JSON)',
-            type: 'textarea',
-            gridColumn: '1 / -1',
-            rows: 3,
-            placeholder: '[{"start": 1762016400, "end": 1762102800}]',
-            size: 'large',
-            tooltip: 'Các khoảng thời gian tạm dừng giám sát (JSON format với Unix timestamps)',
-            showCount: true,
-            maxLength: 2000
         }
+        // ✅ HIDDEN: blackoutPeriods field - Giữ nguyên payload object rỗng {} nhưng ẩn UI input
+        // Payload sẽ được set mặc định là {} trong hook
     ];
 
     // Note: Additional settings fields removed - not in BE spec
@@ -268,6 +310,17 @@ const ConfigurationTabComponent = ({
 
     // Trigger conditions table columns
     const conditionsColumns = [
+        {
+            title: '#',
+            dataIndex: 'conditionOrder',
+            key: 'conditionOrder',
+            width: 60,
+            render: (order) => (
+                <Tag color="blue" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                    {order || 1}
+                </Tag>
+            ),
+        },
         {
             title: 'Nguồn dữ liệu',
             dataIndex: 'dataSourceLabel',
@@ -310,12 +363,16 @@ const ConfigurationTabComponent = ({
                     <TypographyText>
                         {record.thresholdOperatorLabel} {record.thresholdValue} {record.unit}
                     </TypographyText>
-                    <br />
-                    <TypographyText type="secondary" style={{ fontSize: '11px' }}>
-                        Thứ tự: {record.conditionOrder || 1}
-                        {record.consecutiveRequired && ' | Liên tiếp'}
-                        {record.includeComponent && ' | Bao gồm Component'}
-                    </TypographyText>
+                    {(record.consecutiveRequired || record.includeComponent) && (
+                        <>
+                            <br />
+                            <TypographyText type="secondary" style={{ fontSize: '11px' }}>
+                                {record.consecutiveRequired && 'Liên tiếp'}
+                                {record.consecutiveRequired && record.includeComponent && ' | '}
+                                {record.includeComponent && 'Bao gồm Component'}
+                            </TypographyText>
+                        </>
+                    )}
                 </div>
             ),
         },
@@ -447,6 +504,13 @@ const ConfigurationTabComponent = ({
                                 type="warning"
                                 showIcon
                             />
+                        ) : unusedDataSources.length === 0 && !editingCondition ? (
+                            <Alert
+                                message="Đã sử dụng hết nguồn dữ liệu"
+                                description="Tất cả nguồn dữ liệu đã được thêm vào điều kiện. Vui lòng thêm nguồn dữ liệu mới ở tab 'Thông tin Cơ bản' hoặc chỉnh sửa điều kiện hiện có."
+                                type="info"
+                                showIcon
+                            />
                         ) : (
                             <>
                                 <Form
@@ -466,8 +530,13 @@ const ConfigurationTabComponent = ({
                                                     size="large"
                                                     optionLabelProp="displayLabel"
                                                     popupMatchSelectWidth={300}
+                                                    disabled={!editingCondition && unusedDataSources.length === 0}
                                                 >
-                                                    {availableDataSources.map(source => {
+                                                    {/* ✅ Show only unused data sources when adding new, or include current when editing */}
+                                                    {(editingCondition
+                                                        ? availableDataSources
+                                                        : unusedDataSources
+                                                    ).map(source => {
                                                         const displayLabel = source.label.length > 17 ? source.label.substring(0, 17) + '...' : source.label;
                                                         return (
                                                             <Select.Option
@@ -698,21 +767,7 @@ const ConfigurationTabComponent = ({
                                                 />
                                             </Form.Item>
                                         </Col>
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="conditionOrder"
-                                                label="Thứ tự điều kiện"
-                                                tooltip="Thứ tự ưu tiên khi đánh giá điều kiện này. 1 = ưu tiên cao nhất, được kiểm tra trước. Phải >= 1 nếu nhập"
-                                                rules={[{ type: 'number', min: 1, message: getConditionValidation('CONDITION_ORDER_MIN') }]}
-                                            >
-                                                <InputNumber
-                                                    placeholder="1"
-                                                    min={1}
-                                                    size="large"
-                                                    style={{ width: '100%' }}
-                                                />
-                                            </Form.Item>
-                                        </Col>
+                                        {/* ✅ REMOVED: conditionOrder manual input - Auto-set theo thứ tự thêm của user */}
                                         <Col span={8}>
                                             <Form.Item
                                                 name="baselineWindowDays"
@@ -820,11 +875,71 @@ const ConfigurationTabComponent = ({
                             className="no-conditions-alert"
                         />
                     ) : (
-                        <CustomTable
-                            columns={conditionsColumns}
-                            dataSource={configurationData.conditions}
-                            pagination={false}
-                        />
+                        <DragDropContext onDragEnd={handleDragEnd}>
+                            <Droppable droppableId="conditions-table">
+                                {(provided) => (
+                                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                                        <CustomTable
+                                            columns={conditionsColumns}
+                                            dataSource={configurationData.conditions}
+                                            pagination={false}
+                                            rowKey="id"
+                                            components={{
+                                                body: {
+                                                    wrapper: (props) => <tbody {...props}>{props.children}</tbody>,
+                                                    row: ({ children, ...props }) => {
+                                                        const index = configurationData.conditions.findIndex(
+                                                            (x) => x.id === props['data-row-key']
+                                                        );
+                                                        return (
+                                                            <Draggable
+                                                                key={props['data-row-key']}
+                                                                draggableId={props['data-row-key']}
+                                                                index={index}
+                                                            >
+                                                                {(provided, snapshot) => (
+                                                                    <tr
+                                                                        ref={provided.innerRef}
+                                                                        {...provided.draggableProps}
+                                                                        {...props}
+                                                                        style={{
+                                                                            ...props.style,
+                                                                            ...provided.draggableProps.style,
+                                                                            ...(snapshot.isDragging ? {
+                                                                                display: 'table',
+                                                                                background: '#fafafa'
+                                                                            } : {}),
+                                                                        }}
+                                                                    >
+                                                                        {children?.map((child, idx) => {
+                                                                            if (idx === 0) {
+                                                                                return (
+                                                                                    <td key={child.key} {...child.props}>
+                                                                                        <Space>
+                                                                                            <HolderOutlined
+                                                                                                {...provided.dragHandleProps}
+                                                                                                style={{ cursor: 'grab' }}
+                                                                                            />
+                                                                                            {child.props.children}
+                                                                                        </Space>
+                                                                                    </td>
+                                                                                );
+                                                                            }
+                                                                            return child;
+                                                                        })}
+                                                                    </tr>
+                                                                )}
+                                                            </Draggable>
+                                                        );
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                        {provided.placeholder}
+                                    </div>
+                                )}
+                            </Droppable>
+                        </DragDropContext>
                     )}
 
                     {/* Logic Preview */}

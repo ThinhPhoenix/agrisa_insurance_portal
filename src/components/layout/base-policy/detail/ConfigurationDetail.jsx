@@ -49,9 +49,14 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
     const triggerColumns = [
         {
             title: '#',
-            key: 'index',
-            width: 50,
-            render: (_, record) => record.conditionOrder || 1,
+            dataIndex: 'conditionOrder',
+            key: 'conditionOrder',
+            width: 60,
+            render: (order) => (
+                <Tag color="blue" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                    {order || 1}
+                </Tag>
+            ),
         },
         {
             title: 'Nguồn dữ liệu',

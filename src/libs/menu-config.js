@@ -18,6 +18,10 @@ export const sidebarMenuItems = [
     ],
   },
   {
+    key: "claim",
+    label: "Quản lý bồi thường",
+  },
+  {
     key: "beneficiary",
     label: "Quản lý người thụ hưởng",
   },

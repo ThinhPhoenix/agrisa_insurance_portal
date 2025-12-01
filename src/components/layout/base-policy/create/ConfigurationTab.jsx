@@ -1,5 +1,6 @@
 import CustomForm from '@/components/custom-form';
 import CustomTable from '@/components/custom-table';
+import TriggerLogicExplainer from '@/components/layout/base-policy/TriggerLogicExplainer';
 import {
     getConditionError,
     getConditionValidation,
@@ -23,6 +24,7 @@ import {
     Col,
     Collapse,
     Form,
+    Input,
     InputNumber,
     Popconfirm,
     Row,
@@ -37,6 +39,52 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
+
+// ✅ Debounced Input Component for Vietnamese IME fix
+const DebouncedTextArea = memo(({ value: initialValue, onChange, ...props }) => {
+    const [localValue, setLocalValue] = useState(initialValue || '');
+    const timeoutRef = useRef(null);
+
+    // Sync local state when initialValue changes from parent
+    useEffect(() => {
+        setLocalValue(initialValue || '');
+    }, [initialValue]);
+
+    // Handle input with debounce
+    const handleChange = useCallback((e) => {
+        const newValue = e.target.value;
+        setLocalValue(newValue); // Update local immediately for smooth typing
+
+        // Clear previous timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        // Debounce parent update
+        timeoutRef.current = setTimeout(() => {
+            onChange?.(e);
+        }, 300);
+    }, [onChange]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    return (
+        <Input.TextArea
+            {...props}
+            value={localValue}
+            onChange={handleChange}
+        />
+    );
+});
+
+DebouncedTextArea.displayName = 'DebouncedTextArea';
 
 // ✅ OPTIMIZATION: Memoize ConfigurationTab to prevent unnecessary re-renders
 const ConfigurationTabComponent = ({
@@ -266,47 +314,8 @@ const ConfigurationTabComponent = ({
 
 
 
-    // Generate trigger configuration fields
-    const getTriggerFields = () => [
-        {
-            name: 'logicalOperator',
-            label: 'Toán tử Logic',
-            type: 'select',
-            required: true,
-            gridColumn: '1',
-            placeholder: 'Chọn toán tử',
-            size: 'large',
-            tooltip: 'AND = tất cả điều kiện phải đúng | OR = 1 điều kiện đúng là đủ',
-            options: [
-                { value: 'AND', label: 'AND - Tất cả điều kiện phải đúng' },
-                { value: 'OR', label: 'OR - Một trong các điều kiện đúng' }
-            ],
-            rules: [
-                { required: true, message: getTriggerValidation('LOGICAL_OPERATOR_REQUIRED') }
-            ]
-        },
-        {
-            name: 'growthStage',
-            label: 'Giai đoạn sinh trưởng',
-            type: 'textarea',
-            gridColumn: '2',
-            rows: 2,
-            placeholder: 'Ví dụ: Toàn chu kỳ sinh trưởng lúa (120 ngày)',
-            size: 'large',
-            tooltip: 'Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 500 ký tự)',
-            showCount: true,
-            maxLength: 500
-        }
-        // ✅ HIDDEN: blackoutPeriods field - Giữ nguyên payload object rỗng {} nhưng ẩn UI input
-        // Payload sẽ được set mặc định là {} trong hook
-    ];
-
-    // Note: Additional settings fields removed - not in BE spec
-    // - policyDescription → already have product_description in BasicTab
-    // - enableGracePeriod/gracePeriodDays → not in spec
-    // - enableAutoRenewal → already have auto_renewal in BasicTab
-    // - enableStorage → not in spec
-    // - NotificationsManager → use important_additional_information in BasicTab
+    // ✅ Note: getTriggerFields removed - now using direct Form rendering with DebouncedTextArea
+    // This fixes Vietnamese IME re-render issues for growthStage field
 
     // Trigger conditions table columns
     const conditionsColumns = [
@@ -465,17 +474,50 @@ const ConfigurationTabComponent = ({
                     <div style={{ marginBottom: 16 }}>
                         <Title level={5} style={{ marginBottom: 8 }}>Cấu hình Trigger & Giai đoạn sinh trưởng</Title>
                         <TypographyText type="secondary">
-                            Chọn toán tử logic để kết hợp các điều kiện, mô tả giai đoạn sinh trưởng, và cấu hình các khoảng thời gian không giám sát (blackout periods).
+                            Chọn toán tử logic để kết hợp các điều kiện, mô tả giai đoạn sinh trưởng.
                         </TypographyText>
                     </div>
-                    <CustomForm
+                    <Form
                         ref={formRef}
-                        fields={getTriggerFields()}
+                        layout="vertical"
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
-                        gridColumns="repeat(2, 1fr)"
-                        gap="24px"
-                    />
+                    >
+                        <Row gutter={24}>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="logicalOperator"
+                                    label="Toán tử Logic"
+                                    tooltip="AND = tất cả điều kiện phải đúng | OR = 1 điều kiện đúng là đủ"
+                                    rules={[{ required: true, message: getTriggerValidation('LOGICAL_OPERATOR_REQUIRED') }]}
+                                >
+                                    <Select
+                                        placeholder="Chọn toán tử"
+                                        size="large"
+                                        options={[
+                                            { value: 'AND', label: 'AND - Tất cả điều kiện phải đúng' },
+                                            { value: 'OR', label: 'OR - Một trong các điều kiện đúng' }
+                                        ]}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="growthStage"
+                                    label="Giai đoạn sinh trưởng"
+                                    tooltip="Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 500 ký tự)"
+                                >
+                                    <DebouncedTextArea
+                                        rows={2}
+                                        placeholder="Ví dụ: Toàn chu kỳ sinh trưởng lúa (120 ngày)"
+                                        size="large"
+                                        showCount
+                                        maxLength={500}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Panel>
 
                 {/* Trigger Conditions */}
@@ -942,39 +984,13 @@ const ConfigurationTabComponent = ({
                         </DragDropContext>
                     )}
 
-                    {/* Logic Preview */}
-                    {configurationData.conditions?.length > 0 && (
-                        <Card
-                            title="Xem trước Logic Kích hoạt"
-                            className="logic-preview-card"
-                            style={{ marginTop: 16 }}
-                        >
-                            <div className="logic-preview">
-                                <TypographyText>
-                                    Thanh toán <TypographyText strong>{configurationData.payoutPercentage}%</TypographyText> (tối đa{' '}
-                                    <TypographyText strong>{configurationData.maxPayoutAmount?.toLocaleString()} ₫</TypographyText>) khi{' '}
-                                    <TypographyText strong>
-                                        {configurationData.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
-                                    </TypographyText>
-                                    {' '}các điều kiện sau được thỏa mãn:
-                                </TypographyText>
-                                <ul style={{ marginTop: 8 }}>
-                                    {configurationData.conditions.map((condition, index) => (
-                                        <li key={condition.id}>
-                                            <TypographyText>
-                                                {condition.aggregationFunctionLabel} của {condition.dataSourceLabel}{' '}
-                                                trong {condition.aggregationWindowDays} ngày{' '}
-                                                {condition.thresholdOperatorLabel} {condition.thresholdValue} {condition.unit}
-                                                {condition.baselineWindowDays && (
-                                                    <> (baseline: {condition.baselineWindowDays} ngày)</>
-                                                )}
-                                            </TypographyText>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </Card>
-                    )}
+                    {/* Logic Explainer - Diễn giải logic trigger thành câu văn dễ hiểu */}
+                    <div style={{ marginTop: 16 }}>
+                        <TriggerLogicExplainer
+                            configurationData={configurationData}
+                            mockData={mockData}
+                        />
+                    </div>
                 </Panel>
             </Collapse>
         </div>

@@ -8,6 +8,7 @@ import {
 } from "@/components/layout/base-policy/detail";
 import useDetailPolicy from "@/services/hooks/base-policy/use-detail-policy";
 import usePolicy from "@/services/hooks/base-policy/use-policy";
+import useDataSource from "@/services/hooks/common/use-data-source";
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
@@ -36,6 +37,7 @@ const { Title, Text } = Typography;
 const PolicyDetailPage = ({ params }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("basic");
+  const [enrichedDataSources, setEnrichedDataSources] = React.useState([]);
 
   // Use policy list hook for checking draft/active status
   const { policies, activePolicies } = usePolicy();
@@ -48,6 +50,9 @@ const PolicyDetailPage = ({ params }) => {
     fetchPolicyDetail,
     fetchActivePolicyDetail,
   } = useDetailPolicy();
+
+  // Use data source hook for fetching data source details
+  const { fetchDataSourcesByIds } = useDataSource();
 
   // Fetch policy detail and validate on mount
   useEffect(() => {
@@ -134,6 +139,46 @@ const PolicyDetailPage = ({ params }) => {
     router,
   ]);
 
+  // Fetch data source details when policy detail is loaded
+  useEffect(() => {
+    const loadDataSources = async () => {
+      if (
+        !apiPolicyDetail?.conditions ||
+        apiPolicyDetail.conditions.length === 0
+      ) {
+        setEnrichedDataSources([]);
+        return;
+      }
+
+      // Extract unique data source IDs from conditions
+      const dataSourceIds = [
+        ...new Set(
+          apiPolicyDetail.conditions.map(
+            (condition) => condition.data_source_id
+          )
+        ),
+      ].filter(Boolean);
+
+      if (dataSourceIds.length === 0) {
+        setEnrichedDataSources([]);
+        return;
+      }
+
+      // Fetch data source details
+      const dataSourceDetails = await fetchDataSourcesByIds(dataSourceIds);
+
+      // Create a map for quick lookup
+      const dataSourceMap = {};
+      dataSourceDetails.forEach((ds) => {
+        dataSourceMap[ds.id] = ds;
+      });
+
+      setEnrichedDataSources(dataSourceMap);
+    };
+
+    loadDataSources();
+  }, [apiPolicyDetail, fetchDataSourcesByIds]);
+
   // Show loading spinner
   if (policyDetailLoading) {
     return (
@@ -218,25 +263,32 @@ const PolicyDetailPage = ({ params }) => {
       growthStage: trigger?.growth_stage || "",
       monitorInterval: trigger?.monitor_interval || 1,
       monitorFrequencyUnit: trigger?.monitor_frequency_unit || "day",
-      triggerConditions: conditions.map((condition) => ({
-        id: condition.id,
-        dataSourceId: condition.data_source_id,
-        thresholdOperator: condition.threshold_operator,
-        thresholdValue: condition.threshold_value,
-        earlyWarningThreshold: condition.early_warning_threshold,
-        aggregationFunction: condition.aggregation_function,
-        aggregationWindowDays: condition.aggregation_window_days,
-        consecutiveRequired: condition.consecutive_required,
-        includeComponent: condition.include_component,
-        baselineWindowDays: condition.baseline_window_days,
-        baselineFunction: condition.baseline_function,
-        validationWindowDays: condition.validation_window_days,
-        conditionOrder: condition.condition_order,
-        baseCost: condition.base_cost,
-        categoryMultiplier: condition.category_multiplier,
-        tierMultiplier: condition.tier_multiplier,
-        calculatedCost: condition.calculated_cost,
-      })),
+      triggerConditions: conditions.map((condition) => {
+        const dataSourceDetail = enrichedDataSources[condition.data_source_id];
+        return {
+          id: condition.id,
+          dataSourceId: condition.data_source_id,
+          thresholdOperator: condition.threshold_operator,
+          thresholdValue: condition.threshold_value,
+          earlyWarningThreshold: condition.early_warning_threshold,
+          aggregationFunction: condition.aggregation_function,
+          aggregationWindowDays: condition.aggregation_window_days,
+          consecutiveRequired: condition.consecutive_required,
+          includeComponent: condition.include_component,
+          baselineWindowDays: condition.baseline_window_days,
+          baselineFunction: condition.baseline_function,
+          validationWindowDays: condition.validation_window_days,
+          conditionOrder: condition.condition_order,
+          baseCost: condition.base_cost,
+          categoryMultiplier: condition.category_multiplier,
+          tierMultiplier: condition.tier_multiplier,
+          calculatedCost: condition.calculated_cost,
+          // Enriched fields for display
+          dataSourceLabel: dataSourceDetail?.label || condition.data_source_id,
+          dataSourceParameterName: dataSourceDetail?.parameterName || "",
+          dataSourceUnit: dataSourceDetail?.unit || "",
+        };
+      }),
     },
 
     // Tags from document_tags
@@ -250,15 +302,24 @@ const PolicyDetailPage = ({ params }) => {
       })
     ),
 
-    // Data sources - map from conditions
-    selectedDataSources: conditions.map((condition) => ({
-      id: condition.data_source_id,
-      dataSourceId: condition.data_source_id,
-      baseCost: condition.base_cost,
-      calculatedCost: condition.calculated_cost,
-      categoryMultiplier: condition.category_multiplier,
-      tierMultiplier: condition.tier_multiplier,
-    })),
+    // Data sources - map from conditions with enriched details
+    selectedDataSources: conditions.map((condition) => {
+      const dataSourceDetail = enrichedDataSources[condition.data_source_id];
+      return {
+        id: condition.data_source_id,
+        dataSourceId: condition.data_source_id,
+        baseCost: condition.base_cost,
+        calculatedCost: condition.calculated_cost,
+        categoryMultiplier: condition.category_multiplier,
+        tierMultiplier: condition.tier_multiplier,
+        // Enriched fields from API
+        label: dataSourceDetail?.label || condition.data_source_id,
+        parameterName: dataSourceDetail?.parameterName || "",
+        unit: dataSourceDetail?.unit || "",
+        categoryLabel: dataSourceDetail?.categoryLabel || "",
+        tierLabel: dataSourceDetail?.tierLabel || "",
+      };
+    }),
   };
 
   const handleBack = () => {

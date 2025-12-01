@@ -1,5 +1,6 @@
 import CustomForm from '@/components/custom-form';
 import CustomTable from '@/components/custom-table';
+import TriggerLogicExplainer from '@/components/layout/base-policy/TriggerLogicExplainer';
 import {
     getConditionError,
     getConditionValidation,
@@ -11,6 +12,7 @@ import {
     ClockCircleOutlined,
     DeleteOutlined,
     EditOutlined,
+    HolderOutlined,
     InfoCircleOutlined,
     PlusOutlined,
     SettingOutlined
@@ -22,6 +24,7 @@ import {
     Col,
     Collapse,
     Form,
+    Input,
     InputNumber,
     Popconfirm,
     Row,
@@ -32,9 +35,56 @@ import {
     Typography
 } from 'antd';
 import { memo, useRef, useState, useCallback, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
+
+// ✅ Debounced Input Component for Vietnamese IME fix
+const DebouncedTextArea = memo(({ value: initialValue, onChange, ...props }) => {
+    const [localValue, setLocalValue] = useState(initialValue || '');
+    const timeoutRef = useRef(null);
+
+    // Sync local state when initialValue changes from parent
+    useEffect(() => {
+        setLocalValue(initialValue || '');
+    }, [initialValue]);
+
+    // Handle input with debounce
+    const handleChange = useCallback((e) => {
+        const newValue = e.target.value;
+        setLocalValue(newValue); // Update local immediately for smooth typing
+
+        // Clear previous timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        // Debounce parent update
+        timeoutRef.current = setTimeout(() => {
+            onChange?.(e);
+        }, 300);
+    }, [onChange]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    return (
+        <Input.TextArea
+            {...props}
+            value={localValue}
+            onChange={handleChange}
+        />
+    );
+});
+
+DebouncedTextArea.displayName = 'DebouncedTextArea';
 
 // ✅ OPTIMIZATION: Memoize ConfigurationTab to prevent unnecessary re-renders
 const ConfigurationTabComponent = ({
@@ -52,6 +102,15 @@ const ConfigurationTabComponent = ({
     const [editingCondition, setEditingCondition] = useState(null);
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
+
+    // ✅ Filter out data sources that are already used in conditions
+    const unusedDataSources = availableDataSources.filter(dataSource => {
+        // Check if this data source is already used in any condition
+        const isUsed = configurationData.conditions?.some(
+            condition => condition.dataSourceId === dataSource.value
+        );
+        return !isUsed;
+    });
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
@@ -78,6 +137,16 @@ const ConfigurationTabComponent = ({
             // Calculate condition cost
             const calculatedCost = calculateConditionCost(baseCost, categoryMultiplier, tierMultiplier);
 
+            // ✅ AUTO-SET conditionOrder: Set theo thứ tự thêm của user
+            // Nếu đang edit, giữ nguyên order cũ
+            // Nếu thêm mới, set order = số lượng conditions hiện tại + 1
+            let conditionOrder;
+            if (editingCondition) {
+                conditionOrder = editingCondition.conditionOrder;
+            } else {
+                conditionOrder = (configurationData.conditions?.length || 0) + 1;
+            }
+
             const condition = {
                 // ✅ Core condition fields (from form)
                 dataSourceId: values.dataSourceId, // REQUIRED - UUID from API
@@ -91,7 +160,7 @@ const ConfigurationTabComponent = ({
                 baselineWindowDays: values.baselineWindowDays || null,
                 baselineFunction: values.baselineFunction || null,
                 validationWindowDays: values.validationWindowDays || null,
-                conditionOrder: values.conditionOrder || null,
+                conditionOrder, // ✅ AUTO-SET theo thứ tự thêm
 
                 // ✅ Display labels (for UI table)
                 id: editingCondition?.id || Date.now().toString(),
@@ -131,6 +200,37 @@ const ConfigurationTabComponent = ({
     const handleCancelEdit = () => {
         setEditingCondition(null);
         conditionForm.resetFields();
+    };
+
+    // ✅ Handle drag end - Reorder conditions and update conditionOrder
+    const handleDragEnd = (result) => {
+        if (!result.destination) {
+            return;
+        }
+
+        const sourceIndex = result.source.index;
+        const destIndex = result.destination.index;
+
+        if (sourceIndex === destIndex) {
+            return;
+        }
+
+        // Reorder array
+        const newConditions = Array.from(configurationData.conditions);
+        const [removed] = newConditions.splice(sourceIndex, 1);
+        newConditions.splice(destIndex, 0, removed);
+
+        // Update conditionOrder for all conditions based on new position
+        const updatedConditions = newConditions.map((condition, index) => ({
+            ...condition,
+            conditionOrder: index + 1
+        }));
+
+        // Update parent state
+        onDataChange({
+            ...configurationData,
+            conditions: updatedConditions
+        });
     };
 
     // Helper function to render select option with tooltip
@@ -214,60 +314,22 @@ const ConfigurationTabComponent = ({
 
 
 
-    // Generate trigger configuration fields
-    const getTriggerFields = () => [
-        {
-            name: 'logicalOperator',
-            label: 'Toán tử Logic',
-            type: 'select',
-            required: true,
-            gridColumn: '1',
-            placeholder: 'Chọn toán tử',
-            size: 'large',
-            tooltip: 'AND = tất cả điều kiện phải đúng | OR = 1 điều kiện đúng là đủ',
-            options: [
-                { value: 'AND', label: 'AND - Tất cả điều kiện phải đúng' },
-                { value: 'OR', label: 'OR - Một trong các điều kiện đúng' }
-            ],
-            rules: [
-                { required: true, message: getTriggerValidation('LOGICAL_OPERATOR_REQUIRED') }
-            ]
-        },
-        {
-            name: 'growthStage',
-            label: 'Giai đoạn sinh trưởng',
-            type: 'textarea',
-            gridColumn: '2',
-            rows: 2,
-            placeholder: 'Ví dụ: Toàn chu kỳ sinh trưởng lúa (120 ngày)',
-            size: 'large',
-            tooltip: 'Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 500 ký tự)',
-            showCount: true,
-            maxLength: 500
-        },
-        {
-            name: 'blackoutPeriods',
-            label: 'Khoảng thời gian không giám sát (JSON)',
-            type: 'textarea',
-            gridColumn: '1 / -1',
-            rows: 3,
-            placeholder: '[{"start": 1762016400, "end": 1762102800}]',
-            size: 'large',
-            tooltip: 'Các khoảng thời gian tạm dừng giám sát (JSON format với Unix timestamps)',
-            showCount: true,
-            maxLength: 2000
-        }
-    ];
-
-    // Note: Additional settings fields removed - not in BE spec
-    // - policyDescription → already have product_description in BasicTab
-    // - enableGracePeriod/gracePeriodDays → not in spec
-    // - enableAutoRenewal → already have auto_renewal in BasicTab
-    // - enableStorage → not in spec
-    // - NotificationsManager → use important_additional_information in BasicTab
+    // ✅ Note: getTriggerFields removed - now using direct Form rendering with DebouncedTextArea
+    // This fixes Vietnamese IME re-render issues for growthStage field
 
     // Trigger conditions table columns
     const conditionsColumns = [
+        {
+            title: '#',
+            dataIndex: 'conditionOrder',
+            key: 'conditionOrder',
+            width: 60,
+            render: (order) => (
+                <Tag color="blue" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                    {order || 1}
+                </Tag>
+            ),
+        },
         {
             title: 'Nguồn dữ liệu',
             dataIndex: 'dataSourceLabel',
@@ -310,12 +372,16 @@ const ConfigurationTabComponent = ({
                     <TypographyText>
                         {record.thresholdOperatorLabel} {record.thresholdValue} {record.unit}
                     </TypographyText>
-                    <br />
-                    <TypographyText type="secondary" style={{ fontSize: '11px' }}>
-                        Thứ tự: {record.conditionOrder || 1}
-                        {record.consecutiveRequired && ' | Liên tiếp'}
-                        {record.includeComponent && ' | Bao gồm Component'}
-                    </TypographyText>
+                    {(record.consecutiveRequired || record.includeComponent) && (
+                        <>
+                            <br />
+                            <TypographyText type="secondary" style={{ fontSize: '11px' }}>
+                                {record.consecutiveRequired && 'Liên tiếp'}
+                                {record.consecutiveRequired && record.includeComponent && ' | '}
+                                {record.includeComponent && 'Bao gồm Component'}
+                            </TypographyText>
+                        </>
+                    )}
                 </div>
             ),
         },
@@ -408,17 +474,50 @@ const ConfigurationTabComponent = ({
                     <div style={{ marginBottom: 16 }}>
                         <Title level={5} style={{ marginBottom: 8 }}>Cấu hình Trigger & Giai đoạn sinh trưởng</Title>
                         <TypographyText type="secondary">
-                            Chọn toán tử logic để kết hợp các điều kiện, mô tả giai đoạn sinh trưởng, và cấu hình các khoảng thời gian không giám sát (blackout periods).
+                            Chọn toán tử logic để kết hợp các điều kiện, mô tả giai đoạn sinh trưởng.
                         </TypographyText>
                     </div>
-                    <CustomForm
+                    <Form
                         ref={formRef}
-                        fields={getTriggerFields()}
+                        layout="vertical"
                         initialValues={configurationData}
                         onValuesChange={onDataChange}
-                        gridColumns="repeat(2, 1fr)"
-                        gap="24px"
-                    />
+                    >
+                        <Row gutter={24}>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="logicalOperator"
+                                    label="Toán tử Logic"
+                                    tooltip="AND = tất cả điều kiện phải đúng | OR = 1 điều kiện đúng là đủ"
+                                    rules={[{ required: true, message: getTriggerValidation('LOGICAL_OPERATOR_REQUIRED') }]}
+                                >
+                                    <Select
+                                        placeholder="Chọn toán tử"
+                                        size="large"
+                                        options={[
+                                            { value: 'AND', label: 'AND - Tất cả điều kiện phải đúng' },
+                                            { value: 'OR', label: 'OR - Một trong các điều kiện đúng' }
+                                        ]}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="growthStage"
+                                    label="Giai đoạn sinh trưởng"
+                                    tooltip="Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 500 ký tự)"
+                                >
+                                    <DebouncedTextArea
+                                        rows={2}
+                                        placeholder="Ví dụ: Toàn chu kỳ sinh trưởng lúa (120 ngày)"
+                                        size="large"
+                                        showCount
+                                        maxLength={500}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Panel>
 
                 {/* Trigger Conditions */}
@@ -447,6 +546,13 @@ const ConfigurationTabComponent = ({
                                 type="warning"
                                 showIcon
                             />
+                        ) : unusedDataSources.length === 0 && !editingCondition ? (
+                            <Alert
+                                message="Đã sử dụng hết nguồn dữ liệu"
+                                description="Tất cả nguồn dữ liệu đã được thêm vào điều kiện. Vui lòng thêm nguồn dữ liệu mới ở tab 'Thông tin Cơ bản' hoặc chỉnh sửa điều kiện hiện có."
+                                type="info"
+                                showIcon
+                            />
                         ) : (
                             <>
                                 <Form
@@ -466,8 +572,13 @@ const ConfigurationTabComponent = ({
                                                     size="large"
                                                     optionLabelProp="displayLabel"
                                                     popupMatchSelectWidth={300}
+                                                    disabled={!editingCondition && unusedDataSources.length === 0}
                                                 >
-                                                    {availableDataSources.map(source => {
+                                                    {/* ✅ Show only unused data sources when adding new, or include current when editing */}
+                                                    {(editingCondition
+                                                        ? availableDataSources
+                                                        : unusedDataSources
+                                                    ).map(source => {
                                                         const displayLabel = source.label.length > 17 ? source.label.substring(0, 17) + '...' : source.label;
                                                         return (
                                                             <Select.Option
@@ -698,21 +809,7 @@ const ConfigurationTabComponent = ({
                                                 />
                                             </Form.Item>
                                         </Col>
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="conditionOrder"
-                                                label="Thứ tự điều kiện"
-                                                tooltip="Thứ tự ưu tiên khi đánh giá điều kiện này. 1 = ưu tiên cao nhất, được kiểm tra trước. Phải >= 1 nếu nhập"
-                                                rules={[{ type: 'number', min: 1, message: getConditionValidation('CONDITION_ORDER_MIN') }]}
-                                            >
-                                                <InputNumber
-                                                    placeholder="1"
-                                                    min={1}
-                                                    size="large"
-                                                    style={{ width: '100%' }}
-                                                />
-                                            </Form.Item>
-                                        </Col>
+                                        {/* ✅ REMOVED: conditionOrder manual input - Auto-set theo thứ tự thêm của user */}
                                         <Col span={8}>
                                             <Form.Item
                                                 name="baselineWindowDays"
@@ -820,46 +917,80 @@ const ConfigurationTabComponent = ({
                             className="no-conditions-alert"
                         />
                     ) : (
-                        <CustomTable
-                            columns={conditionsColumns}
-                            dataSource={configurationData.conditions}
-                            pagination={false}
-                        />
+                        <DragDropContext onDragEnd={handleDragEnd}>
+                            <Droppable droppableId="conditions-table">
+                                {(provided) => (
+                                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                                        <CustomTable
+                                            columns={conditionsColumns}
+                                            dataSource={configurationData.conditions}
+                                            pagination={false}
+                                            rowKey="id"
+                                            components={{
+                                                body: {
+                                                    wrapper: (props) => <tbody {...props}>{props.children}</tbody>,
+                                                    row: ({ children, ...props }) => {
+                                                        const index = configurationData.conditions.findIndex(
+                                                            (x) => x.id === props['data-row-key']
+                                                        );
+                                                        return (
+                                                            <Draggable
+                                                                key={props['data-row-key']}
+                                                                draggableId={props['data-row-key']}
+                                                                index={index}
+                                                            >
+                                                                {(provided, snapshot) => (
+                                                                    <tr
+                                                                        ref={provided.innerRef}
+                                                                        {...provided.draggableProps}
+                                                                        {...props}
+                                                                        style={{
+                                                                            ...props.style,
+                                                                            ...provided.draggableProps.style,
+                                                                            ...(snapshot.isDragging ? {
+                                                                                display: 'table',
+                                                                                background: '#fafafa'
+                                                                            } : {}),
+                                                                        }}
+                                                                    >
+                                                                        {children?.map((child, idx) => {
+                                                                            if (idx === 0) {
+                                                                                return (
+                                                                                    <td key={child.key} {...child.props}>
+                                                                                        <Space>
+                                                                                            <HolderOutlined
+                                                                                                {...provided.dragHandleProps}
+                                                                                                style={{ cursor: 'grab' }}
+                                                                                            />
+                                                                                            {child.props.children}
+                                                                                        </Space>
+                                                                                    </td>
+                                                                                );
+                                                                            }
+                                                                            return child;
+                                                                        })}
+                                                                    </tr>
+                                                                )}
+                                                            </Draggable>
+                                                        );
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                        {provided.placeholder}
+                                    </div>
+                                )}
+                            </Droppable>
+                        </DragDropContext>
                     )}
 
-                    {/* Logic Preview */}
-                    {configurationData.conditions?.length > 0 && (
-                        <Card
-                            title="Xem trước Logic Kích hoạt"
-                            className="logic-preview-card"
-                            style={{ marginTop: 16 }}
-                        >
-                            <div className="logic-preview">
-                                <TypographyText>
-                                    Thanh toán <TypographyText strong>{configurationData.payoutPercentage}%</TypographyText> (tối đa{' '}
-                                    <TypographyText strong>{configurationData.maxPayoutAmount?.toLocaleString()} ₫</TypographyText>) khi{' '}
-                                    <TypographyText strong>
-                                        {configurationData.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
-                                    </TypographyText>
-                                    {' '}các điều kiện sau được thỏa mãn:
-                                </TypographyText>
-                                <ul style={{ marginTop: 8 }}>
-                                    {configurationData.conditions.map((condition, index) => (
-                                        <li key={condition.id}>
-                                            <TypographyText>
-                                                {condition.aggregationFunctionLabel} của {condition.dataSourceLabel}{' '}
-                                                trong {condition.aggregationWindowDays} ngày{' '}
-                                                {condition.thresholdOperatorLabel} {condition.thresholdValue} {condition.unit}
-                                                {condition.baselineWindowDays && (
-                                                    <> (baseline: {condition.baselineWindowDays} ngày)</>
-                                                )}
-                                            </TypographyText>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </Card>
-                    )}
+                    {/* Logic Explainer - Diễn giải logic trigger thành câu văn dễ hiểu */}
+                    <div style={{ marginTop: 16 }}>
+                        <TriggerLogicExplainer
+                            configurationData={configurationData}
+                            mockData={mockData}
+                        />
+                    </div>
                 </Panel>
             </Collapse>
         </div>

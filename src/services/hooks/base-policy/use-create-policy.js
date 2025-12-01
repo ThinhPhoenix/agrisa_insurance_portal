@@ -489,10 +489,21 @@ const useCreatePolicy = () => {
   }, []);
 
   const handleRemoveTriggerCondition = useCallback((id) => {
-    setConfigurationData((prev) => ({
-      ...prev,
-      conditions: prev.conditions.filter((condition) => condition.id !== id),
-    }));
+    setConfigurationData((prev) => {
+      // Filter out the removed condition
+      const filteredConditions = prev.conditions.filter((condition) => condition.id !== id);
+
+      // ✅ Reorder conditionOrder after removal
+      const reorderedConditions = filteredConditions.map((condition, index) => ({
+        ...condition,
+        conditionOrder: index + 1
+      }));
+
+      return {
+        ...prev,
+        conditions: reorderedConditions,
+      };
+    });
   }, []);
 
   const handleUpdateTriggerCondition = useCallback((id, updates) => {

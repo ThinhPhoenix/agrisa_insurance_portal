@@ -29,13 +29,13 @@ import {
 import { useRouter } from "next/navigation";
 
 // Components - Lazy loaded for code splitting
-import BasicTab from "@/components/layout/policy/create/BasicTab";
-import ConfigurationTab from "@/components/layout/policy/create/ConfigurationTab";
-import EstimatedCosts from "@/components/layout/policy/create/EstimatedCosts";
-import FAQTab from "@/components/layout/policy/create/FAQTab";
-import FileUploadPreview from "@/components/layout/policy/create/FileUploadPreview";
-import ReviewTab from "@/components/layout/policy/create/ReviewTab";
-import TagsTab from "@/components/layout/policy/create/TagsTab";
+import BasicTab from "@/components/layout/base-policy/create/BasicTab";
+import ConfigurationTab from "@/components/layout/base-policy/create/ConfigurationTab";
+import EstimatedCosts from "@/components/layout/base-policy/create/EstimatedCosts";
+import FAQTab from "@/components/layout/base-policy/create/FAQTab";
+import FileUploadPreview from "@/components/layout/base-policy/create/FileUploadPreview";
+import ReviewTab from "@/components/layout/base-policy/create/ReviewTab";
+import TagsTab from "@/components/layout/base-policy/create/TagsTab";
 
 // Hook
 import useCreatePolicy from "@/services/hooks/base-policy/use-create-policy";

@@ -5,7 +5,7 @@ import {
   ConfigurationDetail,
   CostSummary,
   TagsDetail,
-} from "@/components/layout/policy/detail";
+} from "@/components/layout/base-policy/detail";
 import useDetailPolicy from "@/services/hooks/base-policy/use-detail-policy";
 import usePolicy from "@/services/hooks/base-policy/use-policy";
 import {

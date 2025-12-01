@@ -18,12 +18,31 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
         return mockData.monitoringFrequencies.find(m => m.value === value)?.label || value;
     };
 
-    const getDataSourceLabel = (dataSourceId) => {
-        return mockData.dataSources.find(ds => ds.id === dataSourceId)?.label || 'N/A';
+    const getDataSourceLabel = (condition) => {
+        // Use enriched data from API if available
+        if (condition.dataSourceLabel) {
+            return condition.dataSourceLabel;
+        }
+        // Fallback to mockData for backwards compatibility
+        return mockData.dataSources.find(ds => ds.id === condition.dataSourceId)?.label || condition.dataSourceId || 'N/A';
     };
 
-    const getDataSourceUnit = (dataSourceId) => {
-        return mockData.dataSources.find(ds => ds.id === dataSourceId)?.unit || '';
+    const getDataSourceUnit = (condition) => {
+        // Use enriched data from API if available
+        if (condition.dataSourceUnit) {
+            return condition.dataSourceUnit;
+        }
+        // Fallback to mockData for backwards compatibility
+        return mockData.dataSources.find(ds => ds.id === condition.dataSourceId)?.unit || '';
+    };
+
+    const getDataSourceParameterName = (condition) => {
+        // Use enriched data from API if available
+        if (condition.dataSourceParameterName) {
+            return condition.dataSourceParameterName;
+        }
+        // Fallback to mockData for backwards compatibility
+        return mockData.dataSources.find(ds => ds.id === condition.dataSourceId)?.parameterName || '';
     };
 
     // Trigger conditions table columns
@@ -40,12 +59,11 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             render: (_, record) => (
                 <div>
                     <Tag color="blue">
-                        {getDataSourceLabel(record.dataSourceId)}
+                        {getDataSourceLabel(record)}
                     </Tag>
                     <br />
                     <Text type="secondary" style={{ fontSize: 11 }}>
-                        {mockData.dataSources.find(ds => ds.id === record.dataSourceId)?.parameterName || ''} (
-                        {getDataSourceUnit(record.dataSourceId)})
+                        {getDataSourceParameterName(record)} {getDataSourceUnit(record) && `(${getDataSourceUnit(record)})`}
                     </Text>
                 </div>
             ),
@@ -82,7 +100,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     <Tag color="red">
                         {getThresholdOperatorLabel(record.thresholdOperator)}
                     </Tag>
-                    <Text strong> {record.thresholdValue}</Text> {getDataSourceUnit(record.dataSourceId)}
+                    <Text strong> {record.thresholdValue}</Text> {getDataSourceUnit(record)}
                     {record.earlyWarningThreshold && (
                         <>
                             <br />
@@ -244,9 +262,9 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                                         {policyData.configuration?.triggerConditions?.map((condition, index) => (
                                             <li key={condition.id}>
                                                 <Text>
-                                                    {getAggregationFunctionLabel(condition.aggregationFunction)} của {getDataSourceLabel(condition.dataSourceId)}{' '}
+                                                    {getAggregationFunctionLabel(condition.aggregationFunction)} của {getDataSourceLabel(condition)}{' '}
                                                     trong {condition.aggregationWindowDays} ngày{' '}
-                                                    {getThresholdOperatorLabel(condition.thresholdOperator)} {condition.thresholdValue} {getDataSourceUnit(condition.dataSourceId)}
+                                                    {getThresholdOperatorLabel(condition.thresholdOperator)} {condition.thresholdValue} {getDataSourceUnit(condition)}
                                                     {condition.baselineWindowDays > 0 && (
                                                         <> (baseline: {condition.baselineWindowDays} ngày, hàm: {condition.baselineFunction})</>
                                                     )}

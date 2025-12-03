@@ -779,6 +779,7 @@ const TagsTabComponent = ({
                         placeholders={placeholders}
                         tags={tagsData?.tags || []}
                         tagDataTypes={mockData.tagDataTypes || []}
+                        initialMappings={tagsData?.mappings || {}}
                         onSelectedRowsChange={setSelectedRowsCount}
                         onCreateTag={(tag) => {
                             console.log('🔍 TagsTab - onCreateTag called with:', tag);

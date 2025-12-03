@@ -124,6 +124,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
     placeholders = [],
     tags = [],
     tagDataTypes = [],
+    initialMappings = {},  // 🆕 Receive mappings from parent (tagsData.mappings)
     onCreateTag,
     onMappingChange,
     onExportSchema,
@@ -177,6 +178,20 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             mappings
         });
     }, [mappings]);
+
+    // 🆕 Sync initialMappings from parent into local state
+    useEffect(() => {
+        if (initialMappings && Object.keys(initialMappings).length > 0) {
+            console.log('🔄 Syncing initialMappings from parent:', {
+                initialMappings,
+                currentMappings: mappings
+            });
+            setMappings(prevMappings => ({
+                ...prevMappings,
+                ...initialMappings
+            }));
+        }
+    }, [initialMappings]);
 
     //  Use tags directly from parent - no need for local cache
     // Parent state (use-policy.js) is the single source of truth

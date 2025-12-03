@@ -407,7 +407,11 @@ const PolicyDetailPage = ({ params }) => {
             ),
             children: (
               <Card>
-                <Space direction="vertical" size="large" style={{ width: "100%" }}>
+                <Space
+                  direction="vertical"
+                  size="large"
+                  style={{ width: "100%" }}
+                >
                   <div>
                     <Title level={4}>
                       <FilePdfOutlined /> Tài liệu Chính sách Bảo hiểm
@@ -440,9 +444,9 @@ const PolicyDetailPage = ({ params }) => {
                       <br />
                       <Text strong>
                         {policyDetail.document.file_size_bytes
-                          ? `${(policyDetail.document.file_size_bytes / 1024).toFixed(
-                              2
-                            )} KB`
+                          ? `${(
+                              policyDetail.document.file_size_bytes / 1024
+                            ).toFixed(2)} KB`
                           : "N/A"}
                       </Text>
                     </Col>

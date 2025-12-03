@@ -47,13 +47,34 @@ export function usePolicyDetail(policyId) {
         const policyData = policyResponse.data.data;
 
         // Validate access: check if insurance_provider_id matches user's partner_id OR user_id
-        const hasAccess =
-          (userProfile?.partner_id &&
-            policyData.insurance_provider_id === userProfile.partner_id) ||
-          (userProfile?.user_id &&
-            policyData.insurance_provider_id === userProfile.user_id);
+        const userPartnerId = userProfile?.partner_id;
+        const userUserId = userProfile?.user_id;
+        const policyProviderId = policyData.insurance_provider_id;
 
-        if (userProfile && !hasAccess) {
+        console.log("=== ACCESS VALIDATION ===");
+        console.log("User Profile:", userProfile);
+        console.log("User Partner ID:", userPartnerId);
+        console.log("User ID:", userUserId);
+        console.log("Policy Provider ID:", policyProviderId);
+
+        // Check if user has no identification at all
+        if (!userPartnerId && !userUserId) {
+          console.error("⚠️ No user partner_id or user_id found");
+          setAccessDenied(true);
+          setError(getApprovalError("UNAUTHORIZED_ACCESS"));
+          setLoading(false);
+          return;
+        }
+
+        // Check if provider ID matches
+        const hasAccess =
+          (userPartnerId && policyProviderId === userPartnerId) ||
+          (userUserId && policyProviderId === userUserId);
+
+        console.log("Has Access:", hasAccess);
+
+        if (!hasAccess) {
+          console.warn("⚠️ Access denied - partner_id/user_id mismatch");
           setAccessDenied(true);
           setError(getApprovalError("UNAUTHORIZED_ACCESS"));
           setLoading(false);
@@ -77,16 +98,35 @@ export function usePolicyDetail(policyId) {
         }
 
         // 3. Fetch Base Policy Detail
-        if (policyData.base_policy_id && userProfile?.partner_id) {
+        if (policyData.base_policy_id && policyData.insurance_provider_id) {
           try {
-            const basePolicyResponse = await axiosInstance.get(
-              endpoints.policy.base_policy.get_active_detail(
-                policyData.base_policy_id,
-                true
-              )
+            console.log("=== FETCHING BASE POLICY ===");
+            console.log("Base Policy ID:", policyData.base_policy_id);
+            console.log("Insurance Provider ID:", policyData.insurance_provider_id);
+
+            const basePolicyUrl = endpoints.policy.base_policy.get_detail(
+              policyData.base_policy_id,
+              {
+                provider_id: policyData.insurance_provider_id,
+                include_pdf: true,
+                pdf_expiry_hours: 1,
+              }
             );
+            console.log("Base Policy URL:", basePolicyUrl);
+
+            const basePolicyResponse = await axiosInstance.get(basePolicyUrl);
+            console.log("Base Policy Response:", basePolicyResponse.data);
+
             if (basePolicyResponse.data.success) {
               const basePolicyData = basePolicyResponse.data.data;
+
+              if (!basePolicyData) {
+                console.warn("⚠️ No base policy found in response");
+                console.warn("Response data:", basePolicyData);
+                return;
+              }
+
+              console.log("✅ Base Policy Data loaded successfully");
               setBasePolicy(basePolicyData);
 
               console.log("=== BASE POLICY DATA ===");
@@ -216,7 +256,8 @@ export function usePolicyDetail(policyId) {
               }
             }
           } catch (err) {
-            console.error("Error fetching base policy:", err);
+            console.error("❌ Error fetching base policy:", err);
+            console.error("Error details:", err.response?.data || err.message);
           }
         }
 

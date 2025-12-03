@@ -33,10 +33,20 @@ export const endpoints = {
       create_complete: (expiration_hours = 24) =>
         `/policy/protected/api/v2/base-policies/complete?expiration_hours=${expiration_hours}`, // ✅ Changed from v1 to v2
       get_by_provider: `/policy/protected/api/v2/base-policies/by-provider`,
-      get_draft_detail: (provider_id, base_policy_id, archive_status = false) =>
-        `/policy/protected/api/v2/base-policies/draft/filter?provider_id=${provider_id}&base_policy_id=${base_policy_id}&archive_status=${archive_status}`,
-      get_active_detail: (id, include_pdf = true) =>
-        `/policy/protected/api/v2/base-policies/detail?id=${id}&include_pdf=${include_pdf}`,
+      get_detail: (id, options = {}) => {
+        const {
+          provider_id,
+          include_pdf = true,
+          pdf_expiry_hours = 1,
+        } = options;
+        const params = new URLSearchParams({
+          id,
+          include_pdf: include_pdf.toString(),
+          pdf_expiry_hours: pdf_expiry_hours.toString(),
+        });
+        if (provider_id) params.append("provider_id", provider_id);
+        return `/policy/protected/api/v2/base-policies/detail?${params.toString()}`;
+      },
       get_count: `/policy/protected/api/v2/base-policies/count`,
       get_count_by_status: (status) =>
         `/policy/protected/api/v2/base-policies/count/status/${status}`,

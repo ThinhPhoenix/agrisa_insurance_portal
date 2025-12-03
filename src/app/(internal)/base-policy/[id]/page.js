@@ -13,6 +13,8 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  EyeOutlined,
+  FilePdfOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
 import {
@@ -39,8 +41,8 @@ const PolicyDetailPage = ({ params }) => {
   const [activeTab, setActiveTab] = React.useState("basic");
   const [enrichedDataSources, setEnrichedDataSources] = React.useState([]);
 
-  // Use policy list hook for checking draft/active status
-  const { policies, activePolicies } = usePolicy();
+  // Use policy list hook for checking policy status
+  const { policies } = usePolicy();
 
   // Use detail policy hook for fetching policy details
   const {
@@ -83,22 +85,25 @@ const PolicyDetailPage = ({ params }) => {
           return;
         }
 
-        // Determine if policy is draft or active by checking both lists
-        const isDraft = policies.some((p) => p.base_policy?.id === params.id);
-        const isActive = activePolicies.some(
+        // Find policy in the list to check its status
+        const policyInList = policies.find(
           (p) => p.base_policy?.id === params.id
         );
+        const policyStatus = policyInList?.base_policy?.status;
 
         let policyData = null;
 
-        // Try to fetch as active policy first (uses the new API)
-        if (isActive || (!isDraft && !isActive)) {
+        // Try to fetch based on status
+        if (policyStatus === "active") {
           policyData = await fetchActivePolicyDetail(params.id);
-        }
-
-        // If not found or is draft, try draft API
-        if (!policyData && (isDraft || !isActive)) {
+        } else if (policyStatus === "draft") {
           policyData = await fetchPolicyDetail(params.id);
+        } else {
+          // If policy not found in list or unknown status, try active API first, then draft
+          policyData = await fetchActivePolicyDetail(params.id);
+          if (!policyData) {
+            policyData = await fetchPolicyDetail(params.id);
+          }
         }
 
         if (!policyData) {
@@ -130,14 +135,7 @@ const PolicyDetailPage = ({ params }) => {
     };
 
     loadPolicyDetail();
-  }, [
-    params.id,
-    fetchPolicyDetail,
-    fetchActivePolicyDetail,
-    policies,
-    activePolicies,
-    router,
-  ]);
+  }, [params.id, fetchPolicyDetail, fetchActivePolicyDetail, policies, router]);
 
   // Fetch data source details when policy detail is loaded
   useEffect(() => {
@@ -320,6 +318,10 @@ const PolicyDetailPage = ({ params }) => {
         tierLabel: dataSourceDetail?.tierLabel || "",
       };
     }),
+
+    // Document information from API
+    document: apiPolicyDetail.document || null,
+    metadata: apiPolicyDetail.metadata || null,
   };
 
   const handleBack = () => {
@@ -329,24 +331,24 @@ const PolicyDetailPage = ({ params }) => {
   const getStatusTag = (status) => {
     const statusConfig = {
       draft: {
-        color: "orange",
+        color: "processing",
         icon: <ClockCircleOutlined />,
         text: "Chờ duyệt",
       },
       active: {
-        color: "green",
+        color: "success",
         icon: <CheckCircleOutlined />,
         text: "Đang hoạt động",
       },
-      pending: {
-        color: "orange",
+      closed: {
+        color: "error",
         icon: <ClockCircleOutlined />,
-        text: "Chờ duyệt",
+        text: "Đã đóng",
       },
-      inactive: {
-        color: "red",
-        icon: <ClockCircleOutlined />,
-        text: "Không hoạt động",
+      archived: {
+        color: "default",
+        icon: <FileTextOutlined />,
+        text: "Đã lưu trữ",
       },
     };
     const config = statusConfig[status] || statusConfig.draft;
@@ -392,6 +394,160 @@ const PolicyDetailPage = ({ params }) => {
       ),
       children: <TagsDetail policyData={policyDetail} mockData={mockData} />,
     },
+    // Add document tab if document exists
+    ...(policyDetail.document?.has_document
+      ? [
+          {
+            key: "document",
+            label: (
+              <Space>
+                <FilePdfOutlined />
+                <span>Xem Tài liệu PDF</span>
+              </Space>
+            ),
+            children: (
+              <Card>
+                <Space direction="vertical" size="large" style={{ width: "100%" }}>
+                  <div>
+                    <Title level={4}>
+                      <FilePdfOutlined /> Tài liệu Chính sách Bảo hiểm
+                    </Title>
+                    <Text type="secondary">
+                      Xem và tải xuống tài liệu chính sách bảo hiểm
+                    </Text>
+                  </div>
+
+                  <Divider style={{ margin: "12px 0" }} />
+
+                  {/* Document info */}
+                  <Row gutter={[16, 16]}>
+                    <Col span={12}>
+                      <Text type="secondary">Tên tài liệu:</Text>
+                      <br />
+                      <Text strong code>
+                        {policyDetail.document.document_url}
+                      </Text>
+                    </Col>
+                    <Col span={12}>
+                      <Text type="secondary">Loại tệp:</Text>
+                      <br />
+                      <Tag color="blue">
+                        {policyDetail.document.content_type || "PDF"}
+                      </Tag>
+                    </Col>
+                    <Col span={12}>
+                      <Text type="secondary">Kích thước:</Text>
+                      <br />
+                      <Text strong>
+                        {policyDetail.document.file_size_bytes
+                          ? `${(policyDetail.document.file_size_bytes / 1024).toFixed(
+                              2
+                            )} KB`
+                          : "N/A"}
+                      </Text>
+                    </Col>
+                    <Col span={12}>
+                      <Text type="secondary">Trạng thái:</Text>
+                      <br />
+                      <Tag
+                        color={
+                          policyDetail.documentValidationStatus === "passed"
+                            ? "green"
+                            : "orange"
+                        }
+                      >
+                        {policyDetail.documentValidationStatus === "passed"
+                          ? "Đã xác thực"
+                          : "Chưa xác thực"}
+                      </Tag>
+                    </Col>
+                  </Row>
+
+                  <Divider style={{ margin: "12px 0" }} />
+
+                  {/* Action buttons */}
+                  <Space direction="vertical" style={{ width: "100%" }}>
+                    <div>
+                      <Text type="secondary" strong>
+                        Tài liệu gốc (Document URL):
+                      </Text>
+                      <br />
+                      <Text code style={{ wordBreak: "break-all" }}>
+                        {policyDetail.document.document_url}
+                      </Text>
+                    </div>
+                    <Space>
+                      <Button
+                        type="primary"
+                        icon={<EyeOutlined />}
+                        size="large"
+                        onClick={() => {
+                          if (policyDetail.document.presigned_url) {
+                            window.open(
+                              policyDetail.document.presigned_url,
+                              "_blank"
+                            );
+                          } else {
+                            message.warning("URL tài liệu không khả dụng");
+                          }
+                        }}
+                        disabled={!policyDetail.document.presigned_url}
+                      >
+                        Xem Tài liệu PDF
+                      </Button>
+                      {policyDetail.document.presigned_url_expiry && (
+                        <Text type="secondary" style={{ fontSize: "12px" }}>
+                          Link hết hạn:{" "}
+                          {new Date(
+                            policyDetail.document.presigned_url_expiry
+                          ).toLocaleString("vi-VN")}
+                        </Text>
+                      )}
+                    </Space>
+                  </Space>
+
+                  {/* Metadata */}
+                  {policyDetail.metadata && (
+                    <>
+                      <Divider style={{ margin: "12px 0" }} />
+                      <div>
+                        <Text type="secondary" strong>
+                          Thông tin bổ sung:
+                        </Text>
+                        <Row gutter={[16, 8]} style={{ marginTop: "8px" }}>
+                          <Col span={8}>
+                            <Text type="secondary">Tổng triggers:</Text>
+                            <br />
+                            <Text strong>
+                              {policyDetail.metadata.total_triggers || 0}
+                            </Text>
+                          </Col>
+                          <Col span={8}>
+                            <Text type="secondary">Tổng conditions:</Text>
+                            <br />
+                            <Text strong>
+                              {policyDetail.metadata.total_conditions || 0}
+                            </Text>
+                          </Col>
+                          <Col span={8}>
+                            <Text type="secondary">Tổng chi phí dữ liệu:</Text>
+                            <br />
+                            <Text strong style={{ color: "#1890ff" }}>
+                              {policyDetail.metadata.total_data_cost?.toLocaleString() ||
+                                0}{" "}
+                              ₫
+                            </Text>
+                          </Col>
+                        </Row>
+                      </div>
+                    </>
+                  )}
+                </Space>
+              </Card>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (

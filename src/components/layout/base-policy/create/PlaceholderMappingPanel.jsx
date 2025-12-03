@@ -407,13 +407,10 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
 
-    //  NEW: Delete placeholder and rebuild PDF if already applied
+    //  NEW: Delete placeholder and rebuild PDF
     const handleDeletePlaceholder = async (placeholderId) => {
-        const wasApplied = appliedToPDF.has(placeholderId);
-
         console.log('🗑️ handleDeletePlaceholder:', {
             placeholderId,
-            wasApplied,
             appliedToPDFBefore: Array.from(appliedToPDF),
             mappingsBefore: mappings,
             mappingsKeys: Object.keys(mappings)
@@ -432,8 +429,11 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         // Remove from selection
         setSelectedRows(prev => prev.filter(id => id !== placeholderId));
 
-        // ✅ If was applied to PDF, need to rebuild PDF without this placeholder
-        if (wasApplied && filePreviewRef?.current?.getOriginalFile) {
+        // ✅ In manual scan workflow, every placeholder has AcroForm immediately when created
+        // So we always need to rebuild PDF when deleting (not just when wasApplied)
+        const isMapped = !!mappings[placeholderId];
+
+        if (isMapped && filePreviewRef?.current?.getOriginalFile) {
             try {
                 console.log('🔨 Starting rebuild process...');
                 message.loading('Đang rebuild PDF...', 0);
@@ -449,19 +449,19 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 const originalFile = fileResult.file;
                 const arrayBuffer = await originalFile.arrayBuffer();
 
-                // Import function
-                const { createFillablePDFFromMappings, pdfBytesToFile } = await import('../../../../libs/pdf/pdfEditor');
+                // Import function - use pdfAcroFormEditor for manual scan workflow
+                const { createFillablePDFFromMappings } = await import('../../../../libs/pdf/pdfAcroFormEditor');
+                const { pdfBytesToFile } = await import('../../../../libs/pdf/pdfFormHelper');
 
                 // ✅ FIX: Keep ALL placeholders except deleted one for form field creation
                 const remainingPlaceholders = placeholders.filter(p => p.id !== placeholderId);
 
-                // ✅ CRITICAL FIX: Build mappings for ALL remaining APPLIED placeholders
-                // This ensures Form 1, 2, 3 applied → Delete Form 2 → Rebuild with Form 1 + 3
+                // ✅ CRITICAL FIX: Build mappings for ALL remaining placeholders that have mappings
+                // In manual scan workflow, every field is created immediately, so we rebuild with all remaining mapped fields
                 const remainingMappings = {};
                 remainingPlaceholders.forEach(p => {
-                    // Include if: placeholder was applied before delete (check original appliedToPDF)
-                    // AND is not the deleted one AND has mapping
-                    if (appliedToPDF.has(p.id) && p.id !== placeholderId && newMappings[p.id]) {
+                    // Include if: placeholder has mapping in newMappings
+                    if (newMappings[p.id]) {
                         remainingMappings[p.id] = newMappings[p.id];
                     }
                 });
@@ -523,23 +523,18 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                         deletedId: placeholderId
                     });
 
-                    // ✅ CRITICAL: Rebuild fillable PDF
-                    // Need to remove text for ALL original placeholders (including deleted)
-                    // to ensure deleted form fields don't remain on PDF
+                    // ✅ CRITICAL: Rebuild fillable PDF with remaining fields only
+                    // Start from original PDF to ensure deleted fields are gone
                     const result = await createFillablePDFFromMappings(
-                        arrayBuffer,
+                        arrayBuffer, // Original PDF
                         remainingPlaceholders, // Only create form fields for remaining placeholders
-                        remainingMappings,
-                        allTagsIncludingNew,
+                        remainingMappings, // Only map remaining placeholders
+                        allTagsIncludingNew, // All tags including newly created
                         {
-                            fillFields: true,
-                            makeFieldsEditable: true,
-                            showBorders: true,
-                            removeOriginalText: true,
-                            writeTextBeforeField: false,
-                            // ✅ FIX: Pass ALL placeholders (including deleted) to remove their text
-                            // This ensures deleted placeholders have their text removed so form fields are gone
-                            allPlaceholders: placeholders // ALL placeholders before delete
+                            fillFields: true, // Fill with default value (field name)
+                            makeFieldsEditable: true, // Keep editable
+                            showBorders: true, // Show field borders
+                            removeOriginalText: true // Remove placeholder text from PDF
                         }
                     );
 
@@ -632,8 +627,9 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             const currentFile = fileResult.file;
             const arrayBuffer = await currentFile.arrayBuffer();
 
-            // Import functions
-            const { createFillablePDFFromMappings, pdfBytesToFile } = await import('../../../../libs/pdf/pdfEditor');
+            // Import functions - use pdfAcroFormEditor for manual scan workflow
+            const { createFillablePDFFromMappings } = await import('../../../../libs/pdf/pdfAcroFormEditor');
+            const { pdfBytesToFile } = await import('../../../../libs/pdf/pdfFormHelper');
 
             // Filter: Only selected placeholders
             const selectedPlaceholders = placeholders.filter(p => selectedRows.includes(p.id));
@@ -715,18 +711,17 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             const allTagsIncludingNew = [...effectiveTags, ...createdTagsInBatch];
             console.log('🔍 allTagsIncludingNew for fillable PDF:', allTagsIncludingNew);
 
-            //  Create fillable AcroForm fields directly (no text writing layer)
+            // Create fillable AcroForm fields
             const result = await createFillablePDFFromMappings(
-                arrayBuffer,   // Original PDF without text modifications
-                selectedPlaceholders,
-                selectedMappings,
-                allTagsIncludingNew,
+                arrayBuffer, // Original PDF
+                selectedPlaceholders, // Selected placeholders to create fields
+                selectedMappings, // Mappings for selected placeholders
+                allTagsIncludingNew, // All tags including newly created
                 {
-                    fillFields: true,              // Pre-fill with ASCII-safe tag.key
-                    makeFieldsEditable: true,      // Editable for backend
-                    showBorders: true,             // Show field borders
-                    removeOriginalText: true,      // Remove placeholder background text
-                    writeTextBeforeField: false,   // No text writing layer
+                    fillFields: true, // Fill with default value (field name)
+                    makeFieldsEditable: true, // Keep editable
+                    showBorders: true, // Show field borders
+                    removeOriginalText: true // Remove placeholder text from PDF
                 }
             );
 
@@ -942,6 +937,72 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         );
     }
 
+    // NEW: Clear all placeholders and revert to original PDF
+    const handleClearAll = async () => {
+        try {
+            console.log('🗑️ Clearing all placeholders and reverting to original PDF');
+            message.loading('Đang xóa tất cả và khôi phục PDF gốc...', 0);
+
+            // Get original PDF
+            if (!filePreviewRef?.current?.getOriginalFile) {
+                message.destroy();
+                message.error('Không thể truy cập file PDF gốc');
+                return;
+            }
+
+            const fileResult = filePreviewRef.current.getOriginalFile();
+            if (!fileResult || !fileResult.success || !fileResult.file) {
+                message.destroy();
+                message.error(getPdfError('FILE_NOT_FOUND'));
+                return;
+            }
+
+            const originalFile = fileResult.file;
+            const arrayBuffer = await originalFile.arrayBuffer();
+
+            // Create fresh file from original
+            const freshOriginalFile = new File([arrayBuffer], originalFile.name, {
+                type: 'application/pdf',
+                lastModified: Date.now()
+            });
+
+            // Clear all local state
+            setMappings({});
+            setAppliedToPDF(new Set());
+            setSelectedRows([]);
+            setBatchCreatedTags([]);
+            setTempInputs({});
+
+            // Reload original PDF in preview
+            if (filePreviewRef?.current?.updateFillablePDF) {
+                await filePreviewRef.current.updateFillablePDF(freshOriginalFile, new Uint8Array(arrayBuffer));
+            }
+
+            // Notify parent to clear all placeholders
+            if (onDeletePlaceholder) {
+                // Delete all placeholders one by one
+                placeholders.forEach(p => onDeletePlaceholder(p.id));
+            }
+
+            // Notify parent to reset tagsData
+            if (onMappingChange) {
+                onMappingChange({}, {
+                    documentTagsObject: {},
+                    shouldOverwriteDocumentTags: true,
+                    modifiedPdfBytes: new Uint8Array(arrayBuffer),
+                    uploadedFile: freshOriginalFile
+                });
+            }
+
+            message.destroy();
+            message.success('Đã xóa hết và khôi phục PDF gốc thành công');
+        } catch (error) {
+            message.destroy();
+            message.error('Lỗi khi xóa hết: ' + error.message);
+            console.error('❌ Error clearing all:', error);
+        }
+    };
+
     return (
         <Card
             title={
@@ -955,6 +1016,27 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                         }}
                     />
                 </Space>
+            }
+            extra={
+                placeholders.length > 0 && (
+                    <Popconfirm
+                        title="Xóa hết trường thông tin?"
+                        description="Thao tác này sẽ xóa tất cả các trường đã tạo và khôi phục PDF về trạng thái gốc. Bạn có chắc chắn?"
+                        onConfirm={handleClearAll}
+                        okText="Xóa hết"
+                        cancelText="Hủy"
+                        okButtonProps={{ danger: true }}
+                    >
+                        <Button
+                            type="default"
+                            danger
+                            icon={<DeleteOutlined />}
+                            size="small"
+                        >
+                            Xóa hết
+                        </Button>
+                    </Popconfirm>
+                )
             }
         >
             {/* Info Alert - Rules */}

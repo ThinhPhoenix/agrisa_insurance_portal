@@ -275,15 +275,19 @@ export default function PolicyPage() {
       render: (status) => {
         const statusConfig = {
           draft: {
-            color: "orange",
+            color: "processing",
             text: "Chờ duyệt",
           },
           active: {
-            color: "green",
+            color: "success",
             text: "Đang hoạt động",
           },
+          closed: {
+            color: "error",
+            text: "Đã đóng",
+          },
           archived: {
-            color: "red",
+            color: "default",
             text: "Đã lưu trữ",
           },
         };

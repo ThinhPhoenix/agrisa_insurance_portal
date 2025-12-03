@@ -64,6 +64,7 @@ const PDFViewerWithSelection = ({
     const [loading, setLoading] = useState(true); // Loading state for PDF
     const containerRef = useRef(null);
     const canvasRefs = useRef({});
+    const renderTasksRef = useRef(new Map()); // ✅ Track render tasks for cleanup
     const [fieldForm] = Form.useForm();
 
     // NEW: Drag selection state
@@ -137,9 +138,6 @@ const PDFViewerWithSelection = ({
 
                 setRenderedPages(pages);
 
-                // Track render tasks to cancel them if component unmounts
-                const renderTasks = new Map();
-
                 // ✅ OPTIMIZATION: Render initial pages first, then lazy-load remaining
                 setTimeout(() => {
                     pages.forEach(({ pageNum, page, viewport, isRendered }) => {
@@ -148,10 +146,11 @@ const PDFViewerWithSelection = ({
                             const context = canvas.getContext('2d', { alpha: false }); // Disable alpha for better performance
 
                             // Cancel any existing render task for this canvas
-                            const existingTask = renderTasks.get(pageNum);
+                            const existingTask = renderTasksRef.current.get(pageNum);
                             if (existingTask) {
                                 try {
                                     existingTask.cancel();
+                                    renderTasksRef.current.delete(pageNum);
                                 } catch (e) {
                                     // Ignore cancel errors
                                 }
@@ -165,7 +164,20 @@ const PDFViewerWithSelection = ({
                                 viewport: viewport
                             };
                             const renderTask = page.render(renderContext);
-                            renderTasks.set(pageNum, renderTask);
+                            renderTasksRef.current.set(pageNum, renderTask);
+
+                            // Remove from map when complete to avoid memory leaks
+                            renderTask.promise
+                                .then(() => {
+                                    renderTasksRef.current.delete(pageNum);
+                                })
+                                .catch(err => {
+                                    // Ignore RenderingCancelledException - this is expected when cancelling
+                                    if (err.name !== 'RenderingCancelledException') {
+                                        console.error(`Error rendering page ${pageNum}:`, err);
+                                    }
+                                    renderTasksRef.current.delete(pageNum);
+                                });
                         }
                     });
 
@@ -179,10 +191,11 @@ const PDFViewerWithSelection = ({
                                         const context = canvas.getContext('2d', { alpha: false });
 
                                         // Cancel any existing render task for this canvas
-                                        const existingTask = renderTasks.get(pageNum);
+                                        const existingTask = renderTasksRef.current.get(pageNum);
                                         if (existingTask) {
                                             try {
                                                 existingTask.cancel();
+                                                renderTasksRef.current.delete(pageNum);
                                             } catch (e) {
                                                 // Ignore cancel errors
                                             }
@@ -194,7 +207,20 @@ const PDFViewerWithSelection = ({
                                             viewport: viewport
                                         };
                                         const renderTask = page.render(renderContext);
-                                        renderTasks.set(pageNum, renderTask);
+                                        renderTasksRef.current.set(pageNum, renderTask);
+
+                                        // Remove from map when complete
+                                        renderTask.promise
+                                            .then(() => {
+                                                renderTasksRef.current.delete(pageNum);
+                                            })
+                                            .catch(err => {
+                                                // Ignore RenderingCancelledException - this is expected when cancelling
+                                                if (err.name !== 'RenderingCancelledException') {
+                                                    console.error(`Error rendering page ${pageNum}:`, err);
+                                                }
+                                                renderTasksRef.current.delete(pageNum);
+                                            });
                                     }
                                 }
                             });
@@ -212,6 +238,20 @@ const PDFViewerWithSelection = ({
         };
 
         loadPdf();
+
+        // ✅ Cleanup: Cancel all render tasks when component unmounts or pdfUrl changes
+        return () => {
+            console.log('🧹 Cleaning up PDF render tasks...');
+            renderTasksRef.current.forEach((task, pageNum) => {
+                try {
+                    task.cancel();
+                    console.log(`✅ Cancelled render task for page ${pageNum}`);
+                } catch (e) {
+                    // Ignore cancel errors
+                }
+            });
+            renderTasksRef.current.clear();
+        };
     }, [pdfUrl]);
 
     // NEW: Handle mouse down to start drag selection
@@ -343,17 +383,8 @@ const PDFViewerWithSelection = ({
         const fieldEndY = Math.max(dragStart.pdfY, pdfEndY);
         const fieldHeight = fieldEndY - fieldStartY;
 
-        // Minimum dimension checks
-        if (fieldWidth < 20) {
-            message.warning('Vùng chọn quá hẹp. Vui lòng kéo rộng hơn.');
-            setIsDragging(false);
-            setDragStart(null);
-            setDragEnd(null);
-            return;
-        }
-
-        if (fieldHeight < 8) {
-            message.warning('Vùng chọn quá thấp. Vui lòng kéo cao hơn.');
+        // Minimum dimension checks - removed warnings, just silently ignore too small selections
+        if (fieldWidth < 20 || fieldHeight < 8) {
             setIsDragging(false);
             setDragStart(null);
             setDragEnd(null);

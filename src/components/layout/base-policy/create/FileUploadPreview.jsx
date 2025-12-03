@@ -449,7 +449,7 @@ const FileUploadPreview = forwardRef(({
 
     const handleExitPlacementMode = useCallback(() => {
         setIsPlacementMode(false);
-        message.success('Đã thoát chế độ quét');
+        // Removed success message - silent exit from scan mode
     }, []);
 
     const handleTagPlaced = async ({ tag, coordinates }) => {

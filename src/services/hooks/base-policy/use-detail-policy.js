@@ -101,6 +101,96 @@ const useDetailPolicy = () => {
     []
   );
 
+  const fetchDraftPolicyDetail = useCallback(
+    async (basePolicyId, archiveStatus = false) => {
+      if (!basePolicyId) {
+        return null;
+      }
+
+      setPolicyDetailLoading(true);
+      setPolicyDetailError(null);
+
+      const token = localStorage.getItem("token");
+
+      try {
+        const response = await axiosInstance.get(
+          endpoints.policy.base_policy.get_draft_detail_by_id(
+            basePolicyId,
+            archiveStatus
+          ),
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (
+          response.data?.success &&
+          response.data?.data?.policies &&
+          response.data.data.policies.length > 0
+        ) {
+          const policyData = response.data.data.policies[0];
+
+          // Security check
+          const meData = localStorage.getItem("me");
+          if (meData) {
+            try {
+              const userData = JSON.parse(meData);
+              const userId = userData?.user_id;
+              const partnerId = userData?.partner_id;
+
+              if (partnerId || userId) {
+                const policyProviderId =
+                  policyData.base_policy?.insurance_provider_id;
+
+                const hasAccess =
+                  policyProviderId === partnerId || policyProviderId === userId;
+
+                if (!hasAccess) {
+                  setPolicyDetail(null);
+                  setPolicyDetailError(
+                    "You do not have permission to access this policy"
+                  );
+                  return null;
+                }
+              }
+            } catch (error) {
+              // Continue even if security check fails
+            }
+          }
+
+          // Transform to match expected format
+          const transformedData = {
+            base_policy: policyData.base_policy,
+            trigger: policyData.trigger || null,
+            conditions: policyData.conditions || [],
+            document: policyData.document,
+            metadata: policyData.metadata,
+          };
+
+          setPolicyDetail(transformedData);
+          return transformedData;
+        } else {
+          setPolicyDetail(null);
+          setPolicyDetailError("Draft policy not found");
+          return null;
+        }
+      } catch (error) {
+        setPolicyDetailError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to fetch draft policy detail"
+        );
+        setPolicyDetail(null);
+        return null;
+      } finally {
+        setPolicyDetailLoading(false);
+      }
+    },
+    []
+  );
+
   const fetchPolicyDetail = useCallback(
     async (basePolicyId, includePdf = true, pdfExpiryHours = 1) => {
       const meData = localStorage.getItem("me");
@@ -230,6 +320,7 @@ const useDetailPolicy = () => {
     policyDetailLoading,
     policyDetailError,
     fetchPolicyDetailByProvider,
+    fetchDraftPolicyDetail,
     fetchPolicyDetail,
     fetchActivePolicyDetail,
     clearPolicyDetail,

@@ -188,9 +188,10 @@ const TagsTabComponent = ({
                     ...prev.mappings,
                     ...mapping
                 },
+                // ✅ FIX: Only send dataType value, not entire tag object
                 documentTagsObject: {
                     ...prev.documentTagsObject,
-                    [fieldData.key]: tempTag
+                    [fieldData.key]: tempTag.dataType || 'string'
                 }
             }));
 
@@ -824,17 +825,24 @@ const TagsTabComponent = ({
                                     // - If flag is true (from delete operation): OVERWRITE to remove deleted tags
                                     // - Otherwise (from apply operation): MERGE to preserve existing tags
                                     if (pdfData.documentTagsObject !== undefined) {
+                                        console.log('📥 Received documentTagsObject from PlaceholderMappingPanel:', pdfData.documentTagsObject);
+                                        console.log('📥 Type check:', Object.entries(pdfData.documentTagsObject).map(([k, v]) => `${k}: ${typeof v} = ${JSON.stringify(v)}`));
+
                                         if (pdfData.shouldOverwriteDocumentTags) {
                                             // Overwrite completely (for delete operations)
                                             updates.documentTagsObject = pdfData.documentTagsObject;
                                             console.log('🔄 OVERWRITE documentTagsObject (delete operation):', pdfData.documentTagsObject);
                                         } else {
                                             // Merge (for apply operations - preserve existing tags)
+                                            console.log('🔍 Before merge - prev.documentTagsObject:', prev.documentTagsObject);
+                                            console.log('🔍 Before merge - pdfData.documentTagsObject:', pdfData.documentTagsObject);
+
                                             updates.documentTagsObject = {
                                                 ...prev.documentTagsObject,
                                                 ...pdfData.documentTagsObject
                                             };
                                             console.log('🔄 MERGE documentTagsObject (apply operation):', updates.documentTagsObject);
+                                            console.log('🔍 Type check after merge:', Object.entries(updates.documentTagsObject).map(([k, v]) => `${k}: ${typeof v} = ${JSON.stringify(v)}`));
                                         }
                                     }
                                     if (pdfData.modifiedPdfBytes !== undefined) {

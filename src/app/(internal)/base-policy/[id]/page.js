@@ -49,6 +49,7 @@ const PolicyDetailPage = ({ params }) => {
     policyDetail: apiPolicyDetail,
     policyDetailLoading,
     policyDetailError,
+    fetchDraftPolicyDetail,
     fetchPolicyDetail,
     fetchActivePolicyDetail,
   } = useDetailPolicy();
@@ -94,15 +95,21 @@ const PolicyDetailPage = ({ params }) => {
         let policyData = null;
 
         // Try to fetch based on status
-        if (policyStatus === "active") {
+        if (policyStatus === "draft") {
+          // Draft policies use draft/filter API with base_policy_id
+          policyData = await fetchDraftPolicyDetail(params.id, false);
+        } else if (
+          policyStatus === "active" ||
+          policyStatus === "closed" ||
+          policyStatus === "archived"
+        ) {
+          // Non-draft policies use detail API
           policyData = await fetchActivePolicyDetail(params.id);
-        } else if (policyStatus === "draft") {
-          policyData = await fetchPolicyDetail(params.id);
         } else {
           // If policy not found in list or unknown status, try active API first, then draft
           policyData = await fetchActivePolicyDetail(params.id);
           if (!policyData) {
-            policyData = await fetchPolicyDetail(params.id);
+            policyData = await fetchDraftPolicyDetail(params.id, false);
           }
         }
 
@@ -135,7 +142,14 @@ const PolicyDetailPage = ({ params }) => {
     };
 
     loadPolicyDetail();
-  }, [params.id, fetchPolicyDetail, fetchActivePolicyDetail, policies, router]);
+  }, [
+    params.id,
+    fetchDraftPolicyDetail,
+    fetchPolicyDetail,
+    fetchActivePolicyDetail,
+    policies,
+    router,
+  ]);
 
   // Fetch data source details when policy detail is loaded
   useEffect(() => {

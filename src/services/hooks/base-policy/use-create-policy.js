@@ -491,13 +491,17 @@ const useCreatePolicy = () => {
   const handleRemoveTriggerCondition = useCallback((id) => {
     setConfigurationData((prev) => {
       // Filter out the removed condition
-      const filteredConditions = prev.conditions.filter((condition) => condition.id !== id);
+      const filteredConditions = prev.conditions.filter(
+        (condition) => condition.id !== id
+      );
 
       // ✅ Reorder conditionOrder after removal
-      const reorderedConditions = filteredConditions.map((condition, index) => ({
-        ...condition,
-        conditionOrder: index + 1
-      }));
+      const reorderedConditions = filteredConditions.map(
+        (condition, index) => ({
+          ...condition,
+          conditionOrder: index + 1,
+        })
+      );
 
       return {
         ...prev,
@@ -573,9 +577,15 @@ const useCreatePolicy = () => {
 
       // ✅ FIX: Also remove from documentTagsObject if it exists
       const updatedDocumentTags = { ...prev.documentTagsObject };
-      if (tagToRemove && tagToRemove.key && updatedDocumentTags[tagToRemove.key]) {
+      if (
+        tagToRemove &&
+        tagToRemove.key &&
+        updatedDocumentTags[tagToRemove.key]
+      ) {
         delete updatedDocumentTags[tagToRemove.key];
-        console.log(`🗑️ [handleRemoveTag] Removed tag "${tagToRemove.key}" from documentTagsObject`);
+        console.log(
+          `🗑️ [handleRemoveTag] Removed tag "${tagToRemove.key}" from documentTagsObject`
+        );
       }
 
       // ✅ FIX: Also remove from mappings if this tag was mapped to any placeholder
@@ -583,7 +593,9 @@ const useCreatePolicy = () => {
       Object.keys(updatedMappings).forEach((placeholderId) => {
         if (updatedMappings[placeholderId] === id) {
           delete updatedMappings[placeholderId];
-          console.log(`🗑️ [handleRemoveTag] Removed mapping for placeholder ${placeholderId} (was mapped to deleted tag)`);
+          console.log(
+            `🗑️ [handleRemoveTag] Removed mapping for placeholder ${placeholderId} (was mapped to deleted tag)`
+          );
         }
       });
 
@@ -697,7 +709,9 @@ const useCreatePolicy = () => {
         }
 
         if (!insuranceProviderId) {
-          message.error("Chỉ partner mới có thể tạo gói bảo hiểm. Vui lòng đăng nhập với tài khoản partner.");
+          message.error(
+            "Chỉ partner mới có thể tạo gói bảo hiểm. Vui lòng đăng nhập với tài khoản partner."
+          );
           setLoading(false);
           return false;
         }
@@ -725,6 +739,26 @@ const useCreatePolicy = () => {
         warnings.forEach((warning) => {
           message.warning(warning, 10);
         });
+      }
+
+      // ✅ CRITICAL: Log final payload before sending to BE
+      console.log("🚀 FINAL PAYLOAD TO BE (before API call):");
+      console.log(
+        "📦 base_policy.document_tags:",
+        payload.base_policy?.document_tags
+      );
+      console.log("🔍 document_tags format check:");
+      if (payload.base_policy?.document_tags) {
+        Object.entries(payload.base_policy.document_tags).forEach(
+          ([key, value]) => {
+            const isValid = typeof value === "string";
+            console.log(
+              `  ${
+                isValid ? "✅" : "❌"
+              } "${key}": ${typeof value} = ${JSON.stringify(value)}`
+            );
+          }
+        );
       }
 
       const response = await axiosInstance.post(

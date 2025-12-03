@@ -813,74 +813,29 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             )
         },
         {
-            title: 'Trường thông tin',
-            dataIndex: 'mapping',
-            key: 'mapping',
-            render: (_, record) => {
-                const selectedTagId = mappings[record.id];
-                const isApplied = appliedToPDF.has(record.id);
-                const isMapped = !!mappings[record.id];
-
-                // Check both effectiveTags (from parent) and batchCreatedTags (local state)
-                const selectedTag = effectiveTags.find(t => t.id === selectedTagId) ||
-                    batchCreatedTags.find(t => t.id === selectedTagId);
-
-                const local = tempInputs[record.id] || { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' };
-
-                // CRITICAL: If applied to PDF, ALWAYS show tag view (never show input)
-                if (isApplied) {
-                    if (selectedTag) {
-                        return (
-                            <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        <Text strong style={{ display: 'block' }}>{selectedTag.key}</Text>
-                                        <Text type="secondary" style={{ fontSize: 12 }}>{selectedTag.dataTypeLabel}</Text>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    } else {
-                        // Applied but tag not found yet - show temp data from input
-                        return (
-                            <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        <Text strong style={{ display: 'block' }}>{local.key || 'Tag đã áp dụng'}</Text>
-                                        <Text type="secondary" style={{ fontSize: 12 }}>{local.dataType ? effectiveTagDataTypes.find(t => t.value === local.dataType)?.label : 'Đang tải...'}</Text>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    }
+            title: 'Tên trường',
+            dataIndex: 'mappedKey',
+            key: 'mappedKey',
+            render: (text, record) => {
+                // Display field name if mapped
+                if (record.mappedKey) {
+                    return <Text strong>{record.mappedKey}</Text>;
                 }
-
-                // If mapped but not applied, show tag view
-                if (selectedTag) {
-                    return (
-                        <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    <Text strong style={{ display: 'block' }}>{selectedTag.key}</Text>
-                                    <Text type="secondary" style={{ fontSize: 12 }}>{selectedTag.dataTypeLabel}</Text>
-                                </div>
-                            </div>
-                        </div>
-                    );
+                return <Text type="secondary">Chưa có</Text>;
+            }
+        },
+        {
+            title: 'Loại dữ liệu',
+            dataIndex: 'mappedDataType',
+            key: 'mappedDataType',
+            render: (text, record) => {
+                // Display data type label if mapped
+                if (record.mappedDataType) {
+                    const dataTypeObj = effectiveTagDataTypes.find(t => t.value === record.mappedDataType);
+                    const label = dataTypeObj?.label || record.mappedDataType;
+                    return <Text type="secondary">{String(label)}</Text>;
                 }
-
-                // Not mapped and not applied - show input form
-                //  OPTIMIZATION: Use MappingInputCell with internal state to prevent Vietnamese IME lag
-                const initialValue = tempInputs[record.id] || { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' };
-
-                return (
-                    <MappingInputCell
-                        recordId={record.id}
-                        initialValue={initialValue}
-                        onInputChange={handleInputChange}
-                        dataTypeOptions={dataTypeOptions}
-                    />
-                );
+                return <Text type="secondary">Chưa có</Text>;
             }
         },
         {
@@ -1007,15 +962,12 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 message={
                     <div>
                         <Text strong>
-                            <InfoCircleOutlined /> Hướng dẫn sử dụng:
+                            <InfoCircleOutlined /> Bảng danh sách trường đã tạo
                         </Text>
-                        <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
-                            <li><strong>Bước 1:</strong> Điền tên trường (key) và chọn loại dữ liệu cho từng vị trí (1), (2)...</li>
-                            <li><strong>Bước 2:</strong> Tick chọn các vị trí muốn áp dụng (có thể tick nhiều vị trí cùng lúc)</li>
-                            <li><strong>Bước 3:</strong> Bấm nút <strong>"Áp dụng"</strong> để tạo PDF có thể điền cho các vị trí đã chọn</li>
-                            <li><strong>Bước 4:</strong> Bấm <strong>"Tải xuống PDF"</strong> để xem trước PDF cuối cùng</li>
-                            <li><Text type="warning">Lưu ý:</Text> Checkbox sẽ mở khi đã điền đủ thông tin (key + loại dữ liệu)</li>
-                        </ul>
+                        <div style={{ marginTop: 8 }}>
+                            Bảng này hiển thị các trường thông tin đã được tạo qua chế độ quét.
+                            Sử dụng nút <strong>"Chế độ quét"</strong> bên trái để thêm trường mới.
+                        </div>
                     </div>
                 }
                 type="info"
@@ -1028,52 +980,26 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             <Alert
                 message={
                     <Space>
-                        <Text strong>Tiến độ:</Text>
-                        <Tag color="blue">Vị trí: {stats.total}</Tag>
-                        <Tag color="green">Đã map: {stats.mapped}</Tag>
-                        <Tag color="orange">Chưa map: {stats.unmapped}</Tag>
-                        <Tag color="success">Đã áp dụng PDF: {appliedToPDF.size}</Tag>
+                        <Text strong>Thống kê:</Text>
+                        <Tag color="blue">Tổng số trường: {stats.total}</Tag>
+                        <Tag color="success">Đã áp dụng vào PDF: {appliedToPDF.size}</Tag>
                         <Text type="secondary">
-                            Áp dụng: {stats.total > 0 ? Math.round((appliedToPDF.size / stats.total) * 100) : 0}%
+                            Tiến độ: {stats.total > 0 ? Math.round((appliedToPDF.size / stats.total) * 100) : 0}%
                         </Text>
                     </Space>
                 }
-                type={stats.unmapped > 0 ? 'warning' : 'success'}
+                type={appliedToPDF.size === stats.total && stats.total > 0 ? 'success' : 'info'}
                 showIcon
                 style={{ marginBottom: 16 }}
             />
 
-            {/* Mapping Table (custom for horizontal overflow and fixed status column) */}
+            {/* Mapping Table (display-only, no selection) */}
             <CustomTable
                 columns={columns}
                 dataSource={sortedPlaceholders}
                 rowKey="id"
                 pagination={false}
                 scroll={{ x: tableX, y: 400 }}
-                rowSelection={{
-                    selectedRowKeys: selectedRows,
-                    onChange: (selectedRowKeys) => {
-                        setSelectedRows(selectedRowKeys);
-                    },
-                    getCheckboxProps: (record) => {
-                        //  DISABLE khi đã áp dụng vào PDF
-                        if (appliedToPDF.has(record.id)) {
-                            return {
-                                disabled: true,
-                            };
-                        }
-
-                        // Enable khi:
-                        // 1. Đã có mapping (tag đã tạo)
-                        // 2. HOẶC đã điền input (key + dataType)
-                        const hasMappedTag = !!mappings[record.id];
-                        const hasInput = tempInputs[record.id]?.key && tempInputs[record.id]?.dataType;
-
-                        return {
-                            disabled: !hasMappedTag && !hasInput,
-                        };
-                    },
-                }}
             />
 
             <Divider />

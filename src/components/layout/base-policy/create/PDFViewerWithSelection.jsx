@@ -2,8 +2,43 @@ import {
     getPdfError
 } from '@/libs/message';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Button, Input, message, Modal, Space, Spin } from 'antd';
+import { Button, Form, Input, InputNumber, message, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
+
+/**
+ * Convert screen coordinates to PDF coordinates with accurate scaling
+ * Handles browser zoom, canvas scaling, and coordinate transformation
+ * Works accurately at any zoom level (97%, 100%, 125%, etc.)
+ */
+const screenToPDFCoords = (screenX, screenY, canvasRect, viewport, cssScale) => {
+    // Get browser zoom level
+    const browserZoom = window.devicePixelRatio;
+
+    // Calculate position relative to canvas element
+    const canvasX = screenX;
+    const canvasY = screenY;
+
+    // Get actual canvas display size
+    const displayWidth = canvasRect.width;
+    const displayHeight = canvasRect.height;
+
+    // Get PDF page size (in PDF units)
+    const pdfWidth = viewport.width;
+    const pdfHeight = viewport.height;
+
+    // Calculate the actual scale ratio from display to PDF
+    const scaleX = pdfWidth / displayWidth;
+    const scaleY = pdfHeight / displayHeight;
+
+    // Convert to PDF coordinates
+    const pdfX = canvasX * scaleX;
+    const pdfYFromTop = canvasY * scaleY;
+
+    // Flip Y coordinate (PDF Y is from bottom, canvas Y is from top)
+    const pdfY = pdfHeight - pdfYFromTop;
+
+    return { pdfX, pdfY };
+};
 
 /**
  * PDF Viewer with drag-to-select field functionality using PDF.js directly
@@ -17,22 +52,26 @@ const PDFViewerWithSelection = ({
     isPlacementMode = false,
     onExitPlacementMode,
     onCreatePlaceholder, // NEW: callback to create placeholder in mapping panel
-    placeholders = [] // NEW: to check for duplicate positions
+    placeholders = [], // NEW: to check for duplicate positions
+    tagDataTypes = [], // NEW: available data types
+    onCreateAndApplyField, // NEW: callback to create field and immediately apply AcroForm
+    onCloseFullscreen // NEW: callback to close fullscreen modal after field creation
 }) => {
     const [numPages, setNumPages] = useState(null);
     const [clickedPosition, setClickedPosition] = useState(null);
     const [renderedPages, setRenderedPages] = useState([]);
-    const [nextPlaceholderNum, setNextPlaceholderNum] = useState(1); // Auto-increment placeholder number
-    const [positionModalVisible, setPositionModalVisible] = useState(false);
-    const [positionValue, setPositionValue] = useState('');
+    const [fieldFormVisible, setFieldFormVisible] = useState(false);
     const [loading, setLoading] = useState(true); // Loading state for PDF
     const containerRef = useRef(null);
     const canvasRefs = useRef({});
+    const [fieldForm] = Form.useForm();
 
     // NEW: Drag selection state
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState(null);
     const [dragEnd, setDragEnd] = useState(null);
+
+    // Zoom warning removed - coordinate system is now zoom-independent thanks to screenToPDFCoords()
 
     useEffect(() => {
         if (!pdfUrl) return;
@@ -179,80 +218,56 @@ const PDFViewerWithSelection = ({
     const handleMouseDown = async (e) => {
         if (!isPlacementMode) return;
 
-        // Get scroll offsets
-        const scrollContainer = containerRef.current.parentElement;
-        const scrollX = scrollContainer.scrollLeft;
-        const scrollY = scrollContainer.scrollTop;
-
-        // Get click position relative to viewport
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const clickX = e.clientX - containerRect.left + scrollX;
-        const clickY = e.clientY - containerRect.top + scrollY;
-
-        // Calculate which page was clicked and position relative to that page
-        let clickedPage = 1;
-        let pageRelativeY = 0;
-        let currentY = 0;
+        // Find which canvas was clicked
+        let clickedCanvas = null;
+        let clickedPage = null;
 
         for (const pageData of renderedPages) {
-            // Use CSS-scaled height for click detection
-            const displayHeight = pageData.height * pageData.cssScale;
-            const pageHeight = displayHeight + 10; // Small gap
+            const canvas = canvasRefs.current[pageData.pageNum];
+            if (!canvas) continue;
 
-            if (clickY >= currentY && clickY < currentY + displayHeight) {
-                clickedPage = pageData.pageNum;
-                pageRelativeY = clickY - currentY;
+            const rect = canvas.getBoundingClientRect();
+            if (
+                e.clientX >= rect.left &&
+                e.clientX <= rect.right &&
+                e.clientY >= rect.top &&
+                e.clientY <= rect.bottom
+            ) {
+                clickedCanvas = canvas;
+                clickedPage = pageData;
                 break;
             }
-
-            currentY += pageHeight;
         }
 
-        // Find the page data
-        const pageData = renderedPages.find(p => p.pageNum === clickedPage);
-        if (!pageData) {
-            message.error(getPdfError('FILE_CORRUPTED'));
-            return;
-        }
+        if (!clickedCanvas || !clickedPage) return;
 
-        // Calculate X offset because PDF is centered (using CSS-scaled width)
-        const containerWidth = containerRect.width;
-        const displayWidth = pageData.width * pageData.cssScale;
-
-        // IMPORTANT: If PDF is smaller than container, it's centered, so we need to subtract offset
-        // If PDF is larger, there's no centering, xOffset should be 0
-        const xOffset = displayWidth < containerWidth ? (containerWidth - displayWidth) / 2 : 0;
-
-        // Adjust X coordinate for centering (in display coordinates)
-        const displayX = clickX - xOffset;
-
-        // CORRECT APPROACH: Calculate click position relative to CANVAS, not container
-        const canvas = canvasRefs.current[clickedPage];
-        const canvasRect = canvas?.getBoundingClientRect();
-
-        // Click position relative to canvas (in viewport coordinates)
+        // Get position relative to canvas
+        const canvasRect = clickedCanvas.getBoundingClientRect();
         const canvasClickX = e.clientX - canvasRect.left;
         const canvasClickY = e.clientY - canvasRect.top;
 
-        // Convert canvas click position to PDF coordinates
-        // Canvas is displayed with CSS scaling, so divide by cssScale to get PDF coords
-        let pdfX = canvasClickX / pageData.cssScale;
-
-        // Y coordinate: Canvas Y is from top, PDF Y is from bottom
-        const pdfYFromTop = canvasClickY / pageData.cssScale;
-        let pdfY = pageData.viewport.height - pdfYFromTop;
+        // Convert to PDF coordinates using standardized function
+        const { pdfX, pdfY } = screenToPDFCoords(
+            canvasClickX,
+            canvasClickY,
+            canvasRect,
+            clickedPage.viewport,
+            clickedPage.cssScale
+        );
 
         // Store drag start position
         setIsDragging(true);
         setDragStart({
-            screenX: clickX,
-            screenY: clickY,
+            screenX: e.clientX,
+            screenY: e.clientY,
+            canvasX: canvasClickX,
+            canvasY: canvasClickY,
             pdfX,
             pdfY,
-            page: clickedPage,
-            viewport: pageData.viewport,
+            page: clickedPage.pageNum,
+            viewport: clickedPage.viewport,
             canvasRect,
-            cssScale: pageData.cssScale
+            cssScale: clickedPage.cssScale
         });
         setDragEnd(null);
     };
@@ -261,32 +276,30 @@ const PDFViewerWithSelection = ({
     const handleMouseMove = (e) => {
         if (!isDragging || !dragStart) return;
 
-        // Get scroll offsets
-        const scrollContainer = containerRef.current.parentElement;
-        const scrollX = scrollContainer.scrollLeft;
-        const scrollY = scrollContainer.scrollTop;
-
-        // Get current position
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const currentX = e.clientX - containerRect.left + scrollX;
-        const currentY = e.clientY - containerRect.top + scrollY;
-
-        // ✅ FIX: Recalculate canvas rect dynamically (handles fullscreen vs component view)
+        // Get canvas and recalculate rect (handles fullscreen changes)
         const canvas = canvasRefs.current[dragStart.page];
-        const canvasRect = canvas?.getBoundingClientRect();
-        if (!canvasRect) return;
+        if (!canvas) return;
 
-        // Calculate PDF coordinates for current position
+        const canvasRect = canvas.getBoundingClientRect();
+
+        // Get current position relative to canvas
         const canvasCurrentX = e.clientX - canvasRect.left;
         const canvasCurrentY = e.clientY - canvasRect.top;
 
-        const pdfCurrentX = canvasCurrentX / dragStart.cssScale;
-        const pdfYFromTop = canvasCurrentY / dragStart.cssScale;
-        const pdfCurrentY = dragStart.viewport.height - pdfYFromTop;
+        // Convert to PDF coordinates using standardized function
+        const { pdfX: pdfCurrentX, pdfY: pdfCurrentY } = screenToPDFCoords(
+            canvasCurrentX,
+            canvasCurrentY,
+            canvasRect,
+            dragStart.viewport,
+            dragStart.cssScale
+        );
 
         setDragEnd({
-            screenX: currentX,
-            screenY: currentY,
+            screenX: e.clientX,
+            screenY: e.clientY,
+            canvasX: canvasCurrentX,
+            canvasY: canvasCurrentY,
             pdfX: pdfCurrentX,
             pdfY: pdfCurrentY
         });
@@ -296,32 +309,29 @@ const PDFViewerWithSelection = ({
     const handleMouseUp = (e) => {
         if (!isDragging || !dragStart) return;
 
-        // Get final position
-        const scrollContainer = containerRef.current.parentElement;
-        const scrollX = scrollContainer.scrollLeft;
-        const scrollY = scrollContainer.scrollTop;
-
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const endX = e.clientX - containerRect.left + scrollX;
-        const endY = e.clientY - containerRect.top + scrollY;
-
-        // ✅ FIX: Recalculate canvas rect dynamically (handles fullscreen vs component view)
+        // Get canvas and recalculate rect
         const canvas = canvasRefs.current[dragStart.page];
-        const canvasRect = canvas?.getBoundingClientRect();
-        if (!canvasRect) {
+        if (!canvas) {
             setIsDragging(false);
             setDragStart(null);
             setDragEnd(null);
             return;
         }
 
-        // Calculate PDF coordinates
+        const canvasRect = canvas.getBoundingClientRect();
+
+        // Calculate final position relative to canvas
         const canvasEndX = e.clientX - canvasRect.left;
         const canvasEndY = e.clientY - canvasRect.top;
 
-        const pdfEndX = canvasEndX / dragStart.cssScale;
-        const pdfYFromTop = canvasEndY / dragStart.cssScale;
-        const pdfEndY = dragStart.viewport.height - pdfYFromTop;
+        // Convert to PDF coordinates using standardized function
+        const { pdfX: pdfEndX, pdfY: pdfEndY } = screenToPDFCoords(
+            canvasEndX,
+            canvasEndY,
+            canvasRect,
+            dragStart.viewport,
+            dragStart.cssScale
+        );
 
         // Calculate field dimensions (both width AND height from drag)
         const fieldStartX = Math.min(dragStart.pdfX, pdfEndX);
@@ -356,12 +366,12 @@ const PDFViewerWithSelection = ({
         // Calculate fontSize based on height (reverse of auto-detection formula: height = fontSize * 1.2)
         const fontSize = fieldHeight / 1.2;
 
-        // Store selected field area
+        // Store selected field area with canvas coordinates for accurate overlay
         setClickedPosition({
-            screenX: Math.min(dragStart.screenX, endX),
-            screenY: Math.min(dragStart.screenY, endY),
-            screenWidth: Math.abs(endX - dragStart.screenX),
-            screenHeight: Math.abs(endY - dragStart.screenY),
+            canvasX: Math.min(dragStart.canvasX, canvasEndX),
+            canvasY: Math.min(dragStart.canvasY, canvasEndY),
+            canvasWidth: Math.abs(canvasEndX - dragStart.canvasX),
+            canvasHeight: Math.abs(canvasEndY - dragStart.canvasY),
             pdfX: fieldStartX,
             pdfY: centerY,
             pdfWidth: fieldWidth,
@@ -380,63 +390,112 @@ const PDFViewerWithSelection = ({
     const handleConfirmPosition = () => {
         if (!clickedPosition) return;
 
-        // Open modal to input position
-        setPositionModalVisible(true);
-    };
-
-    const handlePositionSubmit = () => {
-        const posNum = parseInt(positionValue);
-        if (!posNum || posNum <= 0) {
-            message.error('Vui lòng nhập vị trí hợp lệ (> 0)');
-            return;
-        }
-
-        // Check for duplicate positions
+        // Auto-suggest next position number
         const existingPositions = placeholders.map(p => {
             const match = p.original.match(/\((\d+)\)/);
             return match ? parseInt(match[1]) : null;
         }).filter(Boolean);
 
-        if (existingPositions.includes(posNum)) {
-            message.error(`Vị trí (${posNum}) đã tồn tại. Vui lòng chọn vị trí khác.`);
-            return;
-        }
+        const nextPosition = existingPositions.length > 0
+            ? Math.max(...existingPositions) + 1
+            : 1;
 
-        const newPlaceholder = {
-            id: `manual-${Date.now()}`,
-            original: `(${posNum})`,
-            fullText: `(${posNum})`,
-            page: clickedPosition.page,
-            x: clickedPosition.pdfX,
-            y: clickedPosition.pdfY,
-            width: clickedPosition.pdfWidth, // Dynamic width from drag
-            height: clickedPosition.pdfHeight, // Dynamic height from drag
-            backgroundX: clickedPosition.pdfX, // Full field area
-            backgroundWidth: clickedPosition.pdfWidth,
-            fontSize: clickedPosition.fontSize, // Dynamic fontSize calculated from height
-            isManual: true // Mark as manual for different color
-        };
+        // Set default values
+        fieldForm.setFieldsValue({
+            position: nextPosition,
+            key: '',
+            dataType: 'string'
+        });
 
-        // Call parent callback to add to PlaceholderMappingPanel
-        if (onCreatePlaceholder) {
-            onCreatePlaceholder(newPlaceholder);
-        }
+        // Show form modal
+        setFieldFormVisible(true);
+    };
 
-        message.success(`Đã tạo placeholder (${posNum}) tại trang ${clickedPosition.page}`);
+    const handleFieldFormSubmit = async () => {
+        try {
+            const values = await fieldForm.validateFields();
+            const { position, key, dataType } = values;
 
-        // Reset state
-        setPositionModalVisible(false);
-        setPositionValue('');
-        setClickedPosition(null);
+            // Check for duplicate positions
+            const existingPositions = placeholders.map(p => {
+                const match = p.original.match(/\((\d+)\)/);
+                return match ? parseInt(match[1]) : null;
+            }).filter(Boolean);
 
-        // Exit placement mode after successful placement
-        if (onExitPlacementMode) {
-            onExitPlacementMode();
+            if (existingPositions.includes(position)) {
+                message.error(`Vị trí (${position}) đã tồn tại. Vui lòng chọn vị trí khác.`);
+                return;
+            }
+
+            // Check for duplicate keys
+            const existingKeys = placeholders.map(p => p.mappedKey).filter(Boolean);
+            if (existingKeys.includes(key)) {
+                message.error(`Tên trường "${key}" đã tồn tại. Vui lòng chọn tên khác.`);
+                return;
+            }
+
+            const newPlaceholder = {
+                id: `manual-${Date.now()}`,
+                original: `(${position})`,
+                fullText: `(${position})`,
+                page: clickedPosition.page,
+                x: clickedPosition.pdfX,
+                y: clickedPosition.pdfY,
+                width: clickedPosition.pdfWidth,
+                height: clickedPosition.pdfHeight,
+                backgroundX: clickedPosition.pdfX,
+                backgroundWidth: clickedPosition.pdfWidth,
+                fontSize: clickedPosition.fontSize,
+                isManual: true,
+                mappedKey: key,
+                mappedDataType: dataType
+            };
+
+            // Call parent callback to create field and immediately apply AcroForm
+            console.log('🔍 Callbacks available:', {
+                hasCreateAndApply: !!onCreateAndApplyField,
+                hasCreatePlaceholder: !!onCreatePlaceholder
+            });
+
+            if (onCreateAndApplyField) {
+                console.log('✅ Calling onCreateAndApplyField with:', { newPlaceholder, fieldData: { key, dataType } });
+                try {
+                    await onCreateAndApplyField(newPlaceholder, { key, dataType });
+                    console.log('✅ onCreateAndApplyField completed successfully');
+                } catch (error) {
+                    console.error('❌ onCreateAndApplyField failed:', error);
+                    message.error(`Không thể tạo AcroForm: ${error.message}`);
+                    return; // Don't close modal if failed
+                }
+            } else if (onCreatePlaceholder) {
+                // Fallback to old behavior
+                console.log('⚠️ Falling back to onCreatePlaceholder (no AcroForm)');
+                onCreatePlaceholder(newPlaceholder);
+            }
+
+            message.success(`Đã tạo trường (${position}) - ${key}`);
+
+            // Reset state
+            setFieldFormVisible(false);
+            fieldForm.resetFields();
+            setClickedPosition(null);
+
+            // Close fullscreen modal and exit placement mode after successful field creation
+            if (onCloseFullscreen) {
+                onCloseFullscreen();
+            }
+            if (onExitPlacementMode) {
+                onExitPlacementMode();
+            }
+        } catch (error) {
+            console.error('Form validation failed:', error);
         }
     };
 
     const handleCancelPosition = () => {
         setClickedPosition(null);
+        setFieldFormVisible(false);
+        fieldForm.resetFields();
     };
 
     return (
@@ -506,79 +565,101 @@ const PDFViewerWithSelection = ({
                     })
                 )}
 
-                {/* Show drag selection rectangle */}
-                {isDragging && dragStart && dragEnd && (
-                    <div
-                        style={{
-                            position: 'absolute',
-                            left: `${Math.min(dragStart.screenX, dragEnd.screenX)}px`,
-                            top: `${Math.min(dragStart.screenY, dragEnd.screenY)}px`,
-                            width: `${Math.abs(dragEnd.screenX - dragStart.screenX)}px`,
-                            height: `${Math.abs(dragEnd.screenY - dragStart.screenY)}px`,
-                            border: '2px dashed #1890ff',
-                            background: 'rgba(24, 144, 255, 0.1)',
-                            pointerEvents: 'none',
-                            zIndex: 998
-                        }}
-                    />
-                )}
+                {/* Show drag selection rectangle - positioned relative to canvas */}
+                {isDragging && dragStart && dragEnd && (() => {
+                    const canvas = canvasRefs.current[dragStart.page];
+                    if (!canvas) return null;
+
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const containerRect = containerRef.current.getBoundingClientRect();
+
+                    // Calculate overlay position relative to container
+                    const left = canvasRect.left - containerRect.left + Math.min(dragStart.canvasX, dragEnd.canvasX);
+                    const top = canvasRect.top - containerRect.top + Math.min(dragStart.canvasY, dragEnd.canvasY);
+                    const width = Math.abs(dragEnd.canvasX - dragStart.canvasX);
+                    const height = Math.abs(dragEnd.canvasY - dragStart.canvasY);
+
+                    return (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                left: `${left}px`,
+                                top: `${top}px`,
+                                width: `${width}px`,
+                                height: `${height}px`,
+                                border: '2px dashed #1890ff',
+                                background: 'rgba(24, 144, 255, 0.1)',
+                                pointerEvents: 'none',
+                                zIndex: 998
+                            }}
+                        />
+                    );
+                })()}
 
                 {/* Show selected field area after drag complete */}
-                {clickedPosition && clickedPosition.screenWidth && (
-                    <div
-                        style={{
-                            position: 'absolute',
-                            left: `${clickedPosition.screenX}px`,
-                            top: `${clickedPosition.screenY}px`,
-                            width: `${clickedPosition.screenWidth}px`,
-                            height: `${clickedPosition.screenHeight}px`,
-                            border: '3px solid #ff4d4f',
-                            background: 'rgba(255, 77, 79, 0.2)',
-                            pointerEvents: 'none',
-                            animation: 'pulse 1.5s ease-in-out infinite',
-                            zIndex: 999,
-                            boxShadow: '0 0 10px rgba(255, 77, 79, 0.5)',
-                            transform: 'translate(0, 0)' // Prevent movement
-                        }}
-                    />
-                )}
+                {clickedPosition && clickedPosition.canvasWidth && (() => {
+                    const canvas = canvasRefs.current[clickedPosition.page];
+                    if (!canvas) return null;
 
-                {/* Confirm/Cancel buttons - positioned below selected area */}
-                {clickedPosition && (
-                    <div
-                        style={{
-                            position: 'absolute',
-                            left: `${clickedPosition.screenX}px`,
-                            top: `${clickedPosition.screenY + (clickedPosition.screenHeight || 20) + 10}px`,
-                            zIndex: 1000,
-                            background: 'white',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            pointerEvents: 'auto', // Allow clicking buttons
-                            transform: 'translate(0, 0)' // Prevent movement
-                        }}
-                        onClick={(e) => e.stopPropagation()} // Prevent triggering parent click
-                    >
-                        <Space>
-                            <Button
-                                type="primary"
-                                size="small"
-                                icon={<CheckOutlined />}
-                                onClick={handleConfirmPosition}
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const containerRect = containerRef.current.getBoundingClientRect();
+
+                    // Calculate overlay position relative to container
+                    const left = canvasRect.left - containerRect.left + clickedPosition.canvasX;
+                    const top = canvasRect.top - containerRect.top + clickedPosition.canvasY;
+
+                    return (
+                        <>
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: `${left}px`,
+                                    top: `${top}px`,
+                                    width: `${clickedPosition.canvasWidth}px`,
+                                    height: `${clickedPosition.canvasHeight}px`,
+                                    border: '3px solid #ff4d4f',
+                                    background: 'rgba(255, 77, 79, 0.2)',
+                                    pointerEvents: 'none',
+                                    animation: 'pulse 1.5s ease-in-out infinite',
+                                    zIndex: 999,
+                                    boxShadow: '0 0 10px rgba(255, 77, 79, 0.5)'
+                                }}
+                            />
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: `${left}px`,
+                                    top: `${top + clickedPosition.canvasHeight + 10}px`,
+                                    zIndex: 1000,
+                                    background: 'white',
+                                    padding: '8px',
+                                    borderRadius: '4px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                    pointerEvents: 'auto'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
                             >
-                                Xác nhận
-                            </Button>
-                            <Button
-                                size="small"
-                                icon={<CloseOutlined />}
-                                onClick={handleCancelPosition}
-                            >
-                                Hủy
-                            </Button>
-                        </Space>
-                    </div>
-                )}
+                                <Space>
+                                    <Button
+                                        type="primary"
+                                        size="small"
+                                        icon={<CheckOutlined />}
+                                        onClick={handleConfirmPosition}
+                                    >
+                                        Xác nhận
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        icon={<CloseOutlined />}
+                                        onClick={handleCancelPosition}
+                                    >
+                                        Hủy
+                                    </Button>
+                                </Space>
+                            </div>
+                        </>
+                    );
+                })()}
             </div>
 
             <style>{`
@@ -594,30 +675,73 @@ const PDFViewerWithSelection = ({
                 }
             `}</style>
 
-            {/* Position Input Modal */}
+            {/* Field Creation Form Modal */}
             <Modal
-                title="Nhập vị trí placeholder"
-                open={positionModalVisible}
-                onOk={handlePositionSubmit}
-                onCancel={() => {
-                    setPositionModalVisible(false);
-                    setPositionValue('');
-                }}
-                okText="Tạo"
+                title="Tạo trường thông tin"
+                open={fieldFormVisible}
+                onOk={handleFieldFormSubmit}
+                onCancel={handleCancelPosition}
+                okText="Tạo và áp dụng"
                 cancelText="Hủy"
+                width={500}
             >
-                <div style={{ padding: '20px 0' }}>
-                    <p>Vị trí phải là số nguyên dương (&gt; 0) và không trùng với các vị trí hiện có.</p>
-                    <Input
-                        type="number"
-                        placeholder="Nhập vị trí (VD: 1, 2, 3...)"
-                        value={positionValue}
-                        onChange={(e) => setPositionValue(e.target.value)}
-                        min={1}
-                        style={{ marginTop: '8px' }}
-                        onPressEnter={handlePositionSubmit}
-                    />
-                </div>
+                <Form
+                    form={fieldForm}
+                    layout="vertical"
+                    style={{ marginTop: 20 }}
+                >
+                    <Form.Item
+                        label="Số thứ tự"
+                        name="position"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập số thứ tự' },
+                            { type: 'number', min: 1, message: 'Số thứ tự phải lớn hơn 0' }
+                        ]}
+                    >
+                        <InputNumber
+                            placeholder="Nhập số thứ tự (1, 2, 3...)"
+                            style={{ width: '100%' }}
+                            min={1}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Tên trường"
+                        name="key"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập tên trường' },
+                            {
+                                pattern: /^[^A-Z!@#$%^&*()+=\[\]{};':"\\|,.<>?\/]*$/,
+                                message: 'Tên trường không được chứa chữ hoa hoặc ký tự đặc biệt'
+                            }
+                        ]}
+                    >
+                        <Input
+                            placeholder="Ví dụ: họ và tên, mã hồ sơ, ngày sinh"
+                            autoFocus
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Loại dữ liệu"
+                        name="dataType"
+                        rules={[{ required: true, message: 'Vui lòng chọn loại dữ liệu' }]}
+                    >
+                        <Select placeholder="Chọn loại dữ liệu">
+                            {(tagDataTypes.length > 0 ? tagDataTypes : [
+                                { label: 'Chuỗi/Text', value: 'string' },
+                                { label: 'Văn bản dài', value: 'textarea' },
+                                { label: 'Ngày tháng', value: 'date' },
+                                { label: 'Số nguyên', value: 'integer' },
+                                { label: 'Số thực', value: 'float' }
+                            ]).map(type => (
+                                <Select.Option key={type.value} value={type.value}>
+                                    {type.label}
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                </Form>
             </Modal>
         </div>
     );

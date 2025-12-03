@@ -36,6 +36,9 @@ const FileUploadPreview = forwardRef(({
     onFileRemove,
     onPlaceholdersDetected,
     onCreatePlaceholder, //  NEW: Callback for placeholder creation (placement mode)
+    onCreateAndApplyField, // NEW: Callback to create field and apply AcroForm immediately
+    placeholders: detectedPlaceholders = [], // NEW: Detected placeholders (renamed to avoid conflict)
+    tagDataTypes = [], // NEW: Available data types
     compactButtons = false,
     tags = [], //  NEW: Tags for manual placement
     // allow parent to control/persist uploaded file across unmounts
@@ -437,11 +440,16 @@ const FileUploadPreview = forwardRef(({
     const handleEnterPlacementMode = useCallback(() => {
         setIsPlacementMode(true);
         setFullscreenVisible(true); // Auto-open fullscreen for better drag selection
-        message.info('Chế độ quét: Kéo chuột để chọn vùng field trên PDF', 4);
+        message.info({
+            content: 'Chế độ quét đã bật. Kéo chuột để chọn vùng trường trên PDF.',
+            duration: 4,
+            icon: <AimOutlined style={{ color: '#1890ff' }} />
+        });
     }, []);
 
     const handleExitPlacementMode = useCallback(() => {
         setIsPlacementMode(false);
+        message.success('Đã thoát chế độ quét');
     }, []);
 
     const handleTagPlaced = async ({ tag, coordinates }) => {
@@ -559,14 +567,16 @@ const FileUploadPreview = forwardRef(({
 
                     <div style={{ marginLeft: 'auto' }}>
                         <Space>
-                            <Tooltip title={isPlacementMode ? "Thoát chế độ đặt tag" : "Đặt tag thủ công (Click vào PDF)"}>
+                            <Tooltip title={isPlacementMode ? "Thoát chế độ quét" : "Chế độ quét - Tạo trường thông tin"}>
                                 <Button
                                     type={isPlacementMode ? "primary" : "default"}
                                     icon={<AimOutlined />}
                                     onClick={isPlacementMode ? handleExitPlacementMode : handleEnterPlacementMode}
                                     size="small"
                                     danger={isPlacementMode}
-                                />
+                                >
+                                    {isPlacementMode ? "Thoát chế độ quét" : "Chế độ quét"}
+                                </Button>
                             </Tooltip>
 
                             <Tooltip title="Toàn màn hình">
@@ -650,7 +660,10 @@ const FileUploadPreview = forwardRef(({
                                     isPlacementMode={isPlacementMode}
                                     onExitPlacementMode={handleExitPlacementMode}
                                     onCreatePlaceholder={onCreatePlaceholder}
-                                    placeholders={placeholders}
+                                    onCreateAndApplyField={onCreateAndApplyField}
+                                    placeholders={detectedPlaceholders}
+                                    tagDataTypes={tagDataTypes}
+                                    onCloseFullscreen={handleFullscreenClose}
                                 />
                             ) : (
                                 <iframe
@@ -703,8 +716,12 @@ const FileUploadPreview = forwardRef(({
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <EyeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
-                            <span>{uploadedFile?.name} - {isPlacementMode ? 'Chế độ quét' : 'Xem toàn màn hình'}</span>
+                            {isPlacementMode ? (
+                                <AimOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                            ) : (
+                                <EyeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                            )}
+                            <span>{uploadedFile?.name} {isPlacementMode && '- Chế độ quét'}</span>
                         </div>
                         {isPlacementMode && (
                             <Button
@@ -742,7 +759,10 @@ const FileUploadPreview = forwardRef(({
                             handleFullscreenClose();
                         }}
                         onCreatePlaceholder={onCreatePlaceholder}
-                        placeholders={placeholders}
+                        onCreateAndApplyField={onCreateAndApplyField}
+                        placeholders={detectedPlaceholders}
+                        tagDataTypes={tagDataTypes}
+                        onCloseFullscreen={handleFullscreenClose}
                     />
                 ) : (
                     <iframe

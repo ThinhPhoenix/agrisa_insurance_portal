@@ -12,10 +12,6 @@ const usePolicy = () => {
   const [policiesLoading, setPoliciesLoading] = useState(false);
   const [policiesError, setPoliciesError] = useState(null);
 
-  const [activePolicies, setActivePolicies] = useState([]);
-  const [activePoliciesLoading, setActivePoliciesLoading] = useState(false);
-  const [activePoliciesError, setActivePoliciesError] = useState(null);
-
   const [policyCounts, setPolicyCounts] = useState({
     total: 0,
     draft: 0,
@@ -25,11 +21,9 @@ const usePolicy = () => {
   const [policyCountsLoading, setPolicyCountsLoading] = useState(false);
   const [policyCountsError, setPolicyCountsError] = useState(null);
 
-  const fetchPoliciesByProvider = useCallback(async (providerId) => {
-    if (!providerId) {
-      return;
-    }
-
+  // Fetch all policies (draft, active, archived) from new unified API
+  // Partner ID is determined from JWT token by backend
+  const fetchPoliciesByProvider = useCallback(async () => {
     setPoliciesLoading(true);
     setPoliciesError(null);
 
@@ -37,7 +31,7 @@ const usePolicy = () => {
 
     try {
       const response = await axiosInstance.get(
-        endpoints.policy.base_policy.get_draft_by_provider(providerId, false),
+        endpoints.policy.base_policy.get_by_provider,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -45,31 +39,18 @@ const usePolicy = () => {
         }
       );
 
-      if (response.data?.success && response.data?.data?.policies) {
-        const draftPoliciesData = response.data.data.policies;
+      if (response.data?.success && response.data?.data) {
+        const policiesData =
+          response.data.data.policies || response.data.data || [];
 
-        const meData = localStorage.getItem("me");
-        if (meData) {
-          try {
-            const userData = JSON.parse(meData);
-            const partnerId = userData?.partner_id;
+        // Transform to match existing format if needed
+        const transformedPolicies = Array.isArray(policiesData)
+          ? policiesData.map((policy) => ({
+              base_policy: policy,
+            }))
+          : [];
 
-            if (partnerId) {
-              const filteredPolicies = draftPoliciesData.filter((policy) => {
-                const providerId = policy.base_policy?.insurance_provider_id;
-                return providerId === partnerId;
-              });
-
-              setPolicies(filteredPolicies);
-            } else {
-              setPolicies(draftPoliciesData);
-            }
-          } catch (error) {
-            setPolicies(draftPoliciesData);
-          }
-        } else {
-          setPolicies(draftPoliciesData);
-        }
+        setPolicies(transformedPolicies);
       } else {
         setPolicies([]);
       }
@@ -86,117 +67,9 @@ const usePolicy = () => {
   }, []);
 
   const fetchPolicies = useCallback(() => {
-    const meData = localStorage.getItem("me");
-    if (meData) {
-      try {
-        const userData = JSON.parse(meData);
-        const partnerId = userData?.partner_id;
-        if (partnerId) {
-          fetchPoliciesByProvider(partnerId);
-        } else {
-          setPoliciesError("Partner ID not found in user data");
-        }
-      } catch (error) {
-        setPoliciesError("Failed to parse user data");
-      }
-    } else {
-      setPoliciesError("User data not found");
-    }
+    // No need to get partner ID, backend determines it from JWT token
+    fetchPoliciesByProvider();
   }, [fetchPoliciesByProvider]);
-
-  const fetchActivePoliciesByProvider = useCallback(async (providerId) => {
-    if (!providerId) {
-      return;
-    }
-
-    setActivePoliciesLoading(true);
-    setActivePoliciesError(null);
-
-    const token = localStorage.getItem("token");
-
-    try {
-      const response = await axiosInstance.get(
-        endpoints.policy.base_policy.get_active(providerId),
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.data?.success && response.data?.data) {
-        const activePoliciesData = Array.isArray(response.data.data)
-          ? response.data.data
-          : [];
-
-        const meData = localStorage.getItem("me");
-        if (meData) {
-          try {
-            const userData = JSON.parse(meData);
-            const partnerId = userData?.partner_id;
-
-            if (partnerId) {
-              const filteredPolicies = activePoliciesData.filter((policy) => {
-                const providerId = policy.insurance_provider_id;
-                return providerId === partnerId;
-              });
-
-              const transformedPolicies = filteredPolicies.map((policy) => ({
-                base_policy: policy,
-              }));
-
-              setActivePolicies(transformedPolicies);
-            } else {
-              const transformedPolicies = activePoliciesData.map((policy) => ({
-                base_policy: policy,
-              }));
-              setActivePolicies(transformedPolicies);
-            }
-          } catch (error) {
-            const transformedPolicies = activePoliciesData.map((policy) => ({
-              base_policy: policy,
-            }));
-            setActivePolicies(transformedPolicies);
-          }
-        } else {
-          const transformedPolicies = activePoliciesData.map((policy) => ({
-            base_policy: policy,
-          }));
-          setActivePolicies(transformedPolicies);
-        }
-      } else {
-        setActivePolicies([]);
-      }
-    } catch (error) {
-      setActivePoliciesError(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch active policies"
-      );
-      setActivePolicies([]);
-    } finally {
-      setActivePoliciesLoading(false);
-    }
-  }, []);
-
-  const fetchActivePolicies = useCallback(() => {
-    const meData = localStorage.getItem("me");
-    if (meData) {
-      try {
-        const userData = JSON.parse(meData);
-        const partnerId = userData?.partner_id;
-        if (partnerId) {
-          fetchActivePoliciesByProvider(partnerId);
-        } else {
-          setActivePoliciesError("Partner ID not found in user data");
-        }
-      } catch (error) {
-        setActivePoliciesError("Failed to parse user data");
-      }
-    } else {
-      setActivePoliciesError("User data not found");
-    }
-  }, [fetchActivePoliciesByProvider]);
 
   const fetchPolicyCounts = useCallback(async () => {
     setPolicyCountsLoading(true);
@@ -253,40 +126,21 @@ const usePolicy = () => {
   // Fetch all data in parallel when user is available
   useEffect(() => {
     const fetchAllData = async () => {
-      // Wait for user data from store OR localStorage
-      let partnerId = user?.partner_id || user?.profile?.partner_id;
-
-      // Fallback to localStorage if store doesn't have user yet
-      if (!partnerId) {
-        const meData = localStorage.getItem("me");
-        if (!meData) {
-          console.log("⏳ Waiting for user data...");
-          return; // Don't set error, just wait for next render
-        }
-
-        try {
-          const userData = JSON.parse(meData);
-          partnerId = userData?.partner_id;
-        } catch (error) {
-          setPoliciesError("Failed to parse user data");
-          setActivePoliciesError("Failed to parse user data");
-          return;
-        }
-      }
-
-      if (!partnerId) {
-        setPoliciesError("Partner ID not found in user data");
-        setActivePoliciesError("Partner ID not found in user data");
+      // Wait for token to be available
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.log("⏳ Waiting for authentication...");
         return;
       }
 
-      console.log("✅ User data ready, fetching policies for partnerId:", partnerId);
+      console.log(
+        "✅ Token ready, fetching policies from backend (partner determined by JWT)"
+      );
 
-      // Fetch all APIs in parallel with independent error handling
-      // Each function manages its own loading state internally
+      // Fetch unified policies API and counts in parallel
+      // Backend determines partner from JWT token
       await Promise.allSettled([
-        fetchPoliciesByProvider(partnerId),
-        fetchActivePoliciesByProvider(partnerId),
+        fetchPoliciesByProvider(),
         fetchPolicyCounts(),
       ]);
     };
@@ -299,16 +153,11 @@ const usePolicy = () => {
     policies,
     policiesLoading,
     policiesError,
-    activePolicies,
-    activePoliciesLoading,
-    activePoliciesError,
     policyCounts,
     policyCountsLoading,
     policyCountsError,
     fetchPoliciesByProvider,
     fetchPolicies,
-    fetchActivePoliciesByProvider,
-    fetchActivePolicies,
     fetchPolicyCounts,
   };
 };

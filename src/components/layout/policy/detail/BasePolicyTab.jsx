@@ -1,11 +1,54 @@
 import { Card, Descriptions, Space, Tag, Typography, Button, Table } from "antd";
-import { DownloadOutlined } from "@ant-design/icons";
+import {
+  DownloadOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 
 const { Text } = Typography;
 
-const STATUS_LABELS = {
-  active: "Đang hoạt động",
-  pending_review: "Chờ duyệt",
+const getStatusTag = (status) => {
+  const statusConfig = {
+    draft: {
+      color: "processing",
+      icon: <ClockCircleOutlined />,
+      text: "Chờ duyệt",
+    },
+    active: {
+      color: "success",
+      icon: <CheckCircleOutlined />,
+      text: "Đang hoạt động",
+    },
+    closed: {
+      color: "error",
+      icon: <StopOutlined />,
+      text: "Đã đóng",
+    },
+    archived: {
+      color: "default",
+      icon: <FileTextOutlined />,
+      text: "Đã lưu trữ",
+    },
+    pending_review: {
+      color: "warning",
+      icon: <ClockCircleOutlined />,
+      text: "Chờ duyệt",
+    },
+  };
+
+  const config = statusConfig[status] || {
+    color: "default",
+    icon: null,
+    text: status,
+  };
+
+  return (
+    <Tag color={config.color} icon={config.icon}>
+      {config.text}
+    </Tag>
+  );
 };
 
 const CROP_TYPE_LABELS = {
@@ -56,16 +99,7 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag
-                color={
-                  basePolicy.base_policy?.status === "active"
-                    ? "green"
-                    : "orange"
-                }
-              >
-                {STATUS_LABELS[basePolicy.base_policy?.status] ||
-                  basePolicy.base_policy?.status}
-              </Tag>
+              {getStatusTag(basePolicy.base_policy?.status)}
             </Descriptions.Item>
           </Descriptions>
         </div>

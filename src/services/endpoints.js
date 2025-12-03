@@ -35,8 +35,13 @@ export const endpoints = {
       get_by_provider: `/policy/protected/api/v2/base-policies/by-provider`,
       get_draft_filter: (provider_id) =>
         `/policy/protected/api/v2/base-policies/draft/filter?provider_id=${provider_id}`,
-      get_draft_detail_by_id: (base_policy_id, archive_status = false) =>
-        `/policy/protected/api/v2/base-policies/draft/filter?archive_status=${archive_status}&base_policy_id=${base_policy_id}`,
+      get_draft_detail_by_id: (base_policy_id, archive_status = false, provider_id = null) => {
+        let url = `/policy/protected/api/v2/base-policies/draft/filter?archive_status=${archive_status}&base_policy_id=${base_policy_id}`;
+        if (provider_id) {
+          url += `&provider_id=${provider_id}`;
+        }
+        return url;
+      },
       get_detail: (id, options = {}) => {
         const {
           provider_id,

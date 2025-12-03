@@ -582,14 +582,14 @@ export default function PolicyDetailPage() {
     setCurrentPhotoPage(page);
   };
 
-  // Handle access denied - redirect to list page
+  // Handle access denied - show error message only
   // IMPORTANT: useEffect must be called before any conditional returns
   useEffect(() => {
     if (accessDenied) {
-      message.error(getApprovalError("UNAUTHORIZED_APPROVE"));
-      router.push(`/policy/${pageType}`);
+      console.error("🚫 Access Denied - Showing error page");
+      message.error("Bạn không có quyền truy cập đơn bảo hiểm này!");
     }
-  }, [accessDenied, pageType, router]);
+  }, [accessDenied]);
 
   if (loading) {
     return (
@@ -603,7 +603,7 @@ export default function PolicyDetailPage() {
     return (
       <ErrorResult
         status="403"
-        subTitle={getErrorMessage("FORBIDDEN")}
+        subTitle="Bạn không có quyền truy cập đơn bảo hiểm này. Vui lòng kiểm tra lại quyền truy cập của bạn."
         backUrl={`/policy/${pageType}`}
         backText="Quay lại danh sách"
       />

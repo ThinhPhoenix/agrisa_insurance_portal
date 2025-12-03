@@ -21,39 +21,87 @@ const usePolicy = () => {
   const [policyCountsLoading, setPolicyCountsLoading] = useState(false);
   const [policyCountsError, setPolicyCountsError] = useState(null);
 
-  // Fetch all policies (draft, active, archived) from new unified API
-  // Partner ID is determined from JWT token by backend
+  // Fetch all policies (draft, active, archived) from APIs
+  // Draft policies come from draft/filter endpoint (requires provider_id)
+  // Non-draft policies come from by-provider endpoint (uses JWT)
   const fetchPoliciesByProvider = useCallback(async () => {
     setPoliciesLoading(true);
     setPoliciesError(null);
 
     const token = localStorage.getItem("token");
 
+    // Get provider_id from localStorage for draft filter
+    const meData = localStorage.getItem("me");
+    let providerId = null;
+    if (meData) {
+      try {
+        const userData = JSON.parse(meData);
+        providerId = userData?.partner_id;
+      } catch (error) {
+        console.error("❌ Failed to parse user data:", error);
+      }
+    }
+
     try {
-      const response = await axiosInstance.get(
-        endpoints.policy.base_policy.get_by_provider,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Fetch both draft and non-draft policies in parallel
+      const [draftResponse, nonDraftResponse] = await Promise.allSettled([
+        // Draft API requires provider_id parameter
+        providerId
+          ? axiosInstance.get(
+              endpoints.policy.base_policy.get_draft_filter(providerId),
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            )
+          : Promise.reject(new Error("Provider ID not found")),
+        // Non-draft API uses JWT token
+        axiosInstance.get(endpoints.policy.base_policy.get_by_provider, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      if (response.data?.success && response.data?.data) {
-        const policiesData =
-          response.data.data.policies || response.data.data || [];
+      // Process draft policies
+      let draftPolicies = [];
+      if (
+        draftResponse.status === "fulfilled" &&
+        draftResponse.value?.data?.success
+      ) {
+        const draftData =
+          draftResponse.value.data.data?.policies ||
+          draftResponse.value.data.data ||
+          [];
+        draftPolicies = Array.isArray(draftData)
+          ? draftData.map((policy) => ({
+              base_policy: policy.base_policy || policy,
+            }))
+          : [];
+      }
 
-        // Transform to match existing format if needed
-        const transformedPolicies = Array.isArray(policiesData)
-          ? policiesData.map((policy) => ({
+      // Process non-draft policies (active, closed, archived)
+      let nonDraftPolicies = [];
+      if (
+        nonDraftResponse.status === "fulfilled" &&
+        nonDraftResponse.value?.data?.success
+      ) {
+        const nonDraftData =
+          nonDraftResponse.value.data.data?.policies ||
+          nonDraftResponse.value.data.data ||
+          [];
+        nonDraftPolicies = Array.isArray(nonDraftData)
+          ? nonDraftData.map((policy) => ({
               base_policy: policy,
             }))
           : [];
-
-        setPolicies(transformedPolicies);
-      } else {
-        setPolicies([]);
       }
+
+      // Merge both lists
+      const allPolicies = [...draftPolicies, ...nonDraftPolicies];
+      setPolicies(allPolicies);
+
+      // Log results for debugging
+      console.log(
+        `✅ Fetched ${draftPolicies.length} draft + ${nonDraftPolicies.length} non-draft = ${allPolicies.length} total policies`
+      );
     } catch (error) {
       setPoliciesError(
         error.response?.data?.message ||

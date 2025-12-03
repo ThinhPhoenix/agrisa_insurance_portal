@@ -771,10 +771,13 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                     //  FIX: Search in merged tags (including newly created)
                     const tag = allTagsIncludingNew.find(t => t.id === tagId);
                     if (tag) {
+                        console.log(`🏷️ Adding to documentTags: "${tag.key}" = "${tag.dataType}"`, tag);
                         documentTags[tag.key] = tag.dataType || 'string';
                     }
                 }
             });
+
+            console.log('📦 Final documentTags object (MUST be { key: dataTypeValue }):', documentTags);
 
             console.log('📦 Final mappings to send to parent:', {
                 oldMappings: Object.keys(mappings),

@@ -38,8 +38,8 @@ import ReviewTab from "@/components/layout/base-policy/create/ReviewTab";
 import TagsTab from "@/components/layout/base-policy/create/TagsTab";
 
 // Hook
-import useCreatePolicy from "@/services/hooks/base-policy/use-create-policy";
 import { createFillablePDFFromMappings } from "@/libs/pdf/pdfAcroFormEditor";
+import useCreatePolicy from "@/services/hooks/base-policy/use-create-policy";
 
 const { Title, Text } = Typography;
 
@@ -188,107 +188,126 @@ const CreatePolicyPage = () => {
   }, []);
 
   // 🆕 Handle create field from scan mode and immediately apply AcroForm
-  const handleCreateAndApplyField = useCallback(async (placeholder, fieldData) => {
-    try {
-      console.log('🔧 Page.js - Creating field from scan mode:', { placeholder, fieldData });
+  const handleCreateAndApplyField = useCallback(
+    async (placeholder, fieldData) => {
+      try {
+        console.log("🔧 Page.js - Creating field from scan mode:", {
+          placeholder,
+          fieldData,
+        });
 
-      // 1. Add placeholder to detected list
-      setDetectedPlaceholders(prev => [...prev, placeholder]);
+        // 1. Add placeholder to detected list
+        setDetectedPlaceholders((prev) => [...prev, placeholder]);
 
-      // 2. Create temp tag for this field
-      const tempTag = {
-        id: `tag-${Date.now()}`,
-        key: fieldData.key,
-        dataType: fieldData.dataType,
-        dataTypeLabel: mockData.tagDataTypes?.find(t => t.value === fieldData.dataType)?.label || fieldData.dataType,
-        defaultValue: fieldData.key, // Set field name as default value to display in PDF
-        createdFromScan: true
-      };
+        // 2. Create temp tag for this field
+        const tempTag = {
+          id: `tag-${Date.now()}`,
+          key: fieldData.key,
+          dataType: fieldData.dataType,
+          dataTypeLabel:
+            mockData.tagDataTypes?.find((t) => t.value === fieldData.dataType)
+              ?.label || fieldData.dataType,
+          defaultValue: fieldData.key, // Set field name as default value to display in PDF
+          createdFromScan: true,
+        };
 
-      // 3. Add tag to tagsData
-      handleTagsDataChange(prev => ({
-        ...prev,
-        tags: [...(prev.tags || []), tempTag]
-      }));
+        // 3. Add tag to tagsData
+        handleTagsDataChange((prev) => ({
+          ...prev,
+          tags: [...(prev.tags || []), tempTag],
+        }));
 
-      // 4. Create mapping
-      const mapping = { [placeholder.id]: tempTag.id };
+        // 4. Create mapping
+        const mapping = { [placeholder.id]: tempTag.id };
 
-      // 5. Wait for state update
-      await new Promise(resolve => setTimeout(resolve, 100));
+        // 5. Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // 6. Call createFillablePDFFromMappings to add AcroForm
-      if (!uploadedFile) {
-        throw new Error('Không tìm thấy file PDF');
+        // 6. Call createFillablePDFFromMappings to add AcroForm
+        if (!uploadedFile) {
+          throw new Error("Không tìm thấy file PDF");
+        }
+
+        // Convert File to ArrayBuffer
+        const arrayBuffer = await uploadedFile.arrayBuffer();
+
+        console.log("📄 Calling createFillablePDFFromMappings with:", {
+          placeholder,
+          mapping,
+          tag: tempTag,
+          hasFile: !!uploadedFile,
+          arrayBufferSize: arrayBuffer.byteLength,
+        });
+
+        const result = await createFillablePDFFromMappings(
+          arrayBuffer,
+          [placeholder],
+          mapping,
+          [tempTag],
+          {
+            tagDataTypes: mockData.tagDataTypes || [],
+            fillFields: true, // Fill field with default value (field name)
+            makeFieldsEditable: true, // Keep fields editable
+          }
+        );
+
+        console.log("✅ AcroForm created successfully, result:", {
+          hasPdfBytes: !!result?.pdfBytes,
+          bytesLength: result?.pdfBytes?.length,
+        });
+
+        // 7. Create new File from PDF bytes
+        const newFile = new File(
+          [result.pdfBytes],
+          uploadedFile?.name || "contract.pdf",
+          { type: "application/pdf" }
+        );
+
+        // 8. Create new blob URL for preview
+        const newUrl = URL.createObjectURL(newFile);
+
+        // 9. Update local state (uploadedFile, fileUrl)
+        setUploadedFile(newFile);
+        setFileUrl(newUrl);
+
+        // 10. Update tagsData with new PDF and mapping
+        handleTagsDataChange((prev) => ({
+          ...prev,
+          modifiedPdfBytes: result.pdfBytes,
+          uploadedFile: newFile,
+          mappings: {
+            ...prev.mappings,
+            ...mapping,
+          },
+          documentTagsObject: {
+            ...prev.documentTagsObject,
+            [fieldData.key]: tempTag.dataType, // ✅ Only store dataType value, not entire object
+          },
+        }));
+
+        // 11. Force refresh via FileUploadPreview imperative handle
+        setTimeout(() => {
+          if (filePreviewRef?.current?.updateFillablePDF) {
+            console.log("🔄 Calling updateFillablePDF to refresh preview");
+            filePreviewRef.current.updateFillablePDF(newFile, result.pdfBytes);
+          }
+        }, 300);
+
+        console.log(`✅ Field "${fieldData.key}" added to PDF with AcroForm`);
+      } catch (error) {
+        console.error("❌ Failed to create AcroForm:", error);
+        throw error;
       }
-
-      // Convert File to ArrayBuffer
-      const arrayBuffer = await uploadedFile.arrayBuffer();
-
-      console.log('📄 Calling createFillablePDFFromMappings with:', {
-        placeholder,
-        mapping,
-        tag: tempTag,
-        hasFile: !!uploadedFile,
-        arrayBufferSize: arrayBuffer.byteLength
-      });
-
-      const result = await createFillablePDFFromMappings(
-        arrayBuffer,
-        [placeholder],
-        mapping,
-        [tempTag],
-        {
-          tagDataTypes: mockData.tagDataTypes || [],
-          fillFields: true, // Fill field with default value (field name)
-          makeFieldsEditable: true // Keep fields editable
-        }
-      );
-
-      console.log('✅ AcroForm created successfully, result:', {
-        hasPdfBytes: !!result?.pdfBytes,
-        bytesLength: result?.pdfBytes?.length
-      });
-
-      // 7. Create new File from PDF bytes
-      const newFile = new File([result.pdfBytes], uploadedFile?.name || 'contract.pdf', { type: 'application/pdf' });
-
-      // 8. Create new blob URL for preview
-      const newUrl = URL.createObjectURL(newFile);
-
-      // 9. Update local state (uploadedFile, fileUrl)
-      setUploadedFile(newFile);
-      setFileUrl(newUrl);
-
-      // 10. Update tagsData with new PDF and mapping
-      handleTagsDataChange(prev => ({
-        ...prev,
-        modifiedPdfBytes: result.pdfBytes,
-        uploadedFile: newFile,
-        mappings: {
-          ...prev.mappings,
-          ...mapping
-        },
-        documentTagsObject: {
-          ...prev.documentTagsObject,
-          [fieldData.key]: tempTag
-        }
-      }));
-
-      // 11. Force refresh via FileUploadPreview imperative handle
-      setTimeout(() => {
-        if (filePreviewRef?.current?.updateFillablePDF) {
-          console.log('🔄 Calling updateFillablePDF to refresh preview');
-          filePreviewRef.current.updateFillablePDF(newFile, result.pdfBytes);
-        }
-      }, 300);
-
-      console.log(`✅ Field "${fieldData.key}" added to PDF with AcroForm`);
-    } catch (error) {
-      console.error('❌ Failed to create AcroForm:', error);
-      throw error;
-    }
-  }, [uploadedFile, mockData.tagDataTypes, handleTagsDataChange, filePreviewRef, setUploadedFile, setFileUrl]);
+    },
+    [
+      uploadedFile,
+      mockData.tagDataTypes,
+      handleTagsDataChange,
+      filePreviewRef,
+      setUploadedFile,
+      setFileUrl,
+    ]
+  );
 
   // Get current step index
   const getCurrentStepIndex = () => {

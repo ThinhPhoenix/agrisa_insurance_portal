@@ -221,7 +221,28 @@ export const usePolicyStore = create((set, get) => ({
     const warnings = []; // Collect warnings to show user
 
     // Build document_tags object (will be included in base_policy)
-    const document_tags = tagsData.documentTagsObject || {};
+    // ✅ CRITICAL: Validate and sanitize documentTagsObject to ensure only "key": "dataType" format
+    const rawDocumentTags = tagsData.documentTagsObject || {};
+    const document_tags = {};
+
+    Object.entries(rawDocumentTags).forEach(([key, value]) => {
+      // If value is an object (wrong format), extract dataType
+      if (typeof value === "object" && value !== null) {
+        console.warn(
+          `⚠️ Fixing invalid document_tags format for "${key}":`,
+          value
+        );
+        document_tags[key] = value.dataType || "string";
+      } else if (typeof value === "string") {
+        // Correct format - already a string
+        document_tags[key] = value;
+      } else {
+        console.warn(
+          `⚠️ Skipping invalid document_tags value for "${key}":`,
+          value
+        );
+      }
+    });
 
     // Build base_policy object
     const base_policy = {
@@ -410,6 +431,15 @@ export const usePolicyStore = create((set, get) => ({
       console.log("📄 Policy Document: null");
     }
     console.log("🏷️ Document Tags:", document_tags);
+    console.log("🔍 Document Tags format validation:");
+    Object.entries(document_tags).forEach(([key, value]) => {
+      console.log(`  - "${key}": ${typeof value} = "${value}"`);
+      if (typeof value !== "string") {
+        console.error(
+          `  ❌ INVALID FORMAT! Expected string, got ${typeof value}`
+        );
+      }
+    });
     console.log("📋 Conditions count:", conditions.length);
 
     if (warnings.length > 0) {

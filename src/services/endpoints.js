@@ -33,6 +33,10 @@ export const endpoints = {
       create_complete: (expiration_hours = 24) =>
         `/policy/protected/api/v2/base-policies/complete?expiration_hours=${expiration_hours}`, // ✅ Changed from v1 to v2
       get_by_provider: `/policy/protected/api/v2/base-policies/by-provider`,
+      get_draft_filter: (provider_id) =>
+        `/policy/protected/api/v2/base-policies/draft/filter?provider_id=${provider_id}`,
+      get_draft_detail_by_id: (base_policy_id, archive_status = false) =>
+        `/policy/protected/api/v2/base-policies/draft/filter?archive_status=${archive_status}&base_policy_id=${base_policy_id}`,
       get_detail: (id, options = {}) => {
         const {
           provider_id,

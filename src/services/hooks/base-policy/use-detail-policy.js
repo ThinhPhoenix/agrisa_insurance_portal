@@ -12,8 +12,8 @@ const useDetailPolicy = () => {
   const [policyDetailError, setPolicyDetailError] = useState(null);
 
   const fetchPolicyDetailByProvider = useCallback(
-    async (providerId, basePolicyId) => {
-      if (!providerId || !basePolicyId) {
+    async (providerId, basePolicyId, includePdf = true, pdfExpiryHours = 1) => {
+      if (!basePolicyId) {
         return null;
       }
 
@@ -24,11 +24,11 @@ const useDetailPolicy = () => {
 
       try {
         const response = await axiosInstance.get(
-          endpoints.policy.base_policy.get_draft_detail(
-            providerId,
-            basePolicyId,
-            false
-          ),
+          endpoints.policy.base_policy.get_detail(basePolicyId, {
+            provider_id: providerId,
+            include_pdf: includePdf,
+            pdf_expiry_hours: pdfExpiryHours,
+          }),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -36,13 +36,10 @@ const useDetailPolicy = () => {
           }
         );
 
-        if (
-          response.data?.success &&
-          response.data?.data?.policies &&
-          response.data.data.policies.length > 0
-        ) {
-          const policyData = response.data.data.policies[0];
+        if (response.data?.success && response.data?.data) {
+          const policyData = response.data.data;
 
+          // Security check
           const meData = localStorage.getItem("me");
           if (meData) {
             try {
@@ -70,8 +67,20 @@ const useDetailPolicy = () => {
             }
           }
 
-          setPolicyDetail(policyData);
-          return policyData;
+          // Transform to match expected format
+          const transformedData = {
+            base_policy: policyData.base_policy,
+            trigger: policyData.triggers?.[0] || policyData.trigger || null,
+            conditions:
+              policyData.triggers?.[0]?.conditions ||
+              policyData.conditions ||
+              [],
+            document: policyData.document,
+            metadata: policyData.metadata,
+          };
+
+          setPolicyDetail(transformedData);
+          return transformedData;
         } else {
           setPolicyDetail(null);
           setPolicyDetailError("Policy not found");
@@ -93,14 +102,19 @@ const useDetailPolicy = () => {
   );
 
   const fetchPolicyDetail = useCallback(
-    async (basePolicyId) => {
+    async (basePolicyId, includePdf = true, pdfExpiryHours = 1) => {
       const meData = localStorage.getItem("me");
       if (meData) {
         try {
           const userData = JSON.parse(meData);
           const providerId = userData?.partner_id;
           if (providerId) {
-            return await fetchPolicyDetailByProvider(providerId, basePolicyId);
+            return await fetchPolicyDetailByProvider(
+              providerId,
+              basePolicyId,
+              includePdf,
+              pdfExpiryHours
+            );
           } else {
             setPolicyDetailError("Partner ID not found in user data");
             return null;
@@ -118,7 +132,8 @@ const useDetailPolicy = () => {
   );
 
   const fetchActivePolicyDetail = useCallback(
-    async (basePolicyId, includePdf = true) => {
+    async (basePolicyId, includePdf = true, pdfExpiryHours = 1) => {
+      // Use the same unified API - no need for provider_id as backend determines from JWT
       if (!basePolicyId) {
         return null;
       }
@@ -130,10 +145,10 @@ const useDetailPolicy = () => {
 
       try {
         const response = await axiosInstance.get(
-          endpoints.policy.base_policy.get_active_detail(
-            basePolicyId,
-            includePdf
-          ),
+          endpoints.policy.base_policy.get_detail(basePolicyId, {
+            include_pdf: includePdf,
+            pdf_expiry_hours: pdfExpiryHours,
+          }),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -144,6 +159,7 @@ const useDetailPolicy = () => {
         if (response.data?.success && response.data?.data) {
           const policyData = response.data.data;
 
+          // Security check
           const meData = localStorage.getItem("me");
           if (meData) {
             try {
@@ -173,8 +189,11 @@ const useDetailPolicy = () => {
 
           const transformedData = {
             base_policy: policyData.base_policy,
-            trigger: policyData.triggers?.[0] || null,
-            conditions: policyData.triggers?.[0]?.conditions || [],
+            trigger: policyData.triggers?.[0] || policyData.trigger || null,
+            conditions:
+              policyData.triggers?.[0]?.conditions ||
+              policyData.conditions ||
+              [],
             document: policyData.document,
             metadata: policyData.metadata,
           };
@@ -183,14 +202,14 @@ const useDetailPolicy = () => {
           return transformedData;
         } else {
           setPolicyDetail(null);
-          setPolicyDetailError("Active policy not found");
+          setPolicyDetailError("Policy not found");
           return null;
         }
       } catch (error) {
         setPolicyDetailError(
           error.response?.data?.message ||
             error.message ||
-            "Failed to fetch active policy detail"
+            "Failed to fetch policy detail"
         );
         setPolicyDetail(null);
         return null;

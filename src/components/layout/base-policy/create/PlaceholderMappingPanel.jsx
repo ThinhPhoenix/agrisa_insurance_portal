@@ -124,6 +124,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
     placeholders = [],
     tags = [],
     tagDataTypes = [],
+    initialMappings = {},  // 🆕 Receive mappings from parent (tagsData.mappings)
     onCreateTag,
     onMappingChange,
     onExportSchema,
@@ -177,6 +178,20 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             mappings
         });
     }, [mappings]);
+
+    // 🆕 Sync initialMappings from parent into local state
+    useEffect(() => {
+        if (initialMappings && Object.keys(initialMappings).length > 0) {
+            console.log('🔄 Syncing initialMappings from parent:', {
+                initialMappings,
+                currentMappings: mappings
+            });
+            setMappings(prevMappings => ({
+                ...prevMappings,
+                ...initialMappings
+            }));
+        }
+    }, [initialMappings]);
 
     //  Use tags directly from parent - no need for local cache
     // Parent state (use-policy.js) is the single source of truth
@@ -407,13 +422,10 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         setTempInputs(prev => ({ ...prev, [id]: value }));
     };
 
-    //  NEW: Delete placeholder and rebuild PDF if already applied
+    //  NEW: Delete placeholder and rebuild PDF
     const handleDeletePlaceholder = async (placeholderId) => {
-        const wasApplied = appliedToPDF.has(placeholderId);
-
         console.log('🗑️ handleDeletePlaceholder:', {
             placeholderId,
-            wasApplied,
             appliedToPDFBefore: Array.from(appliedToPDF),
             mappingsBefore: mappings,
             mappingsKeys: Object.keys(mappings)
@@ -432,8 +444,11 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         // Remove from selection
         setSelectedRows(prev => prev.filter(id => id !== placeholderId));
 
-        // ✅ If was applied to PDF, need to rebuild PDF without this placeholder
-        if (wasApplied && filePreviewRef?.current?.getOriginalFile) {
+        // ✅ In manual scan workflow, every placeholder has AcroForm immediately when created
+        // So we always need to rebuild PDF when deleting (not just when wasApplied)
+        const isMapped = !!mappings[placeholderId];
+
+        if (isMapped && filePreviewRef?.current?.getOriginalFile) {
             try {
                 console.log('🔨 Starting rebuild process...');
                 message.loading('Đang rebuild PDF...', 0);
@@ -449,19 +464,19 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 const originalFile = fileResult.file;
                 const arrayBuffer = await originalFile.arrayBuffer();
 
-                // Import function
-                const { createFillablePDFFromMappings, pdfBytesToFile } = await import('../../../../libs/pdf/pdfEditor');
+                // Import function - use pdfAcroFormEditor for manual scan workflow
+                const { createFillablePDFFromMappings } = await import('../../../../libs/pdf/pdfAcroFormEditor');
+                const { pdfBytesToFile } = await import('../../../../libs/pdf/pdfFormHelper');
 
                 // ✅ FIX: Keep ALL placeholders except deleted one for form field creation
                 const remainingPlaceholders = placeholders.filter(p => p.id !== placeholderId);
 
-                // ✅ CRITICAL FIX: Build mappings for ALL remaining APPLIED placeholders
-                // This ensures Form 1, 2, 3 applied → Delete Form 2 → Rebuild with Form 1 + 3
+                // ✅ CRITICAL FIX: Build mappings for ALL remaining placeholders that have mappings
+                // In manual scan workflow, every field is created immediately, so we rebuild with all remaining mapped fields
                 const remainingMappings = {};
                 remainingPlaceholders.forEach(p => {
-                    // Include if: placeholder was applied before delete (check original appliedToPDF)
-                    // AND is not the deleted one AND has mapping
-                    if (appliedToPDF.has(p.id) && p.id !== placeholderId && newMappings[p.id]) {
+                    // Include if: placeholder has mapping in newMappings
+                    if (newMappings[p.id]) {
                         remainingMappings[p.id] = newMappings[p.id];
                     }
                 });
@@ -523,23 +538,18 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                         deletedId: placeholderId
                     });
 
-                    // ✅ CRITICAL: Rebuild fillable PDF
-                    // Need to remove text for ALL original placeholders (including deleted)
-                    // to ensure deleted form fields don't remain on PDF
+                    // ✅ CRITICAL: Rebuild fillable PDF with remaining fields only
+                    // Start from original PDF to ensure deleted fields are gone
                     const result = await createFillablePDFFromMappings(
-                        arrayBuffer,
+                        arrayBuffer, // Original PDF
                         remainingPlaceholders, // Only create form fields for remaining placeholders
-                        remainingMappings,
-                        allTagsIncludingNew,
+                        remainingMappings, // Only map remaining placeholders
+                        allTagsIncludingNew, // All tags including newly created
                         {
-                            fillFields: true,
-                            makeFieldsEditable: true,
-                            showBorders: true,
-                            removeOriginalText: true,
-                            writeTextBeforeField: false,
-                            // ✅ FIX: Pass ALL placeholders (including deleted) to remove their text
-                            // This ensures deleted placeholders have their text removed so form fields are gone
-                            allPlaceholders: placeholders // ALL placeholders before delete
+                            fillFields: true, // Fill with default value (field name)
+                            makeFieldsEditable: true, // Keep editable
+                            showBorders: true, // Show field borders
+                            removeOriginalText: true // Remove placeholder text from PDF
                         }
                     );
 
@@ -632,8 +642,9 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             const currentFile = fileResult.file;
             const arrayBuffer = await currentFile.arrayBuffer();
 
-            // Import functions
-            const { createFillablePDFFromMappings, pdfBytesToFile } = await import('../../../../libs/pdf/pdfEditor');
+            // Import functions - use pdfAcroFormEditor for manual scan workflow
+            const { createFillablePDFFromMappings } = await import('../../../../libs/pdf/pdfAcroFormEditor');
+            const { pdfBytesToFile } = await import('../../../../libs/pdf/pdfFormHelper');
 
             // Filter: Only selected placeholders
             const selectedPlaceholders = placeholders.filter(p => selectedRows.includes(p.id));
@@ -715,18 +726,17 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             const allTagsIncludingNew = [...effectiveTags, ...createdTagsInBatch];
             console.log('🔍 allTagsIncludingNew for fillable PDF:', allTagsIncludingNew);
 
-            //  Create fillable AcroForm fields directly (no text writing layer)
+            // Create fillable AcroForm fields
             const result = await createFillablePDFFromMappings(
-                arrayBuffer,   // Original PDF without text modifications
-                selectedPlaceholders,
-                selectedMappings,
-                allTagsIncludingNew,
+                arrayBuffer, // Original PDF
+                selectedPlaceholders, // Selected placeholders to create fields
+                selectedMappings, // Mappings for selected placeholders
+                allTagsIncludingNew, // All tags including newly created
                 {
-                    fillFields: true,              // Pre-fill with ASCII-safe tag.key
-                    makeFieldsEditable: true,      // Editable for backend
-                    showBorders: true,             // Show field borders
-                    removeOriginalText: true,      // Remove placeholder background text
-                    writeTextBeforeField: false,   // No text writing layer
+                    fillFields: true, // Fill with default value (field name)
+                    makeFieldsEditable: true, // Keep editable
+                    showBorders: true, // Show field borders
+                    removeOriginalText: true // Remove placeholder text from PDF
                 }
             );
 
@@ -813,74 +823,29 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             )
         },
         {
-            title: 'Trường thông tin',
-            dataIndex: 'mapping',
-            key: 'mapping',
-            render: (_, record) => {
-                const selectedTagId = mappings[record.id];
-                const isApplied = appliedToPDF.has(record.id);
-                const isMapped = !!mappings[record.id];
-
-                // Check both effectiveTags (from parent) and batchCreatedTags (local state)
-                const selectedTag = effectiveTags.find(t => t.id === selectedTagId) ||
-                    batchCreatedTags.find(t => t.id === selectedTagId);
-
-                const local = tempInputs[record.id] || { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' };
-
-                // CRITICAL: If applied to PDF, ALWAYS show tag view (never show input)
-                if (isApplied) {
-                    if (selectedTag) {
-                        return (
-                            <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        <Text strong style={{ display: 'block' }}>{selectedTag.key}</Text>
-                                        <Text type="secondary" style={{ fontSize: 12 }}>{selectedTag.dataTypeLabel}</Text>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    } else {
-                        // Applied but tag not found yet - show temp data from input
-                        return (
-                            <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        <Text strong style={{ display: 'block' }}>{local.key || 'Tag đã áp dụng'}</Text>
-                                        <Text type="secondary" style={{ fontSize: 12 }}>{local.dataType ? effectiveTagDataTypes.find(t => t.value === local.dataType)?.label : 'Đang tải...'}</Text>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    }
+            title: 'Tên trường',
+            dataIndex: 'mappedKey',
+            key: 'mappedKey',
+            render: (text, record) => {
+                // Display field name if mapped
+                if (record.mappedKey) {
+                    return <Text strong>{record.mappedKey}</Text>;
                 }
-
-                // If mapped but not applied, show tag view
-                if (selectedTag) {
-                    return (
-                        <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    <Text strong style={{ display: 'block' }}>{selectedTag.key}</Text>
-                                    <Text type="secondary" style={{ fontSize: 12 }}>{selectedTag.dataTypeLabel}</Text>
-                                </div>
-                            </div>
-                        </div>
-                    );
+                return <Text type="secondary">Chưa có</Text>;
+            }
+        },
+        {
+            title: 'Loại dữ liệu',
+            dataIndex: 'mappedDataType',
+            key: 'mappedDataType',
+            render: (text, record) => {
+                // Display data type label if mapped
+                if (record.mappedDataType) {
+                    const dataTypeObj = effectiveTagDataTypes.find(t => t.value === record.mappedDataType);
+                    const label = dataTypeObj?.label || record.mappedDataType;
+                    return <Text type="secondary">{String(label)}</Text>;
                 }
-
-                // Not mapped and not applied - show input form
-                //  OPTIMIZATION: Use MappingInputCell with internal state to prevent Vietnamese IME lag
-                const initialValue = tempInputs[record.id] || { key: '', dataType: effectiveTagDataTypes?.[0]?.value || 'string' };
-
-                return (
-                    <MappingInputCell
-                        recordId={record.id}
-                        initialValue={initialValue}
-                        onInputChange={handleInputChange}
-                        dataTypeOptions={dataTypeOptions}
-                    />
-                );
+                return <Text type="secondary">Chưa có</Text>;
             }
         },
         {
@@ -987,6 +952,72 @@ const PlaceholderMappingPanelComponent = forwardRef(({
         );
     }
 
+    // NEW: Clear all placeholders and revert to original PDF
+    const handleClearAll = async () => {
+        try {
+            console.log('🗑️ Clearing all placeholders and reverting to original PDF');
+            message.loading('Đang xóa tất cả và khôi phục PDF gốc...', 0);
+
+            // Get original PDF
+            if (!filePreviewRef?.current?.getOriginalFile) {
+                message.destroy();
+                message.error('Không thể truy cập file PDF gốc');
+                return;
+            }
+
+            const fileResult = filePreviewRef.current.getOriginalFile();
+            if (!fileResult || !fileResult.success || !fileResult.file) {
+                message.destroy();
+                message.error(getPdfError('FILE_NOT_FOUND'));
+                return;
+            }
+
+            const originalFile = fileResult.file;
+            const arrayBuffer = await originalFile.arrayBuffer();
+
+            // Create fresh file from original
+            const freshOriginalFile = new File([arrayBuffer], originalFile.name, {
+                type: 'application/pdf',
+                lastModified: Date.now()
+            });
+
+            // Clear all local state
+            setMappings({});
+            setAppliedToPDF(new Set());
+            setSelectedRows([]);
+            setBatchCreatedTags([]);
+            setTempInputs({});
+
+            // Reload original PDF in preview
+            if (filePreviewRef?.current?.updateFillablePDF) {
+                await filePreviewRef.current.updateFillablePDF(freshOriginalFile, new Uint8Array(arrayBuffer));
+            }
+
+            // Notify parent to clear all placeholders
+            if (onDeletePlaceholder) {
+                // Delete all placeholders one by one
+                placeholders.forEach(p => onDeletePlaceholder(p.id));
+            }
+
+            // Notify parent to reset tagsData
+            if (onMappingChange) {
+                onMappingChange({}, {
+                    documentTagsObject: {},
+                    shouldOverwriteDocumentTags: true,
+                    modifiedPdfBytes: new Uint8Array(arrayBuffer),
+                    uploadedFile: freshOriginalFile
+                });
+            }
+
+            message.destroy();
+            message.success('Đã xóa hết và khôi phục PDF gốc thành công');
+        } catch (error) {
+            message.destroy();
+            message.error('Lỗi khi xóa hết: ' + error.message);
+            console.error('❌ Error clearing all:', error);
+        }
+    };
+
     return (
         <Card
             title={
@@ -1001,21 +1032,39 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                     />
                 </Space>
             }
+            extra={
+                placeholders.length > 0 && (
+                    <Popconfirm
+                        title="Xóa hết trường thông tin?"
+                        description="Thao tác này sẽ xóa tất cả các trường đã tạo và khôi phục PDF về trạng thái gốc. Bạn có chắc chắn?"
+                        onConfirm={handleClearAll}
+                        okText="Xóa hết"
+                        cancelText="Hủy"
+                        okButtonProps={{ danger: true }}
+                    >
+                        <Button
+                            type="default"
+                            danger
+                            icon={<DeleteOutlined />}
+                            size="small"
+                        >
+                            Xóa hết
+                        </Button>
+                    </Popconfirm>
+                )
+            }
         >
             {/* Info Alert - Rules */}
             <Alert
                 message={
                     <div>
                         <Text strong>
-                            <InfoCircleOutlined /> Hướng dẫn sử dụng:
+                            <InfoCircleOutlined /> Bảng danh sách trường đã tạo
                         </Text>
-                        <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
-                            <li><strong>Bước 1:</strong> Điền tên trường (key) và chọn loại dữ liệu cho từng vị trí (1), (2)...</li>
-                            <li><strong>Bước 2:</strong> Tick chọn các vị trí muốn áp dụng (có thể tick nhiều vị trí cùng lúc)</li>
-                            <li><strong>Bước 3:</strong> Bấm nút <strong>"Áp dụng"</strong> để tạo PDF có thể điền cho các vị trí đã chọn</li>
-                            <li><strong>Bước 4:</strong> Bấm <strong>"Tải xuống PDF"</strong> để xem trước PDF cuối cùng</li>
-                            <li><Text type="warning">Lưu ý:</Text> Checkbox sẽ mở khi đã điền đủ thông tin (key + loại dữ liệu)</li>
-                        </ul>
+                        <div style={{ marginTop: 8 }}>
+                            Bảng này hiển thị các trường thông tin đã được tạo qua chế độ quét.
+                            Sử dụng nút <strong>"Chế độ quét"</strong> bên trái để thêm trường mới.
+                        </div>
                     </div>
                 }
                 type="info"
@@ -1028,52 +1077,26 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             <Alert
                 message={
                     <Space>
-                        <Text strong>Tiến độ:</Text>
-                        <Tag color="blue">Vị trí: {stats.total}</Tag>
-                        <Tag color="green">Đã map: {stats.mapped}</Tag>
-                        <Tag color="orange">Chưa map: {stats.unmapped}</Tag>
-                        <Tag color="success">Đã áp dụng PDF: {appliedToPDF.size}</Tag>
+                        <Text strong>Thống kê:</Text>
+                        <Tag color="blue">Tổng số trường: {stats.total}</Tag>
+                        <Tag color="success">Đã áp dụng vào PDF: {appliedToPDF.size}</Tag>
                         <Text type="secondary">
-                            Áp dụng: {stats.total > 0 ? Math.round((appliedToPDF.size / stats.total) * 100) : 0}%
+                            Tiến độ: {stats.total > 0 ? Math.round((appliedToPDF.size / stats.total) * 100) : 0}%
                         </Text>
                     </Space>
                 }
-                type={stats.unmapped > 0 ? 'warning' : 'success'}
+                type={appliedToPDF.size === stats.total && stats.total > 0 ? 'success' : 'info'}
                 showIcon
                 style={{ marginBottom: 16 }}
             />
 
-            {/* Mapping Table (custom for horizontal overflow and fixed status column) */}
+            {/* Mapping Table (display-only, no selection) */}
             <CustomTable
                 columns={columns}
                 dataSource={sortedPlaceholders}
                 rowKey="id"
                 pagination={false}
                 scroll={{ x: tableX, y: 400 }}
-                rowSelection={{
-                    selectedRowKeys: selectedRows,
-                    onChange: (selectedRowKeys) => {
-                        setSelectedRows(selectedRowKeys);
-                    },
-                    getCheckboxProps: (record) => {
-                        //  DISABLE khi đã áp dụng vào PDF
-                        if (appliedToPDF.has(record.id)) {
-                            return {
-                                disabled: true,
-                            };
-                        }
-
-                        // Enable khi:
-                        // 1. Đã có mapping (tag đã tạo)
-                        // 2. HOẶC đã điền input (key + dataType)
-                        const hasMappedTag = !!mappings[record.id];
-                        const hasInput = tempInputs[record.id]?.key && tempInputs[record.id]?.dataType;
-
-                        return {
-                            disabled: !hasMappedTag && !hasInput,
-                        };
-                    },
-                }}
             />
 
             <Divider />

@@ -257,6 +257,14 @@ export const createAcroFormFields = async (
               // ⚠️ DO NOT call setText before addToPage - it will trigger WinAnsi encoding
               const textValue = fillFields ? defaultValue : "";
 
+              console.log('🔍 Text field setup:', {
+                fieldName,
+                fillFields,
+                defaultValue,
+                textValue,
+                willSetText: !!textValue
+              });
+
               if (multiline) {
                 formField.enableMultiline();
               }
@@ -288,18 +296,16 @@ export const createAcroFormFields = async (
                 // Skip appearance options to avoid WinAnsi encoding errors
               });
 
-              // ✅ Set Vietnamese text AFTER addToPage using low-level API
+              // ✅ Set Vietnamese text AFTER addToPage
               if (textValue) {
                 try {
-                  const acroField = formField.acroField;
-                  // ✅ Normalize to NFC to prevent decomposed characters
+                  // ✅ Use pdf-lib's built-in setText to generate proper appearance
+                  // This will create appearance stream with embedded font
                   const normalizedText = textValue.normalize("NFC");
-                  const pdfString = pdfDoc.context.obj(normalizedText);
-                  acroField.dict.set(pdfDoc.context.obj("V"), pdfString);
+                  formField.setText(normalizedText);
+
                   console.log(
-                    `✍️ Set Vietnamese value (${
-                      pdfString?.constructor?.name || typeof pdfString
-                    }) for '${fieldName}': '${normalizedText}' - Font in default appearance: ${fontName}`
+                    `✍️ Set Vietnamese value for '${fieldName}': '${normalizedText}'`
                   );
                 } catch (setValueError) {
                   console.warn(
@@ -616,37 +622,4 @@ const mapDataTypeToFieldType = (dataType) => {
   return mapping[dataType] || "text";
 };
 
-/**
- * Create blob URL from PDF bytes for preview
- */
-export const createPDFBlobURL = (pdfBytes) => {
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
-  return url;
-};
-
-/**
- * Download PDF file
- */
-export const downloadPDF = (pdfBytes, filename) => {
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
-};
-
-/**
- * Convert Uint8Array to File object
- */
-export const pdfBytesToFile = (
-  pdfBytes,
-  filename = "fillable_contract.pdf"
-) => {
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
-  const file = new File([blob], filename, { type: "application/pdf" });
-  return file;
-};
+// pdfBytesToFile is also already exported from pdfFormHelper - removed duplicate

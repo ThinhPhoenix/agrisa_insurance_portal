@@ -25,6 +25,7 @@ import {
 } from 'antd';
 import React, { memo, useRef } from 'react';
 import PlaceholderMappingPanel from './PlaceholderMappingPanel';
+import { createFillablePDFFromMappings } from '@/libs/pdf/pdfAcroFormEditor';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -47,7 +48,8 @@ const TagsTabComponent = ({
     onOpenFullscreen,
     placeholders = [],
     onDeletePlaceholder,  // 🆕 Handler to delete placeholder from parent state
-    filePreviewRef  //  NEW - receive from parent to pass down to PlaceholderMappingPanel
+    filePreviewRef,  //  NEW - receive from parent to pass down to PlaceholderMappingPanel
+    onCreateAndApplyField  // NEW - pass to FileUploadPreview for scan mode
 }) => {
     const [tagForm] = Form.useForm();
     const placeholderMappingRef = useRef(null);
@@ -137,6 +139,74 @@ const TagsTabComponent = ({
             }
             return newSet;
         });
+    };
+
+    // NEW: Handle create field from scan mode and immediately apply AcroForm
+    const handleCreateAndApplyField = async (placeholder, fieldData) => {
+        try {
+            console.log('🔧 Creating field from scan mode:', { placeholder, fieldData });
+
+            // 1. Create temp tag for this field
+            const tempTag = {
+                id: `tag-${Date.now()}`,
+                key: fieldData.key,
+                dataType: fieldData.dataType,
+                dataTypeLabel: mockData.tagDataTypes?.find(t => t.value === fieldData.dataType)?.label || fieldData.dataType,
+                createdFromScan: true
+            };
+
+            // 2. Add tag to tagsData first
+            onAddTag(tempTag);
+
+            // 3. Create mapping for this field
+            const mapping = { [placeholder.id]: tempTag.id };
+
+            // 4. Wait a bit for tag to be added
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // 5. Call createFillablePDFFromMappings to add AcroForm
+            if (!tagsData.uploadedFile) {
+                throw new Error('Không tìm thấy file PDF');
+            }
+
+            const result = await createFillablePDFFromMappings(
+                tagsData.uploadedFile,
+                [placeholder],  // Single placeholder
+                mapping,
+                [tempTag],      // Single tag
+                mockData.tagDataTypes || []
+            );
+
+            console.log('✅ AcroForm created successfully');
+
+            // 6. Update tagsData with new PDF and placeholder
+            onDataChange(prev => ({
+                ...prev,
+                modifiedPdfBytes: result.pdfBytes,
+                uploadedFile: new File([result.pdfBytes], prev.uploadedFile?.name || 'contract.pdf', { type: 'application/pdf' }),
+                mappings: {
+                    ...prev.mappings,
+                    ...mapping
+                },
+                documentTagsObject: {
+                    ...prev.documentTagsObject,
+                    [fieldData.key]: tempTag
+                }
+            }));
+
+            // 7. Force refresh PDF preview
+            if (filePreviewRef?.current?.refreshPdf) {
+                setTimeout(() => {
+                    filePreviewRef.current.refreshPdf();
+                }, 200);
+            }
+
+            message.success(`Đã thêm trường "${fieldData.key}" vào PDF`);
+        } catch (error) {
+            console.error('❌ Failed to create AcroForm:', error);
+            message.error(`Không thể thêm trường vào PDF: ${error.message}`);
+            throw error;
+        }
     };
 
     // Handle drag and drop
@@ -681,8 +751,19 @@ const TagsTabComponent = ({
                 </div>
 
                 <Alert
-                    message="Cấu hình trường thông tin cho hợp đồng"
-                    description="Thêm các trường thông tin để tạo mẫu hợp đồng bảo hiểm. Các trường này sẽ được hiển thị trên hợp đồng PDF theo thứ tự và độ rộng bạn cấu hình. Xem trước ở bên phải."
+                    message="Tạo trường thông tin qua chế độ quét PDF"
+                    description={
+                        <div>
+                            <p style={{ marginBottom: 8 }}>Sử dụng chế độ quét để tạo trường thông tin trực tiếp trên PDF:</p>
+                            <ol style={{ marginBottom: 0, paddingLeft: 20 }}>
+                                <li>Bấm nút "Chế độ quét" trên khung xem PDF (bên trái)</li>
+                                <li>Kéo chuột để chọn vùng trường trên PDF (zoom sẽ tự động về 100%)</li>
+                                <li>Điền thông tin trường: số thứ tự, tên trường, loại dữ liệu</li>
+                                <li>Bấm "Tạo và áp dụng" - trường sẽ được thêm vào PDF ngay lập tức</li>
+                                <li>Lặp lại cho các trường tiếp theo</li>
+                            </ol>
+                        </div>
+                    }
                     type="info"
                     showIcon
                     style={{ marginBottom: 24 }}
@@ -698,6 +779,7 @@ const TagsTabComponent = ({
                         placeholders={placeholders}
                         tags={tagsData?.tags || []}
                         tagDataTypes={mockData.tagDataTypes || []}
+                        initialMappings={tagsData?.mappings || {}}
                         onSelectedRowsChange={setSelectedRowsCount}
                         onCreateTag={(tag) => {
                             console.log('🔍 TagsTab - onCreateTag called with:', tag);
@@ -777,24 +859,15 @@ const TagsTabComponent = ({
                     />
                 ) : (
                     <Alert
-                        message="Chưa có trường thông tin được thêm"
-                        description="Tải tệp PDF để phát hiện trường thông tin cần thêm"
+                        message="Chưa có trường thông tin nào"
+                        description="Tải PDF và sử dụng chế độ quét để tạo trường thông tin"
                         type="info"
                         showIcon
                     />
                 )}
 
-                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text type="secondary">Tổng trường thông tin hiện tại: <Text strong>{tagsData.tags.length}</Text></Text>
-                    <Button
-                        type="primary"
-                        icon={<CheckCircleOutlined />}
-                        onClick={handleApply}
-                        disabled={selectedRowsCount === 0}
-                        size="middle"
-                    >
-                        Áp dụng ({selectedRowsCount} vị trí)
-                    </Button>
+                <div style={{ marginTop: 12 }}>
+                    <Text type="secondary">Tổng số trường đã tạo: <Text strong>{placeholders?.length || 0}</Text></Text>
                 </div>
             </div>
         </div>

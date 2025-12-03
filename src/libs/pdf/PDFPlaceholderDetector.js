@@ -870,39 +870,33 @@ export const detectPlaceholders = (text) => {
 };
 
 /**
- * Main function: Phân tích PDF và detect placeholders
+ * Main function: Analyze PDF structure without auto-detection
+ * Returns basic PDF info only - placeholders will be created manually by user
  */
 export const analyzePDFForPlaceholders = async (file) => {
   try {
-    // Extract text from PDF via CDN (includes coordinates!)
-    const result = await extractTextFromPDF(file);
+    // Load PDF.js to get basic info
+    const pdfjsLib = await loadPDFJS();
 
-    if (!result.success) {
-      message.error(`Không thể đọc nội dung PDF: ${result.error}`);
-      return null;
-    }
+    // Convert file to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
 
-    // Use placeholders from extraction (they already have x, y coordinates!)
-    const placeholders = result.placeholdersWithCoordinates || [];
+    const loadingTask = pdfjsLib.getDocument({ data });
+    const pdfDocument = await loadingTask.promise;
 
-    if (placeholders.length === 0) {
-      message.warning(
-        'Không tìm thấy placeholders. Vui lòng kiểm tra định dạng PDF hoặc dùng chức năng "Paste Text"',
-        5
-      );
-    } else {
-      message.success(
-        `Tìm thấy ${placeholders.length} placeholders trong PDF!`
-      );
-    }
+    message.info(
+      `PDF đã sẵn sàng (${pdfDocument.numPages} trang). Sử dụng chế độ quét để tạo trường thông tin.`,
+      3
+    );
 
     return {
-      text: result.text,
-      pageCount: result.pageCount,
-      placeholders,
+      text: "",
+      pageCount: pdfDocument.numPages,
+      placeholders: [], // Empty - user will create manually
     };
   } catch (error) {
-    message.error("Có lỗi khi phân tích PDF");
+    message.error("Có lỗi khi tải PDF");
     return null;
   }
 };

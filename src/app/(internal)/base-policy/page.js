@@ -29,13 +29,10 @@ export default function PolicyPage() {
     policies,
     policiesLoading,
     policiesError,
-    activePolicies,
-    activePoliciesLoading,
-    activePoliciesError,
     policyCounts,
     policyCountsLoading,
     fetchPoliciesByProvider,
-    fetchActivePoliciesByProvider,
+    fetchPolicies,
     fetchPolicyCounts,
   } = usePolicy();
 
@@ -77,31 +74,14 @@ export default function PolicyPage() {
     status: item.base_policy.status,
   });
 
-  // Determine which data to use based on status filter
-  // This automatically uses the appropriate API data:
-  // - "draft" -> uses data from draft API
-  // - "active" -> uses data from active API
-  // - "all" -> combines both APIs
-  const allPoliciesRaw = (() => {
-    switch (filters.policyStatus) {
-      case "draft":
-        return policies.map(transformPolicy);
-      case "active":
-        return activePolicies.map(transformPolicy);
-      case "all":
-      default:
-        return [
-          ...policies.map(transformPolicy),
-          ...activePolicies.map(transformPolicy),
-        ];
-    }
-  })();
+  // Transform all policies from API
+  const allPoliciesRaw = policies.map(transformPolicy);
 
-  // Apply OTHER filters (excluding status) whenever policies or filters change
+  // Apply filters whenever policies or filters change
   useEffect(() => {
     applyFilters(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [policies, activePolicies, filters]);
+  }, [policies, filters]);
 
   // Calculate summary stats using real API data
   const summaryStats = {
@@ -162,6 +142,7 @@ export default function PolicyPage() {
     if (changedValues.policyStatus !== undefined) {
       const newFilters = { ...filters, ...changedValues };
       setFilters(newFilters);
+      // Re-fetch data is not needed as we filter on frontend
     }
   };
 
@@ -182,11 +163,14 @@ export default function PolicyPage() {
 
   // Apply filters
   const applyFilters = (filterValues) => {
-    // Start with policies already filtered by status (via allPoliciesRaw)
     let filtered = [...allPoliciesRaw];
 
-    // Note: Status filter is handled by allPoliciesRaw calculation
-    // This function only applies OTHER filters (productName, cropType, etc.)
+    // Filter by status
+    if (filterValues.policyStatus && filterValues.policyStatus !== "all") {
+      filtered = filtered.filter(
+        (policy) => policy.status === filterValues.policyStatus
+      );
+    }
 
     if (filterValues.productName) {
       filtered = filtered.filter((policy) =>
@@ -291,15 +275,19 @@ export default function PolicyPage() {
       render: (status) => {
         const statusConfig = {
           draft: {
-            color: "orange",
+            color: "processing",
             text: "Chờ duyệt",
           },
           active: {
-            color: "green",
+            color: "success",
             text: "Đang hoạt động",
           },
+          closed: {
+            color: "error",
+            text: "Đã đóng",
+          },
           archived: {
-            color: "red",
+            color: "default",
             text: "Đã lưu trữ",
           },
         };
@@ -401,9 +389,7 @@ export default function PolicyPage() {
   return (
     <Layout.Content className="policy-content">
       <Spin
-        spinning={
-          policiesLoading || activePoliciesLoading || policyCountsLoading
-        }
+        spinning={policiesLoading || policyCountsLoading}
         tip="Đang tải dữ liệu..."
       >
         <div className="policy-space">

@@ -472,14 +472,21 @@ const ReviewTabComponent = ({
                             style={{ marginBottom: 12 }}
                         />
                         <Descriptions column={2} bordered size="small">
-                            {Object.entries(tagsData.documentTagsObject).map(([key, dataType]) => (
-                                <Descriptions.Item
-                                    key={key}
-                                    label={<Text strong>{key}</Text>}
-                                >
-                                    <Tag color="blue">{dataType}</Tag>
-                                </Descriptions.Item>
-                            ))}
+                            {Object.entries(tagsData.documentTagsObject).map(([key, value]) => {
+                                // Handle both old format (string) and new format (tag object)
+                                const displayValue = typeof value === 'string'
+                                    ? value
+                                    : (value?.dataTypeLabel || value?.dataType || 'N/A');
+
+                                return (
+                                    <Descriptions.Item
+                                        key={key}
+                                        label={<Text strong>{key}</Text>}
+                                    >
+                                        <Tag color="blue">{displayValue}</Tag>
+                                    </Descriptions.Item>
+                                );
+                            })}
                         </Descriptions>
                     </Card>
                 )}

@@ -32,6 +32,10 @@ export const sidebarMenuItems = [
     ],
   },
   {
+    key: "payout",
+    label: "Quản lý chi trả",
+  },
+  {
     key: "beneficiary",
     label: "Quản lý người thụ hưởng",
   },

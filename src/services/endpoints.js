@@ -110,4 +110,13 @@ export const endpoints = {
     rejectionByClaim: (claim_id) =>
       `/policy/protected/api/v2/claim-rejections/read-partner/claim/${claim_id}`,
   },
+  payout: {
+    detail: (id) =>
+      `/policy/protected/api/v2/payouts/read-partner/detail/${id}`,
+    byPolicy: (policy_id) =>
+      `/policy/protected/api/v2/payouts/read-partner/by-policy/${policy_id}`,
+    byFarm: (farm_id) =>
+      `/policy/protected/api/v2/payouts/read-partner/by-farm/${farm_id}`,
+    list: "/policy/protected/api/v2/payouts/read-partner/list",
+  },
 };

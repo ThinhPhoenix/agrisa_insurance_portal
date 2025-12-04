@@ -1,0 +1,137 @@
+/* Payout Management Page Styles */
+.payout-content {
+  padding: 24px !important;
+}
+
+.payout-space {
+  width: 100%;
+}
+
+.payout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.payout-title {
+  margin-bottom: 4px !important;
+  font-size: 24px !important;
+  font-weight: bold !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payout-icon {
+  color: #1890ff;
+}
+
+.payout-subtitle {
+  color: #666 !important;
+  font-size: 14px !important;
+  margin-top: 4px !important;
+}
+
+/* Summary Cards */
+.payout-summary-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.payout-summary-card-compact {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.payout-summary-card-compact:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: #d9d9d9;
+}
+
+.payout-summary-content {
+  flex: 1;
+  margin-left: 8px;
+}
+
+.payout-summary-value-compact {
+  font-size: 18px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  line-height: 1.2;
+  color: #262626;
+}
+
+.payout-summary-label-compact {
+  color: #666 !important;
+  font-size: 12px !important;
+  margin-top: 2px !important;
+  line-height: 1.2;
+}
+
+.payout-summary-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.payout-summary-icon.total {
+  background: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+}
+
+.payout-summary-icon.active {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.payout-summary-icon.premium {
+  background: rgba(250, 173, 20, 0.1);
+  color: #faad14;
+}
+
+/* Filters */
+.payout-filters {
+  margin-bottom: 16px !important;
+}
+
+.payout-filter-form {
+  padding: 16px;
+  border-radius: 8px;
+}
+
+/* Table */
+.payout-table-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.payout-actions-cell {
+  display: flex;
+  gap: 4px;
+}
+
+.payout-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -3,11 +3,13 @@
 import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
 import useClaim from "@/services/hooks/claim/use-claim";
+import usePayout from "@/services/hooks/payout/use-payout";
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
+  EyeOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   WalletOutlined,
@@ -60,6 +62,9 @@ export default function ClaimDetailPage() {
     fetchRejectionByClaim,
   } = useClaim();
 
+  const { payoutsByPolicy, payoutsByPolicyLoading, fetchPayoutsByPolicy } =
+    usePayout();
+
   // States for related data
   const [policy, setPolicy] = useState(null);
   const [farm, setFarm] = useState(null);
@@ -74,6 +79,12 @@ export default function ClaimDetailPage() {
   const [approveModalVisible, setApproveModalVisible] = useState(false);
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Payment modal states
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [selectedPayout, setSelectedPayout] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [qrData, setQrData] = useState(null);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -164,7 +175,9 @@ export default function ClaimDetailPage() {
 
         // Fetch rejection if status is rejected
         if (claimDetail.status === "rejected") {
-          console.log("Claim status is rejected, fetching rejection details...");
+          console.log(
+            "Claim status is rejected, fetching rejection details..."
+          );
           setRejectionLoading(true);
           try {
             const rejectionResult = await fetchRejectionByClaim(claimDetail.id);
@@ -173,7 +186,10 @@ export default function ClaimDetailPage() {
               setRejection(rejectionResult.data);
               console.log("Rejection data set:", rejectionResult.data);
             } else {
-              console.error("Failed to fetch rejection:", rejectionResult.error);
+              console.error(
+                "Failed to fetch rejection:",
+                rejectionResult.error
+              );
             }
           } catch (error) {
             console.error("Error fetching rejection:", error);
@@ -183,13 +199,24 @@ export default function ClaimDetailPage() {
         } else {
           console.log("Claim status is NOT rejected:", claimDetail.status);
         }
+
+        // Fetch payouts if status is approved or paid
+        if (
+          claimDetail.status === "approved" ||
+          claimDetail.status === "paid"
+        ) {
+          console.log("Claim is approved/paid, fetching payouts...");
+          if (claimDetail.registered_policy_id) {
+            await fetchPayoutsByPolicy(claimDetail.registered_policy_id);
+          }
+        }
       } finally {
         setAllDataLoaded(true);
       }
     };
 
     fetchRelatedData();
-  }, [claimDetail, fetchRejectionByClaim]);
+  }, [claimDetail, fetchRejectionByClaim, fetchPayoutsByPolicy]);
 
   // Get status color
   const getStatusColor = (status) => {
@@ -451,6 +478,79 @@ export default function ClaimDetailPage() {
     }
   };
 
+  // Handle payment initiation
+  const handlePayment = async (payout) => {
+    setSelectedPayout(payout);
+    setPaymentLoading(true);
+    setPaymentModalVisible(true);
+
+    try {
+      // Call create payout API
+      const response = await axiosInstance.post("/payment/public/payout", {
+        amount: payout.payout_amount,
+        bank_code: "970415", // Vietinbank - You may need to get this from user/config
+        account_number: "123456789", // You may need to get this from user/config
+        user_id: claimDetail.farmer_id || claimDetail.registered_policy_id,
+        description: `Chi trả bảo hiểm claim ${claimDetail.claim_number}`,
+      });
+
+      if (response.data.success) {
+        // Response structure: data.data contains the actual payout data
+        const payoutData = response.data.data?.data || response.data.data;
+        setQrData(payoutData);
+        message.success("Đã tạo mã QR thanh toán");
+      } else {
+        message.error("Không thể tạo mã QR thanh toán");
+        setPaymentModalVisible(false);
+      }
+    } catch (error) {
+      console.error("Error creating payout:", error);
+      message.error("Có lỗi xảy ra khi tạo thanh toán");
+      setPaymentModalVisible(false);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // Handle payment verification
+  const handleVerifyPayment = async () => {
+    if (!qrData || !qrData.verify_hook) {
+      message.error("Không tìm thấy thông tin xác thực");
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      // Call verify endpoint
+      const response = await axiosInstance.get(qrData.verify_hook);
+
+      if (response.data.success) {
+        message.success("Xác nhận thanh toán thành công!");
+        setPaymentModalVisible(false);
+        setQrData(null);
+        setSelectedPayout(null);
+        // Refresh payout list
+        if (claimDetail.registered_policy_id) {
+          await fetchPayoutsByPolicy(claimDetail.registered_policy_id);
+        }
+      } else {
+        message.error("Xác nhận thanh toán thất bại");
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      message.error("Có lỗi xảy ra khi xác nhận thanh toán");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // Handle close payment modal
+  const handleClosePaymentModal = () => {
+    setPaymentModalVisible(false);
+    setQrData(null);
+    setSelectedPayout(null);
+  };
+
   if (claimDetailLoading || !allDataLoaded) {
     return (
       <Layout.Content className="insurance-content">
@@ -665,6 +765,226 @@ export default function ClaimDetailPage() {
         </Row>
 
         <Row gutter={[16, 16]}>
+          {/* Thông tin chi trả - Only show when status is approved or paid */}
+          {(claimDetail.status === "approved" ||
+            claimDetail.status === "paid") && (
+            <Col xs={24}>
+              <Card
+                title={
+                  <Space>
+                    <WalletOutlined style={{ color: "#52c41a" }} />
+                    <span>Thông Tin Chi Trả</span>
+                  </Space>
+                }
+                bordered={false}
+                className="shadow-sm"
+                style={{ borderLeft: "4px solid #52c41a" }}
+              >
+                {payoutsByPolicyLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Spin size="large" tip="Đang tải thông tin chi trả..." />
+                  </div>
+                ) : payoutsByPolicy && payoutsByPolicy.length > 0 ? (
+                  <div>
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: "13px",
+                        display: "block",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      Tìm thấy {payoutsByPolicy.length} khoản chi trả cho đơn
+                      bảo hiểm này
+                    </Text>
+                    <Table
+                      dataSource={payoutsByPolicy.filter(
+                        (payout) => payout.claim_id === claimDetail.id
+                      )}
+                      rowKey="id"
+                      pagination={false}
+                      size="small"
+                      bordered
+                      columns={[
+                        {
+                          title: "Mã chi trả",
+                          dataIndex: "id",
+                          key: "id",
+                          width: 280,
+                          render: (id) => (
+                            <Link href={`/payout/detail?id=${id}`}>
+                              <Text
+                                style={{
+                                  color: "#1890ff",
+                                  fontSize: "12px",
+                                  fontFamily: "monospace",
+                                }}
+                              >
+                                {id}
+                              </Text>
+                            </Link>
+                          ),
+                        },
+                        {
+                          title: "Số tiền",
+                          dataIndex: "payout_amount",
+                          key: "payout_amount",
+                          width: 150,
+                          render: (amount, record) => (
+                            <Text
+                              strong
+                              style={{ color: "#52c41a", fontSize: "14px" }}
+                            >
+                              {formatCurrency(amount)}
+                            </Text>
+                          ),
+                        },
+                        {
+                          title: "Loại tiền",
+                          dataIndex: "currency",
+                          key: "currency",
+                          width: 80,
+                          render: (currency) => (
+                            <Tag color="blue">{currency || "VND"}</Tag>
+                          ),
+                        },
+                        {
+                          title: "Trạng thái",
+                          dataIndex: "status",
+                          key: "status",
+                          width: 130,
+                          render: (status) => {
+                            const statusConfig = {
+                              pending: {
+                                color: "default",
+                                text: "Chờ xử lý",
+                                icon: <ClockCircleOutlined />,
+                              },
+                              processing: {
+                                color: "orange",
+                                text: "Đang xử lý",
+                                icon: <ClockCircleOutlined />,
+                              },
+                              completed: {
+                                color: "green",
+                                text: "Hoàn tất",
+                                icon: <CheckCircleOutlined />,
+                              },
+                              failed: {
+                                color: "red",
+                                text: "Thất bại",
+                                icon: <CloseCircleOutlined />,
+                              },
+                            };
+                            const config =
+                              statusConfig[status] || statusConfig.pending;
+                            return (
+                              <Tag color={config.color} icon={config.icon}>
+                                {config.text}
+                              </Tag>
+                            );
+                          },
+                        },
+                        {
+                          title: "Thời gian khởi tạo",
+                          dataIndex: "initiated_at",
+                          key: "initiated_at",
+                          width: 150,
+                          render: (timestamp) => (
+                            <Text style={{ fontSize: "12px" }}>
+                              {formatDate(timestamp)}
+                            </Text>
+                          ),
+                        },
+                        {
+                          title: "Thời gian hoàn tất",
+                          dataIndex: "completed_at",
+                          key: "completed_at",
+                          width: 150,
+                          render: (timestamp) => (
+                            <Text style={{ fontSize: "12px" }}>
+                              {formatDate(timestamp)}
+                            </Text>
+                          ),
+                        },
+                        {
+                          title: "Xác nhận nông dân",
+                          dataIndex: "farmer_confirmed",
+                          key: "farmer_confirmed",
+                          width: 130,
+                          align: "center",
+                          render: (confirmed) => (
+                            <Tag
+                              color={confirmed ? "green" : "default"}
+                              icon={
+                                confirmed ? (
+                                  <CheckCircleOutlined />
+                                ) : (
+                                  <ClockCircleOutlined />
+                                )
+                              }
+                            >
+                              {confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
+                            </Tag>
+                          ),
+                        },
+                        {
+                          title: "Hành động",
+                          key: "action",
+                          width: 150,
+                          align: "center",
+                          fixed: "right",
+                          render: (_, record) => (
+                            <Space>
+                              <Button
+                                type="primary"
+                                icon={<WalletOutlined />}
+                                size="small"
+                                onClick={() => handlePayment(record)}
+                                disabled={record.status === "completed"}
+                              >
+                                Thanh toán
+                              </Button>
+                              <Link href={`/payout/detail?id=${record.id}`}>
+                                <Button
+                                  type="link"
+                                  icon={<EyeOutlined />}
+                                  size="small"
+                                >
+                                  Xem
+                                </Button>
+                              </Link>
+                            </Space>
+                          ),
+                        },
+                      ]}
+                      scroll={{ x: 1200 }}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <WalletOutlined
+                      style={{
+                        fontSize: 48,
+                        color: "#d9d9d9",
+                        marginBottom: "16px",
+                      }}
+                    />
+                    <Text
+                      type="secondary"
+                      style={{ display: "block", marginBottom: "8px" }}
+                    >
+                      Chưa có khoản chi trả nào cho yêu cầu bồi thường này
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                      Khoản chi trả sẽ được tạo sau khi yêu cầu được xử lý
+                    </Text>
+                  </div>
+                )}
+              </Card>
+            </Col>
+          )}
+
           {/* Thông tin đơn bảo hiểm */}
           <Col xs={24} lg={12}>
             <Card
@@ -891,68 +1211,123 @@ export default function ClaimDetailPage() {
                                     {rejection.reason_evidence.event_date && (
                                       <div>
                                         <Text strong>Ngày sự kiện: </Text>
-                                        <Text>{rejection.reason_evidence.event_date}</Text>
+                                        <Text>
+                                          {rejection.reason_evidence.event_date}
+                                        </Text>
                                       </div>
                                     )}
-                                    {rejection.reason_evidence.policy_clause && (
+                                    {rejection.reason_evidence
+                                      .policy_clause && (
                                       <div>
-                                        <Text strong>Điều khoản chính sách: </Text>
-                                        <Text>{rejection.reason_evidence.policy_clause}</Text>
+                                        <Text strong>
+                                          Điều khoản chính sách:{" "}
+                                        </Text>
+                                        <Text>
+                                          {
+                                            rejection.reason_evidence
+                                              .policy_clause
+                                          }
+                                        </Text>
                                       </div>
                                     )}
-                                    {rejection.reason_evidence.claimed_value && (
+                                    {rejection.reason_evidence
+                                      .claimed_value && (
                                       <div>
                                         <Text strong>Giá trị yêu cầu: </Text>
-                                        <Text>{rejection.reason_evidence.claimed_value}</Text>
+                                        <Text>
+                                          {
+                                            rejection.reason_evidence
+                                              .claimed_value
+                                          }
+                                        </Text>
                                       </div>
                                     )}
-                                    {rejection.reason_evidence.measured_value && (
+                                    {rejection.reason_evidence
+                                      .measured_value && (
                                       <div>
                                         <Text strong>Giá trị đo được: </Text>
-                                        <Text>{rejection.reason_evidence.measured_value}</Text>
+                                        <Text>
+                                          {
+                                            rejection.reason_evidence
+                                              .measured_value
+                                          }
+                                        </Text>
                                       </div>
                                     )}
-                                    {rejection.reason_evidence.threshold_value && (
+                                    {rejection.reason_evidence
+                                      .threshold_value && (
                                       <div>
                                         <Text strong>Ngưỡng kích hoạt: </Text>
-                                        <Text>{rejection.reason_evidence.threshold_value}</Text>
-                                      </div>
-                                    )}
-                                    {rejection.reason_evidence.blackout_period_start && (
-                                      <div>
-                                        <Text strong>Bắt đầu giai đoạn loại trừ: </Text>
                                         <Text>
-                                          {rejection.reason_evidence.blackout_period_start}
+                                          {
+                                            rejection.reason_evidence
+                                              .threshold_value
+                                          }
                                         </Text>
                                       </div>
                                     )}
-                                    {rejection.reason_evidence.blackout_period_end && (
+                                    {rejection.reason_evidence
+                                      .blackout_period_start && (
                                       <div>
-                                        <Text strong>Kết thúc giai đoạn loại trừ: </Text>
+                                        <Text strong>
+                                          Bắt đầu giai đoạn loại trừ:{" "}
+                                        </Text>
                                         <Text>
-                                          {rejection.reason_evidence.blackout_period_end}
+                                          {
+                                            rejection.reason_evidence
+                                              .blackout_period_start
+                                          }
                                         </Text>
                                       </div>
                                     )}
-                                    {rejection.reason_evidence.discrepancy_percent && (
+                                    {rejection.reason_evidence
+                                      .blackout_period_end && (
                                       <div>
-                                        <Text strong>Phần trăm chênh lệch: </Text>
+                                        <Text strong>
+                                          Kết thúc giai đoạn loại trừ:{" "}
+                                        </Text>
                                         <Text>
-                                          {rejection.reason_evidence.discrepancy_percent}%
+                                          {
+                                            rejection.reason_evidence
+                                              .blackout_period_end
+                                          }
+                                        </Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence
+                                      .discrepancy_percent && (
+                                      <div>
+                                        <Text strong>
+                                          Phần trăm chênh lệch:{" "}
+                                        </Text>
+                                        <Text>
+                                          {
+                                            rejection.reason_evidence
+                                              .discrepancy_percent
+                                          }
+                                          %
                                         </Text>
                                       </div>
                                     )}
                                     {rejection.reason_evidence.data_source && (
                                       <div>
                                         <Text strong>Nguồn dữ liệu: </Text>
-                                        <Text>{rejection.reason_evidence.data_source}</Text>
+                                        <Text>
+                                          {
+                                            rejection.reason_evidence
+                                              .data_source
+                                          }
+                                        </Text>
                                       </div>
                                     )}
-                                    {rejection.reason_evidence.evidence_documents &&
-                                      rejection.reason_evidence.evidence_documents.length >
-                                        0 && (
+                                    {rejection.reason_evidence
+                                      .evidence_documents &&
+                                      rejection.reason_evidence
+                                        .evidence_documents.length > 0 && (
                                         <div>
-                                          <Text strong>Tài liệu bằng chứng: </Text>
+                                          <Text strong>
+                                            Tài liệu bằng chứng:{" "}
+                                          </Text>
                                           <ul className="ml-4 mt-1">
                                             {rejection.reason_evidence.evidence_documents.map(
                                               (doc, idx) => (
@@ -1214,6 +1589,103 @@ export default function ClaimDetailPage() {
           )}
         </Row>
       </div>
+
+      {/* Payment QR Modal */}
+      <Modal
+        title={
+          <Space>
+            <WalletOutlined style={{ color: "#52c41a" }} />
+            <span>Thanh toán Chi trả</span>
+          </Space>
+        }
+        open={paymentModalVisible}
+        onCancel={handleClosePaymentModal}
+        width={500}
+        footer={null}
+        centered
+      >
+        {paymentLoading && !qrData ? (
+          <div className="flex justify-center items-center py-12">
+            <Spin size="large" tip="Đang tạo mã QR..." />
+          </div>
+        ) : qrData ? (
+          <div className="space-y-4">
+            {/* Payout Info */}
+            <Card size="small" className="bg-blue-50">
+              <Descriptions column={1} size="small">
+                <Descriptions.Item label="Số tiền chi trả">
+                  <Text strong style={{ color: "#1890ff", fontSize: "16px" }}>
+                    {formatCurrency(selectedPayout?.payout_amount)}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Mã chi trả">
+                  <Text style={{ fontSize: "12px", fontFamily: "monospace" }}>
+                    {selectedPayout?.id}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Mô tả">
+                  <Text type="secondary">
+                    Chi trả bảo hiểm claim {claimDetail.claim_number}
+                  </Text>
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+
+            {/* QR Code */}
+            <div className="flex justify-center py-6">
+              <div className="border-4 border-gray-200 rounded-lg p-4 bg-white">
+                <img
+                  src={qrData.qr}
+                  alt="QR Code"
+                  style={{ width: "280px", height: "280px" }}
+                />
+              </div>
+            </div>
+
+            {/* Instructions */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <Text style={{ fontSize: "13px", display: "block" }}>
+                <InfoCircleOutlined
+                  style={{ color: "#faad14", marginRight: "8px" }}
+                />
+                <strong>Hướng dẫn:</strong>
+              </Text>
+              <ul className="ml-6 mt-2 space-y-1" style={{ fontSize: "12px" }}>
+                <li>Mở ứng dụng ngân hàng trên điện thoại</li>
+                <li>Quét mã QR trên để chuyển khoản</li>
+                <li>Xác nhận giao dịch trong ứng dụng ngân hàng</li>
+                <li>
+                  Sau khi chuyển khoản thành công, nhấn "Xác nhận thanh toán"
+                </li>
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                size="large"
+                onClick={handleClosePaymentModal}
+                disabled={paymentLoading}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                icon={<CheckCircleOutlined />}
+                onClick={handleVerifyPayment}
+                loading={paymentLoading}
+              >
+                Xác nhận thanh toán
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Text type="danger">Không thể tạo mã QR thanh toán</Text>
+          </div>
+        )}
+      </Modal>
 
       {/* Approve Modal */}
       <Modal

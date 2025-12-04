@@ -42,9 +42,8 @@ const useClaim = () => {
       });
 
       if (response.data?.success && response.data?.data) {
-        const claimsData = Array.isArray(response.data.data)
-          ? response.data.data
-          : [];
+        // API returns { data: { claims: [...], count: N, partner_id: "..." } }
+        const claimsData = response.data.data.claims || [];
         setClaims(claimsData);
       } else {
         setClaims([]);
@@ -126,9 +125,8 @@ const useClaim = () => {
       );
 
       if (response.data?.success && response.data?.data) {
-        const claimsData = Array.isArray(response.data.data)
-          ? response.data.data
-          : [];
+        // API returns { data: { claims: [...], count: N, policy_id: "..." } }
+        const claimsData = response.data.data.claims || [];
         setClaimsByPolicy(claimsData);
       } else {
         setClaimsByPolicy([]);

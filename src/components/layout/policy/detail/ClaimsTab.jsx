@@ -52,9 +52,9 @@ const ClaimsTab = ({ policyId }) => {
       case "generated":
         return "Đã tạo";
       case "pending_partner_review":
-        return "Chờ đối tác duyệt";
+        return "Chờ đối tác xem xét";
       case "approved":
-        return "Đã duyệt";
+        return "Đã phê duyệt";
       case "rejected":
         return "Đã từ chối";
       case "paid":
@@ -64,14 +64,24 @@ const ClaimsTab = ({ policyId }) => {
     }
   };
 
-  // Format date from epoch timestamp
+  // Format date from epoch timestamp or ISO string
   const formatDate = (timestamp) => {
     if (!timestamp) return "-";
-    const date =
-      timestamp < 5000000000
+    let date;
+    if (typeof timestamp === 'string') {
+      // ISO string format
+      date = new Date(timestamp);
+    } else {
+      // Unix timestamp
+      date = timestamp < 5000000000
         ? new Date(timestamp * 1000)
         : new Date(timestamp);
-    return date.toLocaleDateString("vi-VN");
+    }
+    return date.toLocaleDateString("vi-VN", {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
   };
 
   // Format currency
@@ -96,7 +106,7 @@ const ClaimsTab = ({ policyId }) => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      width: 150,
+      width: 180,
       render: (status) => (
         <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
       ),
@@ -116,25 +126,39 @@ const ClaimsTab = ({ policyId }) => {
       render: (amount) => formatCurrency(amount),
     },
     {
-      title: "Bồi thường ngưỡng",
+      title: "Bồi thường theo ngưỡng",
       dataIndex: "calculated_threshold_payout",
       key: "calculated_threshold_payout",
       width: 180,
       render: (amount) => formatCurrency(amount),
     },
     {
-      title: "Tự động tạo",
+      title: "Giá trị vượt ngưỡng",
+      dataIndex: "over_threshold_value",
+      key: "over_threshold_value",
+      width: 160,
+      render: (value) => value ? `${value.toFixed(2)}%` : "-",
+    },
+    {
+      title: "Phương thức tạo",
       dataIndex: "auto_generated",
       key: "auto_generated",
-      width: 120,
+      width: 140,
       render: (auto) =>
         auto ? <Tag color="blue">Tự động</Tag> : <Tag>Thủ công</Tag>,
+    },
+    {
+      title: "Thời điểm kích hoạt",
+      dataIndex: "trigger_timestamp",
+      key: "trigger_timestamp",
+      width: 150,
+      render: (timestamp) => formatDate(timestamp),
     },
     {
       title: "Ngày tạo",
       dataIndex: "created_at",
       key: "created_at",
-      width: 120,
+      width: 150,
       render: (date) => formatDate(date),
     },
     {
@@ -195,10 +219,10 @@ const ClaimsTab = ({ policyId }) => {
     0
   );
   const approvedCount = claimsByPolicy.filter(
-    (c) => c.status === "approved"
+    (c) => c.status === "approved" || c.status === "paid"
   ).length;
   const pendingCount = claimsByPolicy.filter(
-    (c) => c.status === "pending_partner_review"
+    (c) => c.status === "pending_partner_review" || c.status === "generated"
   ).length;
 
   return (
@@ -225,7 +249,7 @@ const ClaimsTab = ({ policyId }) => {
               <CheckCircleOutlined style={{ fontSize: 28, color: "#52c41a" }} />
             </div>
             <div className="flex-1">
-              <Text type="secondary" style={{ fontSize: '13px' }}>Đã duyệt</Text>
+              <Text type="secondary" style={{ fontSize: '13px' }}>Đã phê duyệt</Text>
               <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
                 {approvedCount}
               </div>

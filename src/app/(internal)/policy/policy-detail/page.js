@@ -103,6 +103,9 @@ export default function PolicyDetailPage() {
   const [form] = Form.useForm();
   const formRef = useRef();
 
+  // Active tab state
+  const [activeTab, setActiveTab] = useState("basic");
+
   // Risk Analysis modal state
   const [riskAnalysisModalVisible, setRiskAnalysisModalVisible] =
     useState(false);
@@ -702,11 +705,9 @@ export default function PolicyDetailPage() {
     },
   ];
 
-  // Only add Claims tab for active policies (status = active AND underwriting_status = approved)
+  // Add Claims tab for active policies
   if (
-    pageType === "active" &&
-    policy.status === "active" &&
-    policy.underwriting_status === "approved"
+    pageType === "active" && policy.status === "active" && policy.underwriting_status === "approved"
   ) {
     tabItems.push({
       key: "claims",
@@ -760,7 +761,11 @@ export default function PolicyDetailPage() {
           </Space>
         </div>
 
-        <Tabs items={tabItems} />
+        <Tabs
+          items={tabItems}
+          activeKey={activeTab}
+          onChange={setActiveTab}
+        />
 
         <Modal
           title={

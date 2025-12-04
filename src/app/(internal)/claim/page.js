@@ -20,6 +20,7 @@ import {
 import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import "../policy/policy.css";
 
 const { Title, Text } = Typography;
 
@@ -36,8 +37,9 @@ export default function ClaimListPage() {
     "claim_number",
     "status",
     "claim_amount",
+    "over_threshold_value",
+    "auto_generated",
     "created_at",
-    "auto_approval_deadline",
   ]);
 
   useEffect(() => {
@@ -93,9 +95,11 @@ export default function ClaimListPage() {
     return {
       total: allClaims.length,
       pendingReview: allClaims.filter(
-        (c) => c.status === "pending_partner_review"
+        (c) => c.status === "pending_partner_review" || c.status === "generated"
       ).length,
-      approved: allClaims.filter((c) => c.status === "approved").length,
+      approved: allClaims.filter(
+        (c) => c.status === "approved" || c.status === "paid"
+      ).length,
       totalAmount: allClaims.reduce(
         (sum, c) => sum + (c.claim_amount || 0),
         0
@@ -127,9 +131,9 @@ export default function ClaimListPage() {
       case "generated":
         return "Đã tạo";
       case "pending_partner_review":
-        return "Chờ đối tác duyệt";
+        return "Chờ đối tác xem xét";
       case "approved":
-        return "Đã duyệt";
+        return "Đã phê duyệt";
       case "rejected":
         return "Đã từ chối";
       case "paid":
@@ -139,14 +143,24 @@ export default function ClaimListPage() {
     }
   };
 
-  // Format date from epoch timestamp
+  // Format date from epoch timestamp or ISO string
   const formatDate = (timestamp) => {
     if (!timestamp) return "-";
-    const date =
-      timestamp < 5000000000
+    let date;
+    if (typeof timestamp === 'string') {
+      // ISO string format
+      date = new Date(timestamp);
+    } else {
+      // Unix timestamp
+      date = timestamp < 5000000000
         ? new Date(timestamp * 1000)
         : new Date(timestamp);
-    return date.toLocaleDateString("vi-VN");
+    }
+    return date.toLocaleDateString("vi-VN", {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
   };
 
   // Table columns
@@ -192,7 +206,7 @@ export default function ClaimListPage() {
           : "-",
     },
     {
-      title: "Bồi thường ngưỡng",
+      title: "Bồi thường theo ngưỡng",
       dataIndex: "calculated_threshold_payout",
       key: "calculated_threshold_payout",
       width: 180,
@@ -208,37 +222,29 @@ export default function ClaimListPage() {
       title: "Giá trị vượt ngưỡng",
       dataIndex: "over_threshold_value",
       key: "over_threshold_value",
-      width: 150,
-      render: (value) => (value ? value.toFixed(2) : "-"),
+      width: 160,
+      render: (value) => (value ? `${value.toFixed(2)}%` : "-"),
     },
     {
-      title: "Tự động tạo",
+      title: "Phương thức tạo",
       dataIndex: "auto_generated",
       key: "auto_generated",
-      width: 120,
+      width: 140,
       render: (auto) => (auto ? <Tag color="blue">Tự động</Tag> : <Tag>Thủ công</Tag>),
+    },
+    {
+      title: "Thời điểm kích hoạt",
+      dataIndex: "trigger_timestamp",
+      key: "trigger_timestamp",
+      width: 150,
+      render: (timestamp) => formatDate(timestamp),
     },
     {
       title: "Ngày tạo",
       dataIndex: "created_at",
       key: "created_at",
-      width: 120,
-      render: (date) => formatDate(date),
-    },
-    {
-      title: "Hạn tự động duyệt",
-      dataIndex: "auto_approval_deadline",
-      key: "auto_approval_deadline",
       width: 150,
-      render: (timestamp) => formatDate(timestamp),
-    },
-    {
-      title: "Đã tự động duyệt",
-      dataIndex: "auto_approved",
-      key: "auto_approved",
-      width: 140,
-      render: (auto) =>
-        auto ? <Tag color="green">Có</Tag> : <Tag color="default">Không</Tag>,
+      render: (date) => formatDate(date),
     },
     {
       title: "Hành động",
@@ -292,8 +298,8 @@ export default function ClaimListPage() {
       options: [
         { label: "Tất cả", value: "" },
         { label: "Đã tạo", value: "generated" },
-        { label: "Chờ đối tác duyệt", value: "pending_partner_review" },
-        { label: "Đã duyệt", value: "approved" },
+        { label: "Chờ đối tác xem xét", value: "pending_partner_review" },
+        { label: "Đã phê duyệt", value: "approved" },
         { label: "Đã từ chối", value: "rejected" },
         { label: "Đã thanh toán", value: "paid" },
       ],
@@ -391,7 +397,7 @@ export default function ClaimListPage() {
               <div className="insurance-summary-value-compact">
                 {summaryStats.approved}
               </div>
-              <div className="insurance-summary-label-compact">Đã duyệt</div>
+              <div className="insurance-summary-label-compact">Đã phê duyệt</div>
             </div>
           </div>
 

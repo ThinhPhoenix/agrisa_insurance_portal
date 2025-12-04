@@ -1,6 +1,8 @@
 "use client";
 
 import useClaim from "@/services/hooks/claim/use-claim";
+import axiosInstance from "@/libs/axios-instance";
+import { endpoints } from "@/services/endpoints";
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
@@ -21,9 +23,12 @@ import {
   Spin,
   Tag,
   Typography,
+  Table,
 } from "antd";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import "../../policy/policy.css";
 
 const { Title, Text } = Typography;
 
@@ -35,11 +40,103 @@ export default function ClaimDetailPage() {
   const { claimDetail, claimDetailLoading, claimDetailError, fetchClaimDetail } =
     useClaim();
 
+  // States for related data
+  const [policy, setPolicy] = useState(null);
+  const [farm, setFarm] = useState(null);
+  const [basePolicy, setBasePolicy] = useState(null);
+  const [allDataLoaded, setAllDataLoaded] = useState(false);
+
   useEffect(() => {
-    if (claimId) {
-      fetchClaimDetail(claimId);
-    }
+    const fetchAllData = async () => {
+      if (!claimId) return;
+
+      try {
+        // 1. Fetch claim detail first
+        await fetchClaimDetail(claimId);
+      } catch (error) {
+        console.error("Error fetching claim detail:", error);
+      }
+    };
+
+    fetchAllData();
   }, [claimId, fetchClaimDetail]);
+
+  // Fetch related data when claimDetail is loaded
+  useEffect(() => {
+    const fetchRelatedData = async () => {
+      if (!claimDetail) return;
+
+      setAllDataLoaded(false);
+
+      try {
+        // Fetch all related data in parallel
+        const promises = [];
+
+        // Fetch policy detail
+        if (claimDetail.registered_policy_id) {
+          promises.push(
+            axiosInstance
+              .get(endpoints.policy.policy.detail(claimDetail.registered_policy_id))
+              .then((response) => {
+                if (response.data.success) {
+                  setPolicy(response.data.data);
+                  return response.data.data;
+                }
+                return null;
+              })
+              .catch((error) => {
+                console.error("Error fetching policy:", error);
+                return null;
+              })
+          );
+        }
+
+        // Fetch farm detail
+        if (claimDetail.farm_id) {
+          promises.push(
+            axiosInstance
+              .get(endpoints.applications.detail(claimDetail.farm_id))
+              .then((response) => {
+                if (response.data.success) {
+                  setFarm(response.data.data);
+                }
+                return null;
+              })
+              .catch((error) => {
+                console.error("Error fetching farm:", error);
+                return null;
+              })
+          );
+        }
+
+        // Wait for policy to get insurance_provider_id
+        const results = await Promise.all(promises);
+        const policyData = results[0];
+
+        // Fetch base policy detail after we have policy data
+        if (claimDetail.base_policy_id && policyData?.insurance_provider_id) {
+          try {
+            const basePolicyUrl = endpoints.policy.base_policy.get_detail(
+              claimDetail.base_policy_id,
+              {
+                provider_id: policyData.insurance_provider_id,
+              }
+            );
+            const basePolicyResponse = await axiosInstance.get(basePolicyUrl);
+            if (basePolicyResponse.data.success) {
+              setBasePolicy(basePolicyResponse.data.data.base_policy);
+            }
+          } catch (error) {
+            console.error("Error fetching base policy:", error);
+          }
+        }
+      } finally {
+        setAllDataLoaded(true);
+      }
+    };
+
+    fetchRelatedData();
+  }, [claimDetail]);
 
   // Get status color
   const getStatusColor = (status) => {
@@ -65,9 +162,9 @@ export default function ClaimDetailPage() {
       case "generated":
         return "Đã tạo";
       case "pending_partner_review":
-        return "Chờ đối tác duyệt";
+        return "Chờ đối tác xem xét";
       case "approved":
-        return "Đã duyệt";
+        return "Đã phê duyệt";
       case "rejected":
         return "Đã từ chối";
       case "paid":
@@ -77,14 +174,26 @@ export default function ClaimDetailPage() {
     }
   };
 
-  // Format date from epoch timestamp
+  // Format date from epoch timestamp or ISO string
   const formatDate = (timestamp) => {
     if (!timestamp) return "-";
-    const date =
-      timestamp < 5000000000
+    let date;
+    if (typeof timestamp === 'string') {
+      // ISO string format
+      date = new Date(timestamp);
+    } else {
+      // Unix timestamp
+      date = timestamp < 5000000000
         ? new Date(timestamp * 1000)
         : new Date(timestamp);
-    return date.toLocaleString("vi-VN");
+    }
+    return date.toLocaleString("vi-VN", {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   // Format currency
@@ -96,7 +205,7 @@ export default function ClaimDetailPage() {
     }).format(amount);
   };
 
-  if (claimDetailLoading) {
+  if (claimDetailLoading || !allDataLoaded) {
     return (
       <Layout.Content className="insurance-content">
         <div className="flex justify-center items-center h-96">
@@ -130,8 +239,27 @@ export default function ClaimDetailPage() {
     <Layout.Content className="insurance-content">
       <div className="insurance-space">
         {/* Header */}
-        <div className="insurance-header mb-6">
-          <div className="flex items-center gap-4">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <Title level={2} className="insurance-title !mb-0">
+              Chi Tiết Bồi Thường
+            </Title>
+            <Space className="insurance-subtitle">
+              <Text>Mã: {claimDetail.claim_number}</Text>
+              <Text>|</Text>
+              <Text>Trạng thái:</Text>
+              <Tag color={getStatusColor(claimDetail.status)} style={{ fontSize: '13px' }}>
+                {getStatusText(claimDetail.status)}
+              </Tag>
+              {claimDetail.auto_generated && (
+                <Tag color="blue" icon={<InfoCircleOutlined />}>
+                  Tự động
+                </Tag>
+              )}
+            </Space>
+          </div>
+
+          <Space>
             <Button
               icon={<ArrowLeftOutlined />}
               onClick={() => router.back()}
@@ -139,38 +267,26 @@ export default function ClaimDetailPage() {
             >
               Quay lại
             </Button>
-            <div>
-              <Title level={2} className="insurance-title !mb-0">
-                Chi Tiết Bồi Thường
-              </Title>
-              <Text className="insurance-subtitle">
-                Mã: {claimDetail.claim_number}
-              </Text>
-            </div>
-          </div>
-        </div>
-
-        {/* Status Banner */}
-        <Card className="mb-4" style={{ borderLeft: `4px solid ${getStatusColor(claimDetail.status) === 'green' ? '#52c41a' : getStatusColor(claimDetail.status) === 'orange' ? '#faad14' : getStatusColor(claimDetail.status) === 'red' ? '#f5222d' : '#1890ff'}` }}>
-          <Space size="large">
-            <div>
-              <Text strong>Trạng thái: </Text>
-              <Tag color={getStatusColor(claimDetail.status)} style={{ fontSize: '14px' }}>
-                {getStatusText(claimDetail.status)}
-              </Tag>
-            </div>
-            {claimDetail.auto_generated && (
-              <Tag color="blue" icon={<InfoCircleOutlined />}>
-                Tự động tạo
-              </Tag>
-            )}
-            {claimDetail.auto_approved && (
-              <Tag color="green" icon={<CheckCircleOutlined />}>
-                Tự động duyệt
-              </Tag>
+            {claimDetail.status === "pending_partner_review" && (
+              <>
+                <Button
+                  danger
+                  size="large"
+                  onClick={() => {/* TODO: Handle reject */}}
+                >
+                  Từ chối
+                </Button>
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={() => {/* TODO: Handle approve */}}
+                >
+                  Chấp nhận
+                </Button>
+              </>
             )}
           </Space>
-        </Card>
+        </div>
 
         <Row gutter={[16, 16]}>
           {/* Thông tin cơ bản */}
@@ -188,28 +304,28 @@ export default function ClaimDetailPage() {
                 <Descriptions.Item label="Mã bồi thường">
                   <Text strong>{claimDetail.claim_number}</Text>
                 </Descriptions.Item>
-                <Descriptions.Item label="ID Bồi thường">
-                  <Text copyable style={{ fontSize: '12px' }}>{claimDetail.id}</Text>
+                <Descriptions.Item label="Đơn bảo hiểm">
+                  {policy ? (
+                    <Link href={`/policy/policy-detail?id=${policy.id}&type=active`}>
+                      <Text style={{ color: '#1890ff' }}>{policy.policy_number}</Text>
+                    </Link>
+                  ) : (
+                    <Text type="secondary">{claimDetail.registered_policy_id}</Text>
+                  )}
                 </Descriptions.Item>
-                <Descriptions.Item label="ID Đơn bảo hiểm">
-                  <Text copyable style={{ fontSize: '12px' }}>
-                    {claimDetail.registered_policy_id}
-                  </Text>
+                <Descriptions.Item label="Gói bảo hiểm">
+                  {basePolicy ? (
+                    <Text>{basePolicy.product_name || basePolicy.name || basePolicy.policy_name}</Text>
+                  ) : (
+                    <Text type="secondary">{claimDetail.base_policy_id}</Text>
+                  )}
                 </Descriptions.Item>
-                <Descriptions.Item label="ID Gói bảo hiểm">
-                  <Text copyable style={{ fontSize: '12px' }}>
-                    {claimDetail.base_policy_id}
-                  </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="ID Trang trại">
-                  <Text copyable style={{ fontSize: '12px' }}>
-                    {claimDetail.farm_id}
-                  </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="ID Trigger">
-                  <Text copyable style={{ fontSize: '12px' }}>
-                    {claimDetail.base_policy_trigger_id}
-                  </Text>
+                <Descriptions.Item label="Trang trại">
+                  {farm ? (
+                    <Text>{farm.farm_name || "Trang trại"}</Text>
+                  ) : (
+                    <Text type="secondary">{claimDetail.farm_id}</Text>
+                  )}
                 </Descriptions.Item>
                 <Descriptions.Item label="Thời gian kích hoạt">
                   {formatDate(claimDetail.trigger_timestamp)}
@@ -249,33 +365,8 @@ export default function ClaimDetailPage() {
                 </Descriptions.Item>
                 <Descriptions.Item label="Giá trị vượt ngưỡng">
                   {claimDetail.over_threshold_value
-                    ? claimDetail.over_threshold_value.toFixed(2)
+                    ? `${claimDetail.over_threshold_value.toFixed(2)}%`
                     : "-"}
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-
-            {/* Thông tin tự động duyệt */}
-            <Card
-              title={
-                <Space>
-                  <ClockCircleOutlined />
-                  <span>Thông Tin Tự Động Duyệt</span>
-                </Space>
-              }
-              bordered={false}
-              className="mt-4"
-            >
-              <Descriptions column={1} bordered size="small">
-                <Descriptions.Item label="Hạn tự động duyệt">
-                  {formatDate(claimDetail.auto_approval_deadline)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Đã tự động duyệt">
-                  {claimDetail.auto_approved ? (
-                    <Tag color="green">Có</Tag>
-                  ) : (
-                    <Tag color="default">Không</Tag>
-                  )}
                 </Descriptions.Item>
               </Descriptions>
             </Card>
@@ -330,21 +421,99 @@ export default function ClaimDetailPage() {
                 title={
                   <Space>
                     <WarningOutlined />
-                    <span>Tóm Tắt Bằng Chứng</span>
+                    <span>Bằng Chứng Kích Hoạt Bồi Thường</span>
                   </Space>
                 }
                 bordered={false}
               >
-                <pre
-                  style={{
-                    backgroundColor: "#f5f5f5",
-                    padding: "12px",
-                    borderRadius: "4px",
-                    overflow: "auto",
-                  }}
-                >
-                  {JSON.stringify(claimDetail.evidence_summary, null, 2)}
-                </pre>
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                  <Descriptions column={2} bordered size="small">
+                    <Descriptions.Item label="Phương thức tạo" span={1}>
+                      <Tag color={claimDetail.evidence_summary.generation_method === 'automatic' ? 'blue' : 'default'}>
+                        {claimDetail.evidence_summary.generation_method === 'automatic' ? 'Tự động' : 'Thủ công'}
+                      </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Số điều kiện kích hoạt" span={1}>
+                      <Text strong>{claimDetail.evidence_summary.conditions_count || 0}</Text>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Thời điểm kích hoạt" span={2}>
+                      {formatDate(claimDetail.evidence_summary.triggered_at)}
+                    </Descriptions.Item>
+                  </Descriptions>
+
+                  {claimDetail.evidence_summary.conditions && claimDetail.evidence_summary.conditions.length > 0 && (
+                    <>
+                      <Text strong style={{ fontSize: '14px', marginTop: '16px', display: 'block' }}>
+                        Chi tiết các điều kiện:
+                      </Text>
+                      <Table
+                        dataSource={claimDetail.evidence_summary.conditions}
+                        rowKey={(record, index) => record.condition_id || index}
+                        pagination={false}
+                        size="small"
+                        bordered
+                        columns={[
+                          {
+                            title: 'Tham số',
+                            dataIndex: 'parameter',
+                            key: 'parameter',
+                            width: 120,
+                            render: (text) => <Tag color="blue">{text?.toUpperCase()}</Tag>,
+                          },
+                          {
+                            title: 'Điều kiện',
+                            key: 'condition',
+                            width: 180,
+                            render: (_, record) => (
+                              <Text>
+                                Giá trị đo được {record.operator} {record.threshold_value}%
+                              </Text>
+                            ),
+                          },
+                          {
+                            title: 'Giá trị baseline',
+                            dataIndex: 'baseline_value',
+                            key: 'baseline_value',
+                            width: 120,
+                            render: (val) => val ? val.toFixed(4) : '-',
+                          },
+                          {
+                            title: 'Giá trị đo được',
+                            dataIndex: 'measured_value',
+                            key: 'measured_value',
+                            width: 120,
+                            render: (val) => val ? val.toFixed(4) : '-',
+                          },
+                          {
+                            title: 'Ngưỡng cảnh báo sớm',
+                            dataIndex: 'early_warning_threshold',
+                            key: 'early_warning_threshold',
+                            width: 140,
+                            render: (val) => val ? `${val}%` : '-',
+                          },
+                          {
+                            title: 'Cảnh báo sớm',
+                            dataIndex: 'is_early_warning',
+                            key: 'is_early_warning',
+                            width: 120,
+                            render: (val) => (
+                              <Tag color={val ? 'orange' : 'green'}>
+                                {val ? 'Có' : 'Không'}
+                              </Tag>
+                            ),
+                          },
+                          {
+                            title: 'Thời điểm đo',
+                            dataIndex: 'timestamp',
+                            key: 'timestamp',
+                            width: 150,
+                            render: (timestamp) => formatDate(timestamp),
+                          },
+                        ]}
+                      />
+                    </>
+                  )}
+                </Space>
               </Card>
             </Col>
           )}

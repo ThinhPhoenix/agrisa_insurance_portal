@@ -40,6 +40,7 @@ const PolicyDetailPage = ({ params }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("basic");
   const [enrichedDataSources, setEnrichedDataSources] = React.useState([]);
+  const hasFetchedRef = React.useRef(false); // Track if we've already fetched
 
   // Use policy list hook for checking policy status
   const { policies } = usePolicy();
@@ -59,6 +60,8 @@ const PolicyDetailPage = ({ params }) => {
 
   // Fetch policy detail and validate on mount
   useEffect(() => {
+    // Prevent duplicate fetches
+    if (hasFetchedRef.current) return;
     const loadPolicyDetail = async () => {
       if (!params.id) {
         message.error("ID chính sách không hợp lệ");
@@ -94,6 +97,9 @@ const PolicyDetailPage = ({ params }) => {
 
         let policyData = null;
 
+        // Mark as fetched before making API call
+        hasFetchedRef.current = true;
+
         // Try to fetch based on status
         if (policyStatus === "draft") {
           // Draft policies use draft/filter API with base_policy_id
@@ -114,6 +120,7 @@ const PolicyDetailPage = ({ params }) => {
         }
 
         if (!policyData) {
+          hasFetchedRef.current = false; // Reset on error
           message.error("Không tìm thấy chính sách");
           router.push("/base-policy");
           return;
@@ -136,20 +143,15 @@ const PolicyDetailPage = ({ params }) => {
         }
       } catch (error) {
         console.error("❌ Error loading policy detail:", error);
+        hasFetchedRef.current = false; // Reset on error
         message.error("Có lỗi xảy ra khi tải thông tin chính sách");
         router.push("/base-policy");
       }
     };
 
     loadPolicyDetail();
-  }, [
-    params.id,
-    fetchDraftPolicyDetail,
-    fetchPolicyDetail,
-    fetchActivePolicyDetail,
-    policies,
-    router,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]); // Only depend on params.id to prevent re-fetching
 
   // Fetch data source details when policy detail is loaded
   useEffect(() => {

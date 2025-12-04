@@ -2,7 +2,6 @@ import CustomForm from '@/components/custom-form';
 import CustomTable from '@/components/custom-table';
 import TriggerLogicExplainer from '@/components/layout/base-policy/TriggerLogicExplainer';
 import {
-    getConditionError,
     getConditionValidation,
     getTriggerValidation
 } from '@/libs/message';
@@ -17,12 +16,14 @@ import {
     PlusOutlined,
     SettingOutlined
 } from '@ant-design/icons';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import {
     Alert,
     Button,
     Card,
     Col,
     Collapse,
+    DatePicker,
     Form,
     Input,
     InputNumber,
@@ -30,12 +31,14 @@ import {
     Row,
     Select,
     Space,
+    Table,
     Tag,
     Tooltip,
-    Typography
+    Typography,
+    message
 } from 'antd';
-import { memo, useRef, useState, useCallback, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import dayjs from 'dayjs';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
@@ -90,16 +93,22 @@ DebouncedTextArea.displayName = 'DebouncedTextArea';
 const ConfigurationTabComponent = ({
     configurationData,
     mockData,
+    basicData, // ✅ NEW: Add basicData for valid date range
     onDataChange,
     onAddTriggerCondition,
     onRemoveTriggerCondition,
     onUpdateTriggerCondition,
+    onAddBlackoutPeriod, // ✅ NEW: Blackout period handlers
+    onRemoveBlackoutPeriod,
+    onUpdateBlackoutPeriod,
     getAvailableDataSourcesForTrigger
 }) => {
     const formRef = useRef();
     const [conditionForm] = Form.useForm();
     const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
+    const [blackoutPeriodForm] = Form.useForm(); // ✅ NEW: Form for blackout periods
+    const [selectedThresholdOperator, setSelectedThresholdOperator] = useState(null); // ✅ NEW: Track threshold operator
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
 
@@ -157,9 +166,15 @@ const ConfigurationTabComponent = ({
                 aggregationWindowDays: values.aggregationWindowDays, // REQUIRED
                 consecutiveRequired: values.consecutiveRequired ?? false,
                 includeComponent: values.includeComponent ?? false,
-                baselineWindowDays: values.baselineWindowDays || null,
-                baselineFunction: values.baselineFunction || null,
+                // ✅ Baseline CHỈ set khi dùng change_gt hoặc change_lt, các operator khác về null
+                baselineWindowDays: (values.thresholdOperator === 'change_gt' || values.thresholdOperator === 'change_lt')
+                    ? (values.baselineWindowDays || null)
+                    : null,
+                baselineFunction: (values.thresholdOperator === 'change_gt' || values.thresholdOperator === 'change_lt')
+                    ? (values.baselineFunction || null)
+                    : null,
                 validationWindowDays: values.validationWindowDays || null,
+                dataQuality: values.dataQuality || 'good', // ✅ Data Quality: good | acceptable | poor
                 conditionOrder, // ✅ AUTO-SET theo thứ tự thêm
 
                 // ✅ Display labels (for UI table)
@@ -169,6 +184,7 @@ const ConfigurationTabComponent = ({
                 unit: selectedDataSource?.unit || '',
                 aggregationFunctionLabel: mockData.aggregationFunctions.find(af => af.value === values.aggregationFunction)?.label || '',
                 thresholdOperatorLabel: mockData.thresholdOperators.find(to => to.value === values.thresholdOperator)?.label || '',
+                dataQualityLabel: values.dataQuality === 'good' ? 'Tốt' : values.dataQuality === 'acceptable' ? 'Chấp nhận được' : 'Kém',
 
                 // ✅ Cost calculation fields (for payload)
                 baseCost,
@@ -186,6 +202,7 @@ const ConfigurationTabComponent = ({
                 onAddTriggerCondition(condition);
             }
 
+            setSelectedThresholdOperator(null); // ✅ Clear selected operator
             conditionFormRef.current?.resetFields();
         });
     };
@@ -193,12 +210,14 @@ const ConfigurationTabComponent = ({
     // Handle edit condition
     const handleEditCondition = (condition) => {
         setEditingCondition(condition);
+        setSelectedThresholdOperator(condition.thresholdOperator); // ✅ Set selected operator for conditional rendering
         conditionForm.setFieldsValue(condition);
     };
 
     // Handle cancel edit
     const handleCancelEdit = () => {
         setEditingCondition(null);
+        setSelectedThresholdOperator(null); // ✅ Clear selected operator
         conditionForm.resetFields();
     };
 
@@ -360,6 +379,9 @@ const ConfigurationTabComponent = ({
                         {record.validationWindowDays && (
                             <> | Kiểm tra: {record.validationWindowDays} ngày</>
                         )}
+                        {record.dataQuality && (
+                            <> | Chất lượng: <Tag color={record.dataQuality === 'good' ? 'green' : record.dataQuality === 'acceptable' ? 'orange' : 'red'} style={{ marginLeft: 4 }}>{record.dataQualityLabel}</Tag></>
+                        )}
                     </TypographyText>
                 </div>
             ),
@@ -518,6 +540,286 @@ const ConfigurationTabComponent = ({
                             </Col>
                         </Row>
                     </Form>
+                </Panel>
+
+                {/* ✅ NEW: Blackout Periods Section */}
+                <Panel
+                    header={
+                        <Space>
+                            <AlertOutlined />
+                            <span>Giai đoạn Không Kích hoạt (Blackout Periods)</span>
+                            <Tag color={configurationData.blackoutPeriods?.periods?.length > 0 ? 'purple' : 'default'}>
+                                {configurationData.blackoutPeriods?.periods?.length || 0} giai đoạn
+                            </Tag>
+                            {(!basicData?.insuranceValidFrom || !basicData?.insuranceValidTo) && (
+                                <Tag color="orange">Cần nhập thời gian hiệu lực trước</Tag>
+                            )}
+                        </Space>
+                    }
+                    key="blackoutPeriods"
+                >
+                    {(!basicData?.insuranceValidFrom || !basicData?.insuranceValidTo) ? (
+                        <Alert
+                            message="Chưa xác định khoảng thời gian bảo hiểm"
+                            description="Vui lòng điền 'Bảo hiểm có hiệu lực từ' và 'Bảo hiểm có hiệu lực đến' ở tab 'Thông tin Cơ bản' trước khi thiết lập giai đoạn không kích hoạt."
+                            type="warning"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                        />
+                    ) : (
+                        <>
+                            <Alert
+                                message="Giai đoạn Không Kích hoạt (Blackout Periods)"
+                                description="Đây là các giai đoạn trong chu kỳ bảo hiểm mà hệ thống KHÔNG được phép kích hoạt bồi thường, dù các điều kiện đều thỏa mãn. Ví dụ: giai đoạn gieo hạt, giai đoạn nảy mầm sớm, hoặc giai đoạn thu hoạch."
+                                type="info"
+                                showIcon
+                                style={{ marginBottom: 16 }}
+                            />
+
+                            <Card style={{ marginBottom: 16 }}>
+                                <Title level={5}>Thêm Giai đoạn Mới</Title>
+                                <Form
+                                    form={blackoutPeriodForm}
+                                    layout="vertical"
+                                    onFinish={(values) => {
+                                        const startDate = values.start;
+                                        const endDate = values.end;
+
+                                        // Validation 1: Kiểm tra start < end
+                                        if (startDate.isAfter(endDate) || startDate.isSame(endDate)) {
+                                            message.error('Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+                                            return;
+                                        }
+
+                                        // Validation 2: Kiểm tra nằm trong valid date range
+                                        const validFrom = basicData?.insuranceValidFrom ? dayjs(basicData.insuranceValidFrom) : null;
+                                        const validTo = basicData?.insuranceValidTo ? dayjs(basicData.insuranceValidTo) : null;
+
+                                        if (validFrom && validTo) {
+                                            // Create dates in same year for comparison (using current year)
+                                            const currentYear = dayjs().year();
+                                            const startInYear = dayjs(`${currentYear}-${values.start.format('MM-DD')}`);
+                                            const endInYear = dayjs(`${currentYear}-${values.end.format('MM-DD')}`);
+                                            const validFromInYear = dayjs(`${currentYear}-${validFrom.format('MM-DD')}`);
+                                            const validToInYear = dayjs(`${currentYear}-${validTo.format('MM-DD')}`);
+
+                                            if (startInYear.isBefore(validFromInYear) || endInYear.isAfter(validToInYear)) {
+                                                message.error(`Giai đoạn phải nằm trong khoảng hiệu lực bảo hiểm (${validFrom.format('DD/MM')} - ${validTo.format('DD/MM')})!`);
+                                                return;
+                                            }
+                                        }
+
+                                        // Validation 3: Kiểm tra không trùng lặp
+                                        const newStart = values.start.format('MM-DD');
+                                        const newEnd = values.end.format('MM-DD');
+
+                                        const hasOverlap = configurationData.blackoutPeriods?.periods?.some(period => {
+                                            const existingStart = dayjs(period.start, 'MM-DD');
+                                            const existingEnd = dayjs(period.end, 'MM-DD');
+                                            const newStartDay = dayjs(newStart, 'MM-DD');
+                                            const newEndDay = dayjs(newEnd, 'MM-DD');
+
+                                            // Check if ranges overlap
+                                            return (newStartDay.isBefore(existingEnd) || newStartDay.isSame(existingEnd)) &&
+                                                (newEndDay.isAfter(existingStart) || newEndDay.isSame(existingStart));
+                                        });
+
+                                        if (hasOverlap) {
+                                            message.error('Giai đoạn này trùng lặp với giai đoạn đã có. Vui lòng chọn khoảng thời gian khác!');
+                                            return;
+                                        }
+
+                                        // Add the blackout period
+                                        onAddBlackoutPeriod({
+                                            start: newStart,
+                                            end: newEnd
+                                        });
+
+                                        blackoutPeriodForm.resetFields();
+                                        message.success('Đã thêm giai đoạn không kích hoạt thành công!');
+                                    }}
+                                >
+                                    <Row gutter={16}>
+                                        <Col span={10}>
+                                            <Form.Item
+                                                name="start"
+                                                label="Ngày bắt đầu"
+                                                tooltip="Ngày bắt đầu giai đoạn không kích hoạt (chỉ chọn được trong khoảng thời gian bảo hiểm có hiệu lực)"
+                                                rules={[
+                                                    { required: true, message: 'Vui lòng chọn ngày bắt đầu!' }
+                                                ]}
+                                            >
+                                                <DatePicker
+                                                    format="DD/MM/YYYY"
+                                                    placeholder="Chọn ngày bắt đầu"
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                    disabledDate={(current) => {
+                                                        if (!current) return false;
+                                                        const validFrom = basicData?.insuranceValidFrom ? dayjs(basicData.insuranceValidFrom) : null;
+                                                        const validTo = basicData?.insuranceValidTo ? dayjs(basicData.insuranceValidTo) : null;
+
+                                                        if (!validFrom || !validTo) return false;
+
+                                                        // Disable dates outside valid range (chỉ so sánh ngày/tháng, bỏ qua năm)
+                                                        const currentMD = current.format('MM-DD');
+                                                        const validFromMD = validFrom.format('MM-DD');
+                                                        const validToMD = validTo.format('MM-DD');
+
+                                                        if (currentMD < validFromMD || currentMD > validToMD) {
+                                                            return true;
+                                                        }
+
+                                                        // Disable dates that overlap with existing blackout periods
+                                                        const existingPeriods = configurationData.blackoutPeriods?.periods || [];
+                                                        const isInExistingPeriod = existingPeriods.some(period => {
+                                                            const periodStart = dayjs(period.start, 'MM-DD');
+                                                            const periodEnd = dayjs(period.end, 'MM-DD');
+                                                            const currentDay = dayjs(currentMD, 'MM-DD');
+
+                                                            // Check if current date falls within any existing period
+                                                            return (currentDay.isAfter(periodStart) || currentDay.isSame(periodStart)) &&
+                                                                (currentDay.isBefore(periodEnd) || currentDay.isSame(periodEnd));
+                                                        });
+
+                                                        return isInExistingPeriod;
+                                                    }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={10}>
+                                            <Form.Item
+                                                name="end"
+                                                label="Ngày kết thúc"
+                                                tooltip="Ngày kết thúc giai đoạn không kích hoạt (phải sau ngày bắt đầu và trong khoảng thời gian bảo hiểm có hiệu lực)"
+                                                rules={[
+                                                    { required: true, message: 'Vui lòng chọn ngày kết thúc!' }
+                                                ]}
+                                            >
+                                                <DatePicker
+                                                    format="DD/MM/YYYY"
+                                                    placeholder="Chọn ngày kết thúc"
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                    disabledDate={(current) => {
+                                                        if (!current) return false;
+                                                        const validFrom = basicData?.insuranceValidFrom ? dayjs(basicData.insuranceValidFrom) : null;
+                                                        const validTo = basicData?.insuranceValidTo ? dayjs(basicData.insuranceValidTo) : null;
+                                                        const startDate = blackoutPeriodForm.getFieldValue('start');
+
+                                                        if (!validFrom || !validTo) return false;
+
+                                                        // Disable dates outside valid range
+                                                        const currentMD = current.format('MM-DD');
+                                                        const validFromMD = validFrom.format('MM-DD');
+                                                        const validToMD = validTo.format('MM-DD');
+
+                                                        if (currentMD < validFromMD || currentMD > validToMD) {
+                                                            return true;
+                                                        }
+
+                                                        // Disable dates before or equal to start date
+                                                        if (startDate && (current.isBefore(startDate, 'day') || current.isSame(startDate, 'day'))) {
+                                                            return true;
+                                                        }
+
+                                                        // Disable dates that overlap with existing blackout periods
+                                                        const existingPeriods = configurationData.blackoutPeriods?.periods || [];
+                                                        const isInExistingPeriod = existingPeriods.some(period => {
+                                                            const periodStart = dayjs(period.start, 'MM-DD');
+                                                            const periodEnd = dayjs(period.end, 'MM-DD');
+                                                            const currentDay = dayjs(currentMD, 'MM-DD');
+
+                                                            // Check if current date falls within any existing period
+                                                            return (currentDay.isAfter(periodStart) || currentDay.isSame(periodStart)) &&
+                                                                (currentDay.isBefore(periodEnd) || currentDay.isSame(periodEnd));
+                                                        });
+
+                                                        return isInExistingPeriod;
+                                                    }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={4}>
+                                            <Form.Item label=" ">
+                                                <Button
+                                                    type="primary"
+                                                    htmlType="submit"
+                                                    icon={<PlusOutlined />}
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                >
+                                                    Thêm
+                                                </Button>
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+                                </Form>
+                            </Card>
+
+                            {/* Blackout Periods Table */}
+                            {configurationData.blackoutPeriods?.periods?.length > 0 && (
+                                <Table
+                                    dataSource={configurationData.blackoutPeriods.periods.map((period, index) => ({
+                                        key: index,
+                                        index: index + 1,
+                                        start: period.start,
+                                        end: period.end
+                                    }))}
+                                    columns={[
+                                        {
+                                            title: '#',
+                                            dataIndex: 'index',
+                                            key: 'index',
+                                            width: 60,
+                                            render: (num) => <Tag color="purple">{num}</Tag>
+                                        },
+                                        {
+                                            title: 'Ngày bắt đầu',
+                                            dataIndex: 'start',
+                                            key: 'start',
+                                            render: (text) => {
+                                                // Convert MM-DD to DD/MM for display
+                                                const [month, day] = text.split('-');
+                                                return <Text strong>{day}/{month}</Text>;
+                                            }
+                                        },
+                                        {
+                                            title: 'Ngày kết thúc',
+                                            dataIndex: 'end',
+                                            key: 'end',
+                                            render: (text) => {
+                                                // Convert MM-DD to DD/MM for display
+                                                const [month, day] = text.split('-');
+                                                return <Text strong>{day}/{month}</Text>;
+                                            }
+                                        },
+                                        {
+                                            title: 'Hành động',
+                                            key: 'action',
+                                            width: 100,
+                                            render: (_, record) => (
+                                                <Popconfirm
+                                                    title="Xóa giai đoạn"
+                                                    description="Bạn có chắc chắn muốn xóa giai đoạn này?"
+                                                    onConfirm={() => {
+                                                        onRemoveBlackoutPeriod(record.key);
+                                                        message.success('Đã xóa giai đoạn!');
+                                                    }}
+                                                    okText="Xóa"
+                                                    cancelText="Hủy"
+                                                >
+                                                    <Button type="text" danger icon={<DeleteOutlined />} />
+                                                </Popconfirm>
+                                            )
+                                        }
+                                    ]}
+                                    pagination={false}
+                                    size="small"
+                                />
+                            )}
+                        </>
+                    )}
                 </Panel>
 
                 {/* Trigger Conditions */}
@@ -697,6 +999,16 @@ const ConfigurationTabComponent = ({
                                                     size="large"
                                                     optionLabelProp="label"
                                                     popupMatchSelectWidth={300}
+                                                    onChange={(value) => {
+                                                        setSelectedThresholdOperator(value);
+                                                        // ✅ Clear baseline fields if operator is not change_gt or change_lt
+                                                        if (value !== 'change_gt' && value !== 'change_lt') {
+                                                            conditionForm.setFieldsValue({
+                                                                baselineWindowDays: null,
+                                                                baselineFunction: null
+                                                            });
+                                                        }
+                                                    }}
                                                 >
                                                     {mockData.thresholdOperators?.map(operator => (
                                                         <Select.Option
@@ -809,51 +1121,73 @@ const ConfigurationTabComponent = ({
                                                 />
                                             </Form.Item>
                                         </Col>
-                                        {/* ✅ REMOVED: conditionOrder manual input - Auto-set theo thứ tự thêm của user */}
                                         <Col span={8}>
                                             <Form.Item
-                                                name="baselineWindowDays"
-                                                label="Chu kỳ tham chiếu (ngày)"
-                                                tooltip="Chu kỳ tham chiếu (Baseline Window): Khoảng thời gian trong quá khứ (tính bằng ngày) được dùng để tạo ra một giá trị 'nền' hoặc 'bình thường'. Ví dụ: Lấy dữ liệu của 365 ngày qua để tính lượng mưa trung bình hàng năm. TUỲ CHỌN - để trống nếu không cần so sánh lịch sử"
-                                                rules={[{ type: 'number', min: 1, message: getConditionValidation('BASELINE_WINDOW_DAYS_MIN') }]}
-                                            >
-                                                <InputNumber
-                                                    placeholder="365"
-                                                    min={1}
-                                                    size="large"
-                                                    style={{ width: '100%' }}
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                        <Col span={8}>
-                                            <Form.Item
-                                                name="baselineFunction"
-                                                label="Hàm tính tham chiếu"
-                                                tooltip="Hàm tính tham chiếu (Baseline Function): Phương pháp tính toán giá trị 'nền' từ dữ liệu lịch sử. Ví dụ: AVG để tính giá trị trung bình trong chu kỳ tham chiếu. TUỲ CHỌN - BẮT BUỘC nếu đã nhập chu kỳ tham chiếu"
-                                                rules={[
-                                                    ({ getFieldValue }) => ({
-                                                        validator(_, value) {
-                                                            const baselineWindowDays = getFieldValue('baselineWindowDays');
-                                                            if (baselineWindowDays && !value) {
-                                                                return Promise.reject(new Error(getConditionError('BASELINE_FUNCTION_REQUIRED')));
-                                                            }
-                                                            return Promise.resolve();
-                                                        }
-                                                    })
-                                                ]}
+                                                name="dataQuality"
+                                                label="Chất lượng dữ liệu"
+                                                tooltip="Chất lượng dữ liệu (Data Quality): Mức độ tin cậy và chính xác của nguồn dữ liệu được sử dụng. Tốt (good): dữ liệu chất lượng cao, Chấp nhận được (acceptable): dữ liệu đủ dùng, Kém (poor): dữ liệu chất lượng thấp"
+                                                initialValue="good"
                                             >
                                                 <Select
-                                                    placeholder="Chọn hàm (nếu có giá trị nền)"
+                                                    placeholder="Chọn chất lượng dữ liệu"
                                                     size="large"
                                                     options={[
-                                                        { value: 'avg', label: 'Trung bình (avg)' },
-                                                        { value: 'sum', label: 'Tổng (sum)' },
-                                                        { value: 'min', label: 'Tối thiểu (min)' },
-                                                        { value: 'max', label: 'Tối đa (max)' }
+                                                        { value: 'good', label: 'Tốt (Good)' },
+                                                        { value: 'acceptable', label: 'Chấp nhận được (Acceptable)' },
+                                                        { value: 'poor', label: 'Kém (Poor)' }
                                                     ]}
                                                 />
                                             </Form.Item>
                                         </Col>
+                                        {/* ✅ REMOVED: conditionOrder manual input - Auto-set theo thứ tự thêm của user */}
+
+                                        {/* ✅ CONDITIONAL: Baseline fields CHỈ hiện khi chọn change_gt hoặc change_lt */}
+                                        {(() => {
+                                            const currentOperator = conditionForm.getFieldValue('thresholdOperator') || selectedThresholdOperator || editingCondition?.thresholdOperator;
+                                            return (currentOperator === 'change_gt' || currentOperator === 'change_lt');
+                                        })() && (
+                                                <>
+                                                    <Col span={8}>
+                                                        <Form.Item
+                                                            name="baselineWindowDays"
+                                                            label="Chu kỳ tham chiếu (ngày)"
+                                                            tooltip="Chu kỳ tham chiếu (Baseline Window): Khoảng thời gian trong quá khứ (tính bằng ngày) được dùng để tạo ra một giá trị 'nền' hoặc 'bình thường'. BẮT BUỘC khi sử dụng toán tử thay đổi (change_gt/change_lt). Ví dụ: 365 ngày để tính giá trị trung bình hàng năm làm mốc so sánh."
+                                                            rules={[
+                                                                { required: true, message: 'Chu kỳ tham chiếu là bắt buộc khi sử dụng toán tử thay đổi!' },
+                                                                { type: 'number', min: 1, message: getConditionValidation('BASELINE_WINDOW_DAYS_MIN') }
+                                                            ]}
+                                                        >
+                                                            <InputNumber
+                                                                placeholder="365"
+                                                                min={1}
+                                                                size="large"
+                                                                style={{ width: '100%' }}
+                                                            />
+                                                        </Form.Item>
+                                                    </Col>
+                                                    <Col span={8}>
+                                                        <Form.Item
+                                                            name="baselineFunction"
+                                                            label="Hàm tính tham chiếu"
+                                                            tooltip="Hàm tính tham chiếu (Baseline Function): Phương pháp tính toán giá trị 'nền' từ dữ liệu lịch sử. BẮT BUỘC khi sử dụng toán tử thay đổi (change_gt/change_lt). Ví dụ: AVG để tính giá trị trung bình trong chu kỳ tham chiếu làm mốc so sánh với giá trị hiện tại."
+                                                            rules={[
+                                                                { required: true, message: 'Hàm tính tham chiếu là bắt buộc khi sử dụng toán tử thay đổi!' }
+                                                            ]}
+                                                        >
+                                                            <Select
+                                                                placeholder="Chọn hàm tính tham chiếu"
+                                                                size="large"
+                                                                options={[
+                                                                    { value: 'avg', label: 'Trung bình (avg)' },
+                                                                    { value: 'sum', label: 'Tổng (sum)' },
+                                                                    { value: 'min', label: 'Tối thiểu (min)' },
+                                                                    { value: 'max', label: 'Tối đa (max)' }
+                                                                ]}
+                                                            />
+                                                        </Form.Item>
+                                                    </Col>
+                                                </>
+                                            )}
                                     </Row>
                                 </Form>
                                 <div style={{ marginTop: 16 }}>

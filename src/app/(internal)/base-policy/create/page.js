@@ -82,6 +82,9 @@ const CreatePolicyPage = () => {
     handleAddTriggerCondition,
     handleRemoveTriggerCondition,
     handleUpdateTriggerCondition,
+    handleAddBlackoutPeriod,
+    handleRemoveBlackoutPeriod,
+    handleUpdateBlackoutPeriod,
     handleTagsDataChange,
     handleAddTag,
     handleRemoveTag,
@@ -445,10 +448,14 @@ const CreatePolicyPage = () => {
         <ConfigurationTab
           configurationData={configurationData}
           mockData={mockData}
+          basicData={basicData}
           onDataChange={handleConfigurationDataChange}
           onAddTriggerCondition={handleAddTriggerCondition}
           onRemoveTriggerCondition={handleRemoveTriggerCondition}
           onUpdateTriggerCondition={handleUpdateTriggerCondition}
+          onAddBlackoutPeriod={handleAddBlackoutPeriod}
+          onRemoveBlackoutPeriod={handleRemoveBlackoutPeriod}
+          onUpdateBlackoutPeriod={handleUpdateBlackoutPeriod}
           getAvailableDataSourcesForTrigger={getAvailableDataSourcesForTrigger}
         />
       ),

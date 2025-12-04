@@ -1,13 +1,16 @@
 import {
+    AlertOutlined,
     BarChartOutlined,
     BulbOutlined,
     CalculatorOutlined,
     CalendarOutlined,
+    CheckCircleOutlined,
     DollarOutlined,
     EditOutlined,
     EnvironmentOutlined,
     FileTextOutlined,
     InfoCircleOutlined,
+    LineChartOutlined,
     LinkOutlined,
     QuestionCircleOutlined,
     SearchOutlined,
@@ -185,6 +188,14 @@ const FAQTab = () => {
             description: 'Số ngày dữ liệu được tính toán',
             example: '7 ngày = tính trung bình 7 ngày',
             required: 'Có'
+        },
+        {
+            key: '5',
+            field: 'Chất lượng dữ liệu',
+            englishTerm: 'Data Quality',
+            description: 'Mức độ tin cậy và chính xác của nguồn dữ liệu',
+            options: 'good (tốt), acceptable (chấp nhận được), poor (kém)',
+            required: 'Không (mặc định: good)'
         },
     ];
 
@@ -601,6 +612,462 @@ const FAQTab = () => {
                                     tính khi policy được kích hoạt.
                                 </Text>
                             </Paragraph>
+                        </Panel>
+
+                        {/* ✅ NEW: Blackout Periods */}
+                        <Panel
+                            header={
+                                <Space>
+                                    <AlertOutlined style={{ color: '#722ed1' }} />
+                                    <Text strong>Giai đoạn Không Kích hoạt (Blackout Periods) là gì?</Text>
+                                </Space>
+                            }
+                            key="6a"
+                        >
+                            <Paragraph>
+                                <Text strong>Blackout Periods</Text> (tiếng Việt: Giai đoạn Không Kích hoạt) là các khoảng thời gian trong chu kỳ bảo hiểm mà hệ thống <Text strong type="danger">KHÔNG ĐƯỢC PHÉP</Text> kích hoạt bồi thường, dù tất cả các điều kiện trigger đều đã thỏa mãn.
+                            </Paragraph>
+
+                            <Divider />
+
+                            <Title level={5}><QuestionCircleOutlined /> Tại sao cần Blackout Periods?</Title>
+                            <Paragraph>
+                                Trong chu kỳ sinh trưởng của cây trồng, có những giai đoạn mà rủi ro chưa thực sự nghiêm trọng hoặc cây trồng có thể tự phục hồi:
+                            </Paragraph>
+                            <ul>
+                                <li>
+                                    <Text strong>Giai đoạn gieo hạt (0-7 ngày):</Text> Cây chưa phát triển, chưa cần bảo hiểm
+                                </li>
+                                <li>
+                                    <Text strong>Giai đoạn nảy mầm sớm (7-21 ngày):</Text> Cây có thể tự phục hồi nếu gặp điều kiện không thuận lợi nhẹ
+                                </li>
+                                <li>
+                                    <Text strong>Giai đoạn thu hoạch (90-120 ngày):</Text> Cây đã chín, không cần bảo hiểm nữa
+                                </li>
+                            </ul>
+
+                            <Divider />
+
+                            <Title level={5}><SettingOutlined /> Cách hoạt động</Title>
+                            <ul>
+                                <li>
+                                    <Text strong>Ngày bắt đầu:</Text> Chọn ngày bắt đầu giai đoạn không kích hoạt (hiển thị: <Text code>dd/mm/yyyy</Text>, VD: 15/01/2024)
+                                </li>
+                                <li>
+                                    <Text strong>Ngày kết thúc:</Text> Chọn ngày kết thúc giai đoạn không kích hoạt (hiển thị: <Text code>dd/mm/yyyy</Text>, VD: 10/02/2024)
+                                </li>
+                                <li>
+                                    <Text strong>Lưu trữ backend:</Text> Hệ thống tự động chuyển sang format <Text code>MM-DD</Text> (tháng-ngày) để lưu vào database
+                                </li>
+                                <li>
+                                    <Text strong>Hiển thị trong bảng:</Text> Format <Text code>dd/mm</Text> (VD: 15/01) để dễ đọc
+                                </li>
+                                <li>
+                                    Có thể thêm nhiều giai đoạn khác nhau
+                                </li>
+                            </ul>
+
+                            <Divider />
+
+                            <Title level={5}><BulbOutlined /> Ví dụ thực tế</Title>
+                            <Paragraph>
+                                <Text strong>Bảo hiểm lúa với chu kỳ 120 ngày:</Text>
+                            </Paragraph>
+                            <ul>
+                                <li>Ngày gieo hạt: 01/01/2025</li>
+                                <li>Ngày thu hoạch dự kiến: 01/05/2025</li>
+                            </ul>
+
+                            <Paragraph>
+                                <Text strong>Blackout Periods được thiết lập:</Text>
+                            </Paragraph>
+                            <Table
+                                dataSource={[
+                                    {
+                                        key: '1',
+                                        period: 'Giai đoạn gieo hạt',
+                                        start: '01/01',
+                                        end: '07/01',
+                                        reason: 'Cây chưa phát triển, chưa cần bảo hiểm'
+                                    },
+                                    {
+                                        key: '2',
+                                        period: 'Giai đoạn nảy mầm',
+                                        start: '08/01',
+                                        end: '22/01',
+                                        reason: 'Cây có thể tự phục hồi'
+                                    },
+                                    {
+                                        key: '3',
+                                        period: 'Giai đoạn thu hoạch',
+                                        start: '30/03',
+                                        end: '01/05',
+                                        reason: 'Cây đã chín, không cần bảo hiểm'
+                                    }
+                                ]}
+                                columns={[
+                                    {
+                                        title: 'Giai đoạn',
+                                        dataIndex: 'period',
+                                        key: 'period',
+                                        render: (text) => <Text strong>{text}</Text>
+                                    },
+                                    {
+                                        title: 'Từ ngày',
+                                        dataIndex: 'start',
+                                        key: 'start',
+                                        render: (text) => <Tag color="purple">{text}</Tag>
+                                    },
+                                    {
+                                        title: 'Đến ngày',
+                                        dataIndex: 'end',
+                                        key: 'end',
+                                        render: (text) => <Tag color="purple">{text}</Tag>
+                                    },
+                                    {
+                                        title: 'Lý do',
+                                        dataIndex: 'reason',
+                                        key: 'reason',
+                                        render: (text) => <Text type="secondary">{text}</Text>
+                                    }
+                                ]}
+                                pagination={false}
+                                size="small"
+                                bordered
+                            />
+
+                            <Divider />
+
+                            <Title level={5}><CheckCircleOutlined /> Các ràng buộc quan trọng</Title>
+                            <ul>
+                                <li>
+                                    <Text strong>Ngày bắt đầu {'<'} Ngày kết thúc:</Text> Ngày bắt đầu phải nhỏ hơn ngày kết thúc (hệ thống tự động disable)
+                                </li>
+                                <li>
+                                    <Text strong>Nằm trong vùng hiệu lực:</Text> Các giai đoạn phải nằm trong khoảng ngày bắt đầu và kết thúc hiệu lực bảo hiểm (hệ thống tự động disable ngày ngoài phạm vi)
+                                </li>
+                                <li>
+                                    <Text strong type="danger">Không trùng lặp:</Text> Các giai đoạn không được trùng hoặc giao nhau - <Text mark>Hệ thống tự động disable các ngày đã nằm trong blackout periods khác</Text>
+                                </li>
+                            </ul>
+
+                            <Divider />
+
+                            <Title level={5}><ThunderboltOutlined /> Kịch bản xử lý</Title>
+                            <Paragraph>
+                                <Text strong>Ngày 05/01/2025 (Trong giai đoạn gieo hạt):</Text>
+                            </Paragraph>
+                            <ul>
+                                <li>✅ Lượng mưa {'<'} 50mm (Điều kiện trigger thỏa mãn)</li>
+                                <li>❌ Ngày nằm trong blackout period (01/01 đến 07/01)</li>
+                                <li>→ <Text strong type="danger">KẾT QUẢ: Không kích hoạt bồi thường</Text> (Blackout có độ ưu tiên cao hơn)</li>
+                            </ul>
+
+                            <Paragraph>
+                                <Text strong>Ngày 15/02/2025 (Giai đoạn sinh trưởng chính):</Text>
+                            </Paragraph>
+                            <ul>
+                                <li>✅ Lượng mưa {'<'} 50mm (Điều kiện trigger thỏa mãn)</li>
+                                <li>✅ Ngày KHÔNG nằm trong blackout period</li>
+                                <li>→ <Text strong type="success">KẾT QUẢ: Kích hoạt bồi thường</Text></li>
+                            </ul>
+                        </Panel>
+
+                        {/* ✅ NEW: Baseline Fields */}
+                        <Panel
+                            header={
+                                <Space>
+                                    <LineChartOutlined style={{ color: '#13c2c2' }} />
+                                    <Text strong>Chu kỳ Tham chiếu và Hàm tính Tham chiếu (Baseline) là gì?</Text>
+                                </Space>
+                            }
+                            key="6b"
+                        >
+                            <Paragraph>
+                                <Text strong>Baseline Fields</Text> (tiếng Việt: Trường Tham chiếu) được sử dụng khi bạn muốn so sánh <Text strong>thay đổi</Text> của dữ liệu hiện tại với dữ liệu lịch sử (quá khứ), thay vì chỉ so sánh với một giá trị ngưỡng cố định.
+                            </Paragraph>
+
+                            <Divider />
+
+                            <Title level={5}><QuestionCircleOutlined /> Khi nào cần Baseline?</Title>
+                            <Paragraph>
+                                Baseline <Text strong type="danger">CHỈ BẮT BUỘC</Text> khi bạn chọn toán tử ngưỡng là:
+                            </Paragraph>
+                            <ul>
+                                <li>
+                                    <Text code>change_gt</Text> (Thay đổi lớn hơn): So sánh mức thay đổi có lớn hơn ngưỡng không
+                                </li>
+                                <li>
+                                    <Text code>change_lt</Text> (Thay đổi nhỏ hơn): So sánh mức thay đổi có nhỏ hơn ngưỡng không
+                                </li>
+                            </ul>
+                            <Paragraph>
+                                Với các toán tử khác (<Text code>{'<'}</Text>, <Text code>{'>'}</Text>, <Text code>{'<='}</Text>, <Text code>{'>='}</Text>), baseline sẽ <Text strong>BỊ ẨN ĐI</Text> và tự động set về <Text code>null</Text>.
+                            </Paragraph>
+
+                            <Divider />
+
+                            <Title level={5}><SettingOutlined /> Các trường Baseline</Title>
+                            <Table
+                                dataSource={[
+                                    {
+                                        key: '1',
+                                        field: 'Chu kỳ tham chiếu',
+                                        englishTerm: 'baseline_window_days',
+                                        description: 'Số ngày dữ liệu lịch sử dùng để tính giá trị tham chiếu (baseline)',
+                                        example: '365 ngày = lấy dữ liệu 1 năm trước',
+                                        required: 'Có (nếu dùng change_gt/change_lt)'
+                                    },
+                                    {
+                                        key: '2',
+                                        field: 'Hàm tính tham chiếu',
+                                        englishTerm: 'baseline_function',
+                                        description: 'Phương pháp tính toán giá trị baseline từ dữ liệu lịch sử',
+                                        example: 'avg, sum, min, max',
+                                        required: 'Có (nếu dùng change_gt/change_lt)'
+                                    }
+                                ]}
+                                columns={[
+                                    {
+                                        title: 'Tên trường',
+                                        dataIndex: 'field',
+                                        key: 'field',
+                                        render: (text) => <Text strong>{text}</Text>
+                                    },
+                                    {
+                                        title: 'Thuật ngữ Anh',
+                                        dataIndex: 'englishTerm',
+                                        key: 'englishTerm',
+                                        render: (text) => <Tag color="cyan">{text}</Tag>
+                                    },
+                                    {
+                                        title: 'Giải thích',
+                                        dataIndex: 'description',
+                                        key: 'description'
+                                    },
+                                    {
+                                        title: 'Ví dụ',
+                                        dataIndex: 'example',
+                                        key: 'example',
+                                        render: (text) => <Text type="secondary">{text}</Text>
+                                    },
+                                    {
+                                        title: 'Bắt buộc',
+                                        dataIndex: 'required',
+                                        key: 'required',
+                                        render: (text) => <Tag color="red">{text}</Tag>
+                                    }
+                                ]}
+                                pagination={false}
+                                size="small"
+                                bordered
+                            />
+
+                            <Divider />
+
+                            <Title level={5}><BulbOutlined /> Ví dụ thực tế với change_gt</Title>
+                            <Paragraph>
+                                <Text strong>Điều kiện:</Text> Kích hoạt bồi thường khi NDVI (chỉ số thực vật) <Text strong>giảm mạnh</Text> so với mức bình thường
+                            </Paragraph>
+                            <ul>
+                                <li>Toán tử ngưỡng: <Tag color="orange">change_lt</Tag> (Thay đổi nhỏ hơn)</li>
+                                <li>Giá trị ngưỡng: <Text code>-0.4</Text> (giảm 0.4 điểm)</li>
+                                <li>Chu kỳ tham chiếu: <Text code>365 ngày</Text> (1 năm)</li>
+                                <li>Hàm tính tham chiếu: <Text code>avg</Text> (trung bình)</li>
+                                <li>Chu kỳ tổng hợp: <Text code>7 ngày</Text></li>
+                            </ul>
+
+                            <Paragraph>
+                                <Text strong>Cách hệ thống tính toán:</Text>
+                            </Paragraph>
+                            <ol>
+                                <li>
+                                    <Text strong>Tính baseline:</Text> Lấy dữ liệu NDVI của 365 ngày trước → Tính trung bình (avg) → Baseline = 0.6
+                                </li>
+                                <li>
+                                    <Text strong>Tính giá trị hiện tại:</Text> Lấy dữ liệu NDVI của 7 ngày gần nhất → Tính trung bình → Current = 0.3
+                                </li>
+                                <li>
+                                    <Text strong>Tính thay đổi:</Text> Change = Current - Baseline = 0.3 - 0.6 = -0.3
+                                </li>
+                                <li>
+                                    <Text strong>So sánh với ngưỡng:</Text> -0.3 {'<'} -0.4? → KHÔNG (vì -0.3 lớn hơn -0.4)
+                                </li>
+                                <li>
+                                    <Text strong>Kết quả:</Text> Không kích hoạt (giảm chưa đủ mạnh)
+                                </li>
+                            </ol>
+
+                            <Paragraph>
+                                <Text strong>Nếu Current = 0.15:</Text>
+                            </Paragraph>
+                            <ol>
+                                <li>Change = 0.15 - 0.6 = -0.45</li>
+                                <li>-0.45 {'<'} -0.4? → CÓ (vì -0.45 nhỏ hơn -0.4)</li>
+                                <li><Text strong type="success">→ Kích hoạt bồi thường!</Text> (giảm quá mạnh, cây có vấn đề)</li>
+                            </ol>
+
+                            <Divider />
+
+                            <Title level={5}><CheckCircleOutlined /> Tương tác với các trường khác</Title>
+                            <ul>
+                                <li>
+                                    <Text strong>Với toán tử {'<'}, {'>'}, {'<='}, {'>='}: </Text>
+                                    Baseline fields sẽ <Text strong>tự động ẩn</Text> và set về <Text code>null</Text>. Không cần nhập.
+                                </li>
+                                <li>
+                                    <Text strong>Với toán tử change_gt, change_lt:</Text>
+                                    Baseline fields sẽ <Text strong>hiện ra</Text> và <Text strong type="danger">BẮT BUỘC</Text> phải nhập cả 2 trường (baseline_window_days và baseline_function).
+                                </li>
+                                <li>
+                                    <Text strong>Khi đổi toán tử:</Text> Hệ thống tự động xóa giá trị baseline nếu chuyển từ change_gt/change_lt sang toán tử khác.
+                                </li>
+                            </ul>
+
+                            <Divider />
+
+                            <Title level={5}><WarningOutlined /> Lưu ý quan trọng</Title>
+                            <ul>
+                                <li>
+                                    Baseline chỉ ảnh hưởng đến <Text strong>toán tử change</Text> (change_gt, change_lt), không ảnh hưởng đến các toán tử khác
+                                </li>
+                                <li>
+                                    Chu kỳ tham chiếu (baseline_window_days) phải {'>'} chu kỳ tổng hợp (aggregation_window_days) để có đủ dữ liệu lịch sử
+                                </li>
+                                <li>
+                                    Hàm tính tham chiếu (baseline_function) nên phù hợp với loại dữ liệu:
+                                    <ul>
+                                        <li><Text code>avg</Text>: Phù hợp với nhiệt độ, NDVI, độ ẩm</li>
+                                        <li><Text code>sum</Text>: Phù hợp với lượng mưa, bức xạ tích lũy</li>
+                                        <li><Text code>max/min</Text>: Phù hợp khi quan tâm giá trị cực trị</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </Panel>
+
+                        {/* ✅ NEW: Data Quality */}
+                        <Panel
+                            header={
+                                <Space>
+                                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                                    <Text strong>Chất lượng Dữ liệu (Data Quality) là gì?</Text>
+                                </Space>
+                            }
+                            key="6c"
+                        >
+                            <Paragraph>
+                                <Text strong>Data Quality</Text> (tiếng Việt: Chất lượng Dữ liệu) đánh giá mức độ tin cậy, chính xác và hoàn chỉnh của nguồn dữ liệu được sử dụng trong điều kiện trigger. Đây là thông tin quan trọng giúp hệ thống và người dùng hiểu rõ độ tin cậy của dữ liệu khi ra quyết định bồi thường.
+                            </Paragraph>
+
+                            <Divider />
+
+                            <Title level={5}><SettingOutlined /> Các mức chất lượng</Title>
+                            <Table
+                                dataSource={[
+                                    {
+                                        key: '1',
+                                        value: 'good',
+                                        label: 'Tốt (Good)',
+                                        description: 'Dữ liệu chất lượng cao, độ chính xác trên 90%, ít nhiễu, cập nhật đầy đủ',
+                                        example: 'Dữ liệu từ trạm khí tượng chính thức, vệ tinh độ phân giải cao',
+                                        color: 'green'
+                                    },
+                                    {
+                                        key: '2',
+                                        value: 'acceptable',
+                                        label: 'Chấp nhận được (Acceptable)',
+                                        description: 'Dữ liệu đủ dùng, độ chính xác 70-90%, có thể thiếu một số điểm dữ liệu',
+                                        example: 'Dữ liệu từ nguồn thứ cấp, vệ tinh độ phân giải trung bình',
+                                        color: 'orange'
+                                    },
+                                    {
+                                        key: '3',
+                                        value: 'poor',
+                                        label: 'Kém (Poor)',
+                                        description: 'Dữ liệu chất lượng thấp, độ chính xác dưới 70%, nhiều lỗ hổng hoặc nhiễu',
+                                        example: 'Dữ liệu từ nguồn không chính thức, cảm biến lỗi thời',
+                                        color: 'red'
+                                    }
+                                ]}
+                                columns={[
+                                    {
+                                        title: 'Giá trị',
+                                        dataIndex: 'value',
+                                        key: 'value',
+                                        width: '12%',
+                                        render: (text) => <Tag color="blue">{text}</Tag>
+                                    },
+                                    {
+                                        title: 'Nhãn',
+                                        dataIndex: 'label',
+                                        key: 'label',
+                                        width: '18%',
+                                        render: (text, record) => <Tag color={record.color}>{text}</Tag>
+                                    },
+                                    {
+                                        title: 'Mô tả',
+                                        dataIndex: 'description',
+                                        key: 'description',
+                                        width: '35%'
+                                    },
+                                    {
+                                        title: 'Ví dụ',
+                                        dataIndex: 'example',
+                                        key: 'example',
+                                        width: '35%',
+                                        render: (text) => <Text type="secondary">{text}</Text>
+                                    }
+                                ]}
+                                pagination={false}
+                                size="small"
+                                bordered
+                            />
+
+                            <Divider />
+
+                            <Title level={5}><QuestionCircleOutlined /> Tại sao cần Data Quality?</Title>
+                            <ul>
+                                <li>
+                                    <Text strong>Đánh giá độ tin cậy:</Text> Giúp người dùng và hệ thống biết nguồn dữ liệu có đáng tin cậy không
+                                </li>
+                                <li>
+                                    <Text strong>Quản lý rủi ro:</Text> Dữ liệu kém chất lượng có thể dẫn đến quyết định bồi thường sai
+                                </li>
+                                <li>
+                                    <Text strong>Điều chỉnh hệ số:</Text> Backend có thể điều chỉnh tính toán dựa trên chất lượng dữ liệu
+                                </li>
+                                <li>
+                                    <Text strong>Minh bạch:</Text> Người mua bảo hiểm hiểu rõ nguồn gốc và chất lượng dữ liệu giám sát
+                                </li>
+                            </ul>
+
+                            <Divider />
+
+                            <Title level={5}><BulbOutlined /> Cách sử dụng</Title>
+                            <Paragraph>
+                                Khi thêm điều kiện trigger, chọn Data Quality phù hợp với nguồn dữ liệu:
+                            </Paragraph>
+                            <ul>
+                                <li>
+                                    <Tag color="green">good</Tag> - Nếu dùng dữ liệu từ NASA, ESA, hoặc trạm khí tượng chính thức
+                                </li>
+                                <li>
+                                    <Tag color="orange">acceptable</Tag> - Nếu dùng dữ liệu từ nguồn thương mại, có một số giới hạn
+                                </li>
+                                <li>
+                                    <Tag color="red">poor</Tag> - Nếu dùng dữ liệu thử nghiệm, không chính thức (không khuyến khích cho production)
+                                </li>
+                            </ul>
+
+                            <Divider />
+
+                            <Title level={5}><WarningOutlined /> Lưu ý</Title>
+                            <ul>
+                                <li>Mặc định, Data Quality được set là <Tag color="green">good</Tag> nếu không chọn</li>
+                                <li>Nên chọn chất lượng phù hợp với thực tế để tránh tranh chấp sau này</li>
+                                <li>Policy với nhiều điều kiện <Tag color="red">poor</Tag> có thể bị từ chối phê duyệt</li>
+                                <li>Data Quality hiển thị trong bảng điều kiện để dễ theo dõi</li>
+                            </ul>
                         </Panel>
 
                         {/* Lưu ý quan trọng */}

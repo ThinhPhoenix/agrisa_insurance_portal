@@ -173,7 +173,7 @@ const initialConfigurationData = {
 
   //  Optional Trigger Fields
   growthStage: "",
-  blackoutPeriods: {}, //  Object, not array - per BE spec
+  blackoutPeriods: { periods: [] }, //  { periods: [{start: 'MM-DD', end: 'MM-DD'}] }
 
   //  Conditions Table (REQUIRED at least 1)
   conditions: [], // Array of condition objects
@@ -305,21 +305,20 @@ export const usePolicyStore = create((set, get) => ({
       monitor_frequency_unit: mapFrequencyUnit(
         configurationData.monitorFrequencyUnit
       ),
-      //  Parse blackout_periods if it's a string, otherwise use as-is
-      // ⚠️ Return {} instead of null when empty (backend may reject empty object)
+      //  Blackout periods: {periods: [{start: 'MM-DD', end: 'MM-DD'}]}
       blackout_periods: (() => {
         const bp = configurationData.blackoutPeriods;
-        if (!bp) return {}; //  Changed from null to {}
-        if (typeof bp === "string") {
-          try {
-            const parsed = JSON.parse(bp);
-            return parsed && Object.keys(parsed).length > 0 ? parsed : null; //  Return null if empty
-          } catch (e) {
-            console.warn("❌ Invalid blackout_periods JSON:", bp);
-            return null; //  Changed from {} to null
-          }
+        if (!bp || !bp.periods || bp.periods.length === 0) {
+          return { periods: [] }; //  Return empty periods array
         }
-        return Object.keys(bp).length > 0 ? bp : null; //  Return null if empty object
+        // Validate and format periods
+        const validPeriods = bp.periods
+          .filter((p) => p.start && p.end)
+          .map((p) => ({
+            start: p.start, // MM-DD format
+            end: p.end, // MM-DD format
+          }));
+        return { periods: validPeriods };
       })(),
     };
 
@@ -349,12 +348,22 @@ export const usePolicyStore = create((set, get) => ({
         tier_multiplier: condition.tierMultiplier || 1,
         calculated_cost: calculatedCost,
 
-        // OPTIONAL fields with defaults to match standard JSON
+        // OPTIONAL fields with conditional defaults
         early_warning_threshold: condition.earlyWarningThreshold || 60.0,
-        baseline_window_days: condition.baselineWindowDays || 365,
-        baseline_function: condition.baselineFunction || "avg",
+        // Baseline fields: only include if threshold_operator is change_gt or change_lt
+        baseline_window_days:
+          condition.thresholdOperator === "change_gt" ||
+          condition.thresholdOperator === "change_lt"
+            ? condition.baselineWindowDays || null
+            : null,
+        baseline_function:
+          condition.thresholdOperator === "change_gt" ||
+          condition.thresholdOperator === "change_lt"
+            ? condition.baselineFunction || null
+            : null,
         validation_window_days: condition.validationWindowDays || 3,
         condition_order: condition.conditionOrder || 1,
+        data_quality: condition.dataQuality || "good", // good | acceptable | poor
       };
 
       console.log("🔍 Mapped condition:", mappedCondition);

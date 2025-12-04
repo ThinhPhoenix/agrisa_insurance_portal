@@ -78,7 +78,7 @@ const useCreatePolicy = () => {
     monitorInterval: 1,
     monitorFrequencyUnit: "day",
     growthStage: "",
-    blackoutPeriods: {},
+    blackoutPeriods: { periods: [] },
     conditions: [],
   });
 
@@ -629,6 +629,36 @@ const useCreatePolicy = () => {
     }));
   }, [basicData.selectedDataSources]);
 
+  // ✅ BLACKOUT PERIODS HANDLERS
+  const handleAddBlackoutPeriod = useCallback((period) => {
+    setConfigurationData((prev) => ({
+      ...prev,
+      blackoutPeriods: {
+        periods: [...(prev.blackoutPeriods.periods || []), period],
+      },
+    }));
+  }, []);
+
+  const handleRemoveBlackoutPeriod = useCallback((index) => {
+    setConfigurationData((prev) => ({
+      ...prev,
+      blackoutPeriods: {
+        periods: prev.blackoutPeriods.periods.filter((_, i) => i !== index),
+      },
+    }));
+  }, []);
+
+  const handleUpdateBlackoutPeriod = useCallback((index, updates) => {
+    setConfigurationData((prev) => ({
+      ...prev,
+      blackoutPeriods: {
+        periods: prev.blackoutPeriods.periods.map((period, i) =>
+          i === index ? { ...period, ...updates } : period
+        ),
+      },
+    }));
+  }, []);
+
   const handleReset = useCallback(() => {
     setBasicData({
       productName: "",
@@ -666,7 +696,7 @@ const useCreatePolicy = () => {
       monitorInterval: 1,
       monitorFrequencyUnit: "day",
       growthStage: "",
-      blackoutPeriods: [],
+      blackoutPeriods: { periods: [] },
       conditions: [],
     });
     setTagsData({
@@ -836,6 +866,9 @@ const useCreatePolicy = () => {
     handleAddTriggerCondition,
     handleRemoveTriggerCondition,
     handleUpdateTriggerCondition,
+    handleAddBlackoutPeriod,
+    handleRemoveBlackoutPeriod,
+    handleUpdateBlackoutPeriod,
     handleTagsDataChange,
     handleAddTag,
     handleRemoveTag,

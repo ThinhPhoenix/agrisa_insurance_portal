@@ -1,8 +1,10 @@
 import CustomTable from '@/components/custom-table';
 import {
+    EyeOutlined,
+    FilePdfOutlined,
     TagOutlined
 } from '@ant-design/icons';
-import { Card, Descriptions, Empty, Tag, Typography } from 'antd';
+import { Button, Card, Col, Divider, Empty, Row, Space, Tag, Typography } from 'antd';
 import React from 'react';
 
 const { Title, Text } = Typography;
@@ -70,49 +72,121 @@ const TagsDetail = ({ policyData, mockData }) => {
 
     return (
         <Card>
-            <Title level={4}>
-                <TagOutlined style={{ marginRight: 8 }} />
-                Tài liệu & Trường thông tin
-                <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
-                    ({tags.length} trường)
-                </Text>
-            </Title>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                {/* Header */}
+                <div>
+                    <Title level={4} style={{ marginBottom: 0 }}>
+                        <TagOutlined style={{ marginRight: 8 }} />
+                        Tài liệu & Trường thông tin
+                    </Title>
+                    <Text type="secondary">Trường dữ liệu và tài liệu hợp đồng PDF</Text>
+                </div>
 
-            {tags.length === 0 ? (
-                <Empty description="Không có tags nào được thêm" />
-            ) : (
-                <>
-                    <CustomTable
-                        columns={tagColumns}
-                        dataSource={tags}
-                        pagination={{
-                            pageSize: 10,
-                            showSizeChanger: false,
-                            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} tags`,
-                        }}
-                    />
+                {/* Section 1: PDF Document */}
+                {policyData.document?.has_document && (
+                    <div>
+                        <Text strong>
+                            <FilePdfOutlined style={{ marginRight: 6, color: '#ff4d4f' }} />
+                            Tài liệu PDF Hợp đồng
+                        </Text>
+                        <Card size="small" style={{ marginTop: 8, backgroundColor: '#fafafa' }}>
+                            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                                {/* Document info */}
+                                <Row gutter={[16, 16]}>
+                                    <Col span={12}>
+                                        <Text type="secondary">Tên tài liệu:</Text>
+                                        <br />
+                                        <Text strong code style={{ fontSize: 12 }}>
+                                            {policyData.document.document_url}
+                                        </Text>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Text type="secondary">Loại tệp:</Text>
+                                        <br />
+                                        <Tag color="blue">
+                                            {policyData.document.content_type || 'PDF'}
+                                        </Tag>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Text type="secondary">Kích thước:</Text>
+                                        <br />
+                                        <Text strong>
+                                            {policyData.document.file_size_bytes
+                                                ? `${(policyData.document.file_size_bytes / 1024).toFixed(2)} KB`
+                                                : 'N/A'}
+                                        </Text>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Text type="secondary">Trạng thái:</Text>
+                                        <br />
+                                        <Tag
+                                            color={
+                                                policyData.documentValidationStatus === 'passed'
+                                                    ? 'green'
+                                                    : 'orange'
+                                            }
+                                        >
+                                            {policyData.documentValidationStatus === 'passed'
+                                                ? 'Đã xác thực'
+                                                : 'Chưa xác thực'}
+                                        </Tag>
+                                    </Col>
+                                </Row>
 
-                    <Card
-                        title="Thông tin tài liệu"
-                        style={{ marginTop: 16 }}
-                        type="inner"
-                    >
-                        <Descriptions bordered column={2} size="small">
-                            <Descriptions.Item label="URL tài liệu mẫu" span={2}>
-                                <Text code>{policyData.templateDocumentUrl || 'N/A'}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái xác thực">
-                                <Tag color={policyData.documentValidationStatus === 'approved' ? 'green' : 'orange'}>
-                                    {getValidationStatusLabel(policyData.documentValidationStatus) || 'chờ duyệt'}
-                                </Tag>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Số lượng trường thông tin">
-                                <Text strong>{tags.length}</Text>
-                            </Descriptions.Item>
-                        </Descriptions>
-                    </Card>
-                </>
-            )}
+                                {/* Action button */}
+                                <Space>
+                                    <Button
+                                        type="primary"
+                                        icon={<EyeOutlined />}
+                                        onClick={() => {
+                                            if (policyData.document.presigned_url) {
+                                                window.open(policyData.document.presigned_url, '_blank');
+                                            }
+                                        }}
+                                        disabled={!policyData.document.presigned_url}
+                                    >
+                                        Xem Tài liệu PDF
+                                    </Button>
+                                    {policyData.document.presigned_url_expiry && (
+                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                            Link hết hạn:{' '}
+                                            {new Date(policyData.document.presigned_url_expiry).toLocaleString('vi-VN')}
+                                        </Text>
+                                    )}
+                                </Space>
+                            </Space>
+                        </Card>
+                    </div>
+                )}
+
+                <Divider style={{ margin: '8px 0' }} />
+
+                {/* Section 2: Tags/Fields */}
+                <div>
+                    <Text strong>
+                        <TagOutlined style={{ marginRight: 6, color: '#1890ff' }} />
+                        Trường thông tin
+                        <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
+                            ({tags.length} trường)
+                        </Text>
+                    </Text>
+
+                    {tags.length === 0 ? (
+                        <Empty description="Không có trường thông tin nào" style={{ marginTop: 16 }} />
+                    ) : (
+                        <CustomTable
+                            columns={tagColumns}
+                            dataSource={tags}
+                            pagination={{
+                                pageSize: 10,
+                                showSizeChanger: false,
+                                showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} trường`,
+                            }}
+                            style={{ marginTop: 8 }}
+                        />
+                    )}
+                </div>
+            </Space>
         </Card>
     );
 };

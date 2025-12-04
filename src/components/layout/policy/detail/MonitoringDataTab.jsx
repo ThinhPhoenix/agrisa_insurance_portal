@@ -1,40 +1,41 @@
-import { Card, Space, Tag, Typography } from "antd";
-import { LineChartOutlined } from "@ant-design/icons";
 import MonitoringDataView from "@/components/layout/policy/detail/monitoring-data-view";
+import { BarChartOutlined } from "@ant-design/icons";
+import { Card, Empty, Space, Tag, Typography } from "antd";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 export default function MonitoringDataTab({ monitoringData }) {
   if (!monitoringData || monitoringData.length === 0) {
     return (
       <Card>
-        <Text type="secondary">Không có dữ liệu giám sát</Text>
+        <Empty
+          description="Không có dữ liệu giám sát"
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
       </Card>
     );
   }
 
   return (
-    <Space direction="vertical" size="large" className="w-full">
+    <Space direction="vertical" size="middle" className="w-full">
       {monitoringData.map((item, idx) => (
-        <Card
-          key={idx}
-          title={
-            <div className="flex justify-between items-center">
-              <span>
-                <LineChartOutlined />{" "}
-                {item.dataSource?.display_name_vi ||
-                  item.parameterName.toUpperCase()}
-                {" - "}
-                <Text type="secondary">
+        <Card key={idx}>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <BarChartOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+              <div>
+                <Title level={4} style={{ margin: 0 }}>
+                  {item.dataSource?.display_name_vi || item.parameterName.toUpperCase()}
+                </Title>
+                <Text type="secondary" style={{ fontSize: '13px' }}>
                   {item.dataSource?.description_vi}
                 </Text>
-              </span>
-              <Tag color="blue">
-                {item.monitoringData?.count || 0} bản ghi
-              </Tag>
+              </div>
             </div>
-          }
-        >
+            <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+              {item.monitoringData?.count || 0} bản ghi
+            </Tag>
+          </div>
           <MonitoringDataView item={item} />
         </Card>
       ))}

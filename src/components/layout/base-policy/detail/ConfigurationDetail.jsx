@@ -1,9 +1,13 @@
 import CustomTable from '@/components/custom-table';
-import { SettingOutlined } from '@ant-design/icons';
-import { Card, Collapse, Descriptions, Tag, Typography } from 'antd';
+import {
+    AlertOutlined,
+    ClockCircleOutlined,
+    SettingOutlined,
+    ThunderboltOutlined
+} from '@ant-design/icons';
+import { Card, Descriptions, Divider, Space, Tag, Typography } from 'antd';
 
 const { Title, Text } = Typography;
-const { Panel } = Collapse;
 
 const ConfigurationDetail = ({ policyData, mockData }) => {
     const getAggregationFunctionLabel = (value) => {
@@ -170,114 +174,62 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
 
     return (
         <Card>
-            <Title level={4}>
-                <SettingOutlined style={{ marginRight: 8 }} />
-                Cấu hình Chính sách
-            </Title>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                {/* Header */}
+                <div>
+                    <Title level={4} style={{ marginBottom: 0 }}>
+                        <SettingOutlined style={{ marginRight: 8 }} />
+                        Cấu hình Nâng cao
+                    </Title>
+                    <Text type="secondary">Giám sát và điều kiện kích hoạt</Text>
+                </div>
 
-            <Collapse defaultActiveKey={['payout', 'conditions']} size="large">
-                {/* Payout Configuration */}
-                <Panel
-                    header="Cấu hình Thanh toán chi trả"
-                    key="payout"
-                >
-                    <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Số tiền chi trả cố định">
-                            <Text strong>{policyData.fixPayoutAmount?.toLocaleString()} {policyData.coverageCurrency}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Chi trả theo hecta">
-                            <Tag color={policyData.isPayoutPerHectare ? 'green' : 'red'}>
-                                {policyData.isPayoutPerHectare ? 'Có' : 'Không'}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Hệ số vượt ngưỡng">
-                            <Text strong>{policyData.overThresholdMultiplier}x</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Tỉ lệ chi trả cơ bản">
-                            <Text strong>{(policyData.payoutBaseRate * 100)?.toFixed(2)}%</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Giới hạn chi trả">
-                            <Text strong>{policyData.payoutCap?.toLocaleString()} {policyData.coverageCurrency}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Tỉ lệ hoàn phí khi hủy">
-                            <Text strong>{(policyData.cancelPremiumRate * 100)?.toFixed(2)}%</Text>
-                        </Descriptions.Item>
-                    </Descriptions>
-                </Panel>
-
-                {/* Monitoring & Alerts */}
-                <Panel
-                    header="Giám sát & Cảnh báo"
-                    key="monitoring"
-                >
-                    <Descriptions bordered column={2} size="small">
+                {/* Section 1: Monitoring & Alerts */}
+                <div>
+                    <Text strong>
+                        <ClockCircleOutlined style={{ marginRight: 6, color: '#1890ff' }} />
+                        Giám sát & Cảnh báo
+                    </Text>
+                    <Descriptions bordered column={2} size="small" style={{ marginTop: 8 }}>
                         <Descriptions.Item label="Tần suất giám sát">
-                            <Text strong>{policyData.configuration?.monitorInterval} {getMonitorFrequencyUnitText(policyData.configuration?.monitorFrequencyUnit)}</Text>
+                            <Space>
+                                <ClockCircleOutlined style={{ color: '#52c41a' }} />
+                                <Text strong>{policyData.configuration?.monitorInterval} {getMonitorFrequencyUnitText(policyData.configuration?.monitorFrequencyUnit)}</Text>
+                            </Space>
                         </Descriptions.Item>
                         <Descriptions.Item label="Giai đoạn sinh trưởng">
-                            <Text strong>{policyData.configuration?.growthStage || 'N/A'}</Text>
+                            <Tag color="cyan">{policyData.configuration?.growthStage || 'N/A'}</Tag>
                         </Descriptions.Item>
                     </Descriptions>
-                </Panel>
+                </div>
 
-                {/* Lifecycle Configuration */}
-                <Panel
-                    header="Cấu hình Chu kỳ sống của Policy"
-                    key="lifecycle"
-                >
-                    <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Tự động gia hạn hợp đồng">
-                            <Tag color={policyData.autoRenewal ? 'green' : 'red'}>
-                                {policyData.autoRenewal ? 'Có' : 'Không'}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Tỉ lệ giảm giá khi gia hạn">
-                            <Text strong>{(policyData.renewalDiscountRate * 100)?.toFixed(2)}%</Text>
-                        </Descriptions.Item>
-                    </Descriptions>
-                </Panel>
+                <Divider style={{ margin: '8px 0' }} />
 
-                {/* Registration Time Configuration */}
-                <Panel
-                    header="Cấu hình thời hạn bảo hiểm"
-                    key="registration-time"
-                >
-                    <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Thời gian mở đăng ký">
-                            <Text strong>{policyData.enrollmentStartDay}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian đóng đăng ký">
-                            <Text strong>{policyData.enrollmentEndDay}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian bắt đầu hiệu lực">
-                            <Text strong>{policyData.insuranceValidFromDay}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian kết thúc hiệu lực">
-                            <Text strong>{policyData.insuranceValidToDay}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian gia hạn thanh toán phí tối đa">
-                            <Text strong>{policyData.maxPremiumPaymentProlong} ngày</Text>
-                        </Descriptions.Item>
-                    </Descriptions>
-                </Panel>
+                {/* Section 2: Trigger Conditions */}
+                <div>
+                    <Space style={{ marginBottom: 12 }}>
+                        <ThunderboltOutlined style={{ color: '#ff4d4f' }} />
+                        <Text strong>Điều kiện Kích hoạt</Text>
+                        <Tag color="blue">{policyData.configuration?.triggerConditions?.length || 0} điều kiện</Tag>
+                    </Space>
 
-                {/* Trigger Conditions */}
-                <Panel
-                    header={`Điều kiện Kích hoạt (${policyData.configuration?.triggerConditions?.length || 0} điều kiện)`}
-                    key="conditions"
-                >
-                    {policyData.configuration?.triggerConditions?.length > 0 && (
+                    {policyData.configuration?.triggerConditions?.length > 0 ? (
                         <>
-                            <Descriptions bordered column={1} size="small" style={{ marginBottom: 16 }}>
-                                <Descriptions.Item label="Toán tử Logic giữa các điều kiện">
-                                    <Tag color="blue">{policyData.configuration?.logicalOperator}</Tag>
-                                    <br />
-                                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                            {/* Logical Operator Info */}
+                            <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f0f5ff' }}>
+                                <Space>
+                                    <AlertOutlined style={{ color: '#1890ff' }} />
+                                    <Text strong>Toán tử Logic:</Text>
+                                    <Tag color="blue" style={{ fontSize: 13 }}>
+                                        {policyData.configuration?.logicalOperator}
+                                    </Tag>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
                                         {mockData.logicalOperators.find(op => op.value === policyData.configuration?.logicalOperator)?.description || ''}
                                     </Text>
-                                </Descriptions.Item>
-                            </Descriptions>
+                                </Space>
+                            </Card>
 
+                            {/* Conditions Table */}
                             <CustomTable
                                 columns={triggerColumns}
                                 dataSource={policyData.configuration?.triggerConditions || []}
@@ -286,66 +238,52 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
 
                             {/* Logic Preview */}
                             <Card
-                                title="Xem trước Logic Kích hoạt"
-                                className="logic-preview-card"
-                                style={{ marginTop: 16 }}
+                                size="small"
+                                title={
+                                    <Space>
+                                        <ThunderboltOutlined style={{ color: '#faad14' }} />
+                                        <span>Xem trước Logic Kích hoạt</span>
+                                    </Space>
+                                }
+                                style={{ marginTop: 16, borderColor: '#faad14' }}
                             >
-                                <div className="logic-preview">
+                                <Space direction="vertical" style={{ width: '100%' }}>
                                     <Text>
-                                        Thanh toán <Text strong>{(policyData.payoutBaseRate * 100)?.toFixed(2)}%</Text> (tối đa{' '}
-                                        <Text strong>{policyData.payoutCap?.toLocaleString()} {policyData.coverageCurrency}</Text>) khi{' '}
-                                        <Text strong>
+                                        <Text strong style={{ color: '#52c41a' }}>Chi trả {(policyData.payoutBaseRate * 100)?.toFixed(2)}%</Text>
+                                        {' '}(tối đa <Text strong>{policyData.payoutCap?.toLocaleString()} {policyData.coverageCurrency}</Text>) khi{' '}
+                                        <Tag color="blue">
                                             {policyData.configuration?.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
-                                        </Text>
+                                        </Tag>
                                         {' '}các điều kiện sau được thỏa mãn:
                                     </Text>
-                                    <ul style={{ marginTop: 8 }}>
+                                    <ul style={{ marginTop: 8, marginBottom: 0 }}>
                                         {policyData.configuration?.triggerConditions?.map((condition, index) => (
                                             <li key={condition.id}>
                                                 <Text>
-                                                    {getAggregationFunctionLabel(condition.aggregationFunction)} của {getDataSourceLabel(condition)}{' '}
-                                                    trong {condition.aggregationWindowDays} ngày{' '}
-                                                    {getThresholdOperatorLabel(condition.thresholdOperator)} {condition.thresholdValue} {getDataSourceUnit(condition)}
+                                                    <Tag color="green">{getAggregationFunctionLabel(condition.aggregationFunction)}</Tag>
+                                                    {' '}của <Tag color="blue">{getDataSourceLabel(condition)}</Tag>
+                                                    {' '}trong <Text strong>{condition.aggregationWindowDays} ngày</Text>
+                                                    {' '}<Tag color="red">{getThresholdOperatorLabel(condition.thresholdOperator)}</Tag>
+                                                    {' '}<Text strong>{condition.thresholdValue} {getDataSourceUnit(condition)}</Text>
                                                     {condition.baselineWindowDays > 0 && (
-                                                        <> (baseline: {condition.baselineWindowDays} ngày, hàm: {condition.baselineFunction})</>
+                                                        <Text type="secondary" style={{ fontSize: 11 }}>
+                                                            {' '}(baseline: {condition.baselineWindowDays} ngày)
+                                                        </Text>
                                                     )}
                                                 </Text>
                                             </li>
                                         ))}
                                     </ul>
-                                </div>
+                                </Space>
                             </Card>
                         </>
+                    ) : (
+                        <Card size="small">
+                            <Text type="secondary">Chưa có điều kiện kích hoạt nào được cấu hình</Text>
+                        </Card>
                     )}
-
-                    {(!policyData.configuration?.triggerConditions || policyData.configuration?.triggerConditions.length === 0) && (
-                        <Text type="secondary">Chưa có điều kiện kích hoạt nào được cấu hình</Text>
-                    )}
-                </Panel>
-
-                {/* Additional Settings */}
-                <Panel
-                    header="Cài đặt Bổ sung"
-                    key="additional"
-                >
-                    <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Mô tả sản phẩm" span={2}>
-                            <Text>{policyData.description || 'Không có mô tả'}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Thông tin bổ sung quan trọng" span={2}>
-                            <Text>{policyData.importantAdditionalInformation || 'Không có thông tin'}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="URL tài liệu mẫu" span={2}>
-                            <Text code>{policyData.templateDocumentUrl || 'N/A'}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Trạng thái xác thực tài liệu">
-                            <Tag color={getValidationStatusColor(policyData.documentValidationStatus || 'pending')}>
-                                {getValidationStatusText(policyData.documentValidationStatus || 'pending')}
-                            </Tag>
-                        </Descriptions.Item>
-                    </Descriptions>
-                </Panel>
-            </Collapse>
+                </div>
+            </Space>
         </Card>
     );
 };

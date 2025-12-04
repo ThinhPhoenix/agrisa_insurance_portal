@@ -1,13 +1,19 @@
-import { Card, Descriptions, Space, Tag, Typography, Button, Table } from "antd";
 import {
-  DownloadOutlined,
-  ClockCircleOutlined,
+  CalendarOutlined,
   CheckCircleOutlined,
+  ClockCircleOutlined,
+  DollarOutlined,
+  DownloadOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
+  ReloadOutlined,
+  SafetyOutlined,
   StopOutlined,
+  ThunderboltOutlined
 } from "@ant-design/icons";
+import { Button, Card, Descriptions, Divider, Space, Table, Tag, Typography } from "antd";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const getStatusTag = (status) => {
   const statusConfig = {
@@ -69,421 +75,371 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
   }
 
   return (
-    <Card>
-      <Space direction="vertical" size="large" className="w-full">
+    <>
+      <Card>
         {/* Product Info Section */}
-        <div>
-          <Text strong className="text-base block mb-3">
-            Thông tin sản phẩm
-          </Text>
-          <Descriptions
-            column={1}
-            size="small"
-            bordered
-            labelStyle={{ width: "50%" }}
-            contentStyle={{ width: "50%" }}
-          >
-            <Descriptions.Item label="Tên sản phẩm">
-              <Text strong>{basePolicy.base_policy?.product_name}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Mã sản phẩm">
-              <Tag color="blue">{basePolicy.base_policy?.product_code}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Mô tả sản phẩm">
-              {basePolicy.base_policy?.product_description}
-            </Descriptions.Item>
-            <Descriptions.Item label="Loại cây trồng">
-              <Tag color="green">
-                {CROP_TYPE_LABELS[basePolicy.base_policy?.crop_type] ||
-                  basePolicy.base_policy?.crop_type}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              {getStatusTag(basePolicy.base_policy?.status)}
-            </Descriptions.Item>
-          </Descriptions>
+        <div className="flex items-center gap-2 mb-4">
+          <SafetyOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+          <Title level={4} style={{ margin: 0 }}>Thông tin sản phẩm</Title>
         </div>
+        <Descriptions
+          column={{ xs: 1, sm: 1, md: 2 }}
+          size="small"
+          labelStyle={{ fontWeight: 500 }}
+        >
+          <Descriptions.Item label="Tên sản phẩm" span={2}>
+            <Text strong style={{ fontSize: '15px' }}>{basePolicy.base_policy?.product_name}</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label="Mã sản phẩm">
+            <Tag color="blue" style={{ fontSize: '13px', padding: '4px 10px' }}>
+              {basePolicy.base_policy?.product_code}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Trạng thái">
+            {getStatusTag(basePolicy.base_policy?.status)}
+          </Descriptions.Item>
+          <Descriptions.Item label="Loại cây trồng">
+            <Tag color="green" style={{ fontSize: '13px', padding: '4px 10px' }}>
+              {CROP_TYPE_LABELS[basePolicy.base_policy?.crop_type] ||
+                basePolicy.base_policy?.crop_type}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Mô tả sản phẩm" span={2}>
+            <Text type="secondary">{basePolicy.base_policy?.product_description}</Text>
+          </Descriptions.Item>
+        </Descriptions>
+
+        <Divider />
 
         {/* Premium Info Section */}
-        <div>
-          <Text strong className="text-base block mb-3">
-            Thông tin phí bảo hiểm
-          </Text>
-          <Descriptions
-            column={1}
-            size="small"
-            bordered
-            labelStyle={{ width: "50%" }}
-            contentStyle={{ width: "50%" }}
-          >
-            <Descriptions.Item label="Phí cố định">
+        <div className="flex items-center gap-2 mb-4">
+          <DollarOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
+          <Title level={4} style={{ margin: 0 }}>Phí bảo hiểm</Title>
+        </div>
+        <Descriptions
+          column={{ xs: 1, sm: 1, md: 2 }}
+          size="small"
+          labelStyle={{ fontWeight: 500 }}
+        >
+          <Descriptions.Item label="Phí cố định">
+            <Text strong style={{ color: '#52c41a' }}>
               {new Intl.NumberFormat("vi-VN", {
                 style: "currency",
-                currency:
-                  basePolicy.base_policy?.coverage_currency || "VND",
+                currency: basePolicy.base_policy?.coverage_currency || "VND",
               }).format(basePolicy.base_policy?.fix_premium_amount || 0)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tính theo hecta">
-              <Tag
-                color={
-                  basePolicy.base_policy?.is_per_hectare
-                    ? "green"
-                    : "orange"
-                }
-              >
-                {basePolicy.base_policy?.is_per_hectare ? "Có" : "Không"}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Tỷ lệ phí cơ bản">
-              {(basePolicy.base_policy?.premium_base_rate * 100).toFixed(2)}
-              %
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời gian gia hạn thanh toán tối đa">
-              {basePolicy.base_policy?.max_premium_payment_prolong} ngày
-            </Descriptions.Item>
-            <Descriptions.Item label="Tỷ lệ phí hủy">
-              {(basePolicy.base_policy?.cancel_premium_rate * 100).toFixed(
-                2
-              )}
-              %
-            </Descriptions.Item>
-          </Descriptions>
-        </div>
+            </Text>
+          </Descriptions.Item>
+          <Descriptions.Item label="Tỷ lệ phí cơ bản">
+            <Tag color="blue">{(basePolicy.base_policy?.premium_base_rate * 100).toFixed(2)}%</Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Tính theo hecta">
+            <Tag color={basePolicy.base_policy?.is_per_hectare ? "green" : "orange"}>
+              {basePolicy.base_policy?.is_per_hectare ? "Có" : "Không"}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Tỷ lệ phí hủy">
+            <Tag color="volcano">{(basePolicy.base_policy?.cancel_premium_rate * 100).toFixed(2)}%</Tag>
+          </Descriptions.Item>
+        </Descriptions>
+
+        <Divider />
 
         {/* Payout Info Section */}
-        <div>
-          <Text strong className="text-base block mb-3">
-            Thông tin chi trả bồi thường
-          </Text>
-          <Descriptions
-            column={1}
-            size="small"
-            bordered
-            labelStyle={{ width: "50%" }}
-            contentStyle={{ width: "50%" }}
-          >
-            <Descriptions.Item label="Số tiền chi trả cố định">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency:
-                  basePolicy.base_policy?.coverage_currency || "VND",
-              }).format(basePolicy.base_policy?.fix_payout_amount || 0)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Chi trả theo hecta">
-              <Tag
-                color={
-                  basePolicy.base_policy?.is_payout_per_hectare
-                    ? "green"
-                    : "orange"
-                }
-              >
-                {basePolicy.base_policy?.is_payout_per_hectare
-                  ? "Có"
-                  : "Không"}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Hệ số nhân vượt ngưỡng">
-              {basePolicy.base_policy?.over_threshold_multiplier}x
-            </Descriptions.Item>
-            <Descriptions.Item label="Tỷ lệ chi trả cơ bản">
-              {(basePolicy.base_policy?.payout_base_rate * 100).toFixed(2)}%
-            </Descriptions.Item>
-            <Descriptions.Item label="Giới hạn chi trả tối đa">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency:
-                  basePolicy.base_policy?.coverage_currency || "VND",
-              }).format(basePolicy.base_policy?.payout_cap || 0)}
-            </Descriptions.Item>
-          </Descriptions>
+        <div className="flex items-center gap-2 mb-4">
+          <DollarOutlined style={{ fontSize: '20px', color: '#faad14' }} />
+          <Title level={4} style={{ margin: 0 }}>Bồi thường</Title>
         </div>
+        <Descriptions
+          column={{ xs: 1, sm: 1, md: 2 }}
+          size="small"
+          labelStyle={{ fontWeight: 500 }}
+        >
+          <Descriptions.Item label="Số tiền cố định">
+            <Text strong style={{ color: '#faad14' }}>
+              {new Intl.NumberFormat("vi-VN", {
+                style: "currency",
+                currency: basePolicy.base_policy?.coverage_currency || "VND",
+              }).format(basePolicy.base_policy?.fix_payout_amount || 0)}
+            </Text>
+          </Descriptions.Item>
+          <Descriptions.Item label="Tỷ lệ chi trả">
+            <Tag color="gold">{(basePolicy.base_policy?.payout_base_rate * 100).toFixed(2)}%</Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Chi trả theo hecta">
+            <Tag color={basePolicy.base_policy?.is_payout_per_hectare ? "green" : "orange"}>
+              {basePolicy.base_policy?.is_payout_per_hectare ? "Có" : "Không"}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Hệ số vượt ngưỡng">
+            <Tag color="purple">{basePolicy.base_policy?.over_threshold_multiplier}x</Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Giới hạn tối đa" span={2}>
+            <Text strong style={{ color: '#ff4d4f' }}>
+              {new Intl.NumberFormat("vi-VN", {
+                style: "currency",
+                currency: basePolicy.base_policy?.coverage_currency || "VND",
+              }).format(basePolicy.base_policy?.payout_cap || 0)}
+            </Text>
+          </Descriptions.Item>
+        </Descriptions>
+
+        <Divider />
 
         {/* Coverage Duration Section */}
-        <div>
-          <Text strong className="text-base block mb-3">
-            Thời hạn bảo hiểm
-          </Text>
-          <Descriptions
-            column={1}
-            size="small"
-            bordered
-            labelStyle={{ width: "50%" }}
-            contentStyle={{ width: "50%" }}
-          >
-            <Descriptions.Item label="Thời hạn bảo hiểm">
-              {basePolicy.base_policy?.coverage_duration_days} ngày
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày bắt đầu đăng ký">
-              {new Date(
-                basePolicy.base_policy?.enrollment_start_day * 1000
-              ).toLocaleDateString("vi-VN")}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày kết thúc đăng ký">
-              {new Date(
-                basePolicy.base_policy?.enrollment_end_day * 1000
-              ).toLocaleDateString("vi-VN")}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày bắt đầu hiệu lực">
-              {new Date(
-                basePolicy.base_policy?.insurance_valid_from_day * 1000
-              ).toLocaleDateString("vi-VN")}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày kết thúc hiệu lực">
-              {new Date(
-                basePolicy.base_policy?.insurance_valid_to_day * 1000
-              ).toLocaleDateString("vi-VN")}
-            </Descriptions.Item>
-          </Descriptions>
+        <div className="flex items-center gap-2 mb-4">
+          <CalendarOutlined style={{ fontSize: '20px', color: '#722ed1' }} />
+          <Title level={4} style={{ margin: 0 }}>Thời hạn bảo hiểm</Title>
         </div>
+        <Descriptions
+          column={{ xs: 1, sm: 1, md: 2 }}
+          size="small"
+          labelStyle={{ fontWeight: 500 }}
+        >
+          <Descriptions.Item label="Thời hạn BH">
+            <Tag color="purple" style={{ fontSize: '14px', padding: '4px 12px' }}>
+              {basePolicy.base_policy?.coverage_duration_days} ngày
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Đăng ký: Bắt đầu">
+            {new Date(
+              basePolicy.base_policy?.enrollment_start_day * 1000
+            ).toLocaleDateString("vi-VN")}
+          </Descriptions.Item>
+          <Descriptions.Item label="Đăng ký: Kết thúc">
+            {new Date(
+              basePolicy.base_policy?.enrollment_end_day * 1000
+            ).toLocaleDateString("vi-VN")}
+          </Descriptions.Item>
+          <Descriptions.Item label="Hiệu lực: Bắt đầu">
+            {new Date(
+              basePolicy.base_policy?.insurance_valid_from_day * 1000
+            ).toLocaleDateString("vi-VN")}
+          </Descriptions.Item>
+          <Descriptions.Item label="Hiệu lực: Kết thúc">
+            {new Date(
+              basePolicy.base_policy?.insurance_valid_to_day * 1000
+            ).toLocaleDateString("vi-VN")}
+          </Descriptions.Item>
+        </Descriptions>
+
+        <Divider />
 
         {/* Renewal & Document Section */}
-        <div>
-          <Text strong className="text-base block mb-3">
-            Gia hạn & Tài liệu
-          </Text>
-          <Descriptions
-            column={1}
-            size="small"
-            bordered
-            labelStyle={{ width: "50%" }}
-            contentStyle={{ width: "50%" }}
-          >
-            <Descriptions.Item label="Tự động gia hạn">
-              <Tag
-                color={
-                  basePolicy.base_policy?.auto_renewal ? "green" : "red"
-                }
-              >
-                {basePolicy.base_policy?.auto_renewal ? "Có" : "Không"}
-              </Tag>
+        <div className="flex items-center gap-2 mb-4">
+          <ReloadOutlined style={{ fontSize: '20px', color: '#13c2c2' }} />
+          <Title level={4} style={{ margin: 0 }}>Gia hạn & Tài liệu</Title>
+        </div>
+        <Descriptions
+          column={{ xs: 1, sm: 1, md: 2 }}
+          size="small"
+          labelStyle={{ fontWeight: 500 }}
+        >
+          <Descriptions.Item label="Tự động gia hạn">
+            <Tag color={basePolicy.base_policy?.auto_renewal ? "green" : "red"}>
+              {basePolicy.base_policy?.auto_renewal ? "Có" : "Không"}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Giảm giá gia hạn">
+            <Tag color="cyan">
+              {(basePolicy.base_policy?.renewal_discount_rate * 100).toFixed(2)}%
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Xác thực tài liệu">
+            <Tag color={basePolicy.base_policy?.document_validation_status === "passed" ? "green" : "orange"}>
+              {basePolicy.base_policy?.document_validation_status === "passed" ? "Đã xác thực" : "Chờ xác thực"}
+            </Tag>
+          </Descriptions.Item>
+          {basePolicy.base_policy?.important_additional_information && (
+            <Descriptions.Item label="Thông tin bổ sung" span={2}>
+              <Text type="secondary">{basePolicy.base_policy.important_additional_information}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Tỷ lệ giảm giá khi gia hạn">
-              {(
-                basePolicy.base_policy?.renewal_discount_rate * 100
-              ).toFixed(2)}
-              %
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái xác thực tài liệu">
-              <Tag
-                color={
-                  basePolicy.base_policy?.document_validation_status ===
-                  "passed"
-                    ? "green"
-                    : "orange"
-                }
-              >
-                {basePolicy.base_policy?.document_validation_status ===
-                "passed"
-                  ? "Đã xác thực"
-                  : "Chờ xác thực"}
-              </Tag>
-            </Descriptions.Item>
-            {basePolicy.base_policy?.important_additional_information && (
-              <Descriptions.Item label="Thông tin bổ sung quan trọng">
-                {basePolicy.base_policy.important_additional_information}
-              </Descriptions.Item>
-            )}
-          </Descriptions>
+          )}
+        </Descriptions>
 
-          {basePolicy?.document?.presigned_url && (
-            <div className="mt-4">
-              <Text strong className="block mb-2">
-                Hợp đồng gốc (Template):
-              </Text>
-              <Space direction="vertical" size="small">
+        {basePolicy?.document?.presigned_url && (
+          <>
+            <Divider style={{ margin: '16px 0' }} />
+            <Space direction="vertical" size="small">
+              <Text strong><FileTextOutlined /> Hợp đồng gốc (Template)</Text>
+              <Space>
                 <Button
+                  type="primary"
                   icon={<DownloadOutlined />}
-                  onClick={() =>
-                    window.open(basePolicy.document.presigned_url, "_blank")
-                  }
+                  onClick={() => window.open(basePolicy.document.presigned_url, "_blank")}
                 >
-                  Xem hợp đồng gốc (PDF)
+                  Xem PDF
                 </Button>
-                <Text type="secondary" className="text-xs">
-                  Kích thước:{" "}
-                  {(basePolicy.document.file_size_bytes / 1024).toFixed(2)}{" "}
-                  KB
+                <Text type="secondary">
+                  {(basePolicy.document.file_size_bytes / 1024).toFixed(2)} KB
                 </Text>
               </Space>
-            </div>
-          )}
-        </div>
-
-        {/* Triggers Section */}
-        {basePolicy.triggers && basePolicy.triggers.length > 0 && (
-          <div>
-            <Text strong className="text-base block mb-3">
-              Điều kiện kích hoạt bồi thường ({basePolicy.triggers.length}{" "}
-              trigger)
-            </Text>
-            <Space direction="vertical" size="middle" className="w-full">
-              {basePolicy.triggers.map((trigger, idx) => (
-                <Card
-                  key={trigger.id || idx}
-                  size="small"
-                  type="inner"
-                  title={`Trigger ${idx + 1}`}
-                >
-                  <Descriptions
-                    column={1}
-                    size="small"
-                    bordered
-                    className="mb-3"
-                  >
-                    <Descriptions.Item label="Toán tử logic">
-                      <Tag color="purple">{trigger.logical_operator}</Tag>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Giai đoạn sinh trưởng">
-                      {trigger.growth_stage || "Tất cả"}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Tần suất giám sát">
-                      {trigger.monitor_interval}{" "}
-                      {trigger.monitor_frequency_unit === "day"
-                        ? "ngày"
-                        : trigger.monitor_frequency_unit}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Số điều kiện">
-                      <Tag color="blue">
-                        {trigger.conditions?.length || 0} điều kiện
-                      </Tag>
-                    </Descriptions.Item>
-                  </Descriptions>
-
-                  {trigger.conditions && trigger.conditions.length > 0 && (
-                    <div>
-                      <Text strong className="block mb-2">
-                        Chi tiết điều kiện:
-                      </Text>
-                      <Table
-                        size="small"
-                        dataSource={trigger.conditions}
-                        rowKey={(record) => record.id}
-                        pagination={false}
-                        columns={[
-                          {
-                            title: "Thứ tự",
-                            dataIndex: "condition_order",
-                            key: "order",
-                            width: 80,
-                            render: (val) => <Tag color="blue">#{val}</Tag>,
-                          },
-                          {
-                            title: "Nguồn dữ liệu",
-                            dataIndex: "data_source_id",
-                            key: "data_source",
-                            ellipsis: true,
-                            render: (dataSourceId) => (
-                              <span>
-                                {dataSourceNames?.[dataSourceId] || (
-                                  <Text
-                                    type="secondary"
-                                    className="text-xs"
-                                  >
-                                    Đang tải...
-                                  </Text>
-                                )}
-                              </span>
-                            ),
-                          },
-                          {
-                            title: "Toán tử",
-                            dataIndex: "threshold_operator",
-                            key: "operator",
-                            width: 100,
-                            render: (val) => (
-                              <Tag color="orange">{val}</Tag>
-                            ),
-                          },
-                          {
-                            title: "Giá trị ngưỡng",
-                            dataIndex: "threshold_value",
-                            key: "threshold",
-                            width: 120,
-                            render: (val) => <Text strong>{val}</Text>,
-                          },
-                          {
-                            title: "Cảnh báo sớm",
-                            dataIndex: "early_warning_threshold",
-                            key: "warning",
-                            width: 120,
-                            render: (val) => <Tag color="gold">{val}</Tag>,
-                          },
-                          {
-                            title: "Hàm tổng hợp",
-                            dataIndex: "aggregation_function",
-                            key: "agg_func",
-                            width: 120,
-                          },
-                          {
-                            title: "Cửa sổ tổng hợp",
-                            dataIndex: "aggregation_window_days",
-                            key: "agg_window",
-                            width: 130,
-                            render: (val) => `${val} ngày`,
-                          },
-                          {
-                            title: "Chi phí tính toán",
-                            dataIndex: "calculated_cost",
-                            key: "cost",
-                            width: 120,
-                            render: (val) => (
-                              <Text type="success">
-                                {new Intl.NumberFormat("vi-VN").format(val)}
-                              </Text>
-                            ),
-                          },
-                        ]}
-                      />
-                    </div>
-                  )}
-                </Card>
-              ))}
             </Space>
-          </div>
+          </>
         )}
+      </Card>
 
-        {/* Metadata Section */}
-        {basePolicy.metadata && (
-          <div>
-            <Text strong className="text-base block mb-3">
-              Metadata
-            </Text>
-            <Descriptions
-              column={1}
-              size="small"
-              bordered
-              labelStyle={{ width: "50%" }}
-              contentStyle={{ width: "50%" }}
-            >
-              <Descriptions.Item label="Tổng số triggers">
-                <Tag color="blue">{basePolicy.metadata.total_triggers}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tổng số điều kiện">
-                <Tag color="cyan">
-                  {basePolicy.metadata.total_conditions}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tổng chi phí dữ liệu">
-                <Text type="success" strong>
-                  {new Intl.NumberFormat("vi-VN").format(
-                    basePolicy.metadata.total_data_cost
-                  )}
-                </Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Số lượng nguồn dữ liệu">
-                <Tag color="purple">
-                  {basePolicy.metadata.data_source_count}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Thời gian truy xuất">
-                {new Date(basePolicy.metadata.retrieved_at).toLocaleString(
-                  "vi-VN"
-                )}
-              </Descriptions.Item>
-            </Descriptions>
+      {/* Triggers Section */}
+      {basePolicy.triggers && basePolicy.triggers.length > 0 && (
+        <Card style={{ marginTop: '16px' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <ThunderboltOutlined style={{ fontSize: '20px', color: '#fa8c16' }} />
+            <Title level={4} style={{ margin: 0 }}>
+              Điều kiện kích hoạt ({basePolicy.triggers.length})
+            </Title>
           </div>
-        )}
-      </Space>
-    </Card>
+          <Space direction="vertical" size="middle" className="w-full">
+            {basePolicy.triggers.map((trigger, idx) => (
+              <Card
+                key={trigger.id || idx}
+                size="small"
+                type="inner"
+                title={
+                  <Space>
+                    <Text strong>Trigger #{idx + 1}</Text>
+                    <Tag color="purple">{trigger.logical_operator}</Tag>
+                    <Tag color="blue">{trigger.conditions?.length || 0} điều kiện</Tag>
+                  </Space>
+                }
+              >
+                <Descriptions
+                  column={{ xs: 1, sm: 2 }}
+                  size="small"
+                  className="mb-3"
+                  labelStyle={{ fontWeight: 500 }}
+                >
+                  <Descriptions.Item label="Giai đoạn sinh trưởng">
+                    <Tag color="green">{trigger.growth_stage || "Tất cả"}</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Tần suất giám sát">
+                    <Tag color="cyan">
+                      {trigger.monitor_interval}{" "}
+                      {trigger.monitor_frequency_unit === "day" ? "ngày" : trigger.monitor_frequency_unit}
+                    </Tag>
+                  </Descriptions.Item>
+                </Descriptions>
+
+                {trigger.conditions && trigger.conditions.length > 0 && (
+                  <div>
+                    <Text strong className="block mb-2">
+                      Chi tiết điều kiện:
+                    </Text>
+                    <Table
+                      size="small"
+                      dataSource={trigger.conditions}
+                      rowKey={(record) => record.id}
+                      pagination={false}
+                      columns={[
+                        {
+                          title: "Thứ tự",
+                          dataIndex: "condition_order",
+                          key: "order",
+                          width: 80,
+                          render: (val) => <Tag color="blue">#{val}</Tag>,
+                        },
+                        {
+                          title: "Nguồn dữ liệu",
+                          dataIndex: "data_source_id",
+                          key: "data_source",
+                          ellipsis: true,
+                          render: (dataSourceId) => (
+                            <span>
+                              {dataSourceNames?.[dataSourceId] || (
+                                <Text
+                                  type="secondary"
+                                  className="text-xs"
+                                >
+                                  Đang tải...
+                                </Text>
+                              )}
+                            </span>
+                          ),
+                        },
+                        {
+                          title: "Toán tử",
+                          dataIndex: "threshold_operator",
+                          key: "operator",
+                          width: 100,
+                          render: (val) => (
+                            <Tag color="orange">{val}</Tag>
+                          ),
+                        },
+                        {
+                          title: "Giá trị ngưỡng",
+                          dataIndex: "threshold_value",
+                          key: "threshold",
+                          width: 120,
+                          render: (val) => <Text strong>{val}</Text>,
+                        },
+                        {
+                          title: "Cảnh báo sớm",
+                          dataIndex: "early_warning_threshold",
+                          key: "warning",
+                          width: 120,
+                          render: (val) => <Tag color="gold">{val}</Tag>,
+                        },
+                        {
+                          title: "Hàm tổng hợp",
+                          dataIndex: "aggregation_function",
+                          key: "agg_func",
+                          width: 120,
+                        },
+                        {
+                          title: "Cửa sổ tổng hợp",
+                          dataIndex: "aggregation_window_days",
+                          key: "agg_window",
+                          width: 130,
+                          render: (val) => `${val} ngày`,
+                        },
+                        {
+                          title: "Chi phí tính toán",
+                          dataIndex: "calculated_cost",
+                          key: "cost",
+                          width: 120,
+                          render: (val) => (
+                            <Text type="success">
+                              {new Intl.NumberFormat("vi-VN").format(val)}
+                            </Text>
+                          ),
+                        },
+                      ]}
+                    />
+                  </div>
+                )}
+              </Card>
+            ))}
+          </Space>
+        </Card>
+      )}
+
+      {/* Metadata Section */}
+      {basePolicy.metadata && (
+        <Card style={{ marginTop: '16px' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <InfoCircleOutlined style={{ fontSize: '20px', color: '#8c8c8c' }} />
+            <Title level={4} style={{ margin: 0 }}>Thống kê</Title>
+          </div>
+          <Descriptions
+            column={{ xs: 1, sm: 2, md: 4 }}
+            size="small"
+            labelStyle={{ fontWeight: 500 }}
+          >
+            <Descriptions.Item label="Tổng triggers">
+              <Tag color="blue">{basePolicy.metadata.total_triggers}</Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Tổng điều kiện">
+              <Tag color="cyan">{basePolicy.metadata.total_conditions}</Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Nguồn dữ liệu">
+              <Tag color="purple">{basePolicy.metadata.data_source_count}</Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Chi phí dữ liệu">
+              <Text strong style={{ color: '#52c41a' }}>
+                {new Intl.NumberFormat("vi-VN").format(basePolicy.metadata.total_data_cost)}
+              </Text>
+            </Descriptions.Item>
+          </Descriptions>
+        </Card>
+      )}
+    </>
   );
 }

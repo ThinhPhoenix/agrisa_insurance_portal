@@ -1,7 +1,15 @@
-import { Card, Descriptions, Space, Tag, Typography, Button } from "antd";
-import { DownloadOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import {
+  CalendarOutlined,
+  DollarOutlined,
+  DownloadOutlined,
+  EnvironmentOutlined,
+  FileTextOutlined,
+  HomeOutlined,
+  UserOutlined
+} from "@ant-design/icons";
+import { Button, Card, Descriptions, Divider, Tag, Typography } from "antd";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 // Crop type translation
 const CROP_TYPE_LABELS = {
@@ -58,112 +66,112 @@ const getStatusText = (status) => {
 export default function BasicInfoTab({ policy, farm }) {
   return (
     <Card>
-      <Space direction="vertical" size="large" className="w-full">
-        {/* Policy Info Section */}
-        <div>
-          <Text strong className="text-base block mb-3">
-            Thông tin hợp đồng
+      {/* Policy Info Section */}
+      <div className="flex items-center gap-2 mb-4">
+        <FileTextOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+        <Title level={4} style={{ margin: 0 }}>Thông tin hợp đồng</Title>
+      </div>
+      <Descriptions
+        column={{ xs: 1, sm: 1, md: 2 }}
+        size="small"
+        labelStyle={{ fontWeight: 500 }}
+      >
+        <Descriptions.Item label="Số hợp đồng">
+          <Text strong>{policy.policy_number}</Text>
+        </Descriptions.Item>
+        <Descriptions.Item label="Trạng thái">
+          <Tag color={getStatusColor(policy.status)}>
+            {getStatusText(policy.status)}
+          </Tag>
+        </Descriptions.Item>
+        <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UserOutlined /> Mã nông dân</span>}>
+          {policy.farmer_id}
+        </Descriptions.Item>
+        <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CalendarOutlined /> Ngày tạo</span>}>
+          {new Date(policy.created_at).toLocaleDateString("vi-VN")}
+        </Descriptions.Item>
+        <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><DollarOutlined /> Số tiền bảo hiểm</span>}>
+          <Text strong style={{ color: '#52c41a' }}>
+            {new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }).format(policy.coverage_amount)}
           </Text>
-          <Descriptions
-            column={1}
-            size="small"
-            bordered
-            labelStyle={{ width: "50%" }}
-            contentStyle={{ width: "50%" }}
-          >
-            <Descriptions.Item label="Số hợp đồng">
-              <Text strong>{policy.policy_number}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Mã nông dân">
-              {policy.farmer_id}
-            </Descriptions.Item>
-            <Descriptions.Item label="Số tiền bảo hiểm">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              }).format(policy.coverage_amount)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Phí bảo hiểm">
-              {new Intl.NumberFormat("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              }).format(policy.total_farmer_premium)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày trồng">
-              {new Date(policy.planting_date * 1000).toLocaleDateString(
-                "vi-VN"
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày kết thúc bảo hiểm">
-              {new Date(policy.coverage_end_date * 1000).toLocaleDateString(
-                "vi-VN"
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo">
-              {new Date(policy.created_at).toLocaleDateString("vi-VN")}
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              <Tag color={getStatusColor(policy.status)}>
-                {getStatusText(policy.status)}
-              </Tag>
-            </Descriptions.Item>
-          </Descriptions>
-        </div>
-
-        {/* Farm Info Section */}
-        <div>
-          <Text strong className="text-base block mb-3">
-            <EnvironmentOutlined /> Thông tin trang trại
+        </Descriptions.Item>
+        <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><DollarOutlined /> Phí bảo hiểm</span>}>
+          <Text strong style={{ color: '#1890ff' }}>
+            {new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }).format(policy.total_farmer_premium)}
           </Text>
-          {farm ? (
-            <Descriptions
-              column={1}
-              size="small"
-              bordered
-              labelStyle={{ width: "50%" }}
-              contentStyle={{ width: "50%" }}
-            >
-              <Descriptions.Item label="Tên trang trại">
-                {farm.farm_name}
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ">
-                {farm.address}, {farm.commune}, {farm.district},{" "}
-                {farm.province}
-              </Descriptions.Item>
-              <Descriptions.Item label="Diện tích">
-                {farm.area_sqm} ha
-              </Descriptions.Item>
-              <Descriptions.Item label="Loại cây trồng">
-                <Tag color="green">
-                  {CROP_TYPE_LABELS[farm.crop_type] || farm.crop_type}
-                </Tag>
-              </Descriptions.Item>
-            </Descriptions>
-          ) : (
-            <Text type="secondary">
-              Không tìm thấy thông tin trang trại
-            </Text>
+        </Descriptions.Item>
+        <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CalendarOutlined /> Ngày trồng</span>}>
+          {new Date(policy.planting_date * 1000).toLocaleDateString(
+            "vi-VN"
           )}
-        </div>
+        </Descriptions.Item>
+        <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CalendarOutlined /> Ngày kết thúc BH</span>}>
+          {new Date(policy.coverage_end_date * 1000).toLocaleDateString(
+            "vi-VN"
+          )}
+        </Descriptions.Item>
+      </Descriptions>
 
-        {/* Signed Document Section */}
-        {policy.signed_policy_document_url && (
-          <div>
-            <Text strong className="text-base block mb-3">
-              Hợp đồng đã ký
-            </Text>
-            <Button
-              type="primary"
-              icon={<DownloadOutlined />}
-              onClick={() =>
-                window.open(policy.signed_policy_document_url, "_blank")
-              }
-            >
-              Xem hợp đồng đã ký (PDF)
-            </Button>
+      <Divider />
+
+      {/* Farm Info Section */}
+      <div className="flex items-center gap-2 mb-4">
+        <EnvironmentOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
+        <Title level={4} style={{ margin: 0 }}>Thông tin trang trại</Title>
+      </div>
+      {farm ? (
+        <Descriptions
+          column={{ xs: 1, sm: 1, md: 2 }}
+          size="small"
+          labelStyle={{ fontWeight: 500 }}
+        >
+          <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><HomeOutlined /> Tên trang trại</span>}>
+            <Text strong>{farm.farm_name}</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label="Diện tích">
+            <Text strong>{farm.area_sqm} ha</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label="Loại cây trồng" span={2}>
+            <Tag color="green" style={{ fontSize: '14px', padding: '4px 12px' }}>
+              {CROP_TYPE_LABELS[farm.crop_type] || farm.crop_type}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><EnvironmentOutlined /> Địa chỉ</span>} span={2}>
+            {farm.address}, {farm.commune}, {farm.district}, {farm.province}
+          </Descriptions.Item>
+        </Descriptions>
+      ) : (
+        <Text type="secondary">
+          Không tìm thấy thông tin trang trại
+        </Text>
+      )}
+
+      {/* Signed Document Section */}
+      {policy.signed_policy_document_url && (
+        <>
+          <Divider />
+          <div className="flex items-center gap-2 mb-4">
+            <FileTextOutlined style={{ fontSize: '20px', color: '#fa8c16' }} />
+            <Title level={4} style={{ margin: 0 }}>Hợp đồng đã ký</Title>
           </div>
-        )}
-      </Space>
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            size="large"
+            onClick={() =>
+              window.open(policy.signed_policy_document_url, "_blank")
+            }
+          >
+            Xem hợp đồng đã ký (PDF)
+          </Button>
+        </>
+      )}
     </Card>
   );
 }

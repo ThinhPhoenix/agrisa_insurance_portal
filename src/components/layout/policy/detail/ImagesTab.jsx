@@ -1,7 +1,8 @@
+import { CameraOutlined, FileImageOutlined } from "@ant-design/icons";
 import { Card, Col, Image, Pagination, Row, Space, Tag, Typography } from "antd";
 import { useState } from "react";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const formatUrl = (url) => {
   if (!url) return "";
@@ -31,8 +32,12 @@ export default function ImagesTab({ farm }) {
   };
 
   return (
-    <Space direction="vertical" size="large" className="w-full">
-      <Card title="Giấy chứng nhận quyền sử dụng đất">
+    <Space direction="vertical" size="middle" className="w-full">
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <FileImageOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+          <Title level={4} style={{ margin: 0 }}>Giấy chứng nhận quyền sử dụng đất</Title>
+        </div>
         {farm?.land_certificate_url ? (
           <Image.PreviewGroup>
             <Row gutter={[16, 16]}>
@@ -56,11 +61,13 @@ export default function ImagesTab({ farm }) {
         )}
       </Card>
 
-      <Card
-        title={`Ảnh vệ tinh & thực địa (${
-          farm?.farm_photos?.length || 0
-        } ảnh)`}
-      >
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <CameraOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
+          <Title level={4} style={{ margin: 0 }}>
+            Ảnh vệ tinh & thực địa ({farm?.farm_photos?.length || 0} ảnh)
+          </Title>
+        </div>
         {farm?.farm_photos && farm.farm_photos.length > 0 ? (
           <>
             <Image.PreviewGroup>
@@ -98,18 +105,18 @@ export default function ImagesTab({ farm }) {
                               photo.quality_score >= 0.8
                                 ? "green"
                                 : photo.quality_score >= 0.6
-                                ? "gold"
-                                : "orange"
+                                  ? "gold"
+                                  : "orange"
                             }
                           >
                             {QUALITY_LABELS[
                               photo.quality_score >= 0.8
                                 ? "excellent"
                                 : photo.quality_score >= 0.6
-                                ? "good"
-                                : photo.quality_score >= 0.4
-                                ? "fair"
-                                : "poor"
+                                  ? "good"
+                                  : photo.quality_score >= 0.4
+                                    ? "fair"
+                                    : "poor"
                             ] || "N/A"}
                           </Tag>
                         )}

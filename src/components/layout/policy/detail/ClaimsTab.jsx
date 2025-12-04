@@ -5,7 +5,7 @@ import {
   FileTextOutlined,
   InfoCircleOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Card, Spin, Table, Tag, Typography } from "antd";
+import { Alert, Button, Card, Space, Spin, Table, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -202,46 +202,54 @@ const ClaimsTab = ({ policyId }) => {
   ).length;
 
   return (
-    <div className="space-y-4">
+    <Space direction="vertical" size="middle" className="w-full">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card size="small">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text type="secondary">Tổng bồi thường</Text>
-              <div className="text-2xl font-bold">{claimsByPolicy.length}</div>
+        <Card>
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0 bg-blue-100 p-3 rounded-lg">
+              <FileTextOutlined style={{ fontSize: 28, color: "#1890ff" }} />
             </div>
-            <FileTextOutlined style={{ fontSize: 32, color: "#1890ff" }} />
+            <div className="flex-1">
+              <Text type="secondary" style={{ fontSize: '13px' }}>Tổng bồi thường</Text>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>
+                {claimsByPolicy.length}
+              </div>
+            </div>
           </div>
         </Card>
 
-        <Card size="small">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text type="secondary">Đã duyệt</Text>
-              <div className="text-2xl font-bold text-green-600">
+        <Card>
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0 bg-green-100 p-3 rounded-lg">
+              <CheckCircleOutlined style={{ fontSize: 28, color: "#52c41a" }} />
+            </div>
+            <div className="flex-1">
+              <Text type="secondary" style={{ fontSize: '13px' }}>Đã duyệt</Text>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
                 {approvedCount}
               </div>
             </div>
-            <CheckCircleOutlined style={{ fontSize: 32, color: "#52c41a" }} />
           </div>
         </Card>
 
-        <Card size="small">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text type="secondary">Tổng số tiền</Text>
-              <div className="text-lg font-bold text-blue-600">
+        <Card>
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0 bg-orange-100 p-3 rounded-lg">
+              <InfoCircleOutlined style={{ fontSize: 28, color: "#faad14" }} />
+            </div>
+            <div className="flex-1">
+              <Text type="secondary" style={{ fontSize: '13px' }}>Tổng số tiền</Text>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#faad14' }}>
                 {formatCurrency(totalAmount)}
               </div>
             </div>
-            <InfoCircleOutlined style={{ fontSize: 32, color: "#1890ff" }} />
           </div>
         </Card>
       </div>
 
       {/* Claims Table */}
-      <Card title="Danh sách bồi thường">
+      <Card>
         <Table
           columns={columns}
           dataSource={claimsByPolicy}
@@ -256,7 +264,7 @@ const ClaimsTab = ({ policyId }) => {
           }}
         />
       </Card>
-    </div>
+    </Space>
   );
 };
 

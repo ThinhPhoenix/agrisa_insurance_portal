@@ -2,6 +2,15 @@
 
 import { CustomForm } from "@/components/custom-form";
 import ErrorResult from "@/components/error-result";
+import {
+  BasePolicyTab,
+  BasicInfoTab,
+  ClaimsTab,
+  ImagesTab,
+  MapTab,
+  MonitoringDataTab,
+  RiskAnalysisTab,
+} from "@/components/layout/policy/detail";
 import axiosInstance from "@/libs/axios-instance";
 import {
   getApprovalError,
@@ -10,44 +19,27 @@ import {
   getApprovalWarning,
   getRiskAnalysisWarning,
 } from "@/libs/message";
-import { getErrorMessage } from "@/libs/message/common-message";
 import { endpoints } from "@/services/endpoints";
 import { usePolicyDetail } from "@/services/hooks/policy/use-policy-detail";
 import { useAuthStore } from "@/stores/auth-store";
 import {
-  BasicInfoTab,
-  BasePolicyTab,
-  MapTab,
-  ImagesTab,
-  MonitoringDataTab,
-  RiskAnalysisTab,
-  ClaimsTab,
-} from "@/components/layout/policy/detail";
-import {
+  BarChartOutlined,
+  CameraOutlined,
   DollarOutlined,
-  DownloadOutlined,
   EnvironmentOutlined,
+  ExclamationCircleOutlined,
   FileTextOutlined,
-  LineChartOutlined,
   SafetyOutlined,
-  WarningOutlined,
 } from "@ant-design/icons";
 import {
   Button,
   Card,
-  Col,
-  Collapse,
-  Descriptions,
   Form,
-  Image,
   Layout,
   message,
   Modal,
-  Pagination,
-  Row,
   Space,
   Spin,
-  Table,
   Tabs,
   Tag,
   Typography,
@@ -181,19 +173,25 @@ export default function PolicyDetailPage() {
     setCreatingRiskAnalysis(true);
     try {
       // Get partner name from user profile
-      const partnerName = user?.profile?.full_name || user?.user?.full_name || "Đối tác";
+      const partnerName =
+        user?.profile?.full_name || user?.user?.full_name || "Đối tác";
 
       // Build identified_risks object if any field is provided
       const identifiedRisks = {};
-      if (values.weather_risk) identifiedRisks.weather_risk = values.weather_risk;
+      if (values.weather_risk)
+        identifiedRisks.weather_risk = values.weather_risk;
       if (values.crop_health) identifiedRisks.crop_health = values.crop_health;
-      if (values.historical_claims) identifiedRisks.historical_claims = values.historical_claims;
+      if (values.historical_claims)
+        identifiedRisks.historical_claims = values.historical_claims;
 
       // Build recommendations object if any field is provided
       const recommendations = {};
-      if (values.monitoring_frequency) recommendations.monitoring_frequency = values.monitoring_frequency;
+      if (values.monitoring_frequency)
+        recommendations.monitoring_frequency = values.monitoring_frequency;
       if (values.suggested_actions) {
-        const actions = values.suggested_actions.split("\n").filter((a) => a.trim());
+        const actions = values.suggested_actions
+          .split("\n")
+          .filter((a) => a.trim());
         if (actions.length > 0) recommendations.suggested_actions = actions;
       }
 
@@ -206,8 +204,10 @@ export default function PolicyDetailPage() {
           ? parseFloat(values.overall_risk_score) / 100
           : undefined,
         overall_risk_level: values.overall_risk_level,
-        identified_risks: Object.keys(identifiedRisks).length > 0 ? identifiedRisks : undefined,
-        recommendations: Object.keys(recommendations).length > 0 ? recommendations : undefined,
+        identified_risks:
+          Object.keys(identifiedRisks).length > 0 ? identifiedRisks : undefined,
+        recommendations:
+          Object.keys(recommendations).length > 0 ? recommendations : undefined,
         analysis_notes: values.analysis_notes,
       };
 
@@ -449,7 +449,8 @@ export default function PolicyDetailPage() {
         name: "validation_notes",
         label: "Ghi chú xác thực",
         type: "textarea",
-        placeholder: "Nhập ghi chú xác thực...\nVí dụ: Đã xác minh tất cả tài liệu. Vị trí trang trại đã được xác nhận. Phân tích rủi ro hoàn tất thành công.",
+        placeholder:
+          "Nhập ghi chú xác thực...\nVí dụ: Đã xác minh tất cả tài liệu. Vị trí trang trại đã được xác nhận. Phân tích rủi ro hoàn tất thành công.",
         required: true,
         rows: 4,
       });
@@ -621,7 +622,6 @@ export default function PolicyDetailPage() {
     );
   }
 
-
   // Build tab items - only show Claims tab for active policies
   const tabItems = [
     {
@@ -629,7 +629,7 @@ export default function PolicyDetailPage() {
       label: (
         <span className="flex items-center gap-2">
           <FileTextOutlined />
-          <span className="hidden sm:inline">Thông tin cơ bản</span>
+          <span className="hidden sm:inline">Cơ bản</span>
         </span>
       ),
       children: <BasicInfoTab policy={policy} farm={farm} />,
@@ -639,10 +639,15 @@ export default function PolicyDetailPage() {
       label: (
         <span className="flex items-center gap-2">
           <SafetyOutlined />
-          <span className="hidden sm:inline">Thông tin gói bảo hiểm</span>
+          <span className="hidden sm:inline">Gói bảo hiểm</span>
         </span>
       ),
-      children: <BasePolicyTab basePolicy={basePolicy} dataSourceNames={dataSourceNames} />,
+      children: (
+        <BasePolicyTab
+          basePolicy={basePolicy}
+          dataSourceNames={dataSourceNames}
+        />
+      ),
     },
     {
       key: "map",
@@ -658,8 +663,8 @@ export default function PolicyDetailPage() {
       key: "images",
       label: (
         <span className="flex items-center gap-2">
-          <FileTextOutlined />
-          <span className="hidden sm:inline">Hình ảnh bằng chứng</span>
+          <CameraOutlined />
+          <span className="hidden sm:inline">Hình ảnh</span>
         </span>
       ),
       children: <ImagesTab farm={farm} />,
@@ -668,8 +673,8 @@ export default function PolicyDetailPage() {
       key: "monitoring",
       label: (
         <span className="flex items-center gap-2">
-          <LineChartOutlined />
-          <span className="hidden sm:inline">Dữ liệu giám sát</span>
+          <BarChartOutlined />
+          <span className="hidden sm:inline">Giám sát</span>
         </span>
       ),
       children: <MonitoringDataTab monitoringData={monitoringData} />,
@@ -678,8 +683,8 @@ export default function PolicyDetailPage() {
       key: "risk",
       label: (
         <span className="flex items-center gap-2">
-          <WarningOutlined />
-          <span className="hidden sm:inline">Phân tích rủi ro</span>
+          <ExclamationCircleOutlined />
+          <span className="hidden sm:inline">Rủi ro</span>
         </span>
       ),
       children: (
@@ -707,7 +712,7 @@ export default function PolicyDetailPage() {
       key: "claims",
       label: (
         <span className="flex items-center gap-2">
-          <DollarOutlined />
+          <DollarOutlined style={{ color: "#52c41a" }} />
           <span className="hidden sm:inline">Bồi thường</span>
         </span>
       ),
@@ -797,33 +802,52 @@ export default function PolicyDetailPage() {
         >
           {/* Risk Analysis Summary */}
           {riskAnalysis?.risk_analyses?.[0] && (
-            <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f5f5f5' }}>
+            <Card
+              size="small"
+              style={{ marginBottom: 16, backgroundColor: "#f5f5f5" }}
+            >
               <Space direction="vertical" size="small" className="w-full">
                 <Text strong>Thông tin đánh giá rủi ro:</Text>
                 <div className="flex justify-between">
                   <Text type="secondary">Loại phân tích:</Text>
                   <Text strong>
-                    {getAnalysisTypeText(riskAnalysis.risk_analyses[0].analysis_type)}
+                    {getAnalysisTypeText(
+                      riskAnalysis.risk_analyses[0].analysis_type
+                    )}
                   </Text>
                 </div>
                 <div className="flex justify-between">
                   <Text type="secondary">Điểm rủi ro:</Text>
                   <Text strong>
                     {riskAnalysis.risk_analyses[0].overall_risk_score
-                      ? `${(riskAnalysis.risk_analyses[0].overall_risk_score * 100).toFixed(2)}%`
-                      : '0%'}
+                      ? `${(
+                          riskAnalysis.risk_analyses[0].overall_risk_score * 100
+                        ).toFixed(2)}%`
+                      : "0%"}
                   </Text>
                 </div>
                 <div className="flex justify-between">
                   <Text type="secondary">Mức độ rủi ro:</Text>
-                  <Tag color={getRiskLevelColor(riskAnalysis.risk_analyses[0].overall_risk_level)}>
-                    {getRiskLevelText(riskAnalysis.risk_analyses[0].overall_risk_level)}
+                  <Tag
+                    color={getRiskLevelColor(
+                      riskAnalysis.risk_analyses[0].overall_risk_level
+                    )}
+                  >
+                    {getRiskLevelText(
+                      riskAnalysis.risk_analyses[0].overall_risk_level
+                    )}
                   </Tag>
                 </div>
                 {riskAnalysis.risk_analyses[0].analysis_notes && (
                   <div>
                     <Text type="secondary">Ghi chú đánh giá:</Text>
-                    <Text style={{ display: 'block', marginTop: 4, whiteSpace: 'pre-wrap' }}>
+                    <Text
+                      style={{
+                        display: "block",
+                        marginTop: 4,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
                       {riskAnalysis.risk_analyses[0].analysis_notes}
                     </Text>
                   </div>

@@ -338,7 +338,7 @@ export default function ClaimDetailPage() {
     try {
       const payload = {
         registered_policy_id: claimDetail.registered_policy_id,
-        status: "APPROVED",
+        status: "approved",
         partner_decision: values.partner_decision,
         partner_notes: values.partner_notes,
       };
@@ -398,7 +398,7 @@ export default function ClaimDetailPage() {
       // Parse data từ form để gửi cho cả 2 APIs
       const validatePayload = {
         registered_policy_id: claimDetail.registered_policy_id,
-        status: "REJECTED",
+        status: "rejected",
         partner_decision: values.reason, // Dùng lý do từ chối làm partner decision
         partner_notes: values.validation_notes, // Dùng ghi chú chi tiết
       };

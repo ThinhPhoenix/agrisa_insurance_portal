@@ -35,7 +35,11 @@ export const endpoints = {
       get_by_provider: `/policy/protected/api/v2/base-policies/by-provider`,
       get_draft_filter: (provider_id) =>
         `/policy/protected/api/v2/base-policies/draft/filter?provider_id=${provider_id}`,
-      get_draft_detail_by_id: (base_policy_id, archive_status = false, provider_id = null) => {
+      get_draft_detail_by_id: (
+        base_policy_id,
+        archive_status = false,
+        provider_id = null
+      ) => {
         let url = `/policy/protected/api/v2/base-policies/draft/filter?archive_status=${archive_status}&base_policy_id=${base_policy_id}`;
         if (provider_id) {
           url += `&provider_id=${provider_id}`;
@@ -99,9 +103,10 @@ export const endpoints = {
     byPolicy: (policy_id) =>
       `/policy/protected/api/v2/claims/read-partner/by-policy/${policy_id}`,
     validate: (claim_id) =>
-      `/policy/protected/api/v2/write/validate/${claim_id}`,
+      `/policy/protected/api/v2/claims/write/validate/${claim_id}`,
     createRejection: "/policy/protected/api/v2/claim-rejections/create-partner",
-    rejectionList: "/policy/protected/api/v2/claim-rejections/read-partner/list",
+    rejectionList:
+      "/policy/protected/api/v2/claim-rejections/read-partner/list",
     rejectionByClaim: (claim_id) =>
       `/policy/protected/api/v2/claim-rejections/read-partner/claim/${claim_id}`,
   },

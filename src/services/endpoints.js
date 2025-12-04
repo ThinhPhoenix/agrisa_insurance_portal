@@ -101,5 +101,8 @@ export const endpoints = {
     validate: (claim_id) =>
       `/policy/protected/api/v2/write/validate/${claim_id}`,
     createRejection: "/policy/protected/api/v2/claim-rejections/create-partner",
+    rejectionList: "/policy/protected/api/v2/claim-rejections/read-partner/list",
+    rejectionByClaim: (claim_id) =>
+      `/policy/protected/api/v2/claim-rejections/read-partner/claim/${claim_id}`,
   },
 };

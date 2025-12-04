@@ -7,6 +7,7 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  CloseCircleOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   WalletOutlined,
@@ -16,6 +17,7 @@ import {
   Button,
   Card,
   Col,
+  Collapse,
   DatePicker,
   Descriptions,
   Form,
@@ -55,6 +57,7 @@ export default function ClaimDetailPage() {
     fetchClaimDetail,
     validateClaim,
     createClaimRejection,
+    fetchRejectionByClaim,
   } = useClaim();
 
   // States for related data
@@ -62,6 +65,10 @@ export default function ClaimDetailPage() {
   const [farm, setFarm] = useState(null);
   const [basePolicy, setBasePolicy] = useState(null);
   const [allDataLoaded, setAllDataLoaded] = useState(false);
+
+  // Rejection state
+  const [rejection, setRejection] = useState(null);
+  const [rejectionLoading, setRejectionLoading] = useState(false);
 
   // Modal states
   const [approveModalVisible, setApproveModalVisible] = useState(false);
@@ -154,13 +161,35 @@ export default function ClaimDetailPage() {
             console.error("Error fetching base policy:", error);
           }
         }
+
+        // Fetch rejection if status is rejected
+        if (claimDetail.status === "rejected") {
+          console.log("Claim status is rejected, fetching rejection details...");
+          setRejectionLoading(true);
+          try {
+            const rejectionResult = await fetchRejectionByClaim(claimDetail.id);
+            console.log("Rejection fetch result:", rejectionResult);
+            if (rejectionResult.success) {
+              setRejection(rejectionResult.data);
+              console.log("Rejection data set:", rejectionResult.data);
+            } else {
+              console.error("Failed to fetch rejection:", rejectionResult.error);
+            }
+          } catch (error) {
+            console.error("Error fetching rejection:", error);
+          } finally {
+            setRejectionLoading(false);
+          }
+        } else {
+          console.log("Claim status is NOT rejected:", claimDetail.status);
+        }
       } finally {
         setAllDataLoaded(true);
       }
     };
 
     fetchRelatedData();
-  }, [claimDetail]);
+  }, [claimDetail, fetchRejectionByClaim]);
 
   // Get status color
   const getStatusColor = (status) => {
@@ -228,6 +257,30 @@ export default function ClaimDetailPage() {
       style: "currency",
       currency: "VND",
     }).format(amount);
+  };
+
+  // Get rejection type text
+  const getRejectionTypeText = (type) => {
+    switch (type) {
+      case "claim_data_incorrect":
+        return "Dữ liệu không chính xác";
+      case "trigger_not_met":
+        return "Không đạt điều kiện kích hoạt";
+      case "policy_not_active":
+        return "Hợp đồng không còn hiệu lực";
+      case "location_mismatch":
+        return "Vị trí không khớp";
+      case "duplicate_claim":
+        return "Yêu cầu trùng lặp";
+      case "suspected_fraud":
+        return "Nghi ngờ gian lận";
+      case "policy_exclusion":
+        return "Nằm trong điều khoản loại trừ";
+      case "other":
+        return "Lý do khác";
+      default:
+        return type;
+    }
   };
 
   // Rejection types with Vietnamese labels (MUST match API enum exactly)
@@ -773,6 +826,159 @@ export default function ClaimDetailPage() {
                     )}
                   </Descriptions.Item>
                 </Descriptions>
+              </Card>
+            </Col>
+          )}
+
+          {/* Thông tin từ chối - Only show when status is rejected */}
+          {claimDetail.status === "rejected" && (
+            <Col xs={24}>
+              <Card
+                title={
+                  <Space>
+                    <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+                    <span>Chi Tiết Lý Do Từ Chối</span>
+                  </Space>
+                }
+                bordered={false}
+                className="shadow-sm"
+                style={{ borderLeft: "4px solid #ff4d4f" }}
+              >
+                {rejectionLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Spin size="large" tip="Đang tải thông tin từ chối..." />
+                  </div>
+                ) : rejection ? (
+                  <>
+                    <Descriptions column={2} bordered size="small">
+                      <Descriptions.Item label="Loại từ chối" span={2}>
+                        <Tag color="red" style={{ fontSize: "14px" }}>
+                          {getRejectionTypeText(rejection.claim_rejection_type)}
+                        </Tag>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Lý do từ chối" span={2}>
+                        <Text strong>{rejection.reason}</Text>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Người đánh giá" span={1}>
+                        <Text>{rejection.validated_by}</Text>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Thời gian đánh giá" span={1}>
+                        <Text strong style={{ color: "#ff4d4f" }}>
+                          {formatDate(rejection.validation_timestamp)}
+                        </Text>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Ghi chú chi tiết" span={2}>
+                        <Text>{rejection.validation_notes}</Text>
+                      </Descriptions.Item>
+                    </Descriptions>
+
+                    {/* Bằng chứng chi tiết - Only show if exists */}
+                    {rejection.reason_evidence &&
+                      Object.keys(rejection.reason_evidence).length > 0 && (
+                        <div style={{ marginTop: "16px" }}>
+                          <Collapse
+                            size="small"
+                            items={[
+                              {
+                                key: "1",
+                                label: (
+                                  <Text strong style={{ fontSize: "14px" }}>
+                                    Bằng chứng chi tiết
+                                  </Text>
+                                ),
+                                children: (
+                                  <div className="space-y-3">
+                                    {rejection.reason_evidence.event_date && (
+                                      <div>
+                                        <Text strong>Ngày sự kiện: </Text>
+                                        <Text>{rejection.reason_evidence.event_date}</Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.policy_clause && (
+                                      <div>
+                                        <Text strong>Điều khoản chính sách: </Text>
+                                        <Text>{rejection.reason_evidence.policy_clause}</Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.claimed_value && (
+                                      <div>
+                                        <Text strong>Giá trị yêu cầu: </Text>
+                                        <Text>{rejection.reason_evidence.claimed_value}</Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.measured_value && (
+                                      <div>
+                                        <Text strong>Giá trị đo được: </Text>
+                                        <Text>{rejection.reason_evidence.measured_value}</Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.threshold_value && (
+                                      <div>
+                                        <Text strong>Ngưỡng kích hoạt: </Text>
+                                        <Text>{rejection.reason_evidence.threshold_value}</Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.blackout_period_start && (
+                                      <div>
+                                        <Text strong>Bắt đầu giai đoạn loại trừ: </Text>
+                                        <Text>
+                                          {rejection.reason_evidence.blackout_period_start}
+                                        </Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.blackout_period_end && (
+                                      <div>
+                                        <Text strong>Kết thúc giai đoạn loại trừ: </Text>
+                                        <Text>
+                                          {rejection.reason_evidence.blackout_period_end}
+                                        </Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.discrepancy_percent && (
+                                      <div>
+                                        <Text strong>Phần trăm chênh lệch: </Text>
+                                        <Text>
+                                          {rejection.reason_evidence.discrepancy_percent}%
+                                        </Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.data_source && (
+                                      <div>
+                                        <Text strong>Nguồn dữ liệu: </Text>
+                                        <Text>{rejection.reason_evidence.data_source}</Text>
+                                      </div>
+                                    )}
+                                    {rejection.reason_evidence.evidence_documents &&
+                                      rejection.reason_evidence.evidence_documents.length >
+                                        0 && (
+                                        <div>
+                                          <Text strong>Tài liệu bằng chứng: </Text>
+                                          <ul className="ml-4 mt-1">
+                                            {rejection.reason_evidence.evidence_documents.map(
+                                              (doc, idx) => (
+                                                <li key={idx}>
+                                                  <Text>{doc}</Text>
+                                                </li>
+                                              )
+                                            )}
+                                          </ul>
+                                        </div>
+                                      )}
+                                  </div>
+                                ),
+                              },
+                            ]}
+                          />
+                        </div>
+                      )}
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <Text type="secondary">
+                      Không tìm thấy thông tin chi tiết về lý do từ chối
+                    </Text>
+                  </div>
+                )}
               </Card>
             </Col>
           )}

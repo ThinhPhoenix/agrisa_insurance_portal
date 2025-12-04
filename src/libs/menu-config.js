@@ -20,6 +20,16 @@ export const sidebarMenuItems = [
   {
     key: "claim",
     label: "Quản lý bồi thường",
+    children: [
+      { key: "claim", label: "Danh sách bồi thường" },
+      { key: "claim/rejection", label: "Danh sách từ chối" },
+      {
+        key: "claim/detail",
+        label: "Chi tiết bồi thường",
+        hideInMenu: true,
+        disableBreadcrumbLink: true,
+      },
+    ],
   },
   {
     key: "beneficiary",

@@ -7,9 +7,9 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  DollarOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
+  WalletOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
 import {
@@ -288,21 +288,100 @@ export default function ClaimDetailPage() {
           </Space>
         </div>
 
+        {/* Summary Cards */}
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24} sm={12} lg={6}>
+            <Card bordered={false} className="shadow-sm">
+              <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <div className="bg-blue-100 p-4 rounded-full">
+                    <WalletOutlined style={{ fontSize: 32, color: '#1890ff' }} />
+                  </div>
+                </div>
+                <Text type="secondary" style={{ fontSize: '13px', display: 'block' }}>
+                  Tổng số tiền bồi thường
+                </Text>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff', marginTop: '8px' }}>
+                  {formatCurrency(claimDetail.claim_amount)}
+                </div>
+              </div>
+            </Card>
+          </Col>
+
+          <Col xs={24} sm={12} lg={6}>
+            <Card bordered={false} className="shadow-sm">
+              <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <div className="bg-green-100 p-4 rounded-full">
+                    <CheckCircleOutlined style={{ fontSize: 32, color: '#52c41a' }} />
+                  </div>
+                </div>
+                <Text type="secondary" style={{ fontSize: '13px', display: 'block' }}>
+                  Bồi thường cố định
+                </Text>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#52c41a', marginTop: '8px' }}>
+                  {formatCurrency(claimDetail.calculated_fix_payout)}
+                </div>
+              </div>
+            </Card>
+          </Col>
+
+          <Col xs={24} sm={12} lg={6}>
+            <Card bordered={false} className="shadow-sm">
+              <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <div className="bg-purple-100 p-4 rounded-full">
+                    <WalletOutlined style={{ fontSize: 32, color: '#722ed1' }} />
+                  </div>
+                </div>
+                <Text type="secondary" style={{ fontSize: '13px', display: 'block' }}>
+                  Bồi thường theo ngưỡng
+                </Text>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#722ed1', marginTop: '8px' }}>
+                  {formatCurrency(claimDetail.calculated_threshold_payout)}
+                </div>
+              </div>
+            </Card>
+          </Col>
+
+          <Col xs={24} sm={12} lg={6}>
+            <Card bordered={false} className="shadow-sm">
+              <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <div className="bg-orange-100 p-4 rounded-full">
+                    <WarningOutlined style={{ fontSize: 32, color: '#fa8c16' }} />
+                  </div>
+                </div>
+                <Text type="secondary" style={{ fontSize: '13px', display: 'block' }}>
+                  Giá trị vượt ngưỡng
+                </Text>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fa8c16', marginTop: '8px' }}>
+                  {claimDetail.over_threshold_value
+                    ? `${claimDetail.over_threshold_value.toFixed(2)}%`
+                    : "-"}
+                </div>
+              </div>
+            </Card>
+          </Col>
+        </Row>
+
         <Row gutter={[16, 16]}>
-          {/* Thông tin cơ bản */}
+          {/* Thông tin đơn bảo hiểm */}
           <Col xs={24} lg={12}>
             <Card
               title={
                 <Space>
                   <FileTextOutlined />
-                  <span>Thông Tin Cơ Bản</span>
+                  <span>Thông Tin Đơn Bảo Hiểm</span>
                 </Space>
               }
               bordered={false}
+              className="shadow-sm"
+              style={{ height: '100%' }}
             >
               <Descriptions column={1} bordered size="small">
                 <Descriptions.Item label="Mã bồi thường">
-                  <Text strong>{claimDetail.claim_number}</Text>
+                  <Text strong style={{ color: '#1890ff' }}>{claimDetail.claim_number}</Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Đơn bảo hiểm">
                   {policy ? (
@@ -315,7 +394,7 @@ export default function ClaimDetailPage() {
                 </Descriptions.Item>
                 <Descriptions.Item label="Gói bảo hiểm">
                   {basePolicy ? (
-                    <Text>{basePolicy.product_name || basePolicy.name || basePolicy.policy_name}</Text>
+                    <Text strong>{basePolicy.product_name || basePolicy.name || basePolicy.policy_name}</Text>
                   ) : (
                     <Text type="secondary">{claimDetail.base_policy_id}</Text>
                   )}
@@ -327,8 +406,35 @@ export default function ClaimDetailPage() {
                     <Text type="secondary">{claimDetail.farm_id}</Text>
                   )}
                 </Descriptions.Item>
+                <Descriptions.Item label="Phương thức tạo">
+                  {claimDetail.auto_generated ? (
+                    <Tag color="blue" icon={<InfoCircleOutlined />}>Tự động</Tag>
+                  ) : (
+                    <Tag>Thủ công</Tag>
+                  )}
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </Col>
+
+          {/* Thông tin thời gian */}
+          <Col xs={24} lg={12}>
+            <Card
+              title={
+                <Space>
+                  <ClockCircleOutlined />
+                  <span>Thông Tin Thời Gian</span>
+                </Space>
+              }
+              bordered={false}
+              className="shadow-sm"
+              style={{ height: '100%' }}
+            >
+              <Descriptions column={1} bordered size="small">
                 <Descriptions.Item label="Thời gian kích hoạt">
-                  {formatDate(claimDetail.trigger_timestamp)}
+                  <Text strong style={{ color: '#fa8c16' }}>
+                    {formatDate(claimDetail.trigger_timestamp)}
+                  </Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày tạo">
                   {formatDate(claimDetail.created_at)}
@@ -336,83 +442,72 @@ export default function ClaimDetailPage() {
                 <Descriptions.Item label="Cập nhật lần cuối">
                   {formatDate(claimDetail.updated_at)}
                 </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
-
-          {/* Thông tin tài chính */}
-          <Col xs={24} lg={12}>
-            <Card
-              title={
-                <Space>
-                  <DollarOutlined />
-                  <span>Thông Tin Tài Chính</span>
-                </Space>
-              }
-              bordered={false}
-            >
-              <Descriptions column={1} bordered size="small">
-                <Descriptions.Item label="Tổng số tiền bồi thường">
-                  <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>
-                    {formatCurrency(claimDetail.claim_amount)}
-                  </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Bồi thường cố định">
-                  {formatCurrency(claimDetail.calculated_fix_payout)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Bồi thường theo ngưỡng">
-                  {formatCurrency(claimDetail.calculated_threshold_payout)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Giá trị vượt ngưỡng">
-                  {claimDetail.over_threshold_value
-                    ? `${claimDetail.over_threshold_value.toFixed(2)}%`
-                    : "-"}
+                <Descriptions.Item label="Trạng thái hiện tại">
+                  <Tag color={getStatusColor(claimDetail.status)} style={{ fontSize: '13px' }}>
+                    {getStatusText(claimDetail.status)}
+                  </Tag>
                 </Descriptions.Item>
               </Descriptions>
             </Card>
           </Col>
 
           {/* Thông tin đánh giá của đối tác */}
-          <Col xs={24}>
-            <Card
-              title={
-                <Space>
-                  <CheckCircleOutlined />
-                  <span>Thông Tin Đánh Giá Của Đối Tác</span>
-                </Space>
-              }
-              bordered={false}
-            >
-              <Descriptions column={2} bordered size="small">
-                <Descriptions.Item label="Thời gian đánh giá" span={1}>
-                  {formatDate(claimDetail.partner_review_timestamp)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Quyết định" span={1}>
-                  {claimDetail.partner_decision ? (
-                    <Tag
-                      color={
-                        claimDetail.partner_decision === "approved"
-                          ? "green"
-                          : "red"
-                      }
-                    >
-                      {claimDetail.partner_decision === "approved"
-                        ? "Chấp thuận"
-                        : "Từ chối"}
-                    </Tag>
-                  ) : (
-                    "-"
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Người đánh giá" span={1}>
-                  {claimDetail.reviewed_by || "-"}
-                </Descriptions.Item>
-                <Descriptions.Item label="Ghi chú của đối tác" span={2}>
-                  {claimDetail.partner_notes || "-"}
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
+          {(claimDetail.partner_review_timestamp || claimDetail.partner_decision || claimDetail.reviewed_by || claimDetail.partner_notes) && (
+            <Col xs={24}>
+              <Card
+                title={
+                  <Space>
+                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                    <span>Thông Tin Đánh Giá Của Đối Tác</span>
+                  </Space>
+                }
+                bordered={false}
+                className="shadow-sm"
+              >
+                <Descriptions column={2} bordered size="small">
+                  <Descriptions.Item label="Thời gian đánh giá" span={1}>
+                    {claimDetail.partner_review_timestamp ? (
+                      <Text strong>{formatDate(claimDetail.partner_review_timestamp)}</Text>
+                    ) : (
+                      <Text type="secondary">Chưa đánh giá</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Quyết định" span={1}>
+                    {claimDetail.partner_decision ? (
+                      <Tag
+                        color={
+                          claimDetail.partner_decision === "approved"
+                            ? "green"
+                            : "red"
+                        }
+                        style={{ fontSize: '13px' }}
+                      >
+                        {claimDetail.partner_decision === "approved"
+                          ? "Chấp thuận"
+                          : "Từ chối"}
+                      </Tag>
+                    ) : (
+                      <Text type="secondary">Chưa có quyết định</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Người đánh giá" span={1}>
+                    {claimDetail.reviewed_by ? (
+                      <Text>{claimDetail.reviewed_by}</Text>
+                    ) : (
+                      <Text type="secondary">-</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ghi chú của đối tác" span={1}>
+                    {claimDetail.partner_notes ? (
+                      <Text>{claimDetail.partner_notes}</Text>
+                    ) : (
+                      <Text type="secondary">Không có ghi chú</Text>
+                    )}
+                  </Descriptions.Item>
+                </Descriptions>
+              </Card>
+            </Col>
+          )}
 
           {/* Bằng chứng */}
           {claimDetail.evidence_summary && (
@@ -420,84 +515,134 @@ export default function ClaimDetailPage() {
               <Card
                 title={
                   <Space>
-                    <WarningOutlined />
+                    <WarningOutlined style={{ color: '#fa8c16' }} />
                     <span>Bằng Chứng Kích Hoạt Bồi Thường</span>
                   </Space>
                 }
                 bordered={false}
+                className="shadow-sm"
               >
-                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                  <Descriptions column={2} bordered size="small">
-                    <Descriptions.Item label="Phương thức tạo" span={1}>
-                      <Tag color={claimDetail.evidence_summary.generation_method === 'automatic' ? 'blue' : 'default'}>
-                        {claimDetail.evidence_summary.generation_method === 'automatic' ? 'Tự động' : 'Thủ công'}
-                      </Tag>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Số điều kiện kích hoạt" span={1}>
-                      <Text strong>{claimDetail.evidence_summary.conditions_count || 0}</Text>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Thời điểm kích hoạt" span={2}>
-                      {formatDate(claimDetail.evidence_summary.triggered_at)}
-                    </Descriptions.Item>
-                  </Descriptions>
+                <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                  {/* Summary Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                      <InfoCircleOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                          Phương thức tạo
+                        </Text>
+                        <Tag color={claimDetail.evidence_summary.generation_method === 'automatic' ? 'blue' : 'default'} style={{ marginTop: '4px' }}>
+                          {claimDetail.evidence_summary.generation_method === 'automatic' ? 'Tự động' : 'Thủ công'}
+                        </Tag>
+                      </div>
+                    </div>
 
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                          Số điều kiện kích hoạt
+                        </Text>
+                        <Text strong style={{ fontSize: '20px', color: '#52c41a' }}>
+                          {claimDetail.evidence_summary.conditions_count || 0}
+                        </Text>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+                      <ClockCircleOutlined style={{ fontSize: 24, color: '#fa8c16' }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                          Thời điểm kích hoạt
+                        </Text>
+                        <Text strong style={{ fontSize: '14px', color: '#fa8c16' }}>
+                          {formatDate(claimDetail.evidence_summary.triggered_at)}
+                        </Text>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Conditions Table */}
                   {claimDetail.evidence_summary.conditions && claimDetail.evidence_summary.conditions.length > 0 && (
-                    <>
-                      <Text strong style={{ fontSize: '14px', marginTop: '16px', display: 'block' }}>
-                        Chi tiết các điều kiện:
-                      </Text>
+                    <div>
+                      <div className="mb-3 pb-2 border-b">
+                        <Text strong style={{ fontSize: '15px', color: '#262626' }}>
+                          Chi tiết các điều kiện kích hoạt
+                        </Text>
+                      </div>
                       <Table
                         dataSource={claimDetail.evidence_summary.conditions}
                         rowKey={(record, index) => record.condition_id || index}
                         pagination={false}
                         size="small"
                         bordered
+                        scroll={{ x: 1000 }}
                         columns={[
                           {
                             title: 'Tham số',
                             dataIndex: 'parameter',
                             key: 'parameter',
-                            width: 120,
-                            render: (text) => <Tag color="blue">{text?.toUpperCase()}</Tag>,
+                            width: 100,
+                            fixed: 'left',
+                            render: (text) => (
+                              <Tag color="blue" style={{ fontSize: '13px', fontWeight: 'bold' }}>
+                                {text?.toUpperCase()}
+                              </Tag>
+                            ),
                           },
                           {
                             title: 'Điều kiện',
                             key: 'condition',
-                            width: 180,
+                            width: 200,
                             render: (_, record) => (
-                              <Text>
-                                Giá trị đo được {record.operator} {record.threshold_value}%
-                              </Text>
+                              <div>
+                                <Text style={{ fontSize: '13px' }}>
+                                  Giá trị đo được <Text strong style={{ color: '#fa8c16' }}>{record.operator}</Text> {record.threshold_value}%
+                                </Text>
+                              </div>
                             ),
                           },
                           {
                             title: 'Giá trị baseline',
                             dataIndex: 'baseline_value',
                             key: 'baseline_value',
-                            width: 120,
-                            render: (val) => val ? val.toFixed(4) : '-',
+                            width: 130,
+                            render: (val) => (
+                              <Text style={{ fontSize: '13px', fontFamily: 'monospace' }}>
+                                {val ? val.toFixed(4) : '-'}
+                              </Text>
+                            ),
                           },
                           {
                             title: 'Giá trị đo được',
                             dataIndex: 'measured_value',
                             key: 'measured_value',
-                            width: 120,
-                            render: (val) => val ? val.toFixed(4) : '-',
+                            width: 130,
+                            render: (val) => (
+                              <Text strong style={{ fontSize: '13px', color: '#1890ff', fontFamily: 'monospace' }}>
+                                {val ? val.toFixed(4) : '-'}
+                              </Text>
+                            ),
                           },
                           {
-                            title: 'Ngưỡng cảnh báo sớm',
+                            title: 'Ngưỡng cảnh báo',
                             dataIndex: 'early_warning_threshold',
                             key: 'early_warning_threshold',
-                            width: 140,
-                            render: (val) => val ? `${val}%` : '-',
+                            width: 130,
+                            render: (val) => (
+                              <Text style={{ fontSize: '13px' }}>
+                                {val ? `${val}%` : '-'}
+                              </Text>
+                            ),
                           },
                           {
                             title: 'Cảnh báo sớm',
                             dataIndex: 'is_early_warning',
                             key: 'is_early_warning',
                             width: 120,
+                            align: 'center',
                             render: (val) => (
-                              <Tag color={val ? 'orange' : 'green'}>
+                              <Tag color={val ? 'orange' : 'green'} style={{ fontSize: '12px' }}>
                                 {val ? 'Có' : 'Không'}
                               </Tag>
                             ),
@@ -507,11 +652,15 @@ export default function ClaimDetailPage() {
                             dataIndex: 'timestamp',
                             key: 'timestamp',
                             width: 150,
-                            render: (timestamp) => formatDate(timestamp),
+                            render: (timestamp) => (
+                              <Text type="secondary" style={{ fontSize: '12px' }}>
+                                {formatDate(timestamp)}
+                              </Text>
+                            ),
                           },
                         ]}
                       />
-                    </>
+                    </div>
                   )}
                 </Space>
               </Card>

@@ -25,11 +25,11 @@ import { useAuthStore } from "@/stores/auth-store";
 import {
   BarChartOutlined,
   CameraOutlined,
-  DollarOutlined,
   EnvironmentOutlined,
   ExclamationCircleOutlined,
   FileTextOutlined,
   SafetyOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -713,7 +713,7 @@ export default function PolicyDetailPage() {
       key: "claims",
       label: (
         <span className="flex items-center gap-2">
-          <DollarOutlined style={{ color: "#52c41a" }} />
+          <WalletOutlined style={{ color: "#52c41a" }} />
           <span className="hidden sm:inline">Bồi thường</span>
         </span>
       ),

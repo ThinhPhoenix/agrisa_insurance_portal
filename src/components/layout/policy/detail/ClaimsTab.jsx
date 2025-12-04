@@ -1,11 +1,14 @@
 import useClaim from "@/services/hooks/claim/use-claim";
+import CustomTable from "@/components/custom-table";
 import {
   CheckCircleOutlined,
+  ClockCircleOutlined,
   EyeOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Card, Space, Spin, Table, Tag, Typography } from "antd";
+import { Alert, Button, Card, Space, Spin, Tag, Typography } from "antd";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -99,8 +102,11 @@ const ClaimsTab = ({ policyId }) => {
       title: "Mã bồi thường",
       dataIndex: "claim_number",
       key: "claim_number",
-      width: 150,
-      render: (text) => <Text strong>{text}</Text>,
+      width: 160,
+      fixed: "left",
+      render: (text) => (
+        <Text strong style={{ color: '#1890ff' }}>{text}</Text>
+      ),
     },
     {
       title: "Trạng thái",
@@ -108,7 +114,9 @@ const ClaimsTab = ({ policyId }) => {
       key: "status",
       width: 180,
       render: (status) => (
-        <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
+        <Tag color={getStatusColor(status)} style={{ fontSize: '13px' }}>
+          {getStatusText(status)}
+        </Tag>
       ),
     },
     {
@@ -116,65 +124,84 @@ const ClaimsTab = ({ policyId }) => {
       dataIndex: "claim_amount",
       key: "claim_amount",
       width: 180,
-      render: (amount) => <Text strong>{formatCurrency(amount)}</Text>,
+      render: (amount) => (
+        <Text strong style={{ fontSize: '15px', color: '#1890ff' }}>
+          {formatCurrency(amount)}
+        </Text>
+      ),
     },
     {
       title: "Bồi thường cố định",
       dataIndex: "calculated_fix_payout",
       key: "calculated_fix_payout",
-      width: 180,
-      render: (amount) => formatCurrency(amount),
+      width: 170,
+      render: (amount) => <Text>{formatCurrency(amount)}</Text>,
     },
     {
       title: "Bồi thường theo ngưỡng",
       dataIndex: "calculated_threshold_payout",
       key: "calculated_threshold_payout",
-      width: 180,
-      render: (amount) => formatCurrency(amount),
+      width: 190,
+      render: (amount) => <Text>{formatCurrency(amount)}</Text>,
     },
     {
       title: "Giá trị vượt ngưỡng",
       dataIndex: "over_threshold_value",
       key: "over_threshold_value",
-      width: 160,
-      render: (value) => value ? `${value.toFixed(2)}%` : "-",
+      width: 170,
+      render: (value) => value ? (
+        <Tag color="orange" style={{ fontSize: '13px' }}>
+          {value.toFixed(2)}%
+        </Tag>
+      ) : "-",
     },
     {
-      title: "Phương thức tạo",
+      title: "Phương thức",
       dataIndex: "auto_generated",
       key: "auto_generated",
-      width: 140,
+      width: 130,
       render: (auto) =>
-        auto ? <Tag color="blue">Tự động</Tag> : <Tag>Thủ công</Tag>,
+        auto ? (
+          <Tag color="blue" icon={<InfoCircleOutlined />}>Tự động</Tag>
+        ) : (
+          <Tag>Thủ công</Tag>
+        ),
     },
     {
       title: "Thời điểm kích hoạt",
       dataIndex: "trigger_timestamp",
       key: "trigger_timestamp",
-      width: 150,
-      render: (timestamp) => formatDate(timestamp),
+      width: 160,
+      render: (timestamp) => (
+        <Text type="secondary" style={{ fontSize: '13px' }}>
+          {formatDate(timestamp)}
+        </Text>
+      ),
     },
     {
       title: "Ngày tạo",
       dataIndex: "created_at",
       key: "created_at",
-      width: 150,
-      render: (date) => formatDate(date),
+      width: 160,
+      render: (date) => (
+        <Text type="secondary" style={{ fontSize: '13px' }}>
+          {formatDate(date)}
+        </Text>
+      ),
     },
     {
       title: "Hành động",
       key: "action",
       fixed: "right",
-      width: 100,
+      width: 120,
       render: (_, record) => (
         <Link href={`/claim/detail?id=${record.id}`}>
           <Button
-            type="dashed"
+            type="primary"
             size="small"
-            className="!bg-blue-100 !border-blue-200 !text-blue-800 hover:!bg-blue-200"
+            icon={<EyeOutlined />}
           >
-            <EyeOutlined size={14} />
-            Xem
+            Xem chi tiết
           </Button>
         </Link>
       ),
@@ -226,45 +253,57 @@ const ClaimsTab = ({ policyId }) => {
   ).length;
 
   return (
-    <Space direction="vertical" size="middle" className="w-full">
+    <Space direction="vertical" size="large" className="w-full">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+        <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 bg-blue-100 p-3 rounded-lg">
-              <FileTextOutlined style={{ fontSize: 28, color: "#1890ff" }} />
+            <div className="flex-shrink-0 bg-blue-100 p-4 rounded-xl">
+              <FileTextOutlined style={{ fontSize: 32, color: "#1890ff" }} />
             </div>
             <div className="flex-1">
-              <Text type="secondary" style={{ fontSize: '13px' }}>Tổng bồi thường</Text>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>
+              <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginBottom: '4px' }}>
+                Tổng số bồi thường
+              </Text>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#1890ff', lineHeight: '1' }}>
                 {claimsByPolicy.length}
               </div>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                yêu cầu
+              </Text>
             </div>
           </div>
         </Card>
 
-        <Card>
+        <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 bg-green-100 p-3 rounded-lg">
-              <CheckCircleOutlined style={{ fontSize: 28, color: "#52c41a" }} />
+            <div className="flex-shrink-0 bg-green-100 p-4 rounded-xl">
+              <CheckCircleOutlined style={{ fontSize: 32, color: "#52c41a" }} />
             </div>
             <div className="flex-1">
-              <Text type="secondary" style={{ fontSize: '13px' }}>Đã phê duyệt</Text>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
+              <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginBottom: '4px' }}>
+                Đã phê duyệt
+              </Text>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#52c41a', lineHeight: '1' }}>
                 {approvedCount}
               </div>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                yêu cầu
+              </Text>
             </div>
           </div>
         </Card>
 
-        <Card>
+        <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 bg-orange-100 p-3 rounded-lg">
-              <InfoCircleOutlined style={{ fontSize: 28, color: "#faad14" }} />
+            <div className="flex-shrink-0 bg-orange-100 p-4 rounded-xl">
+              <WalletOutlined style={{ fontSize: 32, color: "#faad14" }} />
             </div>
             <div className="flex-1">
-              <Text type="secondary" style={{ fontSize: '13px' }}>Tổng số tiền</Text>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#faad14' }}>
+              <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginBottom: '4px' }}>
+                Tổng số tiền
+              </Text>
+              <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#faad14', lineHeight: '1.2' }}>
                 {formatCurrency(totalAmount)}
               </div>
             </div>
@@ -273,21 +312,20 @@ const ClaimsTab = ({ policyId }) => {
       </div>
 
       {/* Claims Table */}
-      <Card>
-        <Table
+      <div className="mt-4">
+        <CustomTable
           columns={columns}
           dataSource={claimsByPolicy}
           rowKey="id"
-          scroll={{ x: 1000 }}
           pagination={{
             pageSize: 10,
             showTotal: (total, range) =>
-              `${range[0]}-${range[1]} của ${total} bản ghi`,
+              `${range[0]}-${range[1]} của ${total} yêu cầu bồi thường`,
             showSizeChanger: true,
             pageSizeOptions: ["10", "20", "50"],
           }}
         />
-      </Card>
+      </div>
     </Space>
   );
 };

@@ -143,6 +143,67 @@ const useClaim = () => {
     }
   }, []);
 
+  /**
+   * Validate claim (Approve or Reject)
+   * @param {string} claimId - Claim ID
+   * @param {object} data - Validation data
+   */
+  const validateClaim = useCallback(async (claimId, data) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await axiosInstance.post(
+        endpoints.claim.validate(claimId),
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to validate claim",
+      };
+    }
+  }, []);
+
+  /**
+   * Create claim rejection with detailed reason
+   * @param {object} data - Rejection data
+   */
+  const createClaimRejection = useCallback(async (data) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await axiosInstance.post(
+        endpoints.claim.createRejection,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to create claim rejection",
+      };
+    }
+  }, []);
+
   return {
     // Claims list
     claims,
@@ -161,6 +222,10 @@ const useClaim = () => {
     claimsByPolicyLoading,
     claimsByPolicyError,
     fetchClaimsByPolicy,
+
+    // Claim actions
+    validateClaim,
+    createClaimRejection,
   };
 };
 

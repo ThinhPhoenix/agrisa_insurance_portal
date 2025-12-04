@@ -13,9 +13,10 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  EyeOutlined,
-  FilePdfOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
+  SettingOutlined,
+  TagOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -380,7 +381,7 @@ const PolicyDetailPage = ({ params }) => {
       key: "basic",
       label: (
         <Space>
-          <FileTextOutlined />
+          <InfoCircleOutlined />
           <span>Thông tin Cơ bản</span>
         </Space>
       ),
@@ -392,8 +393,8 @@ const PolicyDetailPage = ({ params }) => {
       key: "configuration",
       label: (
         <Space>
-          <CheckCircleOutlined />
-          <span>Cấu hình</span>
+          <SettingOutlined />
+          <span>Cấu hình Nâng cao</span>
         </Space>
       ),
       children: (
@@ -404,170 +405,12 @@ const PolicyDetailPage = ({ params }) => {
       key: "tags",
       label: (
         <Space>
-          <FileTextOutlined />
+          <TagOutlined />
           <span>Tài liệu & Trường thông tin</span>
         </Space>
       ),
       children: <TagsDetail policyData={policyDetail} mockData={mockData} />,
     },
-    // Add document tab if document exists
-    ...(policyDetail.document?.has_document
-      ? [
-          {
-            key: "document",
-            label: (
-              <Space>
-                <FilePdfOutlined />
-                <span>Xem Tài liệu PDF</span>
-              </Space>
-            ),
-            children: (
-              <Card>
-                <Space
-                  direction="vertical"
-                  size="large"
-                  style={{ width: "100%" }}
-                >
-                  <div>
-                    <Title level={4}>
-                      <FilePdfOutlined /> Tài liệu Chính sách Bảo hiểm
-                    </Title>
-                    <Text type="secondary">
-                      Xem và tải xuống tài liệu chính sách bảo hiểm
-                    </Text>
-                  </div>
-
-                  <Divider style={{ margin: "12px 0" }} />
-
-                  {/* Document info */}
-                  <Row gutter={[16, 16]}>
-                    <Col span={12}>
-                      <Text type="secondary">Tên tài liệu:</Text>
-                      <br />
-                      <Text strong code>
-                        {policyDetail.document.document_url}
-                      </Text>
-                    </Col>
-                    <Col span={12}>
-                      <Text type="secondary">Loại tệp:</Text>
-                      <br />
-                      <Tag color="blue">
-                        {policyDetail.document.content_type || "PDF"}
-                      </Tag>
-                    </Col>
-                    <Col span={12}>
-                      <Text type="secondary">Kích thước:</Text>
-                      <br />
-                      <Text strong>
-                        {policyDetail.document.file_size_bytes
-                          ? `${(
-                              policyDetail.document.file_size_bytes / 1024
-                            ).toFixed(2)} KB`
-                          : "N/A"}
-                      </Text>
-                    </Col>
-                    <Col span={12}>
-                      <Text type="secondary">Trạng thái:</Text>
-                      <br />
-                      <Tag
-                        color={
-                          policyDetail.documentValidationStatus === "passed"
-                            ? "green"
-                            : "orange"
-                        }
-                      >
-                        {policyDetail.documentValidationStatus === "passed"
-                          ? "Đã xác thực"
-                          : "Chưa xác thực"}
-                      </Tag>
-                    </Col>
-                  </Row>
-
-                  <Divider style={{ margin: "12px 0" }} />
-
-                  {/* Action buttons */}
-                  <Space direction="vertical" style={{ width: "100%" }}>
-                    <div>
-                      <Text type="secondary" strong>
-                        Tài liệu gốc (Document URL):
-                      </Text>
-                      <br />
-                      <Text code style={{ wordBreak: "break-all" }}>
-                        {policyDetail.document.document_url}
-                      </Text>
-                    </div>
-                    <Space>
-                      <Button
-                        type="primary"
-                        icon={<EyeOutlined />}
-                        size="large"
-                        onClick={() => {
-                          if (policyDetail.document.presigned_url) {
-                            window.open(
-                              policyDetail.document.presigned_url,
-                              "_blank"
-                            );
-                          } else {
-                            message.warning("URL tài liệu không khả dụng");
-                          }
-                        }}
-                        disabled={!policyDetail.document.presigned_url}
-                      >
-                        Xem Tài liệu PDF
-                      </Button>
-                      {policyDetail.document.presigned_url_expiry && (
-                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                          Link hết hạn:{" "}
-                          {new Date(
-                            policyDetail.document.presigned_url_expiry
-                          ).toLocaleString("vi-VN")}
-                        </Text>
-                      )}
-                    </Space>
-                  </Space>
-
-                  {/* Metadata */}
-                  {policyDetail.metadata && (
-                    <>
-                      <Divider style={{ margin: "12px 0" }} />
-                      <div>
-                        <Text type="secondary" strong>
-                          Thông tin bổ sung:
-                        </Text>
-                        <Row gutter={[16, 8]} style={{ marginTop: "8px" }}>
-                          <Col span={8}>
-                            <Text type="secondary">Tổng triggers:</Text>
-                            <br />
-                            <Text strong>
-                              {policyDetail.metadata.total_triggers || 0}
-                            </Text>
-                          </Col>
-                          <Col span={8}>
-                            <Text type="secondary">Tổng conditions:</Text>
-                            <br />
-                            <Text strong>
-                              {policyDetail.metadata.total_conditions || 0}
-                            </Text>
-                          </Col>
-                          <Col span={8}>
-                            <Text type="secondary">Tổng chi phí dữ liệu:</Text>
-                            <br />
-                            <Text strong style={{ color: "#1890ff" }}>
-                              {policyDetail.metadata.total_data_cost?.toLocaleString() ||
-                                0}{" "}
-                              ₫
-                            </Text>
-                          </Col>
-                        </Row>
-                      </div>
-                    </>
-                  )}
-                </Space>
-              </Card>
-            ),
-          },
-        ]
-      : []),
   ];
 
   return (

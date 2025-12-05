@@ -304,14 +304,16 @@ export default function ClaimDetailPage() {
     setPaymentModalVisible(true);
 
     try {
-      const response = await axiosInstance.post(endpoints.payment.createPayout, {
-        payout_id: payout.id,
-      });
+      const response = await axiosInstance.post(
+        endpoints.payment.createPayout,
+        {
+          payout_id: payout.id,
+        }
+      );
 
       if (response.data.success) {
         const payoutData = response.data.data?.data || response.data.data;
         setQrData(payoutData);
-        message.success("Đã tạo mã QR thanh toán");
       } else {
         message.error("Không thể tạo mã QR thanh toán");
         setPaymentModalVisible(false);

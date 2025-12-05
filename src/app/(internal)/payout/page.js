@@ -305,7 +305,7 @@ export default function PayoutListPage() {
       name: "searchText",
       label: "Tìm kiếm",
       type: "input",
-      placeholder: "Tìm theo ID chi trả, mã claim, farmer ID...",
+      placeholder: "Tìm theo ID chi trả, mã bồi thường,...",
     },
     {
       name: "status",

@@ -61,9 +61,7 @@ export default function PayoutQRModal({
                 </Text>
               </Descriptions.Item>
               <Descriptions.Item label="Mô tả">
-                <Text type="secondary">
-                  Chi trả bảo hiểm claim {claimNumber}
-                </Text>
+                <Text type="secondary">Chi trả bảo hiểm {claimNumber}</Text>
               </Descriptions.Item>
             </Descriptions>
           </Card>

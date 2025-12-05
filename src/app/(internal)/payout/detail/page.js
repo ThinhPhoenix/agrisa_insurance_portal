@@ -236,18 +236,20 @@ export default function PayoutDetailPage() {
     setPaymentModalVisible(true);
 
     try {
-      const response = await axiosInstance.post(endpoints.payment.createPayout, {
-        amount: payoutDetail.payout_amount,
-        bank_code: "970415",
-        account_number: "123456789",
-        user_id: payoutDetail.farmer_id || payoutDetail.registered_policy_id,
-        description: `Chi trả bảo hiểm ${payoutDetail.id}`,
-      });
+      const response = await axiosInstance.post(
+        endpoints.payment.createPayout,
+        {
+          amount: payoutDetail.payout_amount,
+          bank_code: "970415",
+          account_number: "123456789",
+          user_id: payoutDetail.farmer_id || payoutDetail.registered_policy_id,
+          description: `Chi trả bảo hiểm ${payoutDetail.id}`,
+        }
+      );
 
       if (response.data.success) {
         const payoutData = response.data.data?.data || response.data.data;
         setQrData(payoutData);
-        message.success("Đã tạo mã QR thanh toán");
       } else {
         message.error("Không thể tạo mã QR thanh toán");
         setPaymentModalVisible(false);

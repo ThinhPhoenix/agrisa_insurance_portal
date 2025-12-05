@@ -10,6 +10,8 @@ import { useCallback, useMemo, useState } from "react";
  * @param {Array<string>} config.searchFields - Fields to search in (e.g., ['policy_number', 'farmer_id'])
  * @param {Object} config.defaultFilters - Default filter values
  * @param {number} config.pageSize - Default page size
+ * @param {Object} config.filterHandlers - Custom filter handlers { fieldName: (item, filterValue) => boolean }
+ * @param {Function} config.customFilter - Custom filter function (item, filters, searchText) => boolean
  *
  * @returns {Object} - Contains filtered data, pagination, search, and filter handlers
  */
@@ -18,6 +20,8 @@ export function useTableData(data = [], config = {}) {
     searchFields = [],
     defaultFilters = {},
     pageSize: defaultPageSize = 10,
+    filterHandlers = {},
+    customFilter = null,
   } = config;
 
   // State
@@ -27,15 +31,27 @@ export function useTableData(data = [], config = {}) {
   const [pageSize, setPageSize] = useState(defaultPageSize);
 
   /**
+   * Helper function to get nested object values
+   */
+  const getNestedValue = useCallback((obj, path) => {
+    return path.split(".").reduce((acc, part) => acc && acc[part], obj);
+  }, []);
+
+  /**
    * Filter data based on search text and filters
    */
   const filteredData = useMemo(() => {
     return data.filter((item) => {
+      // Custom filter function override
+      if (customFilter) {
+        return customFilter(item, filters, searchText);
+      }
+
       // Search logic - check if any search field contains the search text
       const matchesSearch =
         !searchText ||
         searchFields.some((field) => {
-          const value = item[field];
+          const value = getNestedValue(item, field);
           if (value === null || value === undefined) return false;
           return String(value).toLowerCase().includes(searchText.toLowerCase());
         });
@@ -45,28 +61,57 @@ export function useTableData(data = [], config = {}) {
         // Skip if filter value is null, undefined, or empty string
         if (value === null || value === undefined || value === "") return true;
 
-        // Handle array filters (e.g., multi-select)
-        if (Array.isArray(value)) {
-          return value.length === 0 || value.includes(item[key]);
+        // Use custom filter handler if provided
+        if (filterHandlers[key]) {
+          return filterHandlers[key](item, value);
         }
 
-        // Handle object filters (e.g., date ranges)
+        // Handle array filters (e.g., multi-select)
+        if (Array.isArray(value)) {
+          return (
+            value.length === 0 || value.includes(getNestedValue(item, key))
+          );
+        }
+
+        // Handle object filters (e.g., date ranges, number ranges)
         if (typeof value === "object" && !Array.isArray(value)) {
-          // Date range filter
+          const itemValue = getNestedValue(item, key);
+
+          // Range filter (from-to)
           if (value.from !== undefined && value.to !== undefined) {
-            const itemValue = item[key];
             if (!itemValue) return false;
             return itemValue >= value.from && itemValue <= value.to;
           }
+
+          // Min/Max filters
+          if (value.min !== undefined) {
+            if (!itemValue || itemValue < value.min) return false;
+          }
+          if (value.max !== undefined) {
+            if (!itemValue || itemValue > value.max) return false;
+          }
+
+          return true;
         }
 
+        // Special handling for "all" value (common in status filters)
+        if (value === "all") return true;
+
         // Simple equality check
-        return item[key] === value;
+        return getNestedValue(item, key) === value;
       });
 
       return matchesSearch && matchesFilters;
     });
-  }, [data, searchText, searchFields, filters]);
+  }, [
+    data,
+    searchText,
+    searchFields,
+    filters,
+    filterHandlers,
+    customFilter,
+    getNestedValue,
+  ]);
 
   /**
    * Paginated data
@@ -143,47 +188,60 @@ export function useTableData(data = [], config = {}) {
   /**
    * Handle page change
    */
-  const handlePageChange = useCallback((page, newPageSize) => {
-    setCurrentPage(page);
-    if (newPageSize !== undefined && newPageSize !== pageSize) {
-      setPageSize(newPageSize);
-    }
-  }, [pageSize]);
+  const handlePageChange = useCallback(
+    (page, newPageSize) => {
+      setCurrentPage(page);
+      if (newPageSize !== undefined && newPageSize !== pageSize) {
+        setPageSize(newPageSize);
+      }
+    },
+    [pageSize]
+  );
 
   /**
    * Get unique values for a field (useful for filter options)
    */
-  const getUniqueValues = useCallback((field) => {
-    const values = data.map((item) => item[field]).filter(Boolean);
-    return [...new Set(values)];
-  }, [data]);
+  const getUniqueValues = useCallback(
+    (field) => {
+      const values = data
+        .map((item) => getNestedValue(item, field))
+        .filter(Boolean);
+      return [...new Set(values)];
+    },
+    [data, getNestedValue]
+  );
 
   /**
    * Get filter options for a specific field
    */
-  const getFilterOptions = useCallback((field, labelField = null) => {
-    const uniqueValues = getUniqueValues(field);
-    return uniqueValues.map((value) => ({
-      value,
-      label: labelField ? value[labelField] : value,
-    }));
-  }, [getUniqueValues]);
+  const getFilterOptions = useCallback(
+    (field, labelField = null) => {
+      const uniqueValues = getUniqueValues(field);
+      return uniqueValues.map((value) => ({
+        value,
+        label: labelField ? value[labelField] : value,
+      }));
+    },
+    [getUniqueValues]
+  );
 
   /**
    * Pagination config for Ant Design Table
    */
-  const paginationConfig = useMemo(() => ({
-    current: currentPage,
-    pageSize,
-    total: filteredData.length,
-    showSizeChanger: true,
-    showQuickJumper: true,
-    showTotal: (total, range) =>
-      `${range[0]}-${range[1]} của ${total} mục`,
-    onChange: handlePageChange,
-    onShowSizeChange: handlePageChange,
-    pageSizeOptions: ["10", "20", "50", "100"],
-  }), [currentPage, pageSize, filteredData.length, handlePageChange]);
+  const paginationConfig = useMemo(
+    () => ({
+      current: currentPage,
+      pageSize,
+      total: filteredData.length,
+      showSizeChanger: true,
+      showQuickJumper: true,
+      showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
+      onChange: handlePageChange,
+      onShowSizeChange: handlePageChange,
+      pageSizeOptions: ["10", "20", "50", "100"],
+    }),
+    [currentPage, pageSize, filteredData.length, handlePageChange]
+  );
 
   return {
     // Data

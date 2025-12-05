@@ -3,6 +3,11 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
+import {
+  booleanFilter,
+  statusFilter,
+  useFilterableList,
+} from "@/services/hooks/common";
 import usePayout from "@/services/hooks/payout/use-payout";
 import {
   CheckCircleOutlined,
@@ -15,7 +20,7 @@ import {
 } from "@ant-design/icons";
 import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import "./payout.css";
 
 const { Title, Text } = Typography;
@@ -23,128 +28,85 @@ const { Title, Text } = Typography;
 export default function PayoutListPage() {
   const { payouts, payoutsLoading, fetchPayouts } = usePayout();
 
-  // Visible columns state
-  const [visibleColumns, setVisibleColumns] = useState([
-    "id",
-    "claim_id",
-    "payout_amount",
-    "status",
-    "farmer_confirmed",
-    "initiated_at",
-  ]);
-
-  // Filter state
-  const [filters, setFilters] = useState({
-    searchText: "",
-    claimId: "",
-    farmerId: "",
-    status: "",
-    farmerConfirmed: "",
-  });
-
-  // Filtered data
-  const [filteredData, setFilteredData] = useState([]);
-
   useEffect(() => {
     fetchPayouts();
   }, [fetchPayouts]);
 
-  // Apply filters whenever payouts or filters change
-  useEffect(() => {
-    applyFilters(filters);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payouts, filters]);
+  const {
+    paginatedData,
+    filteredData,
+    handleFormSubmit,
+    handleClearFilters,
+    paginationConfig,
+    visibleColumns,
+    setColumns: setVisibleColumns,
+    getSummaryStats,
+  } = useFilterableList(payouts, {
+    searchFields: ["id", "claim_id", "farmer_id"],
+    defaultFilters: {
+      searchText: "",
+      status: "all",
+      farmerConfirmed: "all",
+    },
+    defaultVisibleColumns: [
+      "id",
+      "claim_id",
+      "payout_amount",
+      "status",
+      "farmer_confirmed",
+      "initiated_at",
+    ],
+    defaultPageSize: 10,
+    filterHandlers: {
+      searchText: (item, value) => {
+        if (!value || value === "") return true;
+        const searchLower = value.toLowerCase();
+        return (
+          item.id?.toLowerCase().includes(searchLower) ||
+          item.claim_id?.toLowerCase().includes(searchLower) ||
+          item.farmer_id?.toLowerCase().includes(searchLower)
+        );
+      },
+      status: (item, value) => statusFilter(item, value, "status"),
+      farmerConfirmed: (item, value) =>
+        booleanFilter(item, value, "farmer_confirmed"),
+    },
+  });
 
-  // Calculate summary stats
-  const summaryStats = {
-    total: payouts.length,
-    completed: payouts.filter((p) => p.status === "completed").length,
-    processing: payouts.filter((p) => p.status === "processing").length,
-    totalAmount: payouts
-      .filter((p) => p.status === "completed")
-      .reduce((sum, p) => sum + (p.payout_amount || 0), 0),
-  };
+  // Calculate summary stats using hook
+  const summaryStats = getSummaryStats({
+    total: { type: "count" },
+    completed: {
+      type: "count",
+      filterFn: (item) => item.status === "completed",
+    },
+    processing: {
+      type: "count",
+      filterFn: (item) => item.status === "processing",
+    },
+    totalAmount: {
+      type: "sum",
+      field: "payout_amount",
+    },
+  });
 
   // Filter options
   const filterOptions = {
     statuses: [
-      { label: "Tất cả", value: "" },
+      { label: "Tất cả", value: "all" },
       { label: "Chờ xử lý", value: "pending" },
       { label: "Đang xử lý", value: "processing" },
       { label: "Hoàn tất", value: "completed" },
       { label: "Thất bại", value: "failed" },
     ],
     farmerConfirmedOptions: [
-      { label: "Tất cả", value: "" },
+      { label: "Tất cả", value: "all" },
       { label: "Đã xác nhận", value: "true" },
       { label: "Chưa xác nhận", value: "false" },
     ],
   };
 
-  // Handle form submit
-  const handleFormSubmit = (formData) => {
-    setFilters(formData);
-    applyFilters(formData);
-  };
-
-  // Handle clear filters
-  const handleClearFilters = () => {
-    const clearedFilters = {
-      searchText: "",
-      claimId: "",
-      farmerId: "",
-      status: "",
-      farmerConfirmed: "",
-    };
-    setFilters(clearedFilters);
-    applyFilters(clearedFilters);
-  };
-
-  // Apply filters
-  const applyFilters = (filterValues) => {
-    let filtered = [...payouts];
-
-    if (filterValues.searchText) {
-      const searchLower = filterValues.searchText.toLowerCase();
-      filtered = filtered.filter(
-        (payout) =>
-          payout.id?.toLowerCase().includes(searchLower) ||
-          payout.claim_id?.toLowerCase().includes(searchLower) ||
-          payout.farmer_id?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    if (filterValues.claimId) {
-      filtered = filtered.filter((payout) =>
-        payout.claim_id
-          ?.toLowerCase()
-          .includes(filterValues.claimId.toLowerCase())
-      );
-    }
-
-    if (filterValues.farmerId) {
-      filtered = filtered.filter((payout) =>
-        payout.farmer_id
-          ?.toLowerCase()
-          .includes(filterValues.farmerId.toLowerCase())
-      );
-    }
-
-    if (filterValues.status) {
-      filtered = filtered.filter(
-        (payout) => payout.status === filterValues.status
-      );
-    }
-
-    if (filterValues.farmerConfirmed) {
-      const confirmed = filterValues.farmerConfirmed === "true";
-      filtered = filtered.filter(
-        (payout) => payout.farmer_confirmed === confirmed
-      );
-    }
-
-    setFilteredData(filtered);
-  };
+  // Filter options for form
 
   // Format date from epoch timestamp or ISO string
   const formatDate = (timestamp) => {
@@ -337,21 +299,13 @@ export default function PayoutListPage() {
     },
   ];
 
-  // Search fields - First row (4 fields)
-  const searchFieldsRow1 = [
+  // All search fields in one array
+  const searchFields = [
     {
       name: "searchText",
       label: "Tìm kiếm",
       type: "input",
-      placeholder: "Tìm theo ID chi trả, claim ID, farmer ID...",
-      value: filters.searchText,
-    },
-    {
-      name: "claimId",
-      label: "Mã claim",
-      type: "input",
-      placeholder: "Tìm theo mã claim...",
-      value: filters.claimId,
+      placeholder: "Tìm theo ID chi trả, mã claim, farmer ID...",
     },
     {
       name: "status",
@@ -359,7 +313,6 @@ export default function PayoutListPage() {
       type: "combobox",
       placeholder: "Chọn trạng thái",
       options: filterOptions.statuses,
-      value: filters.status,
     },
     {
       name: "farmerConfirmed",
@@ -367,12 +320,7 @@ export default function PayoutListPage() {
       type: "combobox",
       placeholder: "Chọn trạng thái xác nhận",
       options: filterOptions.farmerConfirmedOptions,
-      value: filters.farmerConfirmed,
     },
-  ];
-
-  // Search fields - Second row (buttons)
-  const searchFieldsRow2 = [
     {
       name: "searchButton",
       label: " ",
@@ -484,22 +432,12 @@ export default function PayoutListPage() {
                   ),
                   children: (
                     <div className="payout-filter-form">
-                      <div className="space-y-4">
-                        {/* First row - Main search fields */}
-                        <CustomForm
-                          fields={searchFieldsRow1}
-                          gridColumns="1fr 1fr 1fr 1fr"
-                          gap="16px"
-                          onSubmit={handleFormSubmit}
-                        />
-                        {/* Second row - Action buttons */}
-                        <CustomForm
-                          fields={searchFieldsRow2}
-                          gridColumns="120px 120px 1fr 1fr"
-                          gap="16px"
-                          onSubmit={handleFormSubmit}
-                        />
-                      </div>
+                      <CustomForm
+                        fields={searchFields}
+                        gridColumns="1fr 1fr 1fr 120px 120px"
+                        gap="16px"
+                        onSubmit={handleFormSubmit}
+                      />
                     </div>
                   ),
                 },
@@ -519,15 +457,12 @@ export default function PayoutListPage() {
 
             <CustomTable
               columns={columns}
-              dataSource={filteredData}
+              dataSource={paginatedData}
               visibleColumns={visibleColumns}
               rowKey="id"
               scroll={{ x: 1600 }}
               pagination={{
-                total: filteredData.length,
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
+                ...paginationConfig,
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} của ${total} khoản chi trả`,
               }}

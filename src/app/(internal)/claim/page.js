@@ -5,6 +5,7 @@ import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { getApprovalInfo } from "@/libs/message";
 import useClaim from "@/services/hooks/claim/use-claim";
+import { statusFilter, useFilterableList } from "@/services/hooks/common";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -15,11 +16,20 @@ import {
   FileTextOutlined,
   FilterOutlined,
   SearchOutlined,
-  WarningOutlined,
 } from "@ant-design/icons";
-import { Button, Collapse, Layout, Modal, Space, Spin, Tag, Typography, Descriptions } from "antd";
+import {
+  Button,
+  Collapse,
+  Descriptions,
+  Layout,
+  Modal,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+} from "antd";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "../policy/policy.css";
 
 const { Title, Text } = Typography;
@@ -37,85 +47,64 @@ export default function ClaimListPage() {
   const [selectedRejection, setSelectedRejection] = useState(null);
   const [loadingRejection, setLoadingRejection] = useState(false);
 
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  // Visible columns state
-  const [visibleColumns, setVisibleColumns] = useState([
-    "claim_number",
-    "status",
-    "claim_amount",
-    "over_threshold_value",
-    "auto_generated",
-    "created_at",
-  ]);
-
   useEffect(() => {
     fetchClaims();
   }, [fetchClaims]);
 
-  // Filter claims based on search and status
-  const filteredClaims = useMemo(() => {
-    let result = claims || [];
-
-    // Search filter
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      result = result.filter(
-        (claim) =>
-          claim.claim_number?.toLowerCase().includes(searchLower) ||
-          claim.id?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Status filter
-    if (statusFilter) {
-      result = result.filter((claim) => claim.status === statusFilter);
-    }
-
-    return result;
-  }, [claims, searchText, statusFilter]);
-
-  // Pagination
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredClaims.slice(startIndex, endIndex);
-  }, [filteredClaims, currentPage, pageSize]);
-
-  const paginationConfig = {
-    current: currentPage,
-    pageSize: pageSize,
-    total: filteredClaims.length,
-    showTotal: (total, range) =>
-      `${range[0]}-${range[1]} của ${total} bản ghi`,
-    onChange: (page, pageSize) => {
-      setCurrentPage(page);
-      setPageSize(pageSize);
+  const {
+    paginatedData,
+    filteredData: filteredClaims,
+    handleFormSubmit,
+    handleClearFilters,
+    paginationConfig,
+    visibleColumns,
+    setColumns: setVisibleColumns,
+    getSummaryStats,
+  } = useFilterableList(claims || [], {
+    searchFields: ["claim_number", "id"],
+    defaultFilters: {
+      search: "",
+      status: "",
     },
-    showSizeChanger: true,
-    pageSizeOptions: ["10", "20", "50", "100"],
-  };
+    defaultVisibleColumns: [
+      "claim_number",
+      "status",
+      "claim_amount",
+      "over_threshold_value",
+      "auto_generated",
+      "created_at",
+    ],
+    defaultPageSize: 10,
+    filterHandlers: {
+      search: (item, value) => {
+        if (!value) return true;
+        const searchLower = value.toLowerCase();
+        return (
+          item.claim_number?.toLowerCase().includes(searchLower) ||
+          item.id?.toLowerCase().includes(searchLower)
+        );
+      },
+      status: (item, value) => statusFilter(item, value, "status"),
+    },
+  });
 
   // Calculate summary stats
-  const summaryStats = useMemo(() => {
-    const allClaims = claims || [];
-    return {
-      total: allClaims.length,
-      pendingReview: allClaims.filter(
-        (c) => c.status === "pending_partner_review" || c.status === "generated"
-      ).length,
-      approved: allClaims.filter(
-        (c) => c.status === "approved" || c.status === "paid"
-      ).length,
-      totalAmount: allClaims.reduce(
-        (sum, c) => sum + (c.claim_amount || 0),
-        0
-      ),
-    };
-  }, [claims]);
+  const summaryStats = getSummaryStats({
+    total: { type: "count" },
+    pendingReview: {
+      type: "count",
+      filterFn: (c) =>
+        c.status === "pending_partner_review" || c.status === "generated",
+    },
+    approved: {
+      type: "count",
+      filterFn: (c) => c.status === "approved" || c.status === "paid",
+    },
+    totalAmount: {
+      type: "sum",
+      field: "claim_amount",
+    },
+  });
 
   // Get status color
   const getStatusColor = (status) => {
@@ -157,19 +146,20 @@ export default function ClaimListPage() {
   const formatDate = (timestamp) => {
     if (!timestamp) return "-";
     let date;
-    if (typeof timestamp === 'string') {
+    if (typeof timestamp === "string") {
       // ISO string format
       date = new Date(timestamp);
     } else {
       // Unix timestamp
-      date = timestamp < 5000000000
-        ? new Date(timestamp * 1000)
-        : new Date(timestamp);
+      date =
+        timestamp < 5000000000
+          ? new Date(timestamp * 1000)
+          : new Date(timestamp);
     }
     return date.toLocaleDateString("vi-VN", {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     });
   };
 
@@ -281,7 +271,8 @@ export default function ClaimListPage() {
       dataIndex: "auto_generated",
       key: "auto_generated",
       width: 140,
-      render: (auto) => (auto ? <Tag color="blue">Tự động</Tag> : <Tag>Thủ công</Tag>),
+      render: (auto) =>
+        auto ? <Tag color="blue">Tự động</Tag> : <Tag>Thủ công</Tag>,
     },
     {
       title: "Thời điểm kích hoạt",
@@ -329,20 +320,6 @@ export default function ClaimListPage() {
     },
   ];
 
-  // Handle form submit
-  const handleFormSubmit = (formData) => {
-    setSearchText(formData.search || "");
-    setStatusFilter(formData.status || "");
-    setCurrentPage(1); // Reset to first page
-  };
-
-  // Handle clear filters
-  const handleClearFilters = () => {
-    setSearchText("");
-    setStatusFilter("");
-    setCurrentPage(1);
-  };
-
   // Search fields
   const searchFields = [
     {
@@ -350,14 +327,12 @@ export default function ClaimListPage() {
       label: "Tìm kiếm",
       type: "input",
       placeholder: "Tìm theo mã bồi thường...",
-      value: searchText,
     },
     {
       name: "status",
       label: "Trạng thái",
       type: "select",
       placeholder: "Chọn trạng thái",
-      value: statusFilter,
       options: [
         { label: "Tất cả", value: "" },
         { label: "Đã tạo", value: "generated" },
@@ -453,9 +428,7 @@ export default function ClaimListPage() {
               <div className="insurance-summary-value-compact">
                 {summaryStats.pendingReview}
               </div>
-              <div className="insurance-summary-label-compact">
-                Chờ duyệt
-              </div>
+              <div className="insurance-summary-label-compact">Chờ duyệt</div>
             </div>
           </div>
 
@@ -467,7 +440,9 @@ export default function ClaimListPage() {
               <div className="insurance-summary-value-compact">
                 {summaryStats.approved}
               </div>
-              <div className="insurance-summary-label-compact">Đã phê duyệt</div>
+              <div className="insurance-summary-label-compact">
+                Đã phê duyệt
+              </div>
             </div>
           </div>
 
@@ -609,35 +584,51 @@ export default function ClaimListPage() {
                                 </Text>
                               </div>
                             )}
-                            {selectedRejection.reason_evidence.policy_clause && (
+                            {selectedRejection.reason_evidence
+                              .policy_clause && (
                               <div>
                                 <Text strong>Điều khoản chính sách: </Text>
                                 <Text>
-                                  {selectedRejection.reason_evidence.policy_clause}
+                                  {
+                                    selectedRejection.reason_evidence
+                                      .policy_clause
+                                  }
                                 </Text>
                               </div>
                             )}
-                            {selectedRejection.reason_evidence.claimed_value && (
+                            {selectedRejection.reason_evidence
+                              .claimed_value && (
                               <div>
                                 <Text strong>Giá trị yêu cầu: </Text>
                                 <Text>
-                                  {selectedRejection.reason_evidence.claimed_value}
+                                  {
+                                    selectedRejection.reason_evidence
+                                      .claimed_value
+                                  }
                                 </Text>
                               </div>
                             )}
-                            {selectedRejection.reason_evidence.measured_value && (
+                            {selectedRejection.reason_evidence
+                              .measured_value && (
                               <div>
                                 <Text strong>Giá trị đo được: </Text>
                                 <Text>
-                                  {selectedRejection.reason_evidence.measured_value}
+                                  {
+                                    selectedRejection.reason_evidence
+                                      .measured_value
+                                  }
                                 </Text>
                               </div>
                             )}
-                            {selectedRejection.reason_evidence.threshold_value && (
+                            {selectedRejection.reason_evidence
+                              .threshold_value && (
                               <div>
                                 <Text strong>Ngưỡng kích hoạt: </Text>
                                 <Text>
-                                  {selectedRejection.reason_evidence.threshold_value}
+                                  {
+                                    selectedRejection.reason_evidence
+                                      .threshold_value
+                                  }
                                 </Text>
                               </div>
                             )}
@@ -656,7 +647,9 @@ export default function ClaimListPage() {
                             {selectedRejection.reason_evidence
                               .blackout_period_end && (
                               <div>
-                                <Text strong>Kết thúc giai đoạn loại trừ: </Text>
+                                <Text strong>
+                                  Kết thúc giai đoạn loại trừ:{" "}
+                                </Text>
                                 <Text>
                                   {
                                     selectedRejection.reason_evidence
@@ -682,14 +675,17 @@ export default function ClaimListPage() {
                               <div>
                                 <Text strong>Nguồn dữ liệu: </Text>
                                 <Text>
-                                  {selectedRejection.reason_evidence.data_source}
+                                  {
+                                    selectedRejection.reason_evidence
+                                      .data_source
+                                  }
                                 </Text>
                               </div>
                             )}
                             {selectedRejection.reason_evidence
                               .evidence_documents &&
-                              selectedRejection.reason_evidence.evidence_documents
-                                .length > 0 && (
+                              selectedRejection.reason_evidence
+                                .evidence_documents.length > 0 && (
                                 <div>
                                   <Text strong>Tài liệu bằng chứng: </Text>
                                   <ul className="ml-4 mt-1">

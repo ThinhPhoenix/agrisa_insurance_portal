@@ -236,10 +236,9 @@ export default function PayoutDetailPage() {
     setPaymentModalVisible(true);
 
     try {
-      // Call create payout API
-      const response = await axiosInstance.post("/payment/public/payout", {
+      const response = await axiosInstance.post(endpoints.payment.createPayout, {
         amount: payoutDetail.payout_amount,
-        bank_code: "970415", // Vietinbank
+        bank_code: "970415",
         account_number: "123456789",
         user_id: payoutDetail.farmer_id || payoutDetail.registered_policy_id,
         description: `Chi trả bảo hiểm ${payoutDetail.id}`,

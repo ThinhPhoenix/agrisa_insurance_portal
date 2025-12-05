@@ -119,4 +119,8 @@ export const endpoints = {
       `/policy/protected/api/v2/payouts/read-partner/by-farm/${farm_id}`,
     list: "/policy/protected/api/v2/payouts/read-partner/list",
   },
+  payment: {
+    createPayout: "/payment/public/payout",
+    verifyPayout: "/payment/public/payout/verify",
+  },
 };

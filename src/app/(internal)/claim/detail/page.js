@@ -304,12 +304,8 @@ export default function ClaimDetailPage() {
     setPaymentModalVisible(true);
 
     try {
-      const response = await axiosInstance.post("/payment/public/payout", {
-        amount: payout.payout_amount,
-        bank_code: "970415",
-        account_number: "123456789",
-        user_id: claimDetail.farmer_id || claimDetail.registered_policy_id,
-        description: `Chi trả bảo hiểm claim ${claimDetail.claim_number}`,
+      const response = await axiosInstance.post(endpoints.payment.createPayout, {
+        payout_id: payout.id,
       });
 
       if (response.data.success) {

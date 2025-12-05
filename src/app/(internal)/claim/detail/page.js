@@ -304,11 +304,28 @@ export default function ClaimDetailPage() {
     setPaymentModalVisible(true);
 
     try {
+      // Build payment request with new structure
+      const paymentRequest = {
+        amount: payout.payout_amount,
+        bank_code: "970423",
+        account_number: "09073016692",
+        user_id: payout.farmer_id || "test_id",
+        description: "Chi trả bảo hiểm",
+        type: "policy_payout_payment",
+        items: [
+          {
+            item_id: payout.registered_policy_id,
+            name: `chi tra ${
+              policy?.policy_number || claimDetail?.claim_number || ""
+            }`,
+            price: payout.payout_amount,
+          },
+        ],
+      };
+
       const response = await axiosInstance.post(
         endpoints.payment.createPayout,
-        {
-          payout_id: payout.id,
-        }
+        paymentRequest
       );
 
       if (response.data.success) {

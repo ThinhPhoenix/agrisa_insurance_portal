@@ -236,15 +236,26 @@ export default function PayoutDetailPage() {
     setPaymentModalVisible(true);
 
     try {
+      // Build payment request with new structure
+      const paymentRequest = {
+        amount: payoutDetail.payout_amount,
+        bank_code: "970423",
+        account_number: "09073016692",
+        user_id: payoutDetail.farmer_id || "test_id",
+        description: "Chi trả bảo hiểm",
+        type: "policy_payout_payment",
+        items: [
+          {
+            item_id: payoutDetail.registered_policy_id,
+            name: `Chi tra ${policy?.policy_number || payoutDetail.id}`,
+            price: payoutDetail.payout_amount,
+          },
+        ],
+      };
+
       const response = await axiosInstance.post(
         endpoints.payment.createPayout,
-        {
-          amount: payoutDetail.payout_amount,
-          bank_code: "970415",
-          account_number: "123456789",
-          user_id: payoutDetail.farmer_id || payoutDetail.registered_policy_id,
-          description: `Chi trả bảo hiểm ${payoutDetail.id}`,
-        }
+        paymentRequest
       );
 
       if (response.data.success) {

@@ -33,8 +33,6 @@ const usePayout = () => {
 
   /**
    * Fetch all payouts for partner
-   * Note: This endpoint returns 501 Not Implemented as of the latest API docs
-   * The API recommends using by-policy or by-farm endpoints instead
    */
   const fetchPayouts = useCallback(async () => {
     setPayoutsLoading(true);

@@ -34,9 +34,7 @@ const formatDate = (timestamp) => {
     date = new Date(timestamp);
   } else {
     date =
-      timestamp < 5000000000
-        ? new Date(timestamp * 1000)
-        : new Date(timestamp);
+      timestamp < 5000000000 ? new Date(timestamp * 1000) : new Date(timestamp);
   }
   return date.toLocaleString("vi-VN", {
     year: "numeric",
@@ -44,6 +42,7 @@ const formatDate = (timestamp) => {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh",
   });
 };
 
@@ -190,9 +189,7 @@ export default function ClaimStatusSection({
       render: (confirmed) => (
         <Tag
           color={confirmed ? "green" : "default"}
-          icon={
-            confirmed ? <CheckCircleOutlined /> : <ClockCircleOutlined />
-          }
+          icon={confirmed ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
         >
           {confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
         </Tag>
@@ -321,7 +318,10 @@ export default function ClaimStatusSection({
                                   <div>
                                     <Text strong>Ngưỡng kích hoạt: </Text>
                                     <Text>
-                                      {rejection.reason_evidence.threshold_value}
+                                      {
+                                        rejection.reason_evidence
+                                          .threshold_value
+                                      }
                                     </Text>
                                   </div>
                                 )}
@@ -410,8 +410,7 @@ export default function ClaimStatusSection({
       )}
 
       {/* Thông tin chi trả - Only show when status is approved or paid */}
-      {(claimDetail.status === "approved" ||
-        claimDetail.status === "paid") && (
+      {(claimDetail.status === "approved" || claimDetail.status === "paid") && (
         <Col xs={24}>
           <Card
             title={
@@ -466,7 +465,7 @@ export default function ClaimStatusSection({
                   type="secondary"
                   style={{ display: "block", marginBottom: "8px" }}
                 >
-                  Chưa có khoản chi trả nào cho yêu cầu bồi thường này
+                  Chưa có khoản chi trả nào cho yêu cầu chi trả này
                 </Text>
                 <Text type="secondary" style={{ fontSize: "12px" }}>
                   Khoản chi trả sẽ được tạo sau khi yêu cầu được xử lý
@@ -484,7 +483,7 @@ export default function ClaimStatusSection({
             title={
               <Space>
                 <WarningOutlined style={{ color: "#fa8c16" }} />
-                <span>Bằng Chứng Kích Hoạt Bồi Thường</span>
+                <span>Bằng Chứng Kích Hoạt Chi Trả</span>
               </Space>
             }
             bordered={false}
@@ -532,10 +531,7 @@ export default function ClaimStatusSection({
                     >
                       Số điều kiện kích hoạt
                     </Text>
-                    <Text
-                      strong
-                      style={{ fontSize: "20px", color: "#52c41a" }}
-                    >
+                    <Text strong style={{ fontSize: "20px", color: "#52c41a" }}>
                       {claimDetail.evidence_summary.conditions_count || 0}
                     </Text>
                   </div>
@@ -552,10 +548,7 @@ export default function ClaimStatusSection({
                     >
                       Thời điểm kích hoạt
                     </Text>
-                    <Text
-                      strong
-                      style={{ fontSize: "14px", color: "#fa8c16" }}
-                    >
+                    <Text strong style={{ fontSize: "14px", color: "#fa8c16" }}>
                       {formatDate(claimDetail.evidence_summary.triggered_at)}
                     </Text>
                   </div>
@@ -576,9 +569,7 @@ export default function ClaimStatusSection({
                     </div>
                     <Table
                       dataSource={claimDetail.evidence_summary.conditions}
-                      rowKey={(record, index) =>
-                        record.condition_id || index
-                      }
+                      rowKey={(record, index) => record.condition_id || index}
                       pagination={false}
                       size="small"
                       bordered

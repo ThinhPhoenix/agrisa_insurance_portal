@@ -19,13 +19,13 @@ export const sidebarMenuItems = [
   },
   {
     key: "claim",
-    label: "Quản lý bồi thường",
+    label: "Yêu cầu chi trả bảo hiểm",
     children: [
-      { key: "claim", label: "Danh sách bồi thường" },
+      { key: "claim", label: "Danh sách yêu cầu" },
       { key: "claim/rejection", label: "Danh sách từ chối" },
       {
         key: "claim/detail",
-        label: "Chi tiết bồi thường",
+        label: "Chi tiết chi trả bảo hiểm",
         hideInMenu: true,
         disableBreadcrumbLink: true,
       },
@@ -33,12 +33,12 @@ export const sidebarMenuItems = [
   },
   {
     key: "payout",
-    label: "Quản lý chi trả",
+    label: "Đơn chi trả",
   },
-  {
-    key: "beneficiary",
-    label: "Quản lý người thụ hưởng",
-  },
+  // {
+  //   key: "beneficiary",
+  //   label: "Quản lý người thụ hưởng",
+  // },
   {
     key: "transaction-history",
     label: "Lịch sử giao dịch",

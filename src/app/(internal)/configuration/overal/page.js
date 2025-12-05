@@ -170,7 +170,9 @@ export default function SystemOverviewPage() {
                         </Paragraph>
                         <Text type="secondary">
                           Cập nhật:{" "}
-                          {new Date(source.last_sync).toLocaleString("vi-VN")}
+                          {new Date(source.last_sync).toLocaleString("vi-VN", {
+                            timeZone: "Asia/Ho_Chi_Minh",
+                          })}
                         </Text>
                       </div>
                     }

@@ -69,7 +69,7 @@ export default function ClaimHeader({
       <div className="flex justify-between items-center mb-6">
         <div>
           <Title level={2} className="insurance-title !mb-0">
-            Chi Tiết Bồi Thường
+            Chi Trả Bảo Hiểm
           </Title>
           <Space className="insurance-subtitle">
             <Text>Mã: {claimDetail.claim_number}</Text>
@@ -90,11 +90,7 @@ export default function ClaimHeader({
         </div>
 
         <Space>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={onBack}
-            size="large"
-          >
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack} size="large">
             Quay lại
           </Button>
           {claimDetail.status === "pending_partner_review" && (
@@ -127,16 +123,14 @@ export default function ClaimHeader({
             <div className="text-center">
               <div className="flex justify-center mb-3">
                 <div className="bg-blue-100 p-4 rounded-full">
-                  <WalletOutlined
-                    style={{ fontSize: 32, color: "#1890ff" }}
-                  />
+                  <WalletOutlined style={{ fontSize: 32, color: "#1890ff" }} />
                 </div>
               </div>
               <Text
                 type="secondary"
                 style={{ fontSize: "13px", display: "block" }}
               >
-                Tổng số tiền bồi thường
+                Tổng số tiền chi trả
               </Text>
               <div
                 style={{
@@ -166,7 +160,7 @@ export default function ClaimHeader({
                 type="secondary"
                 style={{ fontSize: "13px", display: "block" }}
               >
-                Bồi thường cố định
+                Chi trả cố định
               </Text>
               <div
                 style={{
@@ -187,16 +181,14 @@ export default function ClaimHeader({
             <div className="text-center">
               <div className="flex justify-center mb-3">
                 <div className="bg-purple-100 p-4 rounded-full">
-                  <WalletOutlined
-                    style={{ fontSize: 32, color: "#722ed1" }}
-                  />
+                  <WalletOutlined style={{ fontSize: 32, color: "#722ed1" }} />
                 </div>
               </div>
               <Text
                 type="secondary"
                 style={{ fontSize: "13px", display: "block" }}
               >
-                Bồi thường theo ngưỡng
+                Chi trả theo ngưỡng
               </Text>
               <div
                 style={{
@@ -217,9 +209,7 @@ export default function ClaimHeader({
             <div className="text-center">
               <div className="flex justify-center mb-3">
                 <div className="bg-orange-100 p-4 rounded-full">
-                  <WarningOutlined
-                    style={{ fontSize: 32, color: "#fa8c16" }}
-                  />
+                  <WarningOutlined style={{ fontSize: 32, color: "#fa8c16" }} />
                 </div>
               </div>
               <Text

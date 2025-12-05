@@ -1,3 +1,4 @@
+import CustomTable from "@/components/custom-table";
 import {
   Card,
   Col,
@@ -6,14 +7,12 @@ import {
   Descriptions,
   InputNumber,
   Row,
-  Select,
   Space,
   Tag,
   Typography,
 } from "antd";
-import { Bar, Line, Pie } from "react-chartjs-2";
 import { useState } from "react";
-import CustomTable from "@/components/custom-table";
+import { Bar, Line, Pie } from "react-chartjs-2";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -89,10 +88,12 @@ export default function MonitoringDataView({ item }) {
   // Filter records by date range if selected
   let filteredRecords = sortedRecords;
   if (dateRange && dateRange[0] && dateRange[1]) {
-    const startTimestamp = dateRange[0].startOf('day').valueOf() / 1000;
-    const endTimestamp = dateRange[1].endOf('day').valueOf() / 1000;
+    const startTimestamp = dateRange[0].startOf("day").valueOf() / 1000;
+    const endTimestamp = dateRange[1].endOf("day").valueOf() / 1000;
     filteredRecords = sortedRecords.filter(
-      (r) => r.measurement_timestamp >= startTimestamp && r.measurement_timestamp <= endTimestamp
+      (r) =>
+        r.measurement_timestamp >= startTimestamp &&
+        r.measurement_timestamp <= endTimestamp
     );
   }
 
@@ -150,7 +151,9 @@ export default function MonitoringDataView({ item }) {
     datasets: [
       {
         label: "Mây che phủ (%)",
-        data: chartRecords.map((r) => r.cloud_cover_percentage?.toFixed(1) || 0),
+        data: chartRecords.map(
+          (r) => r.cloud_cover_percentage?.toFixed(1) || 0
+        ),
         borderColor: "rgb(34, 197, 94)",
         backgroundColor: "rgba(34, 197, 94, 0.1)",
         tension: 0.4,
@@ -246,10 +249,10 @@ export default function MonitoringDataView({ item }) {
         beginAtZero: true,
         max: 100,
         ticks: {
-          callback: function(value) {
-            return value + '%';
-          }
-        }
+          callback: function (value) {
+            return value + "%";
+          },
+        },
       },
     },
   };
@@ -299,7 +302,8 @@ export default function MonitoringDataView({ item }) {
             {item.dataSource?.unit}
           </Descriptions.Item>
           <Descriptions.Item label="Tần suất cập nhật">
-            {UPDATE_FREQUENCY_LABELS[item.dataSource?.update_frequency] || item.dataSource?.update_frequency}
+            {UPDATE_FREQUENCY_LABELS[item.dataSource?.update_frequency] ||
+              item.dataSource?.update_frequency}
           </Descriptions.Item>
           <Descriptions.Item label="Độ phân giải">
             {item.dataSource?.spatial_resolution}
@@ -373,25 +377,29 @@ export default function MonitoringDataView({ item }) {
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={8}>
             <Space direction="vertical" size="small" className="w-full">
-              <Text type="secondary" className="text-xs">Số lượng mẫu hiển thị</Text>
+              <Text type="secondary" className="text-xs">
+                Số lượng mẫu hiển thị
+              </Text>
               <InputNumber
                 min={10}
                 max={filteredRecords.length}
                 value={chartSampleSize}
                 onChange={(value) => setChartSampleSize(value || 30)}
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
                 placeholder="Nhập số mẫu"
               />
             </Space>
           </Col>
           <Col xs={24} sm={12} md={16}>
             <Space direction="vertical" size="small" className="w-full">
-              <Text type="secondary" className="text-xs">Khoảng thời gian</Text>
+              <Text type="secondary" className="text-xs">
+                Khoảng thời gian
+              </Text>
               <RangePicker
                 format="DD/MM/YYYY"
-                placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
+                placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                 onChange={(dates) => setDateRange(dates)}
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
               />
             </Space>
           </Col>
@@ -479,170 +487,179 @@ export default function MonitoringDataView({ item }) {
           {
             key: "monitoring-data",
             label: `Chi tiết dữ liệu giám sát (${count} bản ghi)`,
-            children: records.length > 0 ? (
-              <CustomTable
-                dataSource={records}
-                rowKey={(record, index) => `${record.id}-${index}`}
-                size="small"
-                scroll={{ x: 1400 }}
-                pagination={{
-                  pageSize: 10,
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50", "100"],
-                  showTotal: (total, range) =>
-                    `${range[0]}-${range[1]} của ${total} mục`,
-                  position: ["bottomCenter"],
-                }}
-                columns={[
-            {
-              title: "Thời gian đo",
-              dataIndex: "measurement_timestamp",
-              key: "timestamp",
-              width: 170,
-              fixed: "left",
-              sorter: (a, b) =>
-                a.measurement_timestamp - b.measurement_timestamp,
-              defaultSortOrder: "descend",
-              render: (val) => (
-                <span className="text-xs">
-                  {new Date(val * 1000).toLocaleString("vi-VN")}
-                </span>
+            children:
+              records.length > 0 ? (
+                <CustomTable
+                  dataSource={records}
+                  rowKey={(record, index) => `${record.id}-${index}`}
+                  size="small"
+                  scroll={{ x: 1400 }}
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    pageSizeOptions: ["10", "20", "50", "100"],
+                    showTotal: (total, range) =>
+                      `${range[0]}-${range[1]} của ${total} mục`,
+                    position: ["bottomCenter"],
+                  }}
+                  columns={[
+                    {
+                      title: "Thời gian đo",
+                      dataIndex: "measurement_timestamp",
+                      key: "timestamp",
+                      width: 170,
+                      fixed: "left",
+                      sorter: (a, b) =>
+                        a.measurement_timestamp - b.measurement_timestamp,
+                      defaultSortOrder: "descend",
+                      render: (val) => (
+                        <span className="text-xs">
+                          {new Date(val * 1000).toLocaleString("vi-VN", {
+                            timeZone: "Asia/Ho_Chi_Minh",
+                          })}
+                        </span>
+                      ),
+                    },
+                    {
+                      title: "Giá trị đo",
+                      dataIndex: "measured_value",
+                      key: "value",
+                      width: 130,
+                      sorter: (a, b) => a.measured_value - b.measured_value,
+                      render: (val, record) => (
+                        <span className="font-semibold text-blue-600">
+                          {val?.toFixed(4)}{" "}
+                          <Text type="secondary" className="text-xs">
+                            {record.unit}
+                          </Text>
+                        </span>
+                      ),
+                    },
+                    {
+                      title: "Chất lượng",
+                      dataIndex: "data_quality",
+                      key: "quality",
+                      width: 120,
+                      filters: [
+                        { text: "Xuất sắc", value: "excellent" },
+                        { text: "Tốt", value: "good" },
+                        { text: "Trung bình", value: "fair" },
+                        { text: "Kém", value: "poor" },
+                      ],
+                      onFilter: (value, record) =>
+                        record.data_quality === value,
+                      render: (quality) => (
+                        <Tag
+                          color={
+                            quality === "excellent"
+                              ? "green"
+                              : quality === "good"
+                              ? "blue"
+                              : quality === "fair"
+                              ? "orange"
+                              : quality === "poor"
+                              ? "red"
+                              : "default"
+                          }
+                        >
+                          {QUALITY_LABELS[quality] || quality}
+                        </Tag>
+                      ),
+                    },
+                    {
+                      title: "Độ tin cậy",
+                      dataIndex: "confidence_score",
+                      key: "confidence",
+                      width: 110,
+                      sorter: (a, b) => a.confidence_score - b.confidence_score,
+                      render: (val) => (
+                        <span className="text-purple-600 font-medium">
+                          {(val * 100).toFixed(1)}%
+                        </span>
+                      ),
+                    },
+                    {
+                      title: "Mây che phủ",
+                      dataIndex: "cloud_cover_percentage",
+                      key: "cloud",
+                      width: 110,
+                      sorter: (a, b) =>
+                        a.cloud_cover_percentage - b.cloud_cover_percentage,
+                      render: (val) => (
+                        <span
+                          className={
+                            val > 50 ? "text-red-500" : "text-green-600"
+                          }
+                        >
+                          {val?.toFixed(1)}%
+                        </span>
+                      ),
+                    },
+                    {
+                      title: "Thống kê thành phần",
+                      key: "stats",
+                      width: 200,
+                      render: (_, record) => {
+                        const stats = record.component_data?.statistics;
+                        return stats ? (
+                          <div className="text-xs space-y-1">
+                            <div>
+                              <Text type="secondary">Tối đa:</Text>{" "}
+                              <strong>{stats.max?.toFixed(4)}</strong>
+                            </div>
+                            <div>
+                              <Text type="secondary">Trung vị:</Text>{" "}
+                              <strong>{stats.median?.toFixed(4)}</strong>
+                            </div>
+                            <div>
+                              <Text type="secondary">Tối thiểu:</Text>{" "}
+                              <strong>{stats.min?.toFixed(4)}</strong>
+                            </div>
+                            <div>
+                              <Text type="secondary">Độ lệch:</Text>{" "}
+                              {stats.stddev?.toFixed(4)}
+                            </div>
+                          </div>
+                        ) : (
+                          "-"
+                        );
+                      },
+                    },
+                    {
+                      title: "Nguồn đo",
+                      dataIndex: "measurement_source",
+                      key: "source",
+                      width: 150,
+                      ellipsis: true,
+                    },
+                    {
+                      title: "Số hợp đồng",
+                      dataIndex: "policy_number",
+                      key: "policy",
+                      width: 140,
+                    },
+                    {
+                      title: "Trạng thái HĐ",
+                      dataIndex: "policy_status",
+                      key: "status",
+                      width: 130,
+                      filters: [
+                        { text: "Đang hoạt động", value: "active" },
+                        { text: "Chờ duyệt", value: "pending_review" },
+                      ],
+                      onFilter: (value, record) =>
+                        record.policy_status === value,
+                      render: (status) => (
+                        <Tag color={status === "active" ? "green" : "orange"}>
+                          {STATUS_LABELS[status] || status}
+                        </Tag>
+                      ),
+                    },
+                  ]}
+                />
+              ) : (
+                <Text type="secondary">Chưa có dữ liệu giám sát</Text>
               ),
-            },
-            {
-              title: "Giá trị đo",
-              dataIndex: "measured_value",
-              key: "value",
-              width: 130,
-              sorter: (a, b) => a.measured_value - b.measured_value,
-              render: (val, record) => (
-                <span className="font-semibold text-blue-600">
-                  {val?.toFixed(4)}{" "}
-                  <Text type="secondary" className="text-xs">
-                    {record.unit}
-                  </Text>
-                </span>
-              ),
-            },
-            {
-              title: "Chất lượng",
-              dataIndex: "data_quality",
-              key: "quality",
-              width: 120,
-              filters: [
-                { text: "Xuất sắc", value: "excellent" },
-                { text: "Tốt", value: "good" },
-                { text: "Trung bình", value: "fair" },
-                { text: "Kém", value: "poor" },
-              ],
-              onFilter: (value, record) => record.data_quality === value,
-              render: (quality) => (
-                <Tag
-                  color={
-                    quality === "excellent"
-                      ? "green"
-                      : quality === "good"
-                      ? "blue"
-                      : quality === "fair"
-                      ? "orange"
-                      : quality === "poor"
-                      ? "red"
-                      : "default"
-                  }
-                >
-                  {QUALITY_LABELS[quality] || quality}
-                </Tag>
-              ),
-            },
-            {
-              title: "Độ tin cậy",
-              dataIndex: "confidence_score",
-              key: "confidence",
-              width: 110,
-              sorter: (a, b) => a.confidence_score - b.confidence_score,
-              render: (val) => (
-                <span className="text-purple-600 font-medium">
-                  {(val * 100).toFixed(1)}%
-                </span>
-              ),
-            },
-            {
-              title: "Mây che phủ",
-              dataIndex: "cloud_cover_percentage",
-              key: "cloud",
-              width: 110,
-              sorter: (a, b) =>
-                a.cloud_cover_percentage - b.cloud_cover_percentage,
-              render: (val) => (
-                <span className={val > 50 ? "text-red-500" : "text-green-600"}>
-                  {val?.toFixed(1)}%
-                </span>
-              ),
-            },
-            {
-              title: "Thống kê thành phần",
-              key: "stats",
-              width: 200,
-              render: (_, record) => {
-                const stats = record.component_data?.statistics;
-                return stats ? (
-                  <div className="text-xs space-y-1">
-                    <div>
-                      <Text type="secondary">Tối đa:</Text>{" "}
-                      <strong>{stats.max?.toFixed(4)}</strong>
-                    </div>
-                    <div>
-                      <Text type="secondary">Trung vị:</Text>{" "}
-                      <strong>{stats.median?.toFixed(4)}</strong>
-                    </div>
-                    <div>
-                      <Text type="secondary">Tối thiểu:</Text>{" "}
-                      <strong>{stats.min?.toFixed(4)}</strong>
-                    </div>
-                    <div>
-                      <Text type="secondary">Độ lệch:</Text>{" "}
-                      {stats.stddev?.toFixed(4)}
-                    </div>
-                  </div>
-                ) : (
-                  "-"
-                );
-              },
-            },
-            {
-              title: "Nguồn đo",
-              dataIndex: "measurement_source",
-              key: "source",
-              width: 150,
-              ellipsis: true,
-            },
-            {
-              title: "Số hợp đồng",
-              dataIndex: "policy_number",
-              key: "policy",
-              width: 140,
-            },
-            {
-              title: "Trạng thái HĐ",
-              dataIndex: "policy_status",
-              key: "status",
-              width: 130,
-              filters: [
-                { text: "Đang hoạt động", value: "active" },
-                { text: "Chờ duyệt", value: "pending_review" },
-              ],
-              onFilter: (value, record) => record.policy_status === value,
-              render: (status) => (
-                <Tag color={status === "active" ? "green" : "orange"}>
-                  {STATUS_LABELS[status] || status}
-                </Tag>
-              ),
-            },
-                ]}
-              />
-            ) : (
-              <Text type="secondary">Chưa có dữ liệu giám sát</Text>
-            ),
           },
         ]}
       />

@@ -72,7 +72,7 @@ export default function ClaimModals({
     <>
       {/* Approve Modal */}
       <Modal
-        title="Xác nhận duyệt bồi thường"
+        title="Xác nhận duyệt chi trả"
         open={approveModalVisible}
         onCancel={onApproveCancel}
         footer={null}
@@ -89,7 +89,7 @@ export default function ClaimModals({
           >
             <TextArea
               rows={3}
-              placeholder="Ví dụ: Yêu cầu bồi thường đáp ứng đầy đủ các điều kiện. Đã xác minh tài liệu vào ngày..."
+              placeholder="Ví dụ: Yêu cầu chi trả đáp ứng đầy đủ các điều kiện. Đã xác minh tài liệu vào ngày..."
             />
           </Form.Item>
 
@@ -120,7 +120,7 @@ export default function ClaimModals({
 
       {/* Reject Modal */}
       <Modal
-        title="Từ chối Yêu Cầu Bồi Thường"
+        title="Từ chối Yêu Cầu Chi Trả Bảo Hiểm"
         open={rejectModalVisible}
         onCancel={onRejectCancel}
         footer={null}

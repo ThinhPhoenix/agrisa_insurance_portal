@@ -55,9 +55,7 @@ const formatDate = (timestamp) => {
     date = new Date(timestamp);
   } else {
     date =
-      timestamp < 5000000000
-        ? new Date(timestamp * 1000)
-        : new Date(timestamp);
+      timestamp < 5000000000 ? new Date(timestamp * 1000) : new Date(timestamp);
   }
   return date.toLocaleString("vi-VN", {
     year: "numeric",
@@ -65,6 +63,7 @@ const formatDate = (timestamp) => {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh",
   });
 };
 
@@ -96,7 +95,7 @@ export default function ClaimDetailsCards({
           style={{ height: "100%" }}
         >
           <Descriptions column={1} bordered size="small">
-            <Descriptions.Item label="Mã bồi thường">
+            <Descriptions.Item label="Mã chi trả">
               <Text strong style={{ color: "#1890ff" }}>
                 {claimDetail.claim_number}
               </Text>
@@ -111,9 +110,7 @@ export default function ClaimDetailsCards({
                   </Text>
                 </Link>
               ) : (
-                <Text type="secondary">
-                  {claimDetail.registered_policy_id}
-                </Text>
+                <Text type="secondary">{claimDetail.registered_policy_id}</Text>
               )}
             </Descriptions.Item>
             <Descriptions.Item label="Gói bảo hiểm">

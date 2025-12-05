@@ -1,5 +1,6 @@
 "use client";
 
+import PayoutQRModal from "@/components/payout-qr-modal";
 import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
 import useClaim from "@/services/hooks/claim/use-claim";
@@ -765,391 +766,6 @@ export default function ClaimDetailPage() {
         </Row>
 
         <Row gutter={[16, 16]}>
-          {/* Thông tin chi trả - Only show when status is approved or paid */}
-          {(claimDetail.status === "approved" ||
-            claimDetail.status === "paid") && (
-            <Col xs={24}>
-              <Card
-                title={
-                  <Space>
-                    <WalletOutlined style={{ color: "#52c41a" }} />
-                    <span>Thông Tin Chi Trả</span>
-                  </Space>
-                }
-                bordered={false}
-                className="shadow-sm"
-                style={{ borderLeft: "4px solid #52c41a" }}
-              >
-                {payoutsByPolicyLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Spin size="large" tip="Đang tải thông tin chi trả..." />
-                  </div>
-                ) : payoutsByPolicy && payoutsByPolicy.length > 0 ? (
-                  <div>
-                    <Text
-                      type="secondary"
-                      style={{
-                        fontSize: "13px",
-                        display: "block",
-                        marginBottom: "16px",
-                      }}
-                    >
-                      Tìm thấy {payoutsByPolicy.length} khoản chi trả cho đơn
-                      bảo hiểm này
-                    </Text>
-                    <Table
-                      dataSource={payoutsByPolicy.filter(
-                        (payout) => payout.claim_id === claimDetail.id
-                      )}
-                      rowKey="id"
-                      pagination={false}
-                      size="small"
-                      bordered
-                      columns={[
-                        {
-                          title: "Mã chi trả",
-                          dataIndex: "id",
-                          key: "id",
-                          width: 280,
-                          render: (id) => (
-                            <Link href={`/payout/detail?id=${id}`}>
-                              <Text
-                                style={{
-                                  color: "#1890ff",
-                                  fontSize: "12px",
-                                  fontFamily: "monospace",
-                                }}
-                              >
-                                {id}
-                              </Text>
-                            </Link>
-                          ),
-                        },
-                        {
-                          title: "Số tiền",
-                          dataIndex: "payout_amount",
-                          key: "payout_amount",
-                          width: 150,
-                          render: (amount, record) => (
-                            <Text
-                              strong
-                              style={{ color: "#52c41a", fontSize: "14px" }}
-                            >
-                              {formatCurrency(amount)}
-                            </Text>
-                          ),
-                        },
-                        {
-                          title: "Loại tiền",
-                          dataIndex: "currency",
-                          key: "currency",
-                          width: 80,
-                          render: (currency) => (
-                            <Tag color="blue">{currency || "VND"}</Tag>
-                          ),
-                        },
-                        {
-                          title: "Trạng thái",
-                          dataIndex: "status",
-                          key: "status",
-                          width: 130,
-                          render: (status) => {
-                            const statusConfig = {
-                              pending: {
-                                color: "default",
-                                text: "Chờ xử lý",
-                                icon: <ClockCircleOutlined />,
-                              },
-                              processing: {
-                                color: "orange",
-                                text: "Đang xử lý",
-                                icon: <ClockCircleOutlined />,
-                              },
-                              completed: {
-                                color: "green",
-                                text: "Hoàn tất",
-                                icon: <CheckCircleOutlined />,
-                              },
-                              failed: {
-                                color: "red",
-                                text: "Thất bại",
-                                icon: <CloseCircleOutlined />,
-                              },
-                            };
-                            const config =
-                              statusConfig[status] || statusConfig.pending;
-                            return (
-                              <Tag color={config.color} icon={config.icon}>
-                                {config.text}
-                              </Tag>
-                            );
-                          },
-                        },
-                        {
-                          title: "Thời gian khởi tạo",
-                          dataIndex: "initiated_at",
-                          key: "initiated_at",
-                          width: 150,
-                          render: (timestamp) => (
-                            <Text style={{ fontSize: "12px" }}>
-                              {formatDate(timestamp)}
-                            </Text>
-                          ),
-                        },
-                        {
-                          title: "Thời gian hoàn tất",
-                          dataIndex: "completed_at",
-                          key: "completed_at",
-                          width: 150,
-                          render: (timestamp) => (
-                            <Text style={{ fontSize: "12px" }}>
-                              {formatDate(timestamp)}
-                            </Text>
-                          ),
-                        },
-                        {
-                          title: "Xác nhận nông dân",
-                          dataIndex: "farmer_confirmed",
-                          key: "farmer_confirmed",
-                          width: 130,
-                          align: "center",
-                          render: (confirmed) => (
-                            <Tag
-                              color={confirmed ? "green" : "default"}
-                              icon={
-                                confirmed ? (
-                                  <CheckCircleOutlined />
-                                ) : (
-                                  <ClockCircleOutlined />
-                                )
-                              }
-                            >
-                              {confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
-                            </Tag>
-                          ),
-                        },
-                        {
-                          title: "Hành động",
-                          key: "action",
-                          width: 150,
-                          align: "center",
-                          fixed: "right",
-                          render: (_, record) => (
-                            <Space>
-                              <Button
-                                type="primary"
-                                icon={<WalletOutlined />}
-                                size="small"
-                                onClick={() => handlePayment(record)}
-                                disabled={record.status === "completed"}
-                              >
-                                Thanh toán
-                              </Button>
-                              <Link href={`/payout/detail?id=${record.id}`}>
-                                <Button
-                                  type="link"
-                                  icon={<EyeOutlined />}
-                                  size="small"
-                                >
-                                  Xem
-                                </Button>
-                              </Link>
-                            </Space>
-                          ),
-                        },
-                      ]}
-                      scroll={{ x: 1200 }}
-                    />
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <WalletOutlined
-                      style={{
-                        fontSize: 48,
-                        color: "#d9d9d9",
-                        marginBottom: "16px",
-                      }}
-                    />
-                    <Text
-                      type="secondary"
-                      style={{ display: "block", marginBottom: "8px" }}
-                    >
-                      Chưa có khoản chi trả nào cho yêu cầu bồi thường này
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: "12px" }}>
-                      Khoản chi trả sẽ được tạo sau khi yêu cầu được xử lý
-                    </Text>
-                  </div>
-                )}
-              </Card>
-            </Col>
-          )}
-
-          {/* Thông tin đơn bảo hiểm */}
-          <Col xs={24} lg={12}>
-            <Card
-              title={
-                <Space>
-                  <FileTextOutlined />
-                  <span>Thông Tin Đơn Bảo Hiểm</span>
-                </Space>
-              }
-              bordered={false}
-              className="shadow-sm"
-              style={{ height: "100%" }}
-            >
-              <Descriptions column={1} bordered size="small">
-                <Descriptions.Item label="Mã bồi thường">
-                  <Text strong style={{ color: "#1890ff" }}>
-                    {claimDetail.claim_number}
-                  </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Đơn bảo hiểm">
-                  {policy ? (
-                    <Link
-                      href={`/policy/policy-detail?id=${policy.id}&type=active`}
-                    >
-                      <Text style={{ color: "#1890ff" }}>
-                        {policy.policy_number}
-                      </Text>
-                    </Link>
-                  ) : (
-                    <Text type="secondary">
-                      {claimDetail.registered_policy_id}
-                    </Text>
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Gói bảo hiểm">
-                  {basePolicy ? (
-                    <Text strong>
-                      {basePolicy.product_name ||
-                        basePolicy.name ||
-                        basePolicy.policy_name}
-                    </Text>
-                  ) : (
-                    <Text type="secondary">{claimDetail.base_policy_id}</Text>
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trang trại">
-                  {farm ? (
-                    <Text>{farm.farm_name || "Trang trại"}</Text>
-                  ) : (
-                    <Text type="secondary">{claimDetail.farm_id}</Text>
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Phương thức tạo">
-                  {claimDetail.auto_generated ? (
-                    <Tag color="blue" icon={<InfoCircleOutlined />}>
-                      Tự động
-                    </Tag>
-                  ) : (
-                    <Tag>Thủ công</Tag>
-                  )}
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
-
-          {/* Thông tin thời gian */}
-          <Col xs={24} lg={12}>
-            <Card
-              title={
-                <Space>
-                  <ClockCircleOutlined />
-                  <span>Thông Tin Thời Gian</span>
-                </Space>
-              }
-              bordered={false}
-              className="shadow-sm"
-              style={{ height: "100%" }}
-            >
-              <Descriptions column={1} bordered size="small">
-                <Descriptions.Item label="Thời gian kích hoạt">
-                  <Text strong style={{ color: "#fa8c16" }}>
-                    {formatDate(claimDetail.trigger_timestamp)}
-                  </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Ngày tạo">
-                  {formatDate(claimDetail.created_at)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Cập nhật lần cuối">
-                  {formatDate(claimDetail.updated_at)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái hiện tại">
-                  <Tag
-                    color={getStatusColor(claimDetail.status)}
-                    style={{ fontSize: "13px" }}
-                  >
-                    {getStatusText(claimDetail.status)}
-                  </Tag>
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
-
-          {/* Thông tin đánh giá của đối tác */}
-          {(claimDetail.partner_review_timestamp ||
-            claimDetail.partner_decision ||
-            claimDetail.reviewed_by ||
-            claimDetail.partner_notes) && (
-            <Col xs={24}>
-              <Card
-                title={
-                  <Space>
-                    <CheckCircleOutlined style={{ color: "#52c41a" }} />
-                    <span>Thông Tin Đánh Giá Của Đối Tác</span>
-                  </Space>
-                }
-                bordered={false}
-                className="shadow-sm"
-              >
-                <Descriptions column={2} bordered size="small">
-                  <Descriptions.Item label="Thời gian đánh giá" span={1}>
-                    {claimDetail.partner_review_timestamp ? (
-                      <Text strong>
-                        {formatDate(claimDetail.partner_review_timestamp)}
-                      </Text>
-                    ) : (
-                      <Text type="secondary">Chưa đánh giá</Text>
-                    )}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Quyết định" span={1}>
-                    {claimDetail.partner_decision ? (
-                      <Tag
-                        color={
-                          claimDetail.partner_decision === "approved"
-                            ? "green"
-                            : "red"
-                        }
-                        style={{ fontSize: "13px" }}
-                      >
-                        {claimDetail.partner_decision === "approved"
-                          ? "Chấp thuận"
-                          : "Từ chối"}
-                      </Tag>
-                    ) : (
-                      <Text type="secondary">Chưa có quyết định</Text>
-                    )}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Người đánh giá" span={1}>
-                    {claimDetail.reviewed_by ? (
-                      <Text>{claimDetail.reviewed_by}</Text>
-                    ) : (
-                      <Text type="secondary">-</Text>
-                    )}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Ghi chú của đối tác" span={1}>
-                    {claimDetail.partner_notes ? (
-                      <Text>{claimDetail.partner_notes}</Text>
-                    ) : (
-                      <Text type="secondary">Không có ghi chú</Text>
-                    )}
-                  </Descriptions.Item>
-                </Descriptions>
-              </Card>
-            </Col>
-          )}
-
           {/* Thông tin từ chối - Only show when status is rejected */}
           {claimDetail.status === "rejected" && (
             <Col xs={24}>
@@ -1354,6 +970,380 @@ export default function ClaimDetailPage() {
                     </Text>
                   </div>
                 )}
+              </Card>
+            </Col>
+          )}
+
+          {/* Thông tin chi trả - Only show when status is approved or paid */}
+          {(claimDetail.status === "approved" ||
+            claimDetail.status === "paid") && (
+            <Col xs={24}>
+              <Card
+                title={
+                  <Space>
+                    <WalletOutlined style={{ color: "#52c41a" }} />
+                    <span>Thông Tin Chi Trả</span>
+                  </Space>
+                }
+                bordered={false}
+                className="shadow-sm"
+                style={{ borderLeft: "4px solid #52c41a" }}
+              >
+                {payoutsByPolicyLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Spin size="large" tip="Đang tải thông tin chi trả..." />
+                  </div>
+                ) : payoutsByPolicy && payoutsByPolicy.length > 0 ? (
+                  <div>
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: "13px",
+                        display: "block",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      Tìm thấy {payoutsByPolicy.length} khoản chi trả cho đơn
+                      bảo hiểm này
+                    </Text>
+                    <Table
+                      dataSource={payoutsByPolicy.filter(
+                        (payout) => payout.claim_id === claimDetail.id
+                      )}
+                      rowKey="id"
+                      pagination={false}
+                      size="small"
+                      bordered
+                      columns={[
+                        {
+                          title: "Mã chi trả",
+                          dataIndex: "id",
+                          key: "id",
+                          width: 280,
+                          render: (id) => (
+                            <Link href={`/payout/detail?id=${id}`}>
+                              <Text
+                                style={{
+                                  color: "#1890ff",
+                                  fontSize: "12px",
+                                  fontFamily: "monospace",
+                                }}
+                              >
+                                {id}
+                              </Text>
+                            </Link>
+                          ),
+                        },
+                        {
+                          title: "Số tiền",
+                          dataIndex: "payout_amount",
+                          key: "payout_amount",
+                          width: 150,
+                          render: (amount, record) => (
+                            <Text
+                              strong
+                              style={{ color: "#52c41a", fontSize: "14px" }}
+                            >
+                              {formatCurrency(amount)}
+                            </Text>
+                          ),
+                        },
+                        {
+                          title: "Loại tiền",
+                          dataIndex: "currency",
+                          key: "currency",
+                          width: 80,
+                          render: (currency) => (
+                            <Tag color="blue">{currency || "VND"}</Tag>
+                          ),
+                        },
+                        {
+                          title: "Trạng thái",
+                          dataIndex: "status",
+                          key: "status",
+                          width: 130,
+                          render: (status) => {
+                            const statusConfig = {
+                              pending: {
+                                color: "default",
+                                text: "Chờ xử lý",
+                                icon: <ClockCircleOutlined />,
+                              },
+                              processing: {
+                                color: "orange",
+                                text: "Đang xử lý",
+                                icon: <ClockCircleOutlined />,
+                              },
+                              completed: {
+                                color: "green",
+                                text: "Hoàn tất",
+                                icon: <CheckCircleOutlined />,
+                              },
+                              failed: {
+                                color: "red",
+                                text: "Thất bại",
+                                icon: <CloseCircleOutlined />,
+                              },
+                            };
+                            const config =
+                              statusConfig[status] || statusConfig.pending;
+                            return (
+                              <Tag color={config.color} icon={config.icon}>
+                                {config.text}
+                              </Tag>
+                            );
+                          },
+                        },
+                        {
+                          title: "Thời gian khởi tạo",
+                          dataIndex: "initiated_at",
+                          key: "initiated_at",
+                          width: 150,
+                          render: (timestamp) => (
+                            <Text style={{ fontSize: "12px" }}>
+                              {formatDate(timestamp)}
+                            </Text>
+                          ),
+                        },
+                        {
+                          title: "Thời gian hoàn tất",
+                          dataIndex: "completed_at",
+                          key: "completed_at",
+                          width: 150,
+                          render: (timestamp) => (
+                            <Text style={{ fontSize: "12px" }}>
+                              {formatDate(timestamp)}
+                            </Text>
+                          ),
+                        },
+                        {
+                          title: "Xác nhận nông dân",
+                          dataIndex: "farmer_confirmed",
+                          key: "farmer_confirmed",
+                          width: 130,
+                          align: "center",
+                          render: (confirmed) => (
+                            <Tag
+                              color={confirmed ? "green" : "default"}
+                              icon={
+                                confirmed ? (
+                                  <CheckCircleOutlined />
+                                ) : (
+                                  <ClockCircleOutlined />
+                                )
+                              }
+                            >
+                              {confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
+                            </Tag>
+                          ),
+                        },
+                        {
+                          title: "Hành động",
+                          key: "action",
+                          width: 150,
+                          align: "center",
+                          fixed: "right",
+                          render: (_, record) => (
+                            <Space>
+                              <Tooltip title="Thanh toán ngay khoản chi trả này">
+                                <Button
+                                  type="primary"
+                                  icon={<WalletOutlined />}
+                                  size="small"
+                                  onClick={() => handlePayment(record)}
+                                  disabled={record.status === "completed"}
+                                />
+                              </Tooltip>
+                              <Tooltip title="Xem chi tiết khoản chi trả">
+                                <Link href={`/payout/detail?id=${record.id}`}>
+                                  <Button
+                                    type="link"
+                                    icon={<EyeOutlined />}
+                                    size="small"
+                                  />
+                                </Link>
+                              </Tooltip>
+                            </Space>
+                          ),
+                        },
+                      ]}
+                      scroll={{ x: 1200 }}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <WalletOutlined
+                      style={{
+                        fontSize: 48,
+                        color: "#d9d9d9",
+                        marginBottom: "16px",
+                      }}
+                    />
+                    <Text
+                      type="secondary"
+                      style={{ display: "block", marginBottom: "8px" }}
+                    >
+                      Chưa có khoản chi trả nào cho yêu cầu bồi thường này
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                      Khoản chi trả sẽ được tạo sau khi yêu cầu được xử lý
+                    </Text>
+                  </div>
+                )}
+              </Card>
+            </Col>
+          )}
+
+          {/* Thông tin đơn bảo hiểm */}
+          <Col xs={24} lg={12}>
+            <Card
+              title={
+                <Space>
+                  <FileTextOutlined />
+                  <span>Thông Tin Đơn Bảo Hiểm</span>
+                </Space>
+              }
+              bordered={false}
+              className="shadow-sm"
+              style={{ height: "100%" }}
+            >
+              <Descriptions column={1} bordered size="small">
+                <Descriptions.Item label="Mã bồi thường">
+                  <Text strong style={{ color: "#1890ff" }}>
+                    {claimDetail.claim_number}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Đơn bảo hiểm">
+                  {policy ? (
+                    <Link
+                      href={`/policy/policy-detail?id=${policy.id}&type=active`}
+                    >
+                      <Text style={{ color: "#1890ff" }}>
+                        {policy.policy_number}
+                      </Text>
+                    </Link>
+                  ) : (
+                    <Text type="secondary">
+                      {claimDetail.registered_policy_id}
+                    </Text>
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Gói bảo hiểm">
+                  {basePolicy ? (
+                    <Text strong>
+                      {basePolicy.product_name ||
+                        basePolicy.name ||
+                        basePolicy.policy_name}
+                    </Text>
+                  ) : (
+                    <Text type="secondary">{claimDetail.base_policy_id}</Text>
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Trang trại">
+                  {farm ? (
+                    <Text>{farm.farm_name || "Trang trại"}</Text>
+                  ) : (
+                    <Text type="secondary">{claimDetail.farm_id}</Text>
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Phương thức tạo">
+                  {claimDetail.auto_generated ? (
+                    <Tag color="blue" icon={<InfoCircleOutlined />}>
+                      Tự động
+                    </Tag>
+                  ) : (
+                    <Tag>Thủ công</Tag>
+                  )}
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </Col>
+
+          {/* Thông tin thời gian */}
+          <Col xs={24} lg={12}>
+            <Card
+              title={
+                <Space>
+                  <ClockCircleOutlined />
+                  <span>Thông Tin Thời Gian</span>
+                </Space>
+              }
+              bordered={false}
+              className="shadow-sm"
+              style={{ height: "100%" }}
+            >
+              <Descriptions column={1} bordered size="small">
+                <Descriptions.Item label="Thời gian kích hoạt">
+                  <Text strong style={{ color: "#fa8c16" }}>
+                    {formatDate(claimDetail.trigger_timestamp)}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tạo">
+                  {formatDate(claimDetail.created_at)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Cập nhật lần cuối">
+                  {formatDate(claimDetail.updated_at)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Trạng thái hiện tại">
+                  <Tag
+                    color={getStatusColor(claimDetail.status)}
+                    style={{ fontSize: "13px" }}
+                  >
+                    {getStatusText(claimDetail.status)}
+                  </Tag>
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </Col>
+
+          {/* Thông tin đánh giá của đối tác */}
+          {(claimDetail.partner_review_timestamp ||
+            claimDetail.partner_decision ||
+            claimDetail.reviewed_by ||
+            claimDetail.partner_notes) && (
+            <Col xs={24}>
+              <Card
+                title={
+                  <Space>
+                    <CheckCircleOutlined style={{ color: "#52c41a" }} />
+                    <span>Thông Tin Đánh Giá Của Đối Tác</span>
+                  </Space>
+                }
+                bordered={false}
+                className="shadow-sm"
+              >
+                <Descriptions column={2} bordered size="small">
+                  <Descriptions.Item label="Thời gian đánh giá" span={1}>
+                    {claimDetail.partner_review_timestamp ? (
+                      <Text strong>
+                        {formatDate(claimDetail.partner_review_timestamp)}
+                      </Text>
+                    ) : (
+                      <Text type="secondary">Chưa đánh giá</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Quyết định" span={1}>
+                    {claimDetail.partner_decision ? (
+                      <Text>{claimDetail.partner_decision}</Text>
+                    ) : (
+                      <Text type="secondary">Chưa có quyết định</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Người đánh giá" span={1}>
+                    {claimDetail.reviewed_by ? (
+                      <Text>{claimDetail.reviewed_by}</Text>
+                    ) : (
+                      <Text type="secondary">-</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ghi chú của đối tác" span={1}>
+                    {claimDetail.partner_notes ? (
+                      <Text>{claimDetail.partner_notes}</Text>
+                    ) : (
+                      <Text type="secondary">Không có ghi chú</Text>
+                    )}
+                  </Descriptions.Item>
+                </Descriptions>
               </Card>
             </Col>
           )}
@@ -1591,101 +1581,16 @@ export default function ClaimDetailPage() {
       </div>
 
       {/* Payment QR Modal */}
-      <Modal
-        title={
-          <Space>
-            <WalletOutlined style={{ color: "#52c41a" }} />
-            <span>Thanh toán Chi trả</span>
-          </Space>
-        }
-        open={paymentModalVisible}
+      <PayoutQRModal
+        visible={paymentModalVisible}
         onCancel={handleClosePaymentModal}
-        width={500}
-        footer={null}
-        centered
-      >
-        {paymentLoading && !qrData ? (
-          <div className="flex justify-center items-center py-12">
-            <Spin size="large" tip="Đang tạo mã QR..." />
-          </div>
-        ) : qrData ? (
-          <div className="space-y-4">
-            {/* Payout Info */}
-            <Card size="small" className="bg-blue-50">
-              <Descriptions column={1} size="small">
-                <Descriptions.Item label="Số tiền chi trả">
-                  <Text strong style={{ color: "#1890ff", fontSize: "16px" }}>
-                    {formatCurrency(selectedPayout?.payout_amount)}
-                  </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Mã chi trả">
-                  <Text style={{ fontSize: "12px", fontFamily: "monospace" }}>
-                    {selectedPayout?.id}
-                  </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Mô tả">
-                  <Text type="secondary">
-                    Chi trả bảo hiểm claim {claimDetail.claim_number}
-                  </Text>
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-
-            {/* QR Code */}
-            <div className="flex justify-center py-6">
-              <div className="border-4 border-gray-200 rounded-lg p-4 bg-white">
-                <img
-                  src={qrData.qr}
-                  alt="QR Code"
-                  style={{ width: "280px", height: "280px" }}
-                />
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <Text style={{ fontSize: "13px", display: "block" }}>
-                <InfoCircleOutlined
-                  style={{ color: "#faad14", marginRight: "8px" }}
-                />
-                <strong>Hướng dẫn:</strong>
-              </Text>
-              <ul className="ml-6 mt-2 space-y-1" style={{ fontSize: "12px" }}>
-                <li>Mở ứng dụng ngân hàng trên điện thoại</li>
-                <li>Quét mã QR trên để chuyển khoản</li>
-                <li>Xác nhận giao dịch trong ứng dụng ngân hàng</li>
-                <li>
-                  Sau khi chuyển khoản thành công, nhấn "Xác nhận thanh toán"
-                </li>
-              </ul>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                size="large"
-                onClick={handleClosePaymentModal}
-                disabled={paymentLoading}
-              >
-                Hủy
-              </Button>
-              <Button
-                type="primary"
-                size="large"
-                icon={<CheckCircleOutlined />}
-                onClick={handleVerifyPayment}
-                loading={paymentLoading}
-              >
-                Xác nhận thanh toán
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <Text type="danger">Không thể tạo mã QR thanh toán</Text>
-          </div>
-        )}
-      </Modal>
+        onVerify={handleVerifyPayment}
+        loading={paymentLoading}
+        qrData={qrData}
+        selectedPayout={selectedPayout}
+        claimNumber={claimDetail.claim_number}
+        formatCurrency={formatCurrency}
+      />
 
       {/* Approve Modal */}
       <Modal

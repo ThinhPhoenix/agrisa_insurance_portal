@@ -1,5 +1,6 @@
 "use client";
 
+import PayoutQRModal from "@/components/payout-qr-modal";
 import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
 import usePayout from "@/services/hooks/payout/use-payout";
@@ -9,7 +10,6 @@ import {
   ClockCircleOutlined,
   CloseCircleOutlined,
   FileTextOutlined,
-  StarFilled,
   UserOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
@@ -19,12 +19,13 @@ import {
   Col,
   Descriptions,
   Layout,
+  message,
+  Rate,
   Row,
   Space,
   Spin,
   Tag,
   Typography,
-  Rate,
 } from "antd";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -38,14 +39,23 @@ export default function PayoutDetailPage() {
   const searchParams = useSearchParams();
   const payoutId = searchParams.get("id");
 
-  const { payoutDetail, payoutDetailLoading, payoutDetailError, fetchPayoutDetail } =
-    usePayout();
+  const {
+    payoutDetail,
+    payoutDetailLoading,
+    payoutDetailError,
+    fetchPayoutDetail,
+  } = usePayout();
 
   // States for related data
   const [policy, setPolicy] = useState(null);
   const [farm, setFarm] = useState(null);
   const [claim, setClaim] = useState(null);
   const [allDataLoaded, setAllDataLoaded] = useState(false);
+
+  // Payment modal states
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [qrData, setQrData] = useState(null);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -78,7 +88,9 @@ export default function PayoutDetailPage() {
           promises.push(
             axiosInstance
               .get(
-                endpoints.policy.policy.detail(payoutDetail.registered_policy_id)
+                endpoints.policy.policy.detail(
+                  payoutDetail.registered_policy_id
+                )
               )
               .then((response) => {
                 if (response.data.success) {
@@ -218,6 +230,72 @@ export default function PayoutDetailPage() {
     }).format(amount);
   };
 
+  // Handle payment initiation
+  const handlePayment = async () => {
+    setPaymentLoading(true);
+    setPaymentModalVisible(true);
+
+    try {
+      // Call create payout API
+      const response = await axiosInstance.post("/payment/public/payout", {
+        amount: payoutDetail.payout_amount,
+        bank_code: "970415", // Vietinbank
+        account_number: "123456789",
+        user_id: payoutDetail.farmer_id || payoutDetail.registered_policy_id,
+        description: `Chi trả bảo hiểm ${payoutDetail.id}`,
+      });
+
+      if (response.data.success) {
+        const payoutData = response.data.data?.data || response.data.data;
+        setQrData(payoutData);
+        message.success("Đã tạo mã QR thanh toán");
+      } else {
+        message.error("Không thể tạo mã QR thanh toán");
+        setPaymentModalVisible(false);
+      }
+    } catch (error) {
+      console.error("Error creating payout:", error);
+      message.error("Có lỗi xảy ra khi tạo thanh toán");
+      setPaymentModalVisible(false);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // Handle payment verification
+  const handleVerifyPayment = async () => {
+    if (!qrData || !qrData.verify_hook) {
+      message.error("Không tìm thấy thông tin xác thực");
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      const response = await axiosInstance.get(qrData.verify_hook);
+
+      if (response.data.success) {
+        message.success("Xác nhận thanh toán thành công!");
+        setPaymentModalVisible(false);
+        setQrData(null);
+        // Refresh payout detail
+        await fetchPayoutDetail(payoutId);
+      } else {
+        message.error("Xác nhận thanh toán thất bại");
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      message.error("Có lỗi xảy ra khi xác nhận thanh toán");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // Handle close payment modal
+  const handleClosePaymentModal = () => {
+    setPaymentModalVisible(false);
+    setQrData(null);
+  };
+
   if (payoutDetailLoading || !allDataLoaded) {
     return (
       <Layout.Content className="insurance-content">
@@ -279,6 +357,16 @@ export default function PayoutDetailPage() {
             >
               Quay lại
             </Button>
+            {payoutDetail.status !== "completed" && (
+              <Button
+                type="primary"
+                icon={<WalletOutlined />}
+                size="large"
+                onClick={handlePayment}
+              >
+                Thanh toán
+              </Button>
+            )}
           </Space>
         </div>
 
@@ -344,6 +432,12 @@ export default function PayoutDetailPage() {
                               : payoutDetail.status === "failed"
                               ? "#ff4d4f"
                               : "#8c8c8c",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "60px",
+                          height: "60px",
                         }}
                       >
                         {getStatusIcon(payoutDetail.status)}
@@ -402,10 +496,14 @@ export default function PayoutDetailPage() {
                     fontSize: "20px",
                     fontWeight: "bold",
                     marginTop: "8px",
-                    color: payoutDetail.farmer_confirmed ? "#52c41a" : "#8c8c8c",
+                    color: payoutDetail.farmer_confirmed
+                      ? "#52c41a"
+                      : "#8c8c8c",
                   }}
                 >
-                  {payoutDetail.farmer_confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
+                  {payoutDetail.farmer_confirmed
+                    ? "Đã xác nhận"
+                    : "Chưa xác nhận"}
                 </div>
               </div>
             </Card>
@@ -592,6 +690,18 @@ export default function PayoutDetailPage() {
           </Col>
         </Row>
       </div>
+
+      {/* Payment QR Modal */}
+      <PayoutQRModal
+        visible={paymentModalVisible}
+        onCancel={handleClosePaymentModal}
+        onVerify={handleVerifyPayment}
+        loading={paymentLoading}
+        qrData={qrData}
+        selectedPayout={payoutDetail}
+        claimNumber={claim?.claim_number || payoutDetail.claim_id}
+        formatCurrency={formatCurrency}
+      />
     </Layout.Content>
   );
 }

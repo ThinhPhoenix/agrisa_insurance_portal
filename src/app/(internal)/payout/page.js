@@ -229,7 +229,7 @@ export default function PayoutListPage() {
       ),
     },
     {
-      title: "Mã claim",
+      title: "Mã bồi thường",
       dataIndex: "claim_id",
       key: "claim_id",
       width: 280,

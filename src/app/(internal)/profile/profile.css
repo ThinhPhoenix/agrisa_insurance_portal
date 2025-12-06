@@ -1,52 +1,161 @@
-/* Resume-style layout container */
-.profile-container {
-  min-height: 100vh;
-  background-color: #fafafa;
-  font-family: "Barlow", sans-serif;
-}
-
-/* Resume page styling */
-.resume-page {
-  max-width: 1400px;
-  margin: 0 auto;
-  background-color: white;
-  min-height: 100vh;
-  color: #374151;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-}
-
-/* Resume header section */
-.resume-header {
-  background: white;
-  color: #374151;
-  padding: 3rem 2rem;
-  position: relative;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.resume-header h2.ant-typography {
-  color: white !important;
-  margin-bottom: 0.25rem !important;
-}
-
-.resume-header .ant-typography {
-  color: var(--color-secondary-100) !important;
-  font-size: 1.125rem !important;
-  line-height: 1.75rem !important;
-  margin-bottom: 0.5rem !important;
-  display: block !important;
-}
-
-.resume-header .ant-typography:last-child {
-  color: white !important;
-}
-
-/* Removed yellow border after header */
-
-/* Resume main content area */
-.resume-content {
+/* Profile page styling */
+.space-y-4 {
   display: flex;
-  min-height: calc(100vh - 200px);
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Cover photo header styling */
+.profile-header-cover {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.profile-cover-image {
+  height: 280px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.profile-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-cover-image {
+    height: 200px;
+  }
+
+  .ant-row {
+    flex-direction: column;
+  }
+
+  .ant-col {
+    flex: 1 0 auto !important;
+  }
+}
+
+/* Card styling */
+.ant-card {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+/* Typography adjustments */
+.ant-typography-title {
+  color: #000 !important;
+}
+
+.ant-typography-secondary {
+  color: #8c8c8c !important;
+}
+
+/* Tag styling */
+.ant-tag {
+  border-radius: 4px;
+  border: none;
+  padding: 6px 12px;
+}
+
+/* Divider styling */
+.ant-divider {
+  margin: 24px 0;
+  border-top-color: #f0f0f0;
+}
+
+/* Responsive grid for trust metrics */
+@media (max-width: 768px) {
+  .ant-col-xs-12 {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+
+  .ant-col-xs-24 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Contact icons alignment */
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.contact-icon {
+  flex: 0 0 auto;
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.contact-content {
+  flex: 1;
+}
+
+.contact-label {
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* Rating and metrics styling */
+.trust-metric-card {
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  padding: 16px;
+}
+
+.trust-metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.trust-metric-label {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin-bottom: 8px;
+}
+
+.trust-metric-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000;
+  margin-top: 4px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Text link styling */
+a {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+/* Paragraph text styling */
+.ant-typography-paragraph {
+  color: #595959;
+  line-height: 1.8;
 }
 
 /* Left sidebar */

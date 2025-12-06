@@ -2,7 +2,6 @@ import Assets from "@/assets";
 import { labelTranslations, sidebarMenuItems } from "@/libs/menu-config";
 import { Breadcrumb } from "antd";
 import { usePathname } from "next/navigation";
-import AvatarSection from "./avatar-section";
 
 export default function CustomHeader() {
   const pathname = usePathname();
@@ -42,7 +41,8 @@ export default function CustomHeader() {
         const isLastItem = i === segments.length - 1;
         const hasChildren = menuItem.children && menuItem.children.length > 0;
         const isDisabled = menuItem.disableBreadcrumbLink === true;
-        const href = isLastItem || hasChildren || isDisabled ? undefined : currentPath;
+        const href =
+          isLastItem || hasChildren || isDisabled ? undefined : currentPath;
         items.push({
           title: menuItem.label,
           href,
@@ -100,7 +100,6 @@ export default function CustomHeader() {
   return (
     <div className="bg-secondary-100 p-4 border-b flex items-center justify-between">
       <Breadcrumb items={breadcrumbItems} />
-      <AvatarSection />
     </div>
   );
 }

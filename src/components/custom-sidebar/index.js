@@ -1,16 +1,19 @@
 "use client";
 import Assets from "@/assets";
 import { sidebarMenuItems } from "@/libs/menu-config";
-import { Menu } from "antd";
+import { useAuthStore } from "@/stores/auth-store";
+import { Menu, Modal } from "antd";
 import {
   ArrowLeftToLine,
   ArrowRightToLine,
   CreditCard,
   FileText,
   History,
+  LogOut,
   PanelLeft,
   Settings,
   Shield,
+  User,
   Users,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -19,8 +22,8 @@ import { useEffect, useState } from "react";
 // Filter out items with hideInMenu flag and map to AntD menu items with icons
 const filterMenuItems = (items) => {
   return items
-    .filter(item => !item.hideInMenu)
-    .map(item => ({
+    .filter((item) => !item.hideInMenu)
+    .map((item) => ({
       ...item,
       children: item.children ? filterMenuItems(item.children) : undefined,
     }));
@@ -34,6 +37,7 @@ const items = filterMenuItems(sidebarMenuItems).map((item) => ({
 const CustomSidebar = ({ collapsed, setCollapsed }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { logout } = useAuthStore();
   // store a key for which icon to show: 'panel' | 'right' | 'left'
   const [hoverIcon, setHoverIcon] = useState("panel");
   const [selectedKeys, setSelectedKeys] = useState([]);
@@ -43,7 +47,9 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
   useEffect(() => {
     if (pathname) {
       // Remove leading slash for comparison
-      const currentPath = pathname.startsWith("/") ? pathname.slice(1) : pathname;
+      const currentPath = pathname.startsWith("/")
+        ? pathname.slice(1)
+        : pathname;
 
       // Find the matching menu item key - prioritize exact matches and deeper matches
       const findMatchingKey = (items, path) => {
@@ -92,7 +98,10 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
         for (const item of items) {
           // Check children first (prioritize deeper matches)
           if (item.children) {
-            const result = findOpenKeys(item.children, path, [...parents, item.key]);
+            const result = findOpenKeys(item.children, path, [
+              ...parents,
+              item.key,
+            ]);
             if (result.length > 0) {
               return result;
             }
@@ -145,9 +154,27 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
     setHoverIcon("panel");
   };
 
+  const handleLogout = () => {
+    Modal.confirm({
+      title: "Đăng xuất",
+      content: "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?",
+      okText: "Đăng xuất",
+      okButtonProps: { danger: true },
+      cancelText: "Hủy",
+      onOk() {
+        logout();
+        router.push("/sign-in");
+      },
+    });
+  };
+
+  const handleProfile = () => {
+    router.push("/profile");
+  };
+
   return (
     <section
-      className={`h-screen overflow-y-auto bg-secondary-100 border-r transition-all duration-300 ${
+      className={`h-screen bg-secondary-100 border-r transition-all duration-300 flex flex-col ${
         collapsed ? "w-20" : "w-64"
       }`}
       // allow some overflow so rounded active pills aren't clipped when collapsed
@@ -182,8 +209,8 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
         </div>
       </div>
       <div
-        className={`${
-          collapsed ? "flex-1 flex items-center justify-center" : "flex-1"
+        className={`overflow-y-auto flex-1 ${
+          collapsed ? "flex items-center justify-center" : ""
         }`}
       >
         <Menu
@@ -196,6 +223,30 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
           inlineCollapsed={collapsed}
           className={`!border-none transition-all duration-300 w-full`}
         />
+      </div>
+
+      {/* Bottom Actions - Profile & Logout - Fixed at bottom */}
+      <div className="border-t border-primary-500/20 p-2 flex flex-col gap-2 flex-shrink-0">
+        <button
+          onClick={handleProfile}
+          className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg hover:bg-black/5 transition-colors text-[#1d1d1d] w-full ${
+            collapsed ? "justify-center" : ""
+          }`}
+          title="Hồ sơ"
+        >
+          <User size={16} />
+          {!collapsed && <span className="text-sm">Hồ sơ</span>}
+        </button>
+        <button
+          onClick={handleLogout}
+          className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg hover:bg-red-50 transition-colors text-red-600 w-full ${
+            collapsed ? "justify-center" : ""
+          }`}
+          title="Đăng xuất"
+        >
+          <LogOut size={16} />
+          {!collapsed && <span className="text-sm">Đăng xuất</span>}
+        </button>
       </div>
     </section>
   );

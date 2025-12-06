@@ -570,7 +570,7 @@ const ConfigurationTabComponent = ({
                         <>
                             <Alert
                                 message="Giai đoạn Không Kích hoạt (Blackout Periods)"
-                                description="Đây là các giai đoạn trong chu kỳ bảo hiểm mà hệ thống KHÔNG được phép kích hoạt bồi thường, dù các điều kiện đều thỏa mãn. Ví dụ: giai đoạn gieo hạt, giai đoạn nảy mầm sớm, hoặc giai đoạn thu hoạch."
+                                description="Đây là các giai đoạn trong chu kỳ bảo hiểm mà hệ thống KHÔNG được phép kích hoạt chi trả, dù các điều kiện đều thỏa mãn. Ví dụ: giai đoạn gieo hạt, giai đoạn nảy mầm sớm, hoặc giai đoạn thu hoạch."
                                 type="info"
                                 showIcon
                                 style={{ marginBottom: 16 }}
@@ -1062,7 +1062,7 @@ const ConfigurationTabComponent = ({
                                             <Form.Item
                                                 name="earlyWarningThreshold"
                                                 label="Ngưỡng cảnh báo sớm"
-                                                tooltip="Ngưỡng cảnh báo sớm (Early Warning Threshold): Một mốc phụ, khi bị vi phạm sẽ gửi cảnh báo cho người dùng biết rủi ro sắp xảy ra, trước khi đạt đến ngưỡng kích hoạt bồi thường chính"
+                                                tooltip="Ngưỡng cảnh báo sớm (Early Warning Threshold): Một mốc phụ, khi bị vi phạm sẽ gửi cảnh báo cho người dùng biết rủi ro sắp xảy ra, trước khi đạt đến ngưỡng kích hoạt chi trả chính"
                                                 rules={[{ type: 'number', min: 0, message: getConditionValidation('EARLY_WARNING_THRESHOLD_MIN') }]}
                                             >
                                                 <InputNumber

@@ -53,7 +53,7 @@ const BasicTabComponent = ({
         const updates = {};
 
         if (!basicData.product_description) {
-            updates.product_description = "Bảo hiểm tham số theo chỉ số lượng mưa cho cây lúa mùa khô. Bồi thường tự động khi lượng mưa tích lũy thấp hơn ngưỡng 50mm trong 30 ngày liên tục, không cần kiểm tra thiệt hại tại hiện trường.";
+            updates.product_description = "Bảo hiểm tham số theo chỉ số lượng mưa cho cây lúa mùa khô. Chi trả tự động khi lượng mưa tích lũy thấp hơn ngưỡng 50mm trong 30 ngày liên tục, không cần kiểm tra thiệt hại tại hiện trường.";
         }
 
         if (!basicData.coverage_currency) {
@@ -455,8 +455,8 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="payoutBaseRate"
-                            label="Tỷ lệ bồi thường cơ bản"
-                            tooltip="Hệ số tính bồi thường (phải > 0, VD: 0.75 = 75%)"
+                            label="Tỷ lệ chi trả cơ bản"
+                            tooltip="Hệ số tính chi trả (phải > 0, VD: 0.75 = 75%)"
                             rules={[
                                 { required: true, message: getBasePolicyError('PAYOUT_BASE_RATE_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_BASE_RATE_NEGATIVE') }
@@ -474,8 +474,8 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="fixPayoutAmount"
-                            label="Số tiền bồi thường cố định"
-                            tooltip="Số tiền bồi thường cố định khi xảy ra sự cố"
+                            label="Số tiền chi trả cố định"
+                            tooltip="Số tiền chi trả cố định khi xảy ra sự cố"
                             rules={[
                                 { required: true, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_REQUIRED') },
                                 { type: 'number', min: 0, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_NEGATIVE') }
@@ -498,8 +498,8 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="payoutCap"
-                            label="Trần bồi thường"
-                            tooltip="Số tiền bồi thường tối đa cho một hợp đồng"
+                            label="Trần chi trả"
+                            tooltip="Số tiền chi trả tối đa cho một hợp đồng"
                             rules={[
                                 { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_CAP_NEGATIVE') }
                             ]}

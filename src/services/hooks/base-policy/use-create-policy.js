@@ -740,7 +740,7 @@ const useCreatePolicy = () => {
 
         if (!insuranceProviderId) {
           message.error(
-            "Chỉ partner mới có thể tạo gói bảo hiểm. Vui lòng đăng nhập với tài khoản partner."
+            "Chỉ đối tác mới có thể tạo gói bảo hiểm. Vui lòng đăng nhập với tài khoản đối tác."
           );
           setLoading(false);
           return false;

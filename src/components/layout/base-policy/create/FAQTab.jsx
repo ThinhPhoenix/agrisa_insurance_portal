@@ -97,25 +97,25 @@ const FAQTab = () => {
     const payoutFieldsData = [
         {
             key: '1',
-            field: 'Số tiền bồi thường cố định',
+            field: 'Số tiền chi trả cố định',
             englishTerm: 'Fixed Payout Amount',
-            description: 'Số tiền bồi thường cố định khi xảy ra sự kiện bảo hiểm',
+            description: 'Số tiền chi trả cố định khi xảy ra sự kiện kích hoạt bảo hiểm',
             example: '5,000,000 ₫',
-            required: 'Có (nếu không dùng tỷ lệ bồi thường)'
+            required: 'Có (nếu không dùng tỷ lệ chi trả)'
         },
         {
             key: '2',
-            field: 'Tỷ lệ bồi thường cơ bản',
+            field: 'Tỷ lệ chi trả cơ bản',
             englishTerm: 'Payout Base Rate',
-            description: 'Tỷ lệ phần trăm giá trị thiệt hại được bồi thường. PHẢI LỚN HƠN 0',
-            example: '0.75 = bồi thường 75% thiệt hại',
+            description: 'Tỷ lệ phần trăm giá trị thiệt hại được chi trả. PHẢI LỚN HƠN 0',
+            example: '0.75 = chi trả 75% thiệt hại',
             required: 'Có'
         },
         {
             key: '3',
-            field: 'Trần bồi thường',
+            field: 'Trần chi trả',
             englishTerm: 'Payout Cap',
-            description: 'Số tiền tối đa được bồi thường cho một hợp đồng, dù thiệt hại có cao hơn',
+            description: 'Số tiền tối đa được chi trả cho một hợp đồng, dù thiệt hại có cao hơn',
             example: '10,000,000 ₫',
             required: 'Không'
         },
@@ -124,7 +124,7 @@ const FAQTab = () => {
             field: 'Hệ số vượt ngưỡng',
             englishTerm: 'Over Threshold Multiplier',
             description: 'Hệ số nhân bổ sung khi mức độ thiệt hại vượt xa ngưỡng. PHẢI LỚN HƠN 0',
-            example: '1.5 = tăng 50% bồi thường',
+            example: '1.5 = tăng 50% chi trả',
             required: 'Không (mặc định: 1.0)'
         },
     ];
@@ -331,10 +331,10 @@ const FAQTab = () => {
                                     <Text strong>Phí bảo hiểm (Premium):</Text> Số tiền người mua phải trả
                                 </li>
                                 <li>
-                                    <Text strong>Bồi thường (Payout):</Text> Số tiền được chi trả khi xảy ra rủi ro
+                                    <Text strong>Chi trả bảo hiểm (Payout):</Text> Số tiền được chi trả khi xảy ra sự kiện kích hoạt
                                 </li>
                                 <li>
-                                    <Text strong>Điều kiện kích hoạt (Trigger):</Text> Các điều kiện cần thỏa mãn để được bồi thường
+                                    <Text strong>Điều kiện kích hoạt (Trigger):</Text> Các điều kiện cần thỏa mãn để được chi trả bảo hiểm
                                 </li>
                                 <li>
                                     <Text strong>Nguồn dữ liệu:</Text> Dữ liệu vệ tinh hoặc cảm biến dùng để theo dõi
@@ -357,7 +357,7 @@ const FAQTab = () => {
                             </Paragraph>
                             <ol>
                                 <li>
-                                    <Text strong>Thông tin cơ bản:</Text> Nhập tên, mã sản phẩm, loại cây trồng, cấu hình phí và bồi thường
+                                    <Text strong>Thông tin cơ bản:</Text> Nhập tên, mã sản phẩm, loại cây trồng, cấu hình phí và chi trả
                                 </li>
                                 <li>
                                     <Text strong>Cấu hình nâng cao:</Text> Thiết lập điều kiện kích hoạt (trigger) và các điều kiện giám sát
@@ -403,7 +403,7 @@ const FAQTab = () => {
 
                             <Divider />
 
-                            <Title level={5}><DollarOutlined /> Cấu hình Bồi thường (Payout)</Title>
+                            <Title level={5}><DollarOutlined /> Cấu hình Chi trả (Payout)</Title>
                             <Table
                                 dataSource={payoutFieldsData}
                                 columns={basicFieldsColumns}
@@ -413,12 +413,12 @@ const FAQTab = () => {
                             />
                         </Panel>
 
-                        {/* Phí và Bồi thường */}
+                        {/* Phí và Chi trả */}
                         <Panel
                             header={
                                 <Space>
                                     <DollarOutlined style={{ color: '#fa8c16' }} />
-                                    <Text strong>Phí bảo hiểm (Premium) và Bồi thường (Payout) khác nhau như thế nào?</Text>
+                                    <Text strong>Phí bảo hiểm (Premium) và Chi trả (Payout) khác nhau như thế nào?</Text>
                                 </Space>
                             }
                             key="4"
@@ -428,8 +428,8 @@ const FAQTab = () => {
                                 được tham gia bảo hiểm.
                             </Paragraph>
                             <Paragraph>
-                                <Text strong>Bồi thường (Payout)</Text> là số tiền mà <Text underline>công ty bảo hiểm chi trả</Text> cho
-                                người mua khi xảy ra sự kiện rủi ro (như hạn hán, mưa lớn, nhiệt độ quá cao).
+                                <Text strong>Chi trả bảo hiểm (Payout)</Text> là số tiền mà <Text underline>công ty bảo hiểm chi trả</Text> cho
+                                người tham gia khi <Text type="danger">điều kiện trigger được kích hoạt</Text> (như lượng mưa thấp, nhiệt độ quá cao, NDVI giảm).
                             </Paragraph>
 
                             <Divider />
@@ -444,15 +444,15 @@ const FAQTab = () => {
                             </ul>
 
                             <Paragraph>
-                                <Text strong>Bồi thường:</Text>
+                                <Text strong>Chi trả bảo hiểm:</Text>
                             </Paragraph>
                             <ul>
-                                <li>Nếu có <Text code>Bồi thường cố định</Text>: Bồi thường = Bồi thường cố định</li>
+                                <li>Nếu có <Text code>Chi trả cố định</Text>: Chi trả = Chi trả cố định</li>
                                 <li>
-                                    Nếu không có bồi thường cố định: Bồi thường = Thiệt hại ước tính × Tỷ lệ bồi thường cơ bản × Hệ số vượt ngưỡng
+                                    Nếu không có chi trả cố định: Chi trả = Thiệt hại ước tính × Tỷ lệ chi trả cơ bản × Hệ số vượt ngưỡng
                                 </li>
                                 <li>
-                                    Nếu có <Text code>Trần bồi thường</Text>: Bồi thường tối đa = Trần bồi thường (không vượt quá giá trị này)
+                                    Nếu có <Text code>Trần chi trả</Text>: Chi trả tối đa = Trần chi trả (không vượt quá giá trị này)
                                 </li>
                             </ul>
 
@@ -468,14 +468,14 @@ const FAQTab = () => {
                             </ul>
 
                             <Paragraph>
-                                <Text strong>Ví dụ 2:</Text> Bồi thường theo tỷ lệ
+                                <Text strong>Ví dụ 2:</Text> Chi trả theo tỷ lệ
                             </Paragraph>
                             <ul>
                                 <li>Thiệt hại ước tính: 8,000,000 ₫</li>
-                                <li>Tỷ lệ bồi thường cơ bản: 0.75 (75%)</li>
+                                <li>Tỷ lệ chi trả cơ bản: 0.75 (75%)</li>
                                 <li>Hệ số vượt ngưỡng: 1.2 (do thiệt hại nghiêm trọng)</li>
-                                <li>Trần bồi thường: 10,000,000 ₫</li>
-                                <li>→ Bồi thường = 8,000,000 × 0.75 × 1.2 = 7,200,000 ₫</li>
+                                <li>Trần chi trả: 10,000,000 ₫</li>
+                                <li>→ Chi trả = 8,000,000 × 0.75 × 1.2 = 7,200,000 ₫</li>
                                 <li>→ Người mua nhận: <Text mark>7,200,000 ₫</Text> (không vượt trần 10 triệu)</li>
                             </ul>
                         </Panel>
@@ -491,7 +491,7 @@ const FAQTab = () => {
                             key="5"
                         >
                             <Paragraph>
-                                <Text strong>Trigger (Điều kiện kích hoạt)</Text> là bộ quy tắc xác định khi nào policy sẽ chi trả bồi thường.
+                                <Text strong>Trigger (Điều kiện kích hoạt)</Text> là bộ quy tắc xác định khi nào policy sẽ chi trả bảo hiểm.
                                 Trigger bao gồm:
                             </Paragraph>
 
@@ -553,7 +553,7 @@ const FAQTab = () => {
                             </ul>
                             <Paragraph>
                                 → Kết quả: Nếu lượng mưa 7 ngày {'<'} 10mm <Text strong>HOẶC</Text> nhiệt độ 3 ngày {'>'} 38°C
-                                → Policy sẽ kích hoạt và chi trả bồi thường.
+                                → Policy sẽ kích hoạt và chi trả bảo hiểm.
                             </Paragraph>
                         </Panel>
 
@@ -625,7 +625,7 @@ const FAQTab = () => {
                             key="6a"
                         >
                             <Paragraph>
-                                <Text strong>Blackout Periods</Text> (tiếng Việt: Giai đoạn Không Kích hoạt) là các khoảng thời gian trong chu kỳ bảo hiểm mà hệ thống <Text strong type="danger">KHÔNG ĐƯỢC PHÉP</Text> kích hoạt bồi thường, dù tất cả các điều kiện trigger đều đã thỏa mãn.
+                                <Text strong>Blackout Periods</Text> (tiếng Việt: Giai đoạn Không Kích hoạt) là các khoảng thời gian trong chu kỳ bảo hiểm mà hệ thống <Text strong type="danger">KHÔNG ĐƯỢC PHÉP</Text> kích hoạt chi trả, dù tất cả các điều kiện trigger đều đã thỏa mãn.
                             </Paragraph>
 
                             <Divider />
@@ -760,7 +760,7 @@ const FAQTab = () => {
                             <ul>
                                 <li>✅ Lượng mưa {'<'} 50mm (Điều kiện trigger thỏa mãn)</li>
                                 <li>❌ Ngày nằm trong blackout period (01/01 đến 07/01)</li>
-                                <li>→ <Text strong type="danger">KẾT QUẢ: Không kích hoạt bồi thường</Text> (Blackout có độ ưu tiên cao hơn)</li>
+                                <li>→ <Text strong type="danger">KẾT QUẢ: Không kích hoạt chi trả</Text> (Blackout có độ ưu tiên cao hơn)</li>
                             </ul>
 
                             <Paragraph>
@@ -769,7 +769,7 @@ const FAQTab = () => {
                             <ul>
                                 <li>✅ Lượng mưa {'<'} 50mm (Điều kiện trigger thỏa mãn)</li>
                                 <li>✅ Ngày KHÔNG nằm trong blackout period</li>
-                                <li>→ <Text strong type="success">KẾT QUẢ: Kích hoạt bồi thường</Text></li>
+                                <li>→ <Text strong type="success">KẾT QUẢ: Kích hoạt chi trả</Text></li>
                             </ul>
                         </Panel>
 
@@ -867,7 +867,7 @@ const FAQTab = () => {
 
                             <Title level={5}><BulbOutlined /> Ví dụ thực tế với change_gt</Title>
                             <Paragraph>
-                                <Text strong>Điều kiện:</Text> Kích hoạt bồi thường khi NDVI (chỉ số thực vật) <Text strong>giảm mạnh</Text> so với mức bình thường
+                                <Text strong>Điều kiện:</Text> Kích hoạt chi trả khi NDVI (chỉ số thực vật) <Text strong>giảm mạnh</Text> so với mức bình thường
                             </Paragraph>
                             <ul>
                                 <li>Toán tử ngưỡng: <Tag color="orange">change_lt</Tag> (Thay đổi nhỏ hơn)</li>
@@ -904,7 +904,7 @@ const FAQTab = () => {
                             <ol>
                                 <li>Change = 0.15 - 0.6 = -0.45</li>
                                 <li>-0.45 {'<'} -0.4? → CÓ (vì -0.45 nhỏ hơn -0.4)</li>
-                                <li><Text strong type="success">→ Kích hoạt bồi thường!</Text> (giảm quá mạnh, cây có vấn đề)</li>
+                                <li><Text strong type="success">→ Kích hoạt chi trả!</Text> (giảm quá mạnh, cây có vấn đề)</li>
                             </ol>
 
                             <Divider />
@@ -956,7 +956,7 @@ const FAQTab = () => {
                             key="6c"
                         >
                             <Paragraph>
-                                <Text strong>Data Quality</Text> (tiếng Việt: Chất lượng Dữ liệu) đánh giá mức độ tin cậy, chính xác và hoàn chỉnh của nguồn dữ liệu được sử dụng trong điều kiện trigger. Đây là thông tin quan trọng giúp hệ thống và người dùng hiểu rõ độ tin cậy của dữ liệu khi ra quyết định bồi thường.
+                                <Text strong>Data Quality</Text> (tiếng Việt: Chất lượng Dữ liệu) đánh giá mức độ tin cậy, chính xác và hoàn chỉnh của nguồn dữ liệu được sử dụng trong điều kiện trigger. Đây là thông tin quan trọng giúp hệ thống và người dùng hiểu rõ độ tin cậy của dữ liệu khi ra quyết định chi trả.
                             </Paragraph>
 
                             <Divider />
@@ -1031,7 +1031,7 @@ const FAQTab = () => {
                                     <Text strong>Đánh giá độ tin cậy:</Text> Giúp người dùng và hệ thống biết nguồn dữ liệu có đáng tin cậy không
                                 </li>
                                 <li>
-                                    <Text strong>Quản lý rủi ro:</Text> Dữ liệu kém chất lượng có thể dẫn đến quyết định bồi thường sai
+                                    <Text strong>Quản lý rủi ro:</Text> Dữ liệu kém chất lượng có thể dẫn đến quyết định chi trả sai
                                 </li>
                                 <li>
                                     <Text strong>Điều chỉnh hệ số:</Text> Backend có thể điều chỉnh tính toán dựa trên chất lượng dữ liệu
@@ -1089,12 +1089,12 @@ const FAQTab = () => {
                                     Vì nếu = 0 thì nhân với giá trị nào cũng = 0, không hợp lý về nghiệp vụ.
                                 </li>
                                 <li>
-                                    <Text strong>Tỷ lệ bồi thường cơ bản (Payout Base Rate):</Text> PHẢI {'>'} 0.
-                                    Tương tự, nếu = 0 thì không có bồi thường.
+                                    <Text strong>Tỷ lệ chi trả cơ bản (Payout Base Rate):</Text> PHẢI {'>'} 0.
+                                    Tương tự, nếu = 0 thì không có chi trả.
                                 </li>
                                 <li>
                                     <Text strong>Hệ số vượt ngưỡng (Over Threshold Multiplier):</Text> PHẢI {'>'} 0 nếu được nhập.
-                                    Giá trị {'<'}= 0 sẽ làm số tiền bồi thường không hợp lệ.
+                                    Giá trị {'<'}= 0 sẽ làm số tiền chi trả không hợp lệ.
                                 </li>
                                 <li>
                                     <Text strong>Hệ số nhóm và Hệ số gói (Category/Tier Multiplier):</Text> PHẢI {'>'} 0.
@@ -1327,7 +1327,7 @@ const FAQTab = () => {
                                 dataSource={[
                                     { key: '1', english: 'Policy', vietnamese: 'Chính sách bảo hiểm', category: 'Tổng quan' },
                                     { key: '2', english: 'Premium', vietnamese: 'Phí bảo hiểm', category: 'Phí' },
-                                    { key: '3', english: 'Payout', vietnamese: 'Bồi thường', category: 'Bồi thường' },
+                                    { key: '3', english: 'Payout', vietnamese: 'Chi trả bảo hiểm', category: 'Chi trả' },
                                     { key: '4', english: 'Trigger', vietnamese: 'Điều kiện kích hoạt', category: 'Trigger' },
                                     { key: '5', english: 'Condition', vietnamese: 'Điều kiện giám sát', category: 'Trigger' },
                                     { key: '6', english: 'Data Source', vietnamese: 'Nguồn dữ liệu', category: 'Dữ liệu' },

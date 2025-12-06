@@ -32,18 +32,50 @@ export const toSnakeCase = (obj) => {
 };
 
 /**
- * Convert Date object to Unix epoch seconds
+ * Convert Date object to Unix epoch seconds (UTC midnight)
+ *
+ * This function converts a Date object to Unix timestamp (seconds since 1970-01-01 00:00:00 UTC).
+ * It normalizes the date to UTC midnight to avoid timezone issues.
+ *
+ * Example:
+ * - Input: Date("2024-01-01") in Vietnam timezone (GMT+7)
+ * - Output: 1704067200 (2024-01-01 00:00:00 UTC)
+ *
+ * @param {Date|number|string} date - Date to convert
+ * @returns {number|null} Unix timestamp in seconds (UTC), or null if invalid
  */
 export const dateToEpochSeconds = (date) => {
   if (!date) return null;
-  if (date instanceof Date) {
-    return Math.floor(date.getTime() / 1000);
-  }
-  // If already a number, assume it's epoch
+
+  // If already a number, assume it's epoch seconds
   if (typeof date === "number") return date;
-  // Try parsing string
-  const parsed = new Date(date);
-  return isNaN(parsed.getTime()) ? null : Math.floor(parsed.getTime() / 1000);
+
+  let dateObj;
+
+  // Convert to Date object if needed
+  if (date instanceof Date) {
+    dateObj = date;
+  } else {
+    // Try parsing string
+    dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) return null;
+  }
+
+  // Convert to UTC midnight to avoid timezone offset issues
+  // Extract year, month, day from local timezone, then create UTC date
+  const utcDate = new Date(
+    Date.UTC(
+      dateObj.getFullYear(),
+      dateObj.getMonth(),
+      dateObj.getDate(),
+      0,
+      0,
+      0,
+      0
+    )
+  );
+
+  return Math.floor(utcDate.getTime() / 1000);
 };
 
 /**

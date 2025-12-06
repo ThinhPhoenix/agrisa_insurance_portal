@@ -1,16 +1,16 @@
 import { message } from "antd";
 
 /**
- * PDF Placeholder Detector - CDN APPROACH
- * Load PDF.js từ CDN để BYPASS webpack bundling issues
+ * Phát Hiện Placeholder Trong PDF - PHƯƠNG PHÁP CDN
+ * Tải PDF.js từ CDN để tránh lỗi webpack bundling trong Next.js
  *
- * Đọc PDF và tự động detect các placeholders theo pattern:
+ * Đọc file PDF và tự động phát hiện các placeholder theo các mẫu:
  * - (1), (2), (3)... - số trong ngoặc đơn
  * - {{key}} - placeholder dạng handlebars
- * - [key] - placeholder dạng brackets
+ * - [key] - placeholder dạng ngoặc vuông
  */
 
-// Regex patterns để detect placeholders
+// Các mẫu regex để phát hiện placeholders
 const PLACEHOLDER_PATTERNS = [
   {
     name: "numbered",
@@ -37,18 +37,18 @@ const PLACEHOLDER_PATTERNS = [
 ];
 
 /**
- * Load PDF.js từ CDN (bypass webpack bundling)
- * Đây là cách duy nhất để tránh webpack issues trong Next.js
+ * Tải thư viện PDF.js từ CDN (tránh lỗi webpack bundling)
+ * Đây là cách duy nhất để tránh các vấn đề webpack trong Next.js
  */
 const loadPDFJS = () => {
   return new Promise((resolve, reject) => {
-    // Check if already loaded
+    // Kiểm tra xem đã tải chưa
     if (window.pdfjsLib) {
       resolve(window.pdfjsLib);
       return;
     }
 
-    // Load PDF.js from CDN
+    // Tải PDF.js từ CDN
     const script = document.createElement("script");
     script.src =
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
@@ -56,7 +56,7 @@ const loadPDFJS = () => {
 
     script.onload = () => {
       if (window.pdfjsLib) {
-        // Set worker
+        // Thiết lập worker cho PDF.js
         window.pdfjsLib.GlobalWorkerOptions.workerSrc =
           "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
@@ -75,15 +75,15 @@ const loadPDFJS = () => {
 };
 
 /**
- * Đọc text content từ PDF file - CDN APPROACH
- * Load pdfjs-dist từ CDN để bypass webpack bundling issues
+ * Đọc nội dung text từ file PDF - PHƯƠNG PHÁP CDN
+ * Tải pdfjs-dist từ CDN để tránh lỗi webpack bundling
  */
 export const extractTextFromPDF = async (file) => {
   try {
-    // Load PDF.js from CDN (bypass webpack)
+    // Tải PDF.js từ CDN (tránh lỗi webpack)
     const pdfjsLib = await loadPDFJS();
 
-    // Convert file to ArrayBuffer
+    // Chuyển file sang ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
 
@@ -92,14 +92,14 @@ export const extractTextFromPDF = async (file) => {
 
     const placeholders = [];
     let allText = "";
-    const seenNumbers = new Set(); //  Track which numbers we've already added
+    const seenNumbers = new Set(); // Theo dõi các số đã thêm để tránh trùng lặp
 
-    // Extract text from each page
+    // Trích xuất text từ từng trang
     for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
       const page = await pdfDocument.getPage(pageNum);
       const textContent = await page.getTextContent();
 
-      // Process each text item
+      // Xử lý từng phần tử text
       const items = textContent.items;
 
       for (let i = 0; i < items.length; i++) {
@@ -107,68 +107,33 @@ export const extractTextFromPDF = async (file) => {
         const text = item.str;
         allText += text + " ";
 
-        // DEBUG: Log items containing target numbers AND surrounding items
-        const trimmedText = text.trim();
-        if (
-          trimmedText.includes("26") ||
-          trimmedText.includes("27") ||
-          trimmedText.includes("28") ||
-          trimmedText.includes("2 6") ||
-          trimmedText.includes("2 7") ||
-          trimmedText.includes("2 8") ||
-          trimmedText === "26" ||
-          trimmedText === "27" ||
-          trimmedText === "28" ||
-          trimmedText === "2" ||
-          trimmedText === "6" ||
-          trimmedText === "7" ||
-          trimmedText === "8"
-        ) {
-          console.log(
-            `🔎 Page ${pageNum}, Item ${i}: "${text}" (trimmed: "${trimmedText}")`
-          );
+        // MỚI: Xử lý các item bị TÁCH như "(" + "1" + ")" trong 3 item riêng biệt
+        // PDF.js đôi khi tách (1) thành 3 items: "(", "1", ")"
+        // CẢI TIẾN: Xử lý cả số nhiều chữ số bị tách: "(", "2", "6", ")" hoặc "(", " ", "2", " ", "7", ")"
+        // CẢI TIẾN 2: Xử lý trường hợp "(" xuất hiện với dấu chấm: "...........("
+        // CẢI TIẾN 3: Xử lý trường hợp "(" xuất hiện với chữ số: "...(2" (cần kiểm tra item tiếp theo)
 
-          // Log surrounding items (3 before, 3 after)
-          console.log(`   📋 Context (3 items before & after):`);
-          for (
-            let k = Math.max(0, i - 3);
-            k <= Math.min(items.length - 1, i + 3);
-            k++
-          ) {
-            const contextItem = items[k];
-            const contextText = contextItem.str || "";
-            const marker = k === i ? ">>> " : "    ";
-            console.log(`   ${marker}[${k}]: "${contextText.trim()}"`);
-          }
-        }
-
-        //  NEW: Handle SPLIT items like "(" + "1" + ")" in 3 separate items
-        // PDF.js sometimes splits (1) into 3 items: "(", "1", ")"
-        // ENHANCED: Also handle multi-digit split: "(", "2", "6", ")" or "(", " ", "2", " ", "7", ")"
-        // ENHANCED 2: Handle cases where "(" appears with dots: "...........("
-        // ENHANCED 3: Handle cases where "(" appears with digit: "...(2" (need to check next item)
-
-        // Check if current item contains "(" and next item might be a digit
+        // Kiểm tra xem item hiện tại có chứa "(" và item tiếp theo có thể là chữ số
         const hasOpenParen = trimmedText.includes("(");
 
         if (hasOpenParen) {
-          // Extract any digits that appear AFTER "(" in current item
-          // Example: "...(2" -> extract "2"
+          // Trích xuất các chữ số xuất hiện SAU "(" trong item hiện tại
+          // Ví dụ: "...(2" -> trích xuất "2"
           let digits = "";
           const parenIndex = text.indexOf("(");
           if (parenIndex !== -1) {
             const afterParen = text.substring(parenIndex + 1).trim();
-            // Check if there are digits after "("
+            // Kiểm tra xem có chữ số sau "(" không
             const digitMatch = afterParen.match(/^(\d+)/);
             if (digitMatch) {
               digits = digitMatch[1];
             }
           }
 
-          // Look ahead to find matching ")" and collect MORE digits in between
+          // Tìm kiếm phía trước để tìm ")" khớp và thu thập THÊM các chữ số ở giữa
           let j = i + 1;
           let closingParenIndex = -1;
-          let maxLookAhead = Math.min(i + 10, items.length); // Look max 10 items ahead
+          let maxLookAhead = Math.min(i + 10, items.length); // Xem tối đa 10 items phía trước
 
           while (j < maxLookAhead) {
             const checkText = (items[j].str || "").trim();
@@ -177,35 +142,27 @@ export const extractTextFromPDF = async (file) => {
               closingParenIndex = j;
               break;
             } else if (/^\d+$/.test(checkText)) {
-              // It's a digit
+              // Đây là chữ số
               digits += checkText;
             } else if (checkText === "" || checkText === " ") {
-              // Ignore spaces
+              // Bỏ qua khoảng trắng
             } else {
-              // Non-digit, non-space, non-paren -> not a valid pattern
+              // Không phải chữ số, khoảng trắng, ngoặc -> không phải mẫu hợp lệ
               break;
             }
             j++;
           }
 
-          // Valid pattern found: "(" + digits + ")"
+          // Tìm thấy mẫu hợp lệ: "(" + digits + ")"
           if (closingParenIndex !== -1 && digits.length > 0) {
             const numValue = parseInt(digits);
 
-            console.log(
-              `🔍 SPLIT ITEMS DETECTED: Found (${numValue}) split across ${
-                closingParenIndex - i + 1
-              } items`
-            );
-
-            // Skip if already processed
+            // Bỏ qua nếu đã xử lý rồi
             if (seenNumbers.has(numValue)) {
-              console.log(`⚠️ Skipping ${numValue} - already processed`);
               continue;
             }
 
             if (numValue > 100) {
-              console.log(`⚠️ Skipping ${numValue} - too large (>100)`);
               continue;
             }
 
@@ -228,7 +185,11 @@ export const extractTextFromPDF = async (file) => {
             // Collect all digit items between "(" and ")"
             let digitStartX = Infinity;
             let digitEndX = -Infinity;
-            for (let digitIdx = i + 1; digitIdx < closingParenIndex; digitIdx++) {
+            for (
+              let digitIdx = i + 1;
+              digitIdx < closingParenIndex;
+              digitIdx++
+            ) {
               const digitItem = items[digitIdx];
               const digitText = (digitItem.str || "").trim();
               // Only count actual digit items, skip spaces
@@ -236,11 +197,13 @@ export const extractTextFromPDF = async (file) => {
                 const digitX = digitItem.transform[4];
                 const digitWidth = digitItem.width || 0;
                 if (digitX < digitStartX) digitStartX = digitX;
-                if (digitX + digitWidth > digitEndX) digitEndX = digitX + digitWidth;
+                if (digitX + digitWidth > digitEndX)
+                  digitEndX = digitX + digitWidth;
               }
             }
             const digitPositionX = digitStartX !== Infinity ? digitStartX : x;
-            const digitWidth = digitEndX !== -Infinity ? (digitEndX - digitStartX) : width;
+            const digitWidth =
+              digitEndX !== -Infinity ? digitEndX - digitStartX : width;
 
             // Scan for nearby separators
             const Y_TOLERANCE = 10;
@@ -301,14 +264,13 @@ export const extractTextFromPDF = async (file) => {
               if (itemText.includes(":")) {
                 const colonIndex = itemText.indexOf(":");
                 const charWidth = itemWidth / itemText.length;
-                const colonX = itemX + (colonIndex * charWidth);
+                const colonX = itemX + colonIndex * charWidth;
 
                 // Only consider colons that are BEFORE the digit position
                 // Track the closest colon (rightmost one before digit)
                 if (colonX < digitPositionX && colonX > closestColonX) {
                   closestColonX = colonX;
                   closestColonEndX = colonX + charWidth;
-                  console.log(`  🔍 Found colon at x=${colonX.toFixed(2)} in item "${itemText}" (digitPos=${digitPositionX.toFixed(2)})`);
                 }
               }
             }
@@ -329,7 +291,10 @@ export const extractTextFromPDF = async (file) => {
                 // ✅ CRITICAL FIX: For items that CONTAIN the colon, search for separator AFTER colon position
                 // For items AFTER the colon, search from start of item
 
-                if (itemX < closestColonX && itemX + itemWidth > closestColonX) {
+                if (
+                  itemX < closestColonX &&
+                  itemX + itemWidth > closestColonX
+                ) {
                   // This item CONTAINS the colon - need to search only in part AFTER colon
                   const colonIndex = itemText.indexOf(":");
                   if (colonIndex !== -1) {
@@ -337,11 +302,10 @@ export const extractTextFromPDF = async (file) => {
                     const textAfterColon = itemText.substring(colonIndex + 1);
                     const separatorMatch = /[._…]/.exec(textAfterColon);
                     if (separatorMatch) {
-                      const separatorIndexInFullText = colonIndex + 1 + separatorMatch.index;
-                      firstSeparatorX = itemX + (separatorIndexInFullText * charWidth);
-                      console.log(`  🔍 SPLIT: Found first separator at x=${firstSeparatorX.toFixed(2)} in item "${itemText}" (after colon in same item)`);
-                      console.log(`    📊 DEBUG: itemX=${itemX.toFixed(2)}, colonIndex=${colonIndex}, separatorMatch.index=${separatorMatch.index}, separatorIndexInFullText=${separatorIndexInFullText}, charWidth=${charWidth.toFixed(2)}`);
-                      console.log(`    📊 textAfterColon: "${textAfterColon.substring(0, 20)}..."`);
+                      const separatorIndexInFullText =
+                        colonIndex + 1 + separatorMatch.index;
+                      firstSeparatorX =
+                        itemX + separatorIndexInFullText * charWidth;
                       break;
                     }
                   }
@@ -350,8 +314,7 @@ export const extractTextFromPDF = async (file) => {
                   const separatorMatch = /[._…]/.exec(itemText);
                   if (separatorMatch) {
                     const separatorIndex = separatorMatch.index;
-                    firstSeparatorX = itemX + (separatorIndex * charWidth);
-                    console.log(`  🔍 SPLIT: Found first separator at x=${firstSeparatorX.toFixed(2)} in item "${itemText}" (item after colon)`);
+                    firstSeparatorX = itemX + separatorIndex * charWidth;
                     break;
                   }
                 }
@@ -361,16 +324,10 @@ export const extractTextFromPDF = async (file) => {
               // Use first separator if found, otherwise fall back to right after colon
               if (firstSeparatorX !== -1) {
                 fieldStartX = firstSeparatorX;
-                console.log(`  ✅ SPLIT: Field starts at x=${fieldStartX.toFixed(2)} (first separator after colon)`);
               } else {
                 fieldStartX = closestColonEndX;
-                console.log(`  ✅ SPLIT: Field starts at x=${fieldStartX.toFixed(2)} (no separator found, using right after colon)`);
               }
-            } else {
-              console.log(`  ⚠️ No colon found before digit, using startX=${startX.toFixed(2)}`);
-            }
-
-            // ✅ NEW: Find field END by scanning FORWARD from digit position
+            } // ✅ NEW: Find field END by scanning FORWARD from digit position
             // Stop when: (1) next colon found (next field), or (2) non-separator text after separators
             let fieldEndX = endX2;
             let lastSeparatorEndX = -1;
@@ -399,7 +356,7 @@ export const extractTextFromPDF = async (file) => {
                   // No separators found after digit, use position before colon
                   const colonIndex = trimmedText.indexOf(":");
                   const charWidth = itemWidth / trimmedText.length;
-                  fieldEndX = itemX + (colonIndex * charWidth);
+                  fieldEndX = itemX + colonIndex * charWidth;
                 }
                 break;
               }
@@ -428,17 +385,6 @@ export const extractTextFromPDF = async (file) => {
             }
 
             const fullWidth = fieldEndX - fieldStartX;
-
-            // 🔍 DEBUG: Log boundary detection for split items
-            console.log(`🎯 SPLIT (${numValue}) boundaries:`, {
-              fullText: combinedText.substring(0, 60),
-              startX: startX.toFixed(2),
-              endX2: endX2.toFixed(2),
-              fieldStartX: fieldStartX.toFixed(2),
-              fieldEndX: fieldEndX.toFixed(2),
-              fullWidth: fullWidth.toFixed(2),
-              digitPositionX: digitPositionX.toFixed(2),
-            });
 
             placeholders.push({
               id: `placeholder_${placeholders.length + 1}`,
@@ -469,21 +415,6 @@ export const extractTextFromPDF = async (file) => {
         // ENHANCED: Support spaces between digits: (2 6), ( 2 7 ), ( 2 8 )
         const regex = /\(\s*([\d\s]+)\s*\)/g;
         const matches = [...text.matchAll(regex)];
-
-        // DEBUG: Log all matches found
-        if (matches.length > 0) {
-          console.log(
-            `📍 Found ${matches.length} matches in text: "${text.substring(
-              0,
-              60
-            )}..."`
-          );
-          matches.forEach((m, idx) => {
-            console.log(
-              `   Match ${idx + 1}: "${m[0]}" -> captured: "${m[1]}"`
-            );
-          });
-        }
 
         for (const numberedMatch of matches) {
           const num = numberedMatch[1];
@@ -566,18 +497,7 @@ export const extractTextFromPDF = async (file) => {
           const hasPattern = /[._]{2,}/.test(normalizedText);
           const isValid = separatorCount >= 1 || hasPattern;
 
-          console.log(`🔍 Validation for (${cleanedNum}):`, {
-            combinedText: combinedText.substring(0, 50) + "...",
-            separatorCount,
-            hasPattern,
-            isValid,
-            normalizedText: normalizedText.substring(0, 50) + "...",
-          });
-
           if (!isValid) {
-            console.log(
-              `⚠️ REJECTED (${cleanedNum}) - insufficient separators`
-            );
             continue;
           }
 
@@ -607,20 +527,6 @@ export const extractTextFromPDF = async (file) => {
 
             exactNumberX = x + textBeforeWidth;
             exactNumberWidth = digitWidth;
-
-            console.log(
-              `🔍 Single item - digit "${digitOnly}" in "${itemText}":`,
-              {
-                originalNum: num,
-                cleanedNum: cleanedNum,
-                x: x.toFixed(2),
-                width: width.toFixed(2),
-                digitIndex,
-                charWidth: charWidth.toFixed(2),
-                exactNumberX: exactNumberX.toFixed(2),
-                exactNumberWidth: exactNumberWidth.toFixed(2),
-              }
-            );
           }
 
           // ✅ NEW: Find field START by scanning from line start to digit
@@ -640,14 +546,13 @@ export const extractTextFromPDF = async (file) => {
             if (itemText.includes(":")) {
               const colonIndex = itemText.indexOf(":");
               const charWidth = itemWidth / itemText.length;
-              const colonX = itemX + (colonIndex * charWidth);
+              const colonX = itemX + colonIndex * charWidth;
 
               // Only consider colons that are BEFORE the digit position
               // Track the closest colon (rightmost one before digit)
               if (colonX < exactNumberX && colonX > closestColonX) {
                 closestColonX = colonX;
                 closestColonEndX = colonX + charWidth;
-                console.log(`  🔍 SINGLE: Found colon at x=${colonX.toFixed(2)} in item "${itemText}" (digitPos=${exactNumberX.toFixed(2)})`);
               }
             }
           }
@@ -676,11 +581,10 @@ export const extractTextFromPDF = async (file) => {
                   const textAfterColon = itemText.substring(colonIndex + 1);
                   const separatorMatch = /[._…]/.exec(textAfterColon);
                   if (separatorMatch) {
-                    const separatorIndexInFullText = colonIndex + 1 + separatorMatch.index;
-                    firstSeparatorX = itemX + (separatorIndexInFullText * charWidth);
-                    console.log(`  🔍 SINGLE: Found first separator at x=${firstSeparatorX.toFixed(2)} in item "${itemText}" (after colon in same item)`);
-                    console.log(`    📊 DEBUG: itemX=${itemX.toFixed(2)}, colonIndex=${colonIndex}, separatorMatch.index=${separatorMatch.index}, separatorIndexInFullText=${separatorIndexInFullText}, charWidth=${charWidth.toFixed(2)}`);
-                    console.log(`    📊 textAfterColon: "${textAfterColon.substring(0, 20)}..."`);
+                    const separatorIndexInFullText =
+                      colonIndex + 1 + separatorMatch.index;
+                    firstSeparatorX =
+                      itemX + separatorIndexInFullText * charWidth;
                     break;
                   }
                 }
@@ -689,8 +593,7 @@ export const extractTextFromPDF = async (file) => {
                 const separatorMatch = /[._…]/.exec(itemText);
                 if (separatorMatch) {
                   const separatorIndex = separatorMatch.index;
-                  firstSeparatorX = itemX + (separatorIndex * charWidth);
-                  console.log(`  🔍 SINGLE: Found first separator at x=${firstSeparatorX.toFixed(2)} in item "${itemText}" (item after colon)`);
+                  firstSeparatorX = itemX + separatorIndex * charWidth;
                   break;
                 }
               }
@@ -700,13 +603,9 @@ export const extractTextFromPDF = async (file) => {
             // Use first separator if found, otherwise fall back to right after colon
             if (firstSeparatorX !== -1) {
               fieldStartX = firstSeparatorX;
-              console.log(`  ✅ SINGLE: Field starts at x=${fieldStartX.toFixed(2)} (first separator after colon)`);
             } else {
               fieldStartX = closestColonEndX;
-              console.log(`  ✅ SINGLE: Field starts at x=${fieldStartX.toFixed(2)} (no separator found, using right after colon)`);
             }
-          } else {
-            console.log(`  ⚠️ SINGLE: No colon found before digit, using startX=${startX.toFixed(2)}`);
           }
 
           // ✅ NEW: Find field END by scanning FORWARD from digit position
@@ -738,7 +637,7 @@ export const extractTextFromPDF = async (file) => {
                 // No separators found after digit, use position before colon
                 const colonIndex = trimmedText.indexOf(":");
                 const charWidth = itemWidth / trimmedText.length;
-                fieldEndX = itemX + (colonIndex * charWidth);
+                fieldEndX = itemX + colonIndex * charWidth;
               }
               break;
             }
@@ -768,17 +667,6 @@ export const extractTextFromPDF = async (file) => {
 
           const fullWidth = fieldEndX - fieldStartX;
 
-          // 🔍 DEBUG: Log boundary detection for single items
-          console.log(`🎯 SINGLE (${cleanedNum}) boundaries:`, {
-            fullText: combinedText.substring(0, 60),
-            startX: startX.toFixed(2),
-            endX: endX.toFixed(2),
-            fieldStartX: fieldStartX.toFixed(2),
-            fieldEndX: fieldEndX.toFixed(2),
-            fullWidth: fullWidth.toFixed(2),
-            exactNumberX: exactNumberX.toFixed(2),
-          });
-
           placeholders.push({
             id: `placeholder_${placeholders.length + 1}`,
             original: `(${num})`,
@@ -802,17 +690,6 @@ export const extractTextFromPDF = async (file) => {
         } // End of matches loop
       }
     }
-
-    // If no placeholders found from coordinate scan, show warning
-    if (placeholders.length === 0) {
-      // Test patterns
-    }
-
-    // Log full extracted data for debugging and copying
-    console.log("FULL EXTRACTED TEXT FROM PDF:");
-    console.log(allText);
-    console.log("FULL PLACEHOLDERS DATA:");
-    console.log(JSON.stringify(placeholders, null, 2));
 
     return {
       success: true,

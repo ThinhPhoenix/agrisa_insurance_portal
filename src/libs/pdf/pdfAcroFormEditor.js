@@ -1,18 +1,18 @@
 /**
- * PDF AcroForm Editor Utility
- * Uses pdf-lib to create fillable PDF forms with AcroForm fields
+ * Tiện ích chỉnh sửa PDF AcroForm
+ * Sử dụng pdf-lib để tạo các biểu mẫu PDF có thể điền với các trường AcroForm
  *
- * Purpose: Create interactive PDF forms instead of just filling and flattening
- * Input: Original PDF + field definitions
- * Output: PDF with fillable form fields
+ * Mục đích: Tạo biểu mẫu PDF tương tác thay vì chỉ điền và làm phẳng
+ * Đầu vào: PDF gốc + định nghĩa trường
+ * Đầu ra: PDF với các trường biểu mẫu có thể điền
  *
- * NOTE: This module uses the utility from @/utils/pdfFormHelper for core functionality
- * and adds higher-level functions for placeholder mapping integration
+ * LƯU Ý: Module này sử dụng tiện ích từ @/utils/pdfFormHelper cho chức năng cốt lõi
+ * và thêm các hàm cấp cao hơn để tích hợp với placeholder mapping
  */
 
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
-// Re-export utility functions from pdfFormHelper
+// Re-export các hàm tiện ích từ pdfFormHelper
 export {
   addFormFieldsToPdf,
   createPDFBlobURL,
@@ -20,20 +20,20 @@ export {
   pdfBytesToFile,
 } from "@/libs/pdf/pdfFormHelper";
 
-// ✅ Global font cache to avoid re-downloading font on every PDF modification
+// Cache font toàn cục để tránh tải lại font mỗi lần chỉnh sửa PDF
 let cachedFontBytes = null;
 let cachedFontkitModule = null;
 
 /**
- * Load and embed Noto Sans font (supports Vietnamese)
- * @param {PDFDocument} pdfDoc - PDF document
- * @returns {Promise<PDFFont>} - Embedded font
+ * Tải và nhúng font Noto Sans (hỗ trợ tiếng Việt)
+ * @param {PDFDocument} pdfDoc - Tài liệu PDF
+ * @returns {Promise<PDFFont>} - Font đã nhúng
  */
 const embedVietnameseFont = async (pdfDoc) => {
   try {
-    // ✅ Check cache first
+    // Kiểm tra cache trước
     if (!cachedFontBytes) {
-      // DejaVu Sans font supports Vietnamese and has good Unicode coverage
+      // DejaVu Sans font hỗ trợ tiếng Việt và có phạm vi Unicode tốt
       const fontUrl =
         "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf";
 
@@ -46,14 +46,11 @@ const embedVietnameseFont = async (pdfDoc) => {
       }
 
       cachedFontBytes = await fontResponse.arrayBuffer();
-      console.log("✅ Font downloaded and cached:", fontUrl);
-    } else {
-      console.log("✅ Using cached font from previous load");
     }
 
     let customFont;
     try {
-      // Dynamic import fontkit (if installed) - cache module
+      // Dynamic import fontkit (nếu đã cài đặt) - cache module
       if (!cachedFontkitModule) {
         cachedFontkitModule = await import("@pdf-lib/fontkit").then(
           (m) => m.default || m
@@ -62,28 +59,25 @@ const embedVietnameseFont = async (pdfDoc) => {
 
       pdfDoc.registerFontkit(cachedFontkitModule);
       customFont = await pdfDoc.embedFont(cachedFontBytes);
-      console.log("✅ Custom font embedded successfully:", customFont.name);
     } catch (fontkitError) {
-      console.warn("Fontkit not available, using fallback");
       customFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     }
 
     return customFont;
   } catch (error) {
-    console.warn("Failed to load custom font, using Helvetica:", error);
     return await pdfDoc.embedFont(StandardFonts.Helvetica);
   }
 };
 
 /**
- * Create AcroForm fields in PDF
+ * Tạo các trường AcroForm trong PDF
  *
  * @param {ArrayBuffer} pdfArrayBuffer - PDF gốc dạng ArrayBuffer
- * @param {Array} fieldDefinitions - Mảng các field definitions
- * @param {Object} options - Additional options
- * @returns {Promise<{pdfBytes: Uint8Array, warnings: Array}>} - Modified PDF with form fields
+ * @param {Array} fieldDefinitions - Mảng các định nghĩa trường
+ * @param {Object} options - Tùy chọn bổ sung
+ * @returns {Promise<{pdfBytes: Uint8Array, warnings: Array}>} - PDF đã chỉnh sửa với các trường biểu mẫu
  *
- * Field definition format:
+ * Định dạng field definition:
  * {
  *   page: 1,                  // Page number (1-indexed)
  *   x: 150,                   // X coordinate (from pdf.js, bottom-left system)
@@ -125,34 +119,29 @@ export const createAcroFormFields = async (
       removeOriginalText = true,
     } = options;
 
-    // Load PDF document
+    // Tải tài liệu PDF
     const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
     const pages = pdfDoc.getPages();
 
-    // Embed Vietnamese-compatible font
+    // Nhúng font tương thích tiếng Việt
     const font = await embedVietnameseFont(pdfDoc);
-    console.log("🔤 Embedded font for PDF:", {
-      fontName: font.name,
-      fontRef: font.ref?.toString(),
-      isCached: cachedFontBytes !== null,
-    });
 
-    // Get or create the form
+    // Lấy hoặc tạo form
     const form = pdfDoc.getForm();
 
-    // Group fields by page for efficiency
+    // Nhóm các trường theo trang để tối ưu
     const byPage = {};
     fieldDefinitions.forEach((field) => {
       if (!byPage[field.page]) byPage[field.page] = [];
       byPage[field.page].push(field);
     });
 
-    // ✅ Collect warnings for user feedback
+    // Thu thập warnings để phản hồi cho người dùng
     const warnings = [];
 
-    // Create fields page by page
+    // Tạo các trường theo từng trang
     for (const [pageNum, fields] of Object.entries(byPage)) {
-      const pageIndex = parseInt(pageNum) - 1; // Convert to 0-indexed
+      const pageIndex = parseInt(pageNum) - 1; // Chuyển sang 0-indexed
       const page = pages[pageIndex];
       const { height: pageHeight } = page.getSize();
 
@@ -171,20 +160,20 @@ export const createAcroFormFields = async (
             required = false,
             readOnly = false,
             multiline = false,
-            backgroundColor = [1, 1, 1], // White background
-            borderColor = [0.7, 0.7, 0.7], // Gray border
+            backgroundColor = [1, 1, 1], // Nền trắng
+            borderColor = [0.7, 0.7, 0.7], // Viền xám
             borderWidth = showBorders ? 1 : 0,
             backgroundX,
             backgroundWidth,
           } = field;
 
-          // ✅ Step 1: Remove original placeholder text if needed
+          // Bước 1: Xóa text placeholder gốc nếu cần
           if (
             removeOriginalText &&
             backgroundX !== undefined &&
             backgroundWidth !== undefined
           ) {
-            // Draw white rectangle over original placeholder
+            // Vẽ hình chữ nhật trắng lên placeholder gốc
             const rectX = backgroundX;
             const rectWidth = backgroundWidth;
             const rectY = y - fontSize * 0.35;
@@ -195,12 +184,12 @@ export const createAcroFormFields = async (
               y: rectY,
               width: rectWidth,
               height: rectHeight,
-              color: rgb(1, 1, 1), // white
+              color: rgb(1, 1, 1), // Màu trắng
               opacity: 1,
             });
           }
 
-          // ✅ Step 2: Create form field based on type
+          // Bước 2: Tạo trường biểu mẫu dựa trên loại
           let formField;
 
           switch (fieldType.toLowerCase()) {
@@ -210,23 +199,16 @@ export const createAcroFormFields = async (
             case "date":
             case "email":
             case "phone":
-              // Create text field
+              // Tạo text field
               formField = form.createTextField(fieldName);
 
-              // ✅ CRITICAL: Set Vietnamese font BEFORE setText to avoid WinAnsi error
+              // QUAN TRỌNG: Set font tiếng Việt TRƯỚC setText để tránh lỗi WinAnsi
               try {
-                // Get font name from embedded font
+                // Lấy tên font từ embedded font
                 const fontName = font.name;
                 const fontRef = pdfDoc.context.getObjectRef(font.ref);
 
-                console.log("📝 Setting font for field:", {
-                  fieldName,
-                  fontName,
-                  fontRef: fontRef?.toString(),
-                  fontSize,
-                });
-
-                // Add font to AcroForm's default resources
+                // Thêm font vào default resources của AcroForm
                 const acroForm = pdfDoc.catalog.lookup(
                   pdfDoc.context.obj("AcroForm")
                 );
@@ -238,32 +220,16 @@ export const createAcroFormFields = async (
                   }
                 }
 
-                // Set Default Appearance with embedded font
+                // Set Default Appearance với embedded font
                 const acroField = formField.acroField;
                 const appearanceString = `/${fontName} ${fontSize} Tf 0 0 0 rg`;
                 acroField.setDefaultAppearance(appearanceString);
-
-                console.log("✅ Default appearance set:", {
-                  fieldName,
-                  appearanceString,
-                });
               } catch (fontError) {
-                console.warn(
-                  `⚠️ Could not set Vietnamese font for ${fieldName}:`,
-                  fontError.message
-                );
+                // Bỏ qua lỗi font
               }
 
-              // ⚠️ DO NOT call setText before addToPage - it will trigger WinAnsi encoding
+              // CẢNH BÁO: KHÔNG gọi setText trước addToPage - sẽ trigger WinAnsi encoding
               const textValue = fillFields ? defaultValue : "";
-
-              console.log('🔍 Text field setup:', {
-                fieldName,
-                fillFields,
-                defaultValue,
-                textValue,
-                willSetText: !!textValue
-              });
 
               if (multiline) {
                 formField.enableMultiline();
@@ -277,41 +243,34 @@ export const createAcroFormFields = async (
                 formField.enableRequired();
               }
 
-              // ✅ NEW LOGIC: Use full placeholder width (from start to end of field space)
-              // The placeholder x and width already represent the full field area
-              // (from first dot/underscore to last dot/underscore)
-              // This gives us 99% coverage of the field space with no padding
+              // LOGIC MỚI: Sử dụng toàn bộ chiều rộng placeholder (từ đầu đến cuối vùng trường)
+              // Placeholder x và width đã đại diện cho toàn bộ vùng trường
+              // (từ dấu chấm/gạch dưới đầu tiên đến dấu chấm/gạch dưới cuối cùng)
+              // Điều này cho chúng ta 99% phạm vi của vùng trường không có padding
               const fieldX = x;
               const fieldWidth = width;
-              const fieldY = y - fontSize * 0.35; // Adjust for baseline
+              const fieldY = y - fontSize * 0.35; // Điều chỉnh cho baseline
               const fieldHeightCalculated = fieldHeight || fontSize * 1.5;
 
-              // Add widget (visual appearance) to the page
-              // ✅ Use minimal options to avoid triggering WinAnsi appearance generation
+              // Thêm widget (giao diện hiển thị) vào trang
+              // Sử dụng tùy chọn tối thiểu để tránh trigger WinAnsi appearance generation
               formField.addToPage(page, {
                 x: fieldX,
                 y: fieldY,
                 width: fieldWidth,
                 height: fieldHeightCalculated,
-                // Skip appearance options to avoid WinAnsi encoding errors
+                // Bỏ qua appearance options để tránh lỗi WinAnsi encoding
               });
 
-              // ✅ Set Vietnamese text AFTER addToPage
+              // Set text tiếng Việt SAU addToPage
               if (textValue) {
                 try {
-                  // ✅ Use pdf-lib's built-in setText to generate proper appearance
-                  // This will create appearance stream with embedded font
+                  // Sử dụng setText built-in của pdf-lib để tạo appearance đúng
+                  // Điều này sẽ tạo appearance stream với embedded font
                   const normalizedText = textValue.normalize("NFC");
                   formField.setText(normalizedText);
-
-                  console.log(
-                    `✍️ Set Vietnamese value for '${fieldName}': '${normalizedText}'`
-                  );
                 } catch (setValueError) {
-                  console.warn(
-                    `⚠️ Could not set value for ${fieldName}:`,
-                    setValueError.message
-                  );
+                  // Bỏ qua lỗi set value
                 }
               }
 
@@ -319,7 +278,7 @@ export const createAcroFormFields = async (
 
             case "checkbox":
             case "boolean":
-              // Create checkbox
+              // Tạo checkbox
               formField = form.createCheckBox(fieldName);
 
               if (fillFields && defaultValue === true) {
@@ -330,53 +289,53 @@ export const createAcroFormFields = async (
                 formField.enableReadOnly();
               }
 
-              // ✅ NEW LOGIC: Checkbox size based on field width
-              // Default checkbox size is 15px
-              // If field width < 15px, use old logic (centered on field)
-              // If field width >= 15px, make checkbox square with side = field width
+              // LOGIC MỚI: Kích thước checkbox dựa trên chiều rộng trường
+              // Kích thước checkbox mặc định là 15px
+              // Nếu chiều rộng trường < 15px, dùng logic cũ (căn giữa trường)
+              // Nếu chiều rộng trường >= 15px, tạo checkbox vuông với cạnh = chiều rộng trường
               const defaultCheckboxSize = 15;
               let actualCheckboxSize;
               let checkboxX, checkboxY;
 
-              // Determine field width (use backgroundWidth if available, otherwise use width)
+              // Xác định chiều rộng trường (dùng backgroundWidth nếu có, nếu không dùng width)
               const effectiveFieldWidth =
                 backgroundX !== undefined && backgroundWidth !== undefined
                   ? backgroundWidth
                   : width;
 
               if (effectiveFieldWidth < defaultCheckboxSize) {
-                // Case 1: Field is smaller than default checkbox -> use old centered logic
+                // Trường hợp 1: Trường nhỏ hơn checkbox mặc định -> dùng logic căn giữa cũ
                 actualCheckboxSize = defaultCheckboxSize;
 
                 if (
                   backgroundX !== undefined &&
                   backgroundWidth !== undefined
                 ) {
-                  // Center checkbox over the digit position
+                  // Căn giữa checkbox trên vị trí chữ số
                   const digitCenterX = backgroundX + backgroundWidth / 2;
                   checkboxX = digitCenterX - actualCheckboxSize / 2;
                 } else {
-                  // Fallback: use placeholder center
+                  // Fallback: dùng tâm placeholder
                   const centerX = x + width / 2;
                   checkboxX = centerX - actualCheckboxSize / 2;
                 }
               } else {
-                // Case 2: Field is larger than or equal to default checkbox -> make square checkbox = field width
+                // Trường hợp 2: Trường lớn hơn hoặc bằng checkbox mặc định -> tạo checkbox vuông = chiều rộng trường
                 actualCheckboxSize = effectiveFieldWidth;
 
                 if (
                   backgroundX !== undefined &&
                   backgroundWidth !== undefined
                 ) {
-                  // Position checkbox at the start of background
+                  // Đặt checkbox tại đầu background
                   checkboxX = backgroundX;
                 } else {
-                  // Fallback: use placeholder start
+                  // Fallback: dùng đầu placeholder
                   checkboxX = x;
                 }
               }
 
-              checkboxY = y - actualCheckboxSize / 2 + 2; // Adjust for vertical alignment
+              checkboxY = y - actualCheckboxSize / 2 + 2; // Điều chỉnh căn chỉnh dọc
 
               formField.addToPage(page, {
                 x: checkboxX,
@@ -392,7 +351,7 @@ export const createAcroFormFields = async (
 
             case "dropdown":
             case "select":
-              // Create dropdown
+              // Tạo dropdown
               const options = field.options || [];
               formField = form.createDropdown(fieldName);
 
@@ -406,8 +365,8 @@ export const createAcroFormFields = async (
                 formField.enableReadOnly();
               }
 
-              // Add widget to the page
-              // ✅ Use minimal options for dropdown to avoid WinAnsi errors
+              // Thêm widget vào trang
+              // Sử dụng tùy chọn tối thiểu cho dropdown để tránh lỗi WinAnsi
               formField.addToPage(page, {
                 x: x,
                 y: y,
@@ -423,10 +382,10 @@ export const createAcroFormFields = async (
                 warning: `Unsupported field type: ${fieldType}. Defaulting to text field.`,
               });
 
-              // Default to text field
+              // Mặc định là text field
               formField = form.createTextField(fieldName);
 
-              // ✅ Set Vietnamese font for default text field too
+              // Set font tiếng Việt cho text field mặc định
               try {
                 const fontName = font.name;
                 const fontRef = pdfDoc.context.getObjectRef(font.ref);
@@ -447,19 +406,19 @@ export const createAcroFormFields = async (
                   `/${fontName} ${fontSize} Tf 0 0 0 rg`
                 );
               } catch (fontError) {
-                console.warn(`⚠️ Font setup failed for ${fieldName}`);
+                // Bỏ qua lỗi font
               }
 
               const defaultText = fillFields ? defaultValue : "";
 
-              // ✅ NEW LOGIC: Use full placeholder width for default case too
+              // LOGIC MỚI: Sử dụng toàn bộ chiều rộng placeholder cho trường hợp mặc định
               const defaultFieldX = x;
               const defaultFieldWidth = width;
               const defaultFieldY = y;
               const defaultFieldHeightCalculated =
                 fieldHeight || fontSize * 1.5;
 
-              // ✅ Add without appearance options for default case too
+              // Thêm không có appearance options cho trường hợp mặc định
               formField.addToPage(page, {
                 x: defaultFieldX,
                 y: defaultFieldY,
@@ -467,31 +426,24 @@ export const createAcroFormFields = async (
                 height: defaultFieldHeightCalculated,
               });
 
-              // ✅ Set Vietnamese text AFTER addToPage
+              // Set text tiếng Việt SAU addToPage
               if (defaultText) {
                 try {
                   const acroField = formField.acroField;
-                  // ✅ Normalize to NFC
+                  // Normalize về NFC
                   const normalizedText = defaultText.normalize("NFC");
                   acroField.dict.set(
                     pdfDoc.context.obj("V"),
                     pdfDoc.context.obj(normalizedText)
                   );
-                  console.log(
-                    `✍️ Set Vietnamese value: "${fieldName}" = "${normalizedText}" using font: ${fontName}`
-                  );
                 } catch (err) {
-                  console.warn(`⚠️ Failed to set value for ${fieldName}`);
+                  // Bỏ qua lỗi set value
                 }
               }
           }
-
-          console.log(
-            `✅ Created ${fieldType} field: ${fieldName} at page ${pageNum}`
-          );
         } catch (fieldError) {
           console.error(
-            `❌ Error creating field ${field.fieldName}:`,
+            `❌ Lỗi khi tạo trường ${field.fieldName}:`,
             fieldError
           );
           warnings.push({
@@ -502,41 +454,29 @@ export const createAcroFormFields = async (
       }
     }
 
-    // Save modified PDF with form fields
-    // ✅ CRITICAL: Disable updateFieldAppearances to prevent WinAnsi encoding errors
+    // Lưu PDF đã chỉnh sửa với các trường biểu mẫu
+    // QUAN TRỌNG: Tắt updateFieldAppearances để tránh lỗi WinAnsi encoding
     const modifiedPdfBytes = await pdfDoc.save({
       updateFieldAppearances: false,
     });
 
-    // Log warnings summary
-    if (warnings.length > 0) {
-      console.warn(
-        `⚠️ ${warnings.length} warnings during form creation:`,
-        warnings
-      );
-    }
-
-    console.log(
-      `✅ Created ${fieldDefinitions.length} form fields successfully`
-    );
-
     return { pdfBytes: modifiedPdfBytes, warnings };
   } catch (error) {
-    console.error("❌ Error creating AcroForm fields:", error);
+    console.error("❌ Lỗi khi tạo trường AcroForm:", error);
     console.error("❌ Stack:", error.stack);
     throw new Error("Không thể tạo fillable PDF: " + error.message);
   }
 };
 
 /**
- * Create fillable PDF from placeholder mappings
- * This is a higher-level function that converts placeholder mappings to field definitions
+ * Tạo fillable PDF từ placeholder mappings
+ * Đây là hàm cấp cao chuyển đổi placeholder mappings thành field definitions
  *
  * @param {ArrayBuffer} pdfArrayBuffer - PDF gốc
  * @param {Array} placeholders - Danh sách placeholders từ PDFPlaceholderDetector
  * @param {Object} mappings - Mapping object { placeholder_id: tag_id }
  * @param {Array} tags - Danh sách tags
- * @param {Object} options - Additional options
+ * @param {Object} options - Tùy chọn bổ sung
  * @returns {Promise<{pdfBytes: Uint8Array, warnings: Array}>}
  */
 export const createFillablePDFFromMappings = async (
@@ -547,21 +487,21 @@ export const createFillablePDFFromMappings = async (
   options = {}
 ) => {
   try {
-    // Convert placeholders + mappings to field definitions
+    // Chuyển đổi placeholders + mappings thành field definitions
     const fieldDefinitions = [];
 
     placeholders.forEach((placeholder) => {
       const tagId = mappings[placeholder.id];
-      if (!tagId) return; // Skip unmapped placeholders
+      if (!tagId) return; // Bỏ qua placeholders chưa map
 
       const tag = tags.find((t) => t.id === tagId);
       if (!tag) return;
 
-      // ✅ Normalize all Vietnamese text to NFC (composed form)
+      // Normalize tất cả text tiếng Việt về NFC (composed form)
       const normalizedKey = (tag.key || "").normalize("NFC");
       const normalizedDefaultValue = (tag.defaultValue || "").normalize("NFC");
 
-      // Map tag to field definition
+      // Map tag thành field definition
       const fieldDef = {
         page: placeholder.page,
         x: placeholder.x,
@@ -570,7 +510,7 @@ export const createFillablePDFFromMappings = async (
         height: placeholder.height,
         backgroundX: placeholder.backgroundX,
         backgroundWidth: placeholder.backgroundWidth,
-        fieldName: normalizedKey, // Use normalized tag key as field name
+        fieldName: normalizedKey, // Sử dụng tag key đã normalize làm field name
         fieldType: mapDataTypeToFieldType(tag.dataType),
         defaultValue: normalizedDefaultValue,
         placeholder: placeholder.fullText,
@@ -584,20 +524,20 @@ export const createFillablePDFFromMappings = async (
       fieldDefinitions.push(fieldDef);
     });
 
-    // Create AcroForm fields
+    // Tạo các trường AcroForm
     return await createAcroFormFields(
       pdfArrayBuffer,
       fieldDefinitions,
       options
     );
   } catch (error) {
-    console.error("❌ Error creating fillable PDF from mappings:", error);
+    console.error("❌ Lỗi khi tạo fillable PDF từ mappings:", error);
     throw error;
   }
 };
 
 /**
- * Map data type to field type
+ * Map data type thành field type
  */
 const mapDataTypeToFieldType = (dataType) => {
   const mapping = {

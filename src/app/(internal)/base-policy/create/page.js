@@ -99,47 +99,47 @@ const CreatePolicyPage = () => {
     getAvailableDataSourcesForTrigger,
   } = useCreatePolicy();
 
-  // Handle successful policy creation
+  // Xử lý tạo policy thành công
   const handlePolicyCreated = async () => {
     const success = await handleCreatePolicy();
     if (success) {
-      // Wait for success message to be visible before redirecting
+      // Đợi hiển thị thông báo thành công trước khi chuyển hướng
       setTimeout(() => {
         window.location.href = "/base-policy";
-      }, 1500); // 1.5 seconds delay to show success message
+      }, 1500); // Delay 1.5 giây để hiển thị thông báo
     }
   };
 
-  // Handle cancel
+  // Xử lý hủy
   const handleCancel = () => {
     router.push("/base-policy");
   };
 
-  // Handle file upload - Memoized to prevent unnecessary re-renders
+  // Xử lý upload file
   const handleFileUpload = useCallback(
     (file, url) => {
       setUploadedFile(file);
       setFileUrl(url);
 
-      //  Update tagsData with uploaded file
+      // Cập nhật tagsData với file đã upload
       handleTagsDataChange({
         uploadedFile: file,
-        // Note: modifiedPdfBytes will be set later by TagsTab when tags are applied
+        // Lưu ý: modifiedPdfBytes sẽ được set sau bởi TagsTab khi áp dụng tags
       });
     },
     [handleTagsDataChange]
   );
 
-  // Handle file remove - Memoized to prevent unnecessary re-renders
+  // Xử lý xóa file
   const handleFileRemove = useCallback(() => {
-    // Clear local preview state
+    // Xóa state local của preview
     setUploadedFile(null);
     setFileUrl(null);
 
-    // Clear detected placeholders
+    // Xóa placeholders đã phát hiện
     setDetectedPlaceholders([]);
 
-    //  CRITICAL: Clear ALL PDF-related data from tagsData
+    // QUAN TRỌNG: Xóa TẤT CẢ dữ liệu liên quan đến PDF từ tagsData
     handleTagsDataChange({
       uploadedFile: null,
       modifiedPdfBytes: null,
@@ -149,26 +149,25 @@ const CreatePolicyPage = () => {
       pdfData: null,
     });
 
-    // Remove all tags when PDF is deleted to avoid stale mappings
+    // Xóa tất cả tags khi PDF bị xóa để tránh mappings cũ
     try {
       if (
         tagsData &&
         Array.isArray(tagsData.tags) &&
         tagsData.tags.length > 0
       ) {
-        // copy ids to avoid mutation during iteration
+        // Copy ids để tránh mutation trong lúc iteration
         const ids = tagsData.tags.map((t) => t.id);
         ids.forEach((id) => {
           try {
             handleRemoveTag(id);
           } catch (e) {
-            // ignore individual remove errors
-            console.warn("Error removing tag", id, e);
+            // Bỏ qua lỗi xóa từng tag
           }
         });
       }
     } catch (e) {
-      console.warn("Error clearing tags on file remove", e);
+      // Bỏ qua lỗi khi xóa tags
     }
   }, [handleTagsDataChange, handleRemoveTag, tagsData]);
 
@@ -176,33 +175,26 @@ const CreatePolicyPage = () => {
     setDetectedPlaceholders(placeholders || []);
   }, []);
 
-  //  NEW: Handle manual placeholder creation from click-to-place - Memoized
+  // Xử lý tạo placeholder thủ công từ chế độ click-to-place
   const handleCreatePlaceholder = useCallback((newPlaceholder) => {
-    console.log("📍 Adding manual placeholder to list:", newPlaceholder);
     setDetectedPlaceholders((prev) => [...prev, newPlaceholder]);
   }, []);
 
-  // 🆕 Handle placeholder deletion
+  // Xử lý xóa placeholder
   const handleDeletePlaceholder = useCallback((placeholderId) => {
-    console.log("🗑️ Deleting placeholder from list:", placeholderId);
     setDetectedPlaceholders((prev) =>
       prev.filter((p) => p.id !== placeholderId)
     );
   }, []);
 
-  // 🆕 Handle create field from scan mode and immediately apply AcroForm
+  // Xử lý tạo trường từ chế độ quét và áp dụng AcroForm ngay lập tức
   const handleCreateAndApplyField = useCallback(
     async (placeholder, fieldData) => {
       try {
-        console.log("🔧 Page.js - Creating field from scan mode:", {
-          placeholder,
-          fieldData,
-        });
-
-        // 1. Add placeholder to detected list
+        // 1. Thêm placeholder vào danh sách đã phát hiện
         setDetectedPlaceholders((prev) => [...prev, placeholder]);
 
-        // 2. Create temp tag for this field
+        // 2. Tạo tag tạm thời cho trường này
         const tempTag = {
           id: `tag-${Date.now()}`,
           key: fieldData.key,
@@ -210,37 +202,29 @@ const CreatePolicyPage = () => {
           dataTypeLabel:
             mockData.tagDataTypes?.find((t) => t.value === fieldData.dataType)
               ?.label || fieldData.dataType,
-          defaultValue: fieldData.key, // Set field name as default value to display in PDF
+          defaultValue: fieldData.key, // Đặt tên trường làm giá trị mặc định để hiển thị trong PDF
           createdFromScan: true,
         };
 
-        // 3. Add tag to tagsData
+        // 3. Thêm tag vào tagsData
         handleTagsDataChange((prev) => ({
           ...prev,
           tags: [...(prev.tags || []), tempTag],
         }));
 
-        // 4. Create mapping
+        // 4. Tạo mapping cho trường này
         const mapping = { [placeholder.id]: tempTag.id };
 
-        // 5. Wait for state update
+        // 5. Đợi state được cập nhật
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // 6. Call createFillablePDFFromMappings to add AcroForm
+        // 6. Gọi createFillablePDFFromMappings để thêm AcroForm
         if (!uploadedFile) {
           throw new Error("Không tìm thấy file PDF");
         }
 
-        // Convert File to ArrayBuffer
+        // Chuyển File sang ArrayBuffer
         const arrayBuffer = await uploadedFile.arrayBuffer();
-
-        console.log("📄 Calling createFillablePDFFromMappings with:", {
-          placeholder,
-          mapping,
-          tag: tempTag,
-          hasFile: !!uploadedFile,
-          arrayBufferSize: arrayBuffer.byteLength,
-        });
 
         const result = await createFillablePDFFromMappings(
           arrayBuffer,
@@ -249,31 +233,26 @@ const CreatePolicyPage = () => {
           [tempTag],
           {
             tagDataTypes: mockData.tagDataTypes || [],
-            fillFields: true, // Fill field with default value (field name)
-            makeFieldsEditable: true, // Keep fields editable
+            fillFields: true, // Điền trường với giá trị mặc định (tên trường)
+            makeFieldsEditable: true, // Giữ trường có thể chỉnh sửa
           }
         );
 
-        console.log("✅ AcroForm created successfully, result:", {
-          hasPdfBytes: !!result?.pdfBytes,
-          bytesLength: result?.pdfBytes?.length,
-        });
-
-        // 7. Create new File from PDF bytes
+        // 7. Tạo File mới từ PDF bytes
         const newFile = new File(
           [result.pdfBytes],
           uploadedFile?.name || "contract.pdf",
           { type: "application/pdf" }
         );
 
-        // 8. Create new blob URL for preview
+        // 8. Tạo blob URL mới để xem trước
         const newUrl = URL.createObjectURL(newFile);
 
-        // 9. Update local state (uploadedFile, fileUrl)
+        // 9. Cập nhật state local (uploadedFile, fileUrl)
         setUploadedFile(newFile);
         setFileUrl(newUrl);
 
-        // 10. Update tagsData with new PDF and mapping
+        // 10. Cập nhật tagsData với PDF mới và mapping
         handleTagsDataChange((prev) => ({
           ...prev,
           modifiedPdfBytes: result.pdfBytes,
@@ -284,21 +263,18 @@ const CreatePolicyPage = () => {
           },
           documentTagsObject: {
             ...prev.documentTagsObject,
-            [fieldData.key]: tempTag.dataType, // ✅ Only store dataType value, not entire object
+            [fieldData.key]: tempTag.dataType, // Chỉ lưu giá trị dataType, không phải toàn bộ object
           },
         }));
 
-        // 11. Force refresh via FileUploadPreview imperative handle
+        // 11. Buộc refresh thông qua FileUploadPreview imperative handle
         setTimeout(() => {
           if (filePreviewRef?.current?.updateFillablePDF) {
-            console.log("🔄 Calling updateFillablePDF to refresh preview");
             filePreviewRef.current.updateFillablePDF(newFile, result.pdfBytes);
           }
         }, 300);
-
-        console.log(`✅ Field "${fieldData.key}" added to PDF with AcroForm`);
       } catch (error) {
-        console.error("❌ Failed to create AcroForm:", error);
+        console.error("❌ Lỗi khi tạo AcroForm:", error);
         throw error;
       }
     },
@@ -312,13 +288,13 @@ const CreatePolicyPage = () => {
     ]
   );
 
-  // Get current step index
+  // Lấy index của bước hiện tại
   const getCurrentStepIndex = () => {
     const tabs = Object.values(TABS);
     return tabs.findIndex((tab) => tab === currentTab);
   };
 
-  // Check if tab is completed
+  // Kiểm tra tab đã hoàn thành chưa
   const isTabCompleted = (tab) => {
     switch (tab) {
       case TABS.BASIC:
@@ -334,7 +310,7 @@ const CreatePolicyPage = () => {
     }
   };
 
-  // Get validation alert for current tab
+  // Lấy thông báo validation cho tab hiện tại
   const getValidationAlert = () => {
     let message = "";
     let type = "info";
@@ -377,7 +353,7 @@ const CreatePolicyPage = () => {
     return { message, type };
   };
 
-  // Tabs configuration
+  // Cấu hình các tab
   const tabItems = [
     {
       key: TABS.FAQ,

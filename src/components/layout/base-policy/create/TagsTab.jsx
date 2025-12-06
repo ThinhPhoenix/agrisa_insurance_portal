@@ -30,7 +30,7 @@ import { createFillablePDFFromMappings } from '@/libs/pdf/pdfAcroFormEditor';
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-//  OPTIMIZATION: Memoize TagsTab to prevent unnecessary re-renders
+// Component TagsTab - Quản lý tài liệu và trường thông tin
 const TagsTabComponent = ({
     tagsData,
     mockData,
@@ -141,12 +141,10 @@ const TagsTabComponent = ({
         });
     };
 
-    // NEW: Handle create field from scan mode and immediately apply AcroForm
+    // Xử lý tạo trường từ chế độ quét và áp dụng AcroForm ngay
     const handleCreateAndApplyField = async (placeholder, fieldData) => {
         try {
-            console.log('🔧 Creating field from scan mode:', { placeholder, fieldData });
-
-            // 1. Create temp tag for this field
+            // 1. Tạo tag tạm thời cho trường này
             const tempTag = {
                 id: `tag-${Date.now()}`,
                 key: fieldData.key,
@@ -155,31 +153,29 @@ const TagsTabComponent = ({
                 createdFromScan: true
             };
 
-            // 2. Add tag to tagsData first
+            // 2. Thêm tag vào tagsData trước
             onAddTag(tempTag);
 
-            // 3. Create mapping for this field
+            // 3. Tạo mapping cho trường này
             const mapping = { [placeholder.id]: tempTag.id };
 
-            // 4. Wait a bit for tag to be added
+            // 4. Đợi tag được thêm vào
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // 5. Call createFillablePDFFromMappings to add AcroForm
+            // 5. Gọi createFillablePDFFromMappings để thêm AcroForm
             if (!tagsData.uploadedFile) {
                 throw new Error('Không tìm thấy file PDF');
             }
 
             const result = await createFillablePDFFromMappings(
                 tagsData.uploadedFile,
-                [placeholder],  // Single placeholder
+                [placeholder],
                 mapping,
-                [tempTag],      // Single tag
+                [tempTag],
                 mockData.tagDataTypes || []
             );
 
-            console.log('✅ AcroForm created successfully');
-
-            // 6. Update tagsData with new PDF and placeholder
+            // 6. Cập nhật tagsData với PDF mới và placeholder
             onDataChange(prev => ({
                 ...prev,
                 modifiedPdfBytes: result.pdfBytes,
@@ -188,14 +184,13 @@ const TagsTabComponent = ({
                     ...prev.mappings,
                     ...mapping
                 },
-                // ✅ FIX: Only send dataType value, not entire tag object
                 documentTagsObject: {
                     ...prev.documentTagsObject,
                     [fieldData.key]: tempTag.dataType || 'string'
                 }
             }));
 
-            // 7. Force refresh PDF preview
+            // 7. Buộc refresh PDF preview
             if (filePreviewRef?.current?.refreshPdf) {
                 setTimeout(() => {
                     filePreviewRef.current.refreshPdf();
@@ -204,7 +199,7 @@ const TagsTabComponent = ({
 
             message.success(`Đã thêm trường "${fieldData.key}" vào PDF`);
         } catch (error) {
-            console.error('❌ Failed to create AcroForm:', error);
+            console.error('❌ Lỗi khi tạo AcroForm:', error);
             message.error(`Không thể thêm trường vào PDF: ${error.message}`);
             throw error;
         }
@@ -783,23 +778,17 @@ const TagsTabComponent = ({
                         initialMappings={tagsData?.mappings || {}}
                         onSelectedRowsChange={setSelectedRowsCount}
                         onCreateTag={(tag) => {
-                            console.log('🔍 TagsTab - onCreateTag called with:', tag);
-                            console.log('🔍 TagsTab - calling onAddTag...');
                             onAddTag(tag);
-                            console.log('🔍 TagsTab - onAddTag called, current tagsData.tags:', tagsData.tags);
                         }}
                         onDeletePlaceholder={(placeholderId) => {
-                            console.log('🗑️ TagsTab - onDeletePlaceholder called with id:', placeholderId);
-
-                            // Call parent handler to remove from detectedPlaceholders state
+                            // Gọi parent handler để xóa khỏi detectedPlaceholders state
                             if (onDeletePlaceholder) {
                                 onDeletePlaceholder(placeholderId);
                             }
 
-                            // Also update tagsData to sync placeholders (optional, for backward compatibility)
+                            // Đồng bộ tagsData placeholders
                             onDataChange && onDataChange((prev) => {
                                 const updatedPlaceholders = (prev.placeholders || []).filter(p => p.id !== placeholderId);
-                                console.log('🗑️ TagsTab - Updated tagsData.placeholders:', updatedPlaceholders.length);
                                 return {
                                     ...prev,
                                     placeholders: updatedPlaceholders
@@ -807,42 +796,26 @@ const TagsTabComponent = ({
                             });
                         }}
                         onMappingChange={(mappings, pdfData) => {
-                            console.log('🔍 TagsTab - onMappingChange called with:', { mappings, pdfData });
-
-                            //  FIX: Use handleTagsDataChange (prev => ...) instead of spreading tagsData
-                            // to avoid race condition where tags haven't been added yet
+                            // Cập nhật mappings và pdfData
                             onDataChange && onDataChange((prev) => {
                                 const updates = {
                                     ...prev,
                                     mappings,
-                                    // ✅ Lưu placeholders để dùng cho auto-conversion
                                     placeholders: placeholders
                                 };
 
-                                // Only update fields that exist in pdfData (avoid overwriting with undefined)
+                                // Chỉ cập nhật các trường tồn tại trong pdfData
                                 if (pdfData) {
-                                    // ✅ FIX: Check shouldOverwriteDocumentTags flag
-                                    // - If flag is true (from delete operation): OVERWRITE to remove deleted tags
-                                    // - Otherwise (from apply operation): MERGE to preserve existing tags
                                     if (pdfData.documentTagsObject !== undefined) {
-                                        console.log('📥 Received documentTagsObject from PlaceholderMappingPanel:', pdfData.documentTagsObject);
-                                        console.log('📥 Type check:', Object.entries(pdfData.documentTagsObject).map(([k, v]) => `${k}: ${typeof v} = ${JSON.stringify(v)}`));
-
                                         if (pdfData.shouldOverwriteDocumentTags) {
-                                            // Overwrite completely (for delete operations)
+                                            // Ghi đè hoàn toàn (cho thao tác xóa)
                                             updates.documentTagsObject = pdfData.documentTagsObject;
-                                            console.log('🔄 OVERWRITE documentTagsObject (delete operation):', pdfData.documentTagsObject);
                                         } else {
-                                            // Merge (for apply operations - preserve existing tags)
-                                            console.log('🔍 Before merge - prev.documentTagsObject:', prev.documentTagsObject);
-                                            console.log('🔍 Before merge - pdfData.documentTagsObject:', pdfData.documentTagsObject);
-
+                                            // Merge (cho thao tác apply - giữ lại tags hiện có)
                                             updates.documentTagsObject = {
                                                 ...prev.documentTagsObject,
                                                 ...pdfData.documentTagsObject
                                             };
-                                            console.log('🔄 MERGE documentTagsObject (apply operation):', updates.documentTagsObject);
-                                            console.log('🔍 Type check after merge:', Object.entries(updates.documentTagsObject).map(([k, v]) => `${k}: ${typeof v} = ${JSON.stringify(v)}`));
                                         }
                                     }
                                     if (pdfData.modifiedPdfBytes !== undefined) {
@@ -853,17 +826,11 @@ const TagsTabComponent = ({
                                     }
                                 }
 
-                                console.log('💾 Saving to tagsData:', {
-                                    placeholders: updates.placeholders?.length,
-                                    mappings: Object.keys(updates.mappings || {}).length,
-                                    documentTags: Object.keys(updates.documentTagsObject || {}).length
-                                });
-
                                 return updates;
                             });
                         }}
-                        onExportSchema={(schema) => console.log('Exported schema', schema)}
-                        filePreviewRef={filePreviewRef}  //  Pass ref down to PlaceholderMappingPanel
+                        onExportSchema={(schema) => {/* Export schema */}}
+                        filePreviewRef={filePreviewRef}
                     />
                 ) : (
                     <Alert
@@ -882,7 +849,7 @@ const TagsTabComponent = ({
     );
 };
 
-//  OPTIMIZATION: Wrap with memo and add display name
+// Wrap với memo để tối ưu hóa performance
 const TagsTab = memo(TagsTabComponent);
 TagsTab.displayName = 'TagsTab';
 

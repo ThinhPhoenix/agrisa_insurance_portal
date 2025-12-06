@@ -48,35 +48,29 @@ const FileUploadPreview = forwardRef(({
     useImperativeHandle(ref, () => ({
         openFullscreen: () => handleFullscreenOpen(),
 
-        //  NEW: Update with fillable PDF (called from PlaceholderMappingPanel after createFillablePDF)
+        // Cập nhật với fillable PDF (được gọi từ PlaceholderMappingPanel sau khi tạo fillable PDF)
         updateFillablePDF: async (fillableFile, fillableBytes) => {
             try {
-                console.log('🔄 updateFillablePDF called with file:', fillableFile.name, fillableFile.size);
-
-                // Cleanup old URL first
+                // Xóa URL cũ trước
                 if (fileUrl) {
-                    console.log('🗑️ Revoking old URL:', fileUrl);
                     URL.revokeObjectURL(fileUrl);
                 }
 
-                // Create new blob URL for fillable PDF with cache-busting timestamp
+                // Tạo blob URL mới cho fillable PDF với timestamp để force reload
                 const blob = new Blob([fillableFile], { type: 'application/pdf' });
                 const newUrl = URL.createObjectURL(blob);
-                const urlWithTimestamp = `${newUrl}#t=${Date.now()}`; // Add timestamp to force reload
-                console.log('🆕 Created new URL:', urlWithTimestamp);
+                const urlWithTimestamp = `${newUrl}#t=${Date.now()}`;
 
-                // Update state to show fillable PDF in iframe
+                // Cập nhật state để hiển thị fillable PDF trong iframe
                 setUploadedFile(fillableFile);
                 setFileUrl(urlWithTimestamp);
                 setModifiedPdfBytes(fillableBytes);
-                setIframeKey(Date.now()); // 🆕 Force iframe to reload
+                setIframeKey(Date.now()); // Force iframe reload
 
-                // Notify parent
+                // Thông báo cho parent
                 if (onFileUpload) {
                     onFileUpload(fillableFile, urlWithTimestamp);
                 }
-
-                console.log('✅ Fillable PDF updated in FileUploadPreview, iframe will reload with key:', Date.now());
 
                 return {
                     success: true,
@@ -84,7 +78,7 @@ const FileUploadPreview = forwardRef(({
                     file: fillableFile
                 };
             } catch (error) {
-                console.error('❌ Error updating fillable PDF:', error);
+                console.error('❌ Lỗi khi cập nhật fillable PDF:', error);
                 return {
                     success: false,
                     error: error.message
@@ -92,7 +86,7 @@ const FileUploadPreview = forwardRef(({
             }
         },
 
-        //  Apply replacements - OVERWRITE uploadedFile (In-place Editing)
+        // Áp dụng thay thế - GHI ĐÈ uploadedFile (Chỉnh sửa tại chỗ)
         applyReplacements: async (replacements) => {
             if (!uploadedFile) {
                 return { success: false, error: 'No file uploaded' };
@@ -102,7 +96,7 @@ const FileUploadPreview = forwardRef(({
                 setAnalyzing(true);
                 message.loading(getPdfInfo('APPLYING'), 0);
 
-                // Read current file
+                // Đọc file hiện tại
                 const arrayBuffer = await uploadedFile.arrayBuffer();
 
                 // Validate arrayBuffer
@@ -110,51 +104,49 @@ const FileUploadPreview = forwardRef(({
                     throw new Error('Invalid PDF file: ArrayBuffer is empty');
                 }
 
-                // Dynamic import pdf-lib (code splitting)
-                const { replacePlaceholdersInPDF } = await import('../../../../libs/pdf/pdfEditor');
-
-                // Apply replacements
-                const result = await replacePlaceholdersInPDF(arrayBuffer, replacements);
-
-                //  Extract pdfBytes from result object
-                const modifiedBytes = result.pdfBytes || result; // Backward compatibility
-                const warnings = result.warnings || [];
+                // Hiện tại applyReplacements không còn được sử dụng vì logic đã chuyển sang AcroForm
+                // Function này có thể được xóa sau khi xác nhận không còn cần thiết
+                message.destroy();
+                message.error('Chức năng áp dụng thay thế đã ngừng hoạt động. Vui lòng sử dụng chức năng tạo AcroForm.');
+                return {
+                    success: false,
+                    error: 'Feature deprecated'
+                };
 
                 // Validate modifiedBytes
                 if (!modifiedBytes || modifiedBytes.byteLength === 0) {
                     throw new Error('Invalid modified PDF: Bytes are empty');
                 }
 
-                // ⭐ OVERWRITE: Convert bytes to File object
+                // Chuyển bytes thành File object
                 const newFile = new File(
-                    [modifiedBytes],  //  Now correctly contains Uint8Array
+                    [modifiedBytes],
                     uploadedFile.name,
                     { type: 'application/pdf' }
                 );
 
-                // ⭐ OVERWRITE: Create new blob URL first (BEFORE setState)
+                // Tạo blob URL mới
                 const newUrl = URL.createObjectURL(newFile);
 
-                // ⭐ OVERWRITE: Update uploadedFile state
+                // Cập nhật uploadedFile state
                 setUploadedFile(newFile);
 
-                // ⭐ OVERWRITE: Notify parent to update fileUrl
+                // Thông báo cho parent để cập nhật fileUrl
                 if (onFileUpload) {
-                    onFileUpload(newFile, newUrl);  // Pass newUrl, not null!
+                    onFileUpload(newFile, newUrl);
                 }
 
-                // ⭐ OVERWRITE: Update LOCAL fileUrl state (will trigger iframe reload)
-                // Note: Parent will also update fileUrl via callback, which syncs back via useEffect
+                // Cập nhật LOCAL fileUrl state (sẽ trigger iframe reload)
                 setFileUrl(newUrl);
 
-                // ⭐ Cleanup old blob URL after a delay (prevent race condition)
+                // Cleanup blob URL cũ sau delay (tránh race condition)
                 if (fileUrl) {
                     setTimeout(() => {
                         URL.revokeObjectURL(fileUrl);
                     }, 500);
                 }
 
-                // Store bytes for download/submit
+                // Lưu bytes để download/submit
                 setModifiedPdfBytes(modifiedBytes);
 
                 message.destroy();
@@ -180,7 +172,7 @@ const FileUploadPreview = forwardRef(({
             }
         },
 
-        //  Get current file (for backend submission)
+        // Lấy file hiện tại (để submit lên backend)
         getCurrentFile: () => {
             if (!uploadedFile) {
                 return {
@@ -196,7 +188,7 @@ const FileUploadPreview = forwardRef(({
             };
         },
 
-        // 🆕 Get original unmodified file (for rebuild after delete)
+        // Lấy file gốc chưa chỉnh sửa (để rebuild sau khi xóa)
         getOriginalFile: () => {
             if (!originalFile) {
                 return {
@@ -213,12 +205,12 @@ const FileUploadPreview = forwardRef(({
     }));
 
     const [uploadedFile, setUploadedFile] = useState(null);
-    const [originalFile, setOriginalFile] = useState(null); // Store original unmodified PDF
+    const [originalFile, setOriginalFile] = useState(null); // Lưu PDF gốc chưa chỉnh sửa
     const [fileUrl, setFileUrl] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [iframeKey, setIframeKey] = useState(Date.now()); // 🆕 Force iframe reload
+    const [iframeKey, setIframeKey] = useState(Date.now()); // Force iframe reload
 
-    //  Sync fileUrlProp from parent into local state
+    // Đồng bộ fileUrlProp từ parent vào local state
     useEffect(() => {
         if (fileUrlProp !== null && fileUrlProp !== fileUrl) {
             setFileUrl(fileUrlProp);
@@ -234,10 +226,10 @@ const FileUploadPreview = forwardRef(({
     const [modifiedTextUrl, setModifiedTextUrl] = useState(null);
     const fileInputRef = useRef(null);
 
-    // State for modified PDF bytes (for in-place editing)
+    // State cho modified PDF bytes (để chỉnh sửa tại chỗ)
     const [modifiedPdfBytes, setModifiedPdfBytes] = useState(null);
 
-    // Helper: convert File to base64 data URL
+    // Helper: chuyển File sang base64 data URL
     const fileToBase64 = (file) => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
@@ -245,51 +237,42 @@ const FileUploadPreview = forwardRef(({
         reader.readAsDataURL(file);
     });
 
-    // Sync with parent-controlled uploaded file (preserve across unmounts)
+    // Đồng bộ với uploaded file từ parent (giữ qua unmounts)
     useEffect(() => {
         if (uploadedFileProp) {
-            // parent has a file; adopt it
+            // Parent có file; sử dụng nó
             setUploadedFile(uploadedFileProp);
 
-            // ✅ CRITICAL FIX: Only set originalFile if it's not already set
-            // originalFile should NEVER be updated after initial upload
-            // because it must remain the TRUE original PDF (not fillable PDF)
+            // QUAN TRỌNG: Chỉ set originalFile nếu chưa được set
+            // originalFile không bao giờ được cập nhật sau lần upload đầu tiên
+            // vì nó phải giữ nguyên là PDF gốc THẬT (không phải fillable PDF)
             setOriginalFile(prev => {
                 if (!prev) {
-                    console.log('📦 Setting originalFile from parent (first time):', {
-                        name: uploadedFileProp.name,
-                        size: uploadedFileProp.size
-                    });
                     return uploadedFileProp;
                 } else {
-                    console.log('⏭️ Skipping originalFile update - already set:', {
-                        original: { name: prev.name, size: prev.size },
-                        newFile: { name: uploadedFileProp.name, size: uploadedFileProp.size }
-                    });
-                    return prev; // Keep original
+                    return prev; // Giữ nguyên file gốc
                 }
             });
 
             setFileUrl(fileUrlProp);
         } else {
-            // parent cleared file
+            // Parent đã xóa file
             setUploadedFile(null);
             setOriginalFile(null);
             setFileUrl(null);
             setPlaceholders([]);
             setPdfError(null);
         }
-        // only respond to explicit prop changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [uploadedFileProp, fileUrlProp]);
 
-    //  OPTIMIZATION: Memoize handleRemoveFile
+    // Xử lý xóa file
     const handleRemoveFile = useCallback(() => {
         if (fileUrl) {
             URL.revokeObjectURL(fileUrl);
         }
         setUploadedFile(null);
-        setOriginalFile(null); // Clear original file
+        setOriginalFile(null);
         setFileUrl(null);
         setPdfError(null);
         setPlaceholders([]);
@@ -299,14 +282,14 @@ const FileUploadPreview = forwardRef(({
         message.success(getPdfSuccess('REMOVED'));
     }, [fileUrl, onFileRemove]);
 
-    //  OPTIMIZATION: Memoize analyzePDF to prevent re-creation
+    // Phân tích PDF
     const analyzePDF = useCallback(async (file) => {
         setAnalyzing(true);
         try {
-            //  OPTIMIZATION: Delay analysis for large files to allow UI to render first
+            // Delay phân tích cho file lớn để UI render trước
             const fileSizeMB = file.size / 1024 / 1024;
             if (fileSizeMB > 5) {
-                // For files > 5MB, delay analysis by 500ms to allow UI to render
+                // File > 5MB, delay 500ms để UI render
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
@@ -315,28 +298,27 @@ const FileUploadPreview = forwardRef(({
             if (result && result.placeholders) {
                 setPlaceholders(result.placeholders);
 
-                // Notify parent
+                // Thông báo cho parent
                 if (onPlaceholdersDetected) {
                     onPlaceholdersDetected(result.placeholders);
                 }
             }
         } catch (error) {
-            console.error('[FileUploadPreview] PDF analysis error:', error);
+            console.error('[FileUploadPreview] Lỗi phân tích PDF:', error);
             message.error(getPdfError('ANALYSIS_FAILED'));
         } finally {
             setAnalyzing(false);
         }
     }, [onPlaceholdersDetected]);
 
-    //  OPTIMIZATION: Memoize uploadProps to prevent re-creation
-    // IMPORTANT: Must be defined AFTER analyzePDF
+    // Cấu hình upload props (phải được định nghĩa SAU analyzePDF)
     const uploadProps = useMemo(() => ({
         name: 'file',
         multiple: false,
         accept: '.pdf',
         showUploadList: false,
         beforeUpload: async (file) => {
-            // Validate file type - only PDF
+            // Validate loại file - chỉ PDF
             const validExtensions = ['.pdf'];
             const fileName = file.name.toLowerCase();
             const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
@@ -349,7 +331,7 @@ const FileUploadPreview = forwardRef(({
                 return false;
             }
 
-            // Validate file size (max 10MB)
+            // Validate kích thước file (max 10MB)
             const isLt10M = file.size / 1024 / 1024 < 10;
             if (!isLt10M) {
                 message.error(getPdfError('FILE_TOO_LARGE', { maxSize: 10 }));
@@ -363,29 +345,22 @@ const FileUploadPreview = forwardRef(({
                 const url = URL.createObjectURL(file);
                 setFileUrl(url);
                 setUploadedFile(file);
-                setOriginalFile(file); // 🆕 Store original unmodified PDF
-
-                // Convert file to base64 and log the string (data URL)
-                try {
-                    const base64 = await fileToBase64(file);
-                    // Log only the base64/data URL string as requested
-                } catch (convErr) {
-                }
+                setOriginalFile(file); // Lưu PDF gốc chưa chỉnh sửa
 
                 setUploadProgress(100);
                 if (onFileUpload) onFileUpload(file, url);
 
-                // Auto analyze PDF for placeholders
+                // Tự động phân tích PDF để tìm placeholders
                 analyzePDF(file);
             } catch (error) {
-                console.error('[FileUploadPreview] File processing error:', error);
+                console.error('[FileUploadPreview] Lỗi xử lý file:', error);
                 message.error(getPdfError('UPLOAD_FAILED'));
             } finally {
                 setLoading(false);
                 setUploadProgress(0);
             }
 
-            return false; // Prevent auto upload
+            return false; // Ngăn auto upload
         },
         onChange: (info) => {
             if (info.fileList.length === 0) {
@@ -404,7 +379,7 @@ const FileUploadPreview = forwardRef(({
         }
     }), [analyzePDF, onFileUpload, onFileRemove, fileUrl]);
 
-    //  OPTIMIZATION: Memoize handleDownloadFile
+    // Xử lý download file
     const handleDownloadFile = useCallback(() => {
         if (fileUrl && uploadedFile) {
             const link = document.createElement('a');
@@ -416,7 +391,7 @@ const FileUploadPreview = forwardRef(({
         }
     }, [fileUrl, uploadedFile]);
 
-    // PDF callbacks - Not needed with iframe
+    // PDF callbacks
     const onPdfLoad = () => {
         setPdfError(null);
     };
@@ -427,7 +402,7 @@ const FileUploadPreview = forwardRef(({
         message.error(errorMsg);
     };
 
-    //  OPTIMIZATION: Memoize fullscreen handlers
+    // Xử lý fullscreen
     const handleFullscreenOpen = useCallback(() => {
         setFullscreenVisible(true);
     }, []);
@@ -436,10 +411,10 @@ const FileUploadPreview = forwardRef(({
         setFullscreenVisible(false);
     }, []);
 
-    //  OPTIMIZATION: Memoize placement mode handlers
+    // Xử lý placement mode
     const handleEnterPlacementMode = useCallback(() => {
         setIsPlacementMode(true);
-        setFullscreenVisible(true); // Auto-open fullscreen for better drag selection
+        setFullscreenVisible(true); // Tự động mở fullscreen để chọn vùng dễ hơn
         message.info({
             content: 'Chế độ quét đã bật. Kéo chuột để chọn vùng trường trên PDF.',
             duration: 4,
@@ -449,7 +424,6 @@ const FileUploadPreview = forwardRef(({
 
     const handleExitPlacementMode = useCallback(() => {
         setIsPlacementMode(false);
-        // Removed success message - silent exit from scan mode
     }, []);
 
     const handleTagPlaced = async ({ tag, coordinates }) => {
@@ -471,23 +445,8 @@ const FileUploadPreview = forwardRef(({
             // Get current PDF bytes
             const arrayBuffer = await uploadedFile.arrayBuffer();
 
-            // Apply replacement
-            const modifiedBytes = await applyPDFReplacements(arrayBuffer, [replacement]);
-
-            // Create new File object
-            const modifiedBlob = new Blob([modifiedBytes], { type: 'application/pdf' });
-            const modifiedFile = new File([modifiedBlob], uploadedFile.name, { type: 'application/pdf' });
-
-            // Update state
-            setUploadedFile(modifiedFile);
-            setModifiedPdfBytes(modifiedBytes);
-
-            // Create new URL for modified file
-            if (fileUrl) {
-                URL.revokeObjectURL(fileUrl);
-            }
-            const newUrl = URL.createObjectURL(modifiedFile);
-            setFileUrl(newUrl);
+            // Logic này đã được thay thế bằng AcroForm
+            // Chức năng viết text trực tiếp lên PDF đã bị loại bỏ
 
             message.destroy();
             message.success(getTagsSuccess('MAPPED'));

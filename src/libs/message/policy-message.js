@@ -10,6 +10,10 @@ export const POLICY_MESSAGES = {
       UPDATED: "Cập nhật chính sách thành công!",
       DELETED: "Xóa chính sách thành công!",
       SAVED_DRAFT: "Lưu nháp chính sách thành công!",
+      CANCELLED_KEEP_POLICIES:
+        "Huỷ chính sách thành công! Các hợp đồng đã ký sẽ được giữ nguyên.",
+      CANCELLED_WITH_COMPENSATION:
+        "Huỷ chính sách thành công! Thông báo bồi thường đã được gửi đến nông dân.",
     },
 
     ERROR: {
@@ -66,6 +70,17 @@ export const POLICY_MESSAGES = {
       POLICY_DOCUMENT_NAME_REQUIRED: "Vui lòng nhập tên tài liệu!",
       POLICY_DOCUMENT_TOO_LARGE: "Kích thước tài liệu quá lớn! (Tối đa 10MB)",
 
+      // Cancel policy errors
+      CANCEL_INVALID_ID: "ID chính sách không hợp lệ!",
+      CANCEL_INVALID_UUID_FORMAT:
+        "Định dạng ID chính sách không hợp lệ (phải là UUID)!",
+      CANCEL_INVALID_PARAMETER:
+        "Tham số keep_registered_policy không hợp lệ (phải là true hoặc false)!",
+      CANCEL_UNAUTHORIZED: "Bạn không có quyền huỷ chính sách này!",
+      CANCEL_FAILED: "Huỷ chính sách thất bại. Vui lòng thử lại!",
+      CANCEL_POLICY_NOT_ACTIVE:
+        "Chỉ có thể huỷ chính sách đang hoạt động (active)!",
+
       // Server errors
       CREATION_FAILED: "Tạo chính sách thất bại. Vui lòng thử lại!",
       PRODUCT_CODE_EXISTS: "Mã sản phẩm đã tồn tại! Vui lòng sử dụng mã khác.",
@@ -97,6 +112,7 @@ export const POLICY_MESSAGES = {
       VALIDATING: "Đang kiểm tra dữ liệu...",
       SAVING: "Đang lưu...",
       AUTO_FILLED: "Một số trường đã được tự động điền!",
+      CANCELLING: "Đang huỷ chính sách...",
     },
 
     WARNING: {
@@ -105,6 +121,11 @@ export const POLICY_MESSAGES = {
         "Cần nhập tỷ lệ phí cơ bản khi không có phí cố định!",
       PAYOUT_CAP_LOWER_THAN_FIX:
         "Giới hạn chi trả thấp hơn số tiền chi trả cố định!",
+      CANCEL_CONFIRM: "Huỷ chính sách này sẽ không thể hoàn tác. Tiếp tục?",
+      CANCEL_KEEP_POLICIES_CONFIRM:
+        "Huỷ chính sách nhưng giữ nguyên các hợp đồng đã ký cho nông dân. Tiếp tục?",
+      CANCEL_WITH_COMPENSATION_CONFIRM:
+        "Huỷ chính sách và huỷ các hợp đồng đã ký với bồi thường. Nông dân sẽ nhận được thông báo bồi thường. Tiếp tục?",
     },
   },
 
@@ -415,7 +436,8 @@ export const POLICY_MESSAGES = {
       APPROVE_FAILED: "Chấp thuận đơn bảo hiểm thất bại!",
       REJECT_FAILED: "Từ chối đơn bảo hiểm thất bại!",
       UNAUTHORIZED_ACCESS: "Truy cập bị từ chối!",
-      UNAUTHORIZED_APPROVE: "Bạn không có quyền duyệt đơn này. Vi phạm bảo mật!",
+      UNAUTHORIZED_APPROVE:
+        "Bạn không có quyền duyệt đơn này. Vi phạm bảo mật!",
       POLICY_NOT_FOUND: "Không tìm thấy đơn bảo hiểm!",
       FARM_NOT_FOUND: "Không tìm thấy thông tin trang trại!",
       INVALID_STATUS: "Trạng thái đơn bảo hiểm không hợp lệ!",
@@ -457,7 +479,8 @@ export const POLICY_MESSAGES = {
       REGISTERED_POLICY_ID_REQUIRED: "Thiếu mã hợp đồng đã đăng ký!",
       ANALYSIS_STATUS_REQUIRED: "Vui lòng chọn trạng thái phân tích!",
       ANALYSIS_TYPE_REQUIRED: "Vui lòng chọn loại phân tích!",
-      INVALID_RISK_SCORE: "Điểm số rủi ro không hợp lệ (phải từ 0-1 hoặc 0-100)!",
+      INVALID_RISK_SCORE:
+        "Điểm số rủi ro không hợp lệ (phải từ 0-1 hoặc 0-100)!",
     },
 
     INFO: {

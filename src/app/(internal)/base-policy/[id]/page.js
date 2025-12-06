@@ -6,6 +6,8 @@ import {
   CostSummary,
   TagsDetail,
 } from "@/components/layout/base-policy/detail";
+import { POLICY_MESSAGES } from "@/libs/message/policy-message";
+import useCancelPolicy from "@/services/hooks/base-policy/use-cancel-policy";
 import useDetailPolicy from "@/services/hooks/base-policy/use-detail-policy";
 import usePolicy from "@/services/hooks/base-policy/use-policy";
 import useDataSource from "@/services/hooks/common/use-data-source";
@@ -13,6 +15,7 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   SettingOutlined,
@@ -24,6 +27,8 @@ import {
   Col,
   Divider,
   message,
+  Modal,
+  Radio,
   Row,
   Space,
   Spin,
@@ -41,6 +46,8 @@ const PolicyDetailPage = ({ params }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("basic");
   const [enrichedDataSources, setEnrichedDataSources] = React.useState([]);
+  const [cancelModalVisible, setCancelModalVisible] = React.useState(false);
+  const [cancelOption, setCancelOption] = React.useState("keep"); // "keep" or "compensate"
   const hasFetchedRef = React.useRef(false); // Track if we've already fetched
 
   // Use policy list hook for checking policy status
@@ -55,6 +62,9 @@ const PolicyDetailPage = ({ params }) => {
     fetchPolicyDetail,
     fetchActivePolicyDetail,
   } = useDetailPolicy();
+
+  // Use cancel policy hook
+  const { cancelBasePolicyAPI, cancelLoading, cancelError } = useCancelPolicy();
 
   // Use data source hook for fetching data source details
   const { fetchDataSourcesByIds } = useDataSource();
@@ -345,6 +355,59 @@ const PolicyDetailPage = ({ params }) => {
     router.push("/base-policy");
   };
 
+  const handleCancelPolicy = async () => {
+    if (!apiPolicyDetail?.base_policy?.id) {
+      message.error(POLICY_MESSAGES.BASE_POLICY.ERROR.CANCEL_INVALID_ID);
+      return;
+    }
+
+    const keepRegistered = cancelOption === "keep";
+    const cancelMessage = keepRegistered
+      ? POLICY_MESSAGES.BASE_POLICY.WARNING.CANCEL_KEEP_POLICIES_CONFIRM
+      : POLICY_MESSAGES.BASE_POLICY.WARNING.CANCEL_WITH_COMPENSATION_CONFIRM;
+
+    Modal.confirm({
+      title: "Xác nhận huỷ hợp đồng gốc",
+      content: cancelMessage,
+      okText: "Tiếp tục",
+      cancelText: "Hủy",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          message.loading({
+            content: POLICY_MESSAGES.BASE_POLICY.INFO.CANCELLING,
+            key: "cancel-loading",
+          });
+
+          await cancelBasePolicyAPI(
+            apiPolicyDetail.base_policy.id,
+            keepRegistered
+          );
+
+          message.success({
+            content: keepRegistered
+              ? POLICY_MESSAGES.BASE_POLICY.SUCCESS.CANCELLED_KEEP_POLICIES
+              : POLICY_MESSAGES.BASE_POLICY.SUCCESS.CANCELLED_WITH_COMPENSATION,
+            key: "cancel-loading",
+          });
+
+          // Redirect to base-policy list after successful cancellation
+          setTimeout(() => {
+            router.push("/base-policy");
+          }, 1000);
+        } catch (error) {
+          message.error({
+            content:
+              cancelError || POLICY_MESSAGES.BASE_POLICY.ERROR.CANCEL_FAILED,
+            key: "cancel-loading",
+          });
+        }
+      },
+    });
+
+    setCancelModalVisible(false);
+  };
+
   const getStatusTag = (status) => {
     const statusConfig = {
       draft: {
@@ -417,7 +480,7 @@ const PolicyDetailPage = ({ params }) => {
     <div className="space-y-4">
       {/* Header */}
       <Card>
-        <Row align="middle">
+        <Row align="middle" justify="space-between">
           <Col>
             <Space direction="vertical" size={0}>
               <Button
@@ -439,6 +502,20 @@ const PolicyDetailPage = ({ params }) => {
               </Space>
             </Space>
           </Col>
+          {/* Cancel Button - Only show for active policies */}
+          {policyDetail.status === "active" && (
+            <Col>
+              <Button
+                danger
+                type="primary"
+                icon={<DeleteOutlined />}
+                onClick={() => setCancelModalVisible(true)}
+                loading={cancelLoading}
+              >
+                Huỷ hợp đồng gốc
+              </Button>
+            </Col>
+          )}
         </Row>
 
         <Divider />
@@ -494,6 +571,62 @@ const PolicyDetailPage = ({ params }) => {
           </div>
         </Col>
       </Row>
+
+      {/* Cancel Policy Modal */}
+      <Modal
+        title="Huỷ hợp đồng gốc"
+        open={cancelModalVisible}
+        onOk={handleCancelPolicy}
+        onCancel={() => setCancelModalVisible(false)}
+        okText="Tiếp tục"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true, loading: cancelLoading }}
+        width={600}
+      >
+        <Space direction="vertical" style={{ width: "100%" }} size="large">
+          <div>
+            <Text strong>Vui lòng chọn tùy chọn huỷ hợp đồng:</Text>
+            <Radio.Group
+              value={cancelOption}
+              onChange={(e) => setCancelOption(e.target.value)}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                marginTop: "16px",
+                gap: "12px",
+              }}
+            >
+              <Radio value="keep">
+                <div>
+                  <Text strong>Giữ nguyên các hợp đồng đã ký</Text>
+                  <br />
+                  <Text type="secondary">
+                    Huỷ chính sách nhưng các hợp đồng đã ký cho nông dân sẽ vẫn
+                    hoạt động bình thường. Không có bồi thường.
+                  </Text>
+                </div>
+              </Radio>
+              <Radio value="compensate">
+                <div>
+                  <Text strong>Huỷ các hợp đồng đã ký (có bồi thường)</Text>
+                  <br />
+                  <Text type="secondary">
+                    Huỷ chính sách và huỷ tất cả các hợp đồng đã ký. Nông dân sẽ
+                    được bồi thường và nhận được thông báo từ hệ thống.
+                  </Text>
+                </div>
+              </Radio>
+            </Radio.Group>
+          </div>
+          <Card style={{ backgroundColor: "#fafafa" }}>
+            <Space direction="vertical" size="small">
+              <Text strong>Chính sách sẽ huỷ:</Text>
+              <Text code>{policyDetail.productName}</Text>
+              <Text type="secondary">{policyDetail.productCode}</Text>
+            </Space>
+          </Card>
+        </Space>
+      </Modal>
     </div>
   );
 };

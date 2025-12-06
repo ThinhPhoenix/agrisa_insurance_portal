@@ -63,6 +63,8 @@ export const endpoints = {
       get_count: `/policy/protected/api/v2/base-policies/count`,
       get_count_by_status: (status) =>
         `/policy/protected/api/v2/base-policies/count/status/${status}`,
+      cancel: (id, keepRegisteredPolicy = true) =>
+        `/policy/protected/api/v2/base-policies/cancel/${id}?keep_registered_policy=${keepRegisteredPolicy}`,
     },
     policy: {
       list: "/policy/protected/api/v2/policies/read-partner/list",

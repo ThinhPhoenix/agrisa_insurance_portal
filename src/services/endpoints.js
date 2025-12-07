@@ -125,4 +125,8 @@ export const endpoints = {
     createPayout: "/payment/public/payout",
     verifyPayout: "/payment/public/payout/verify",
   },
+  noti: {
+    subscribe: '/noti/protected/subscribe',
+    unsubscribe: '/noti/protected/unsubscribe',
+  }
 };

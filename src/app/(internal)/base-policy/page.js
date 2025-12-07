@@ -8,7 +8,6 @@ import { useFilterableList } from "@/services/hooks/common";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
-  DownloadOutlined,
   EyeOutlined,
   FileTextOutlined,
   FilterOutlined,
@@ -472,8 +471,8 @@ export default function PolicyPage() {
                   Tạo mới
                 </Button>
               </Link>
-              <Button icon={<DownloadOutlined />}>Nhập excel</Button>
-              <Button icon={<DownloadOutlined />}>Xuất excel</Button>
+              {/* <Button icon={<DownloadOutlined />}>Nhập excel</Button>
+              <Button icon={<DownloadOutlined />}>Xuất excel</Button> */}
               <SelectedColumn
                 columns={columns}
                 visibleColumns={visibleColumns}

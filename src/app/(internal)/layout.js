@@ -2,11 +2,7 @@
 import AuthLoading from "@/components/auth-loading";
 import CustomHeader from "@/components/custom-header";
 import CustomSidebar from "@/components/custom-sidebar";
-import axiosInstance from "@/libs/axios-instance";
-import { getErrorMessage } from "@/libs/message/common-message";
-import { endpoints } from "@/services/endpoints";
 import { useAuthStore } from "@/stores/auth-store";
-import { message } from "antd";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -25,7 +21,7 @@ export default function InternalLayoutFlexbox({ children }) {
 
   // DEBUG MODE: Set to false to COMPLETELY skip /me API call on layout mount
   // (useful when BE /me is broken and you need to bypass token verification entirely)
-  const DEBUG_ENABLE_ME_CHECK = false;
+  const DEBUG_ENABLE_ME_CHECK = true;
 
   useEffect(() => {
     // Prevent redirect loop when already on sign-in page
@@ -38,90 +34,92 @@ export default function InternalLayoutFlexbox({ children }) {
     if (isVerifying.current) return;
 
     const verifyAuth = async () => {
-      // Consider token from store OR persisted token in localStorage
+      // STEP 1: Check localStorage for token and /me - redirect immediately if missing
       const storedToken =
         typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const storedMe =
+        typeof window !== "undefined" ? localStorage.getItem("me") : null;
 
-      // If no token at all, redirect immediately
-      if (!storedToken) {
-        if (!hasShownErrorRef.current && !isManualLogout) {
-          message.error(getErrorMessage("SESSION_EXPIRED"));
-          hasShownErrorRef.current = true;
-        }
+      // If no token or no /me data, redirect immediately without message
+      if (!storedToken || !storedMe) {
+        console.warn("⚠️ Missing token or /me data - redirecting to sign-in");
+        localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("me");
+        const { clearUser } = useAuthStore.getState();
+        clearUser();
         router.push("/sign-in");
         return;
       }
 
-      // ALWAYS verify token with /me API
-      // DEBUG_ENABLE_ME_CHECK controls whether to block on error or not
-      isVerifying.current = true;
+      // STEP 2: Validate /me data from localStorage
       try {
-        const response = await axiosInstance.get(endpoints.auth.auth_me);
+        const meData = JSON.parse(storedMe);
 
-        if (response.data.success) {
-          // Token is valid, update user store if needed
-          const profile = response.data.data || {};
-          const existingToken = localStorage.getItem("token") || null;
-          const existingRefresh = localStorage.getItem("refresh_token") || null;
-
-          const userData = {
-            user_id: profile.user_id || null,
-            profile_id: profile.profile_id || null,
-            roles: profile.role_id ? [profile.role_id] : [],
-            token: existingToken,
-            refresh_token: existingRefresh,
-            expires_at: null,
-            session_id: null,
-            profile,
-            user: {
-              id: profile.user_id || null,
-              email: profile.email || null,
-              full_name: profile.full_name || null,
-              display_name: profile.display_name || null,
-              primary_phone: profile.primary_phone || null,
-              partner_id: profile.partner_id || null,
-              role_id: profile.role_id || null,
-            },
-          };
-
-          setUser(userData);
-          // Token verified, allow rendering
-          setIsAuthChecking(false);
-        } else {
-          throw new Error("Invalid token");
-        }
-      } catch (error) {
-        console.error("Auth verification failed:", error);
-
-        // DEBUG MODE: If false, bypass /me error and allow access
-        if (!DEBUG_ENABLE_ME_CHECK) {
-          console.warn("🔧 DEBUG: /me failed but bypassing error. Allowing access with existing token.");
-          setIsAuthChecking(false);
-          isVerifying.current = false;
+        // Check if role_id is system_admin - FORBIDDEN
+        if (meData.role_id === "system_admin") {
+          console.warn("⚠️ Access denied: system_admin role detected");
+          localStorage.removeItem("token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("me");
+          const { clearUser } = useAuthStore.getState();
+          clearUser();
+          router.push("/sign-in");
           return;
         }
 
-        // PRODUCTION MODE: Block access on /me error
-        console.error("❌ /me failed. Blocking access and redirecting to sign-in.");
+        // Check if partner_id is null, empty, or string "null" - FORBIDDEN
+        if (
+          !meData.partner_id ||
+          meData.partner_id.trim() === "" ||
+          meData.partner_id === "null" ||
+          meData.partner_id === "undefined"
+        ) {
+          console.warn("⚠️ Access denied: missing or invalid partner_id");
+          localStorage.removeItem("token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("me");
+          const { clearUser } = useAuthStore.getState();
+          clearUser();
+          router.push("/sign-in");
+          return;
+        }
 
-        // Clear token to prevent infinite redirect loop
+        // STEP 3: Data looks valid, update store and allow access
+        const existingToken = localStorage.getItem("token") || null;
+        const existingRefresh = localStorage.getItem("refresh_token") || null;
+
+        const userData = {
+          user_id: meData.user_id || null,
+          profile_id: meData.profile_id || null,
+          roles: meData.role_id ? [meData.role_id] : [],
+          token: existingToken,
+          refresh_token: existingRefresh,
+          expires_at: null,
+          session_id: null,
+          profile: meData,
+          user: {
+            id: meData.user_id || null,
+            email: meData.email || null,
+            full_name: meData.full_name || null,
+            display_name: meData.display_name || null,
+            primary_phone: meData.primary_phone || null,
+            partner_id: meData.partner_id || null,
+            role_id: meData.role_id || null,
+          },
+        };
+
+        setUser(userData);
+        setIsAuthChecking(false);
+      } catch (parseError) {
+        // /me data is corrupted, redirect to sign-in
+        console.warn("⚠️ Corrupted /me data - redirecting to sign-in");
         localStorage.removeItem("token");
         localStorage.removeItem("refresh_token");
         localStorage.removeItem("me");
-
-        // Clear user store
         const { clearUser } = useAuthStore.getState();
         clearUser();
-
-        // Show error message only once and only if not manual logout
-        if (!hasShownErrorRef.current && !isManualLogout) {
-          message.error(getErrorMessage("SESSION_EXPIRED"));
-          hasShownErrorRef.current = true;
-        }
-
         router.push("/sign-in");
-      } finally {
-        isVerifying.current = false;
       }
     };
 

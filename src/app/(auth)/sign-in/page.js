@@ -20,13 +20,19 @@ const SigninPage = () => {
   const user = useAuthStore((s) => s.user);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  // Redirect to /policy if already authenticated
+  // Redirect to /policy if already authenticated with valid partner_id
   useEffect(() => {
     const storedToken =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const hasToken = Boolean(user?.token) || Boolean(storedToken);
     const hasRoles = Array.isArray(user?.roles) && user.roles.length > 0;
-    const isAuthenticated = hasToken || hasRoles;
+    const hasValidPartner =
+      Boolean(user?.user?.partner_id) || Boolean(user?.profile?.partner_id);
+    const isNotSystemAdmin =
+      user?.user?.role_id !== "system_admin" &&
+      user?.profile?.role_id !== "system_admin";
+    const isAuthenticated =
+      hasToken && hasRoles && hasValidPartner && isNotSystemAdmin;
 
     if (isAuthenticated) {
       router.push("/policy/pending");

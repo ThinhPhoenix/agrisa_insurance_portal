@@ -125,6 +125,14 @@ export const endpoints = {
     createPayout: "/payment/public/payout",
     verifyPayout: "/payment/public/payout/verify",
   },
+  cancelRequest: {
+    create: (policy_id) =>
+      `/policy/protected/api/v2/cancel_request/?policy_id=${policy_id}`,
+    listPartner: "/policy/protected/api/v2/cancel_request/read-partner/own",
+    detail: (id) =>
+      `/policy/protected/api/v2/cancel_request/read-partner/detail/${id}`,
+    review: (id) => `/policy/protected/api/v2/cancel_request/review/${id}`,
+  },
   noti: {
     subscribe: '/noti/protected/subscribe',
     unsubscribe: '/noti/protected/unsubscribe',

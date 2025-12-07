@@ -1,8 +1,8 @@
 "use client";
 import Assets from "@/assets";
 import { sidebarMenuItems } from "@/libs/menu-config";
-import { useAuthStore } from "@/stores/auth-store";
-import { Menu, Modal } from "antd";
+import { useSignOut } from "@/services/hooks/auth/use-auth";
+import { Menu, Modal, message } from "antd";
 import {
   ArrowLeftToLine,
   ArrowRightToLine,
@@ -37,7 +37,7 @@ const items = filterMenuItems(sidebarMenuItems).map((item) => ({
 const CustomSidebar = ({ collapsed, setCollapsed }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { logout } = useAuthStore();
+  const { signOut } = useSignOut();
   // store a key for which icon to show: 'panel' | 'right' | 'left'
   const [hoverIcon, setHoverIcon] = useState("panel");
   const [selectedKeys, setSelectedKeys] = useState([]);
@@ -161,9 +161,15 @@ const CustomSidebar = ({ collapsed, setCollapsed }) => {
       okText: "Đăng xuất",
       okButtonProps: { danger: true },
       cancelText: "Hủy",
-      onOk() {
-        logout();
-        router.push("/sign-in");
+      async onOk() {
+        try {
+          await signOut();
+          message.success("Đăng xuất thành công!");
+          router.push("/sign-in");
+        } catch (error) {
+          message.error("Lỗi khi đăng xuất!");
+          console.error("Logout error:", error);
+        }
       },
     });
   };

@@ -7,6 +7,7 @@ import { getApprovalInfo } from "@/libs/message";
 import { useActivePolicies } from "@/services/hooks/policy/use-active-policies";
 import {
   CheckCircleOutlined,
+  CloseCircleOutlined,
   DownloadOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -15,7 +16,17 @@ import {
   SearchOutlined,
   StarOutlined,
 } from "@ant-design/icons";
-import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
+import {
+  Button,
+  Collapse,
+  Layout,
+  message,
+  Modal,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+} from "antd";
 import Link from "next/link";
 import { useState } from "react";
 import "../policy.css";
@@ -42,6 +53,11 @@ export default function ActivePoliciesPage() {
     "created_at",
   ]);
 
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [submittingCancel, setSubmittingCancel] = useState(false);
+
   // Calculate summary stats using allPolicies (unpaginated)
   const summaryStats = {
     totalPolicies: allPolicies.length,
@@ -66,6 +82,55 @@ export default function ActivePoliciesPage() {
     handleClearFilters();
   };
 
+  // Handle cancel request
+  const handleCancelRequest = (policy) => {
+    setSelectedPolicy(policy);
+    setCancelModalVisible(true);
+    setCancelReason("");
+  };
+
+  const handleSubmitCancelRequest = async () => {
+    if (!cancelReason.trim()) {
+      message.error("Vui lòng nhập lý do hủy");
+      return;
+    }
+
+    setSubmittingCancel(true);
+    try {
+      const response = await fetch(
+        `/policy/protected/api/v2/cancel_request/?policy_id=${selectedPolicy.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            registered_policy_id: selectedPolicy.id,
+            cancel_request_type: "contract_violation",
+            reason: cancelReason,
+            evidence: {},
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        message.success("Gửi yêu cầu hủy thành công");
+        setCancelModalVisible(false);
+        // Refresh the list
+        window.location.reload();
+      } else {
+        throw new Error(data.message || "Gửi yêu cầu thất bại");
+      }
+    } catch (error) {
+      console.error("Error submitting cancel request:", error);
+      message.error(error.message || "Gửi yêu cầu thất bại");
+    } finally {
+      setSubmittingCancel(false);
+    }
+  };
+
   // Get status color for policy status
   const getStatusColor = (status) => {
     switch (status) {
@@ -83,6 +148,10 @@ export default function ActivePoliciesPage() {
         return "red";
       case "rejected":
         return "red";
+      case "dispute":
+        return "red";
+      case "pending_cancel":
+        return "orange";
       default:
         return "default";
     }
@@ -105,6 +174,10 @@ export default function ActivePoliciesPage() {
         return "Đã hủy";
       case "rejected":
         return "Đã từ chối";
+      case "dispute":
+        return "Tranh chấp";
+      case "pending_cancel":
+        return "Chờ hủy";
       default:
         return status;
     }
@@ -240,19 +313,33 @@ export default function ActivePoliciesPage() {
       title: "Hành động",
       key: "action",
       fixed: "right",
-      width: 100,
+      width: 200,
       render: (_, record) => (
         <div className="insurance-actions-cell">
-          <Link href={`/policy/policy-detail?id=${record.id}&type=active`}>
-            <Button
-              type="dashed"
-              size="small"
-              className="insurance-action-btn !bg-blue-100 !border-blue-200 !text-blue-800 hover:!bg-blue-200"
-            >
-              <EyeOutlined size={14} />
-              Xem
-            </Button>
-          </Link>
+          <Space size="small">
+            <Link href={`/policy/policy-detail?id=${record.id}&type=active`}>
+              <Button
+                type="dashed"
+                size="small"
+                className="insurance-action-btn !bg-blue-100 !border-blue-200 !text-blue-800 hover:!bg-blue-200"
+              >
+                <EyeOutlined size={14} />
+                Xem
+              </Button>
+            </Link>
+            {record.status === "active" && (
+              <Button
+                type="dashed"
+                size="small"
+                danger
+                onClick={() => handleCancelRequest(record)}
+                className="insurance-action-btn"
+              >
+                <CloseCircleOutlined size={14} />
+                Yêu cầu hủy
+              </Button>
+            )}
+          </Space>
         </div>
       ),
     },
@@ -427,6 +514,47 @@ export default function ActivePoliciesPage() {
             pagination={paginationConfig}
           />
         </div>
+
+        {/* Cancel Request Modal */}
+        <Modal
+          title="Yêu cầu hủy hợp đồng bảo hiểm"
+          open={cancelModalVisible}
+          onOk={handleSubmitCancelRequest}
+          onCancel={() => setCancelModalVisible(false)}
+          confirmLoading={submittingCancel}
+          okText="Gửi yêu cầu"
+          cancelText="Hủy"
+          width={600}
+        >
+          {selectedPolicy && (
+            <div className="space-y-4">
+              <div>
+                <p>
+                  <strong>Số hợp đồng:</strong> {selectedPolicy.policy_number}
+                </p>
+                <p>
+                  <strong>Mã nông dân:</strong> {selectedPolicy.farmer_id}
+                </p>
+              </div>
+              <div>
+                <label className="block mb-2 font-medium">
+                  Lý do hủy <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="w-full p-2 border rounded"
+                  rows={4}
+                  placeholder="Nhập lý do yêu cầu hủy hợp đồng..."
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                />
+              </div>
+              <p className="text-sm text-gray-500">
+                ⚠️ Sau khi gửi yêu cầu, hợp đồng sẽ chuyển sang trạng thái "Chờ
+                hủy" và nông dân sẽ được thông báo.
+              </p>
+            </div>
+          )}
+        </Modal>
       </div>
     </Layout.Content>
   );

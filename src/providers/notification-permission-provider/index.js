@@ -2,14 +2,16 @@
 
 import { useEffect } from "react";
 
-export default function NotificationPermissionProvider() {
+export default function NotificationPermissionProvider({ children }) {
     useEffect(() => {
-        if ("Notification" in window) {
+        const enableNotifications =
+            localStorage.getItem("enableNotifications") === "true";
+        if (enableNotifications && "Notification" in window) {
             Notification.requestPermission().then((permission) => {
                 console.log("Notification permission:", permission);
             });
         }
     }, []);
 
-    return null;
+    return children;
 }

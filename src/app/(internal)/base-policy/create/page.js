@@ -515,10 +515,10 @@ const CreatePolicyPage = () => {
       {/* Header */}
       <div>
         <Title level={3} style={{ margin: 0 }}>
-          Tạo Policy Bảo hiểm Nông nghiệp Mới
+          Tạo Hợp đồng mẫu Bảo hiểm Nông nghiệp Mới
         </Title>
         <Text type="secondary">
-          Tạo policy bảo hiểm tham số được hỗ trợ bởi vệ tinh
+          Tạo hợp đồng mẫu bảo hiểm tham số được hỗ trợ bởi vệ tinh
         </Text>
       </div>
 
@@ -534,21 +534,21 @@ const CreatePolicyPage = () => {
       <Row gutter={24} style={{ position: "relative" }}>
         {/* Left Content - Tabs */}
         <Col span={16}>
-          <Card>
+          <Card style={{ padding: 0, border: "1px solid #f0f0f0" }}>
             <Tabs
               activeKey={currentTab}
               onChange={handleTabChange}
               items={tabItems}
               size="large"
               type="card"
-              tabBarGutter={8}
               tabBarStyle={{
-                marginBottom: 0,
-                paddingLeft: 8,
-                paddingRight: 8,
+                margin: 0,
+                padding: "0 8px",
+                display: "flex",
+                alignItems: "center",
               }}
               moreIcon={
-                <Space>
+                <Space style={{ marginLeft: "auto", flexShrink: 0 }}>
                   <span>Thêm</span>
                   <InfoCircleOutlined />
                 </Space>

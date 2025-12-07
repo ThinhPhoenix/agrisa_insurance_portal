@@ -1,17 +1,17 @@
 export const sidebarMenuItems = [
   {
     key: "base-policy",
-    label: "Quản lý gói bảo hiểm",
+    label: "Quản lý hợp đồng mẫu",
   },
   {
     key: "policy",
-    label: "Quản lý đơn bảo hiểm",
+    label: "Quản lý hợp đồng",
     children: [
-      { key: "policy/pending", label: "Duyệt đơn đăng ký" },
-      { key: "policy/active", label: "Đơn đang hoạt động" },
+      { key: "policy/pending", label: "Duyệt hợp đồng đăng ký" },
+      { key: "policy/active", label: "Hợp đồng đang hoạt động" },
       {
         key: "policy/policy-detail",
-        label: "Chi tiết đơn bảo hiểm",
+        label: "Chi tiết hợp đồng",
         hideInMenu: true,
         disableBreadcrumbLink: true,
       },
@@ -19,7 +19,7 @@ export const sidebarMenuItems = [
   },
   {
     key: "claim",
-    label: "Yêu cầu chi trả bảo hiểm",
+    label: "Yêu cầu chi trả",
     children: [
       { key: "claim", label: "Danh sách yêu cầu" },
       { key: "claim/rejection", label: "Danh sách từ chối" },
@@ -77,5 +77,5 @@ export const labelTranslations = {
   Create: "Tạo mới",
   Edit: "Chỉnh sửa",
   Profile: "Hồ sơ",
-  BasePolicy: "Chính sách bảo hiểm",
+  BasePolicy: "Hợp đồng mẫu",
 };

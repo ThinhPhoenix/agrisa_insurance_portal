@@ -53,7 +53,6 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                 <Statistic
                     title="Chi phí Dữ liệu/tháng"
                     value={monthlyDataCost}
-                    prefix={<DollarOutlined />}
                     suffix="VND"
                     precision={0}
                     valueStyle={{ color: '#1890ff', fontSize: '14px' }}
@@ -108,7 +107,6 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                 <Statistic
                     title="Tổng Chi phí/Tháng"
                     value={totalEstimatedCost}
-                    prefix={<DollarOutlined />}
                     suffix="VND"
                     precision={0}
                     valueStyle={{

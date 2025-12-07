@@ -371,10 +371,10 @@ export default function PolicyPage() {
             <div>
               <Title level={2} className="policy-title">
                 <SafetyOutlined className="policy-icon" />
-                Quản lý Chính sách Bảo hiểm
+                Quản lý hợp đồng mẫu
               </Title>
               <Text type="secondary" className="policy-subtitle">
-                Quản lý các chính sách bảo hiểm nông nghiệp
+                Quản lý các hợp đồng mẫu bảo hiểm nông nghiệp
               </Text>
             </div>
           </div>
@@ -390,7 +390,7 @@ export default function PolicyPage() {
                   {summaryStats.totalPolicies}
                 </div>
                 <div className="policy-summary-label-compact">
-                  Tổng số chính sách
+                  Tổng số hợp đồng mẫu
                 </div>
               </div>
             </div>
@@ -490,7 +490,7 @@ export default function PolicyPage() {
               pagination={{
                 ...paginationConfig,
                 showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} của ${total} chính sách`,
+                  `${range[0]}-${range[1]} của ${total} hợp đồng mẫu`,
               }}
             />
           </div>

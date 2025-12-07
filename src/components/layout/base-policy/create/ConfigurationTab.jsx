@@ -488,7 +488,7 @@ const ConfigurationTabComponent = ({
                     header={
                         <Space>
                             <SettingOutlined />
-                            <span>Cấu hình Trigger</span>
+                            <span>Cấu hình kích hoạt</span>
                         </Space>
                     }
                     key="trigger-config"
@@ -547,7 +547,7 @@ const ConfigurationTabComponent = ({
                     header={
                         <Space>
                             <AlertOutlined />
-                            <span>Giai đoạn Không Kích hoạt (Blackout Periods)</span>
+                            <span>Giai đoạn Không Kích hoạt</span>
                             <Tag color={configurationData.blackoutPeriods?.periods?.length > 0 ? 'purple' : 'default'}>
                                 {configurationData.blackoutPeriods?.periods?.length || 0} giai đoạn
                             </Tag>

@@ -7,6 +7,13 @@
 /* Tab bar container */
 .ant-tabs-nav {
   margin-bottom: 0 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ant-tabs-card {
+  box-shadow: none !important;
 }
 
 .ant-tabs-nav-wrap {
@@ -14,6 +21,14 @@
   overflow-y: hidden !important;
   scrollbar-width: thin !important;
   scrollbar-color: rgba(0, 0, 0, 0.15) transparent !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.ant-tabs-nav-list {
+  display: flex !important;
+  gap: 0 !important;
+  flex-wrap: nowrap !important;
 }
 
 /* Webkit scrollbar styling */
@@ -36,14 +51,42 @@
 
 /* Tab items - simple design */
 .ant-tabs-tab {
-  padding: 12px 20px !important;
+  padding: 12px 18px !important;
   margin: 0 !important;
-  transition: color 0.2s ease !important;
+  transition: all 0.2s ease !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  font-size: 14px !important;
+}
+
+.ant-tabs-tab-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Remove shadow and border-radius for card tabs */
+.ant-tabs-card .ant-tabs-tab {
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Active tab - simple underline */
 .ant-tabs-tab-active {
   font-weight: 500 !important;
+  opacity: 1 !important;
+}
+
+.ant-tabs-tab:not(.ant-tabs-tab-active) {
+  opacity: 0.7 !important;
+}
+
+.ant-tabs-tab:hover {
+  opacity: 0.9 !important;
 }
 
 /* Tab content styling */
@@ -53,7 +96,9 @@
 
 /* More dropdown button - simple */
 .ant-tabs-nav-more {
-  padding: 12px !important;
+  padding: 12px 8px !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
 }
 
 /* Smooth scroll */
@@ -61,23 +106,20 @@
   scroll-behavior: smooth !important;
 }
 
-/* Responsive: Show only icons on smaller screens */
-@media (max-width: 1400px) {
-  /* Hide text, keep only icons */
-  .ant-tabs-tab .ant-space-item:not(:first-child) {
-    display: none !important;
-  }
-
-  /* Center the tabs */
-  .ant-tabs-nav-list {
-    justify-content: center !important;
-  }
-
-  /* Add background when showing only icons */
+/* Responsive: Adaptive tab sizing */
+@media (max-width: 1600px) {
   .ant-tabs-tab {
     padding: 12px 16px !important;
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 1400px) {
+  /* Collapse to show icons + short text */
+  .ant-tabs-tab {
+    padding: 10px 14px !important;
+    font-size: 12px !important;
     background: #f5f5f5 !important;
-    border-radius: 0 !important;
   }
 
   .ant-tabs-tab:not(.ant-tabs-tab-active):hover {
@@ -93,19 +135,34 @@
     color: #fff !important;
   }
 
-  /* Icon size */
   .ant-tabs-tab .anticon {
-    font-size: 18px !important;
+    font-size: 16px !important;
   }
 }
 
 @media (max-width: 1200px) {
+  /* Show only icons on very small screens */
+  .ant-tabs-tab .ant-space-item:nth-child(2) {
+    display: none !important;
+  }
+
   .ant-tabs-tab {
-    padding: 10px 14px !important;
+    padding: 10px 12px !important;
   }
 
   .ant-tabs-tab .anticon {
     font-size: 16px !important;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .ant-tabs-tab {
+    padding: 8px 10px !important;
+  }
+
+  .ant-tabs-tab .anticon {
+    font-size: 14px !important;
   }
 }
 

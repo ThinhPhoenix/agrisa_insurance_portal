@@ -56,10 +56,6 @@ const BasicTabComponent = ({
             updates.product_description = "Bảo hiểm tham số theo chỉ số lượng mưa cho cây lúa mùa khô. Chi trả tự động khi lượng mưa tích lũy thấp hơn ngưỡng 50mm trong 30 ngày liên tục, không cần kiểm tra thiệt hại tại hiện trường.";
         }
 
-        if (!basicData.coverage_currency) {
-            updates.coverage_currency = "VND";
-        }
-
         // Auto-fill insurance provider ID from logged-in user's partner_id (if available)
         if (!basicData.insuranceProviderId && user?.partner_id) {
             // Only use partner_id for creating base policy
@@ -327,26 +323,6 @@ const BasicTabComponent = ({
                 </Row>
 
                 <Row gutter={24}>
-                    <Col span={12}>
-                        <Form.Item
-                            name="coverageCurrency"
-                            label="Đơn vị tiền tệ"
-                            tooltip="Đồng tiền sử dụng (VND, USD, EUR)"
-                            rules={[
-                                { required: true, message: getBasePolicyError('COVERAGE_CURRENCY_REQUIRED') },
-                                { len: 3, message: getBasePolicyError('CURRENCY_INVALID') }
-                            ]}
-                        >
-                            <Select
-                                placeholder="Chọn đơn vị tiền tệ"
-                                size="large"
-                            >
-                                <Option value="VND">VND - Việt Nam Đồng</Option>
-                                <Option value="USD">USD - Đô la Mỹ</Option>
-                                <Option value="EUR">EUR - Euro</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
                     <Col span={12}>
                         <Form.Item
                             name="coverageDurationDays"
@@ -634,11 +610,6 @@ const BasicTabComponent = ({
                                             return Promise.reject(new Error('Bảo hiểm có hiệu lực từ phải sau ngày bắt đầu đăng ký'));
                                         }
 
-                                        const enrollmentEndDay = getFieldValue('enrollmentEndDay');
-                                        if (enrollmentEndDay && value.isBefore(enrollmentEndDay, 'day')) {
-                                            return Promise.reject(new Error('Bảo hiểm có hiệu lực từ phải sau hoặc bằng ngày kết thúc đăng ký'));
-                                        }
-
                                         return Promise.resolve();
                                     }
                                 })
@@ -649,7 +620,7 @@ const BasicTabComponent = ({
                                 size="large"
                                 style={{ width: '100%' }}
                                 format="DD/MM/YYYY"
-                                disabled={!form.getFieldValue('enrollmentEndDay')}
+                                disabled={!form.getFieldValue('enrollmentStartDay')}
                                 disabledDate={(current) => {
                                     // Disable past dates (before today)
                                     if (current && current.isBefore(new Date(), 'day')) {
@@ -657,15 +628,9 @@ const BasicTabComponent = ({
                                     }
 
                                     const enrollmentStartDay = form.getFieldValue('enrollmentStartDay');
-                                    const enrollmentEndDay = form.getFieldValue('enrollmentEndDay');
 
                                     // Disable dates before enrollment start day
                                     if (enrollmentStartDay && current && (current.isBefore(enrollmentStartDay, 'day') || current.isSame(enrollmentStartDay, 'day'))) {
-                                        return true;
-                                    }
-
-                                    // Disable dates before enrollment end day
-                                    if (enrollmentEndDay && current && current.isBefore(enrollmentEndDay, 'day')) {
                                         return true;
                                     }
 
@@ -759,36 +724,6 @@ const BasicTabComponent = ({
                                 style={{ width: '100%' }}
                                 formatter={value => `${value}%`}
                                 parser={value => value.replace('%', '')}
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                        <Form.Item
-                            name="basePolicyInvalidDate"
-                            label="Ngày vô hiệu hóa"
-                            tooltip="Ngày mà hợp đồng bảo hiểm (policy) này sẽ bị vô hiệu hóa (tuỳ chọn). Phải sau ngày kết thúc hiệu lực"
-                        >
-                            <DatePicker
-                                placeholder="Chọn ngày vô hiệu"
-                                size="large"
-                                style={{ width: '100%' }}
-                                format="DD/MM/YYYY"
-                                disabled={!form.getFieldValue('insuranceValidTo')}
-                                disabledDate={(current) => {
-                                    // Disable past dates (before today)
-                                    if (current && current.isBefore(new Date(), 'day')) {
-                                        return true;
-                                    }
-
-                                    const validTo = form.getFieldValue('insuranceValidTo');
-
-                                    // Disable dates before or equal to insurance valid to
-                                    if (validTo && current) {
-                                        return current.isBefore(validTo, 'day') || current.isSame(validTo, 'day');
-                                    }
-
-                                    return false;
-                                }}
                             />
                         </Form.Item>
                     </Col>

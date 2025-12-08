@@ -150,12 +150,18 @@ export default function PolicyPage() {
     },
   });
 
-  // Calculate summary stats - use policyCounts from API and calculate average from data
+  // Calculate summary stats
+  // Total = API total + draft list count (to include draft policies)
+  // Draft = draft list count
+  const draftCount = filteredData.filter(
+    (item) => item.status === "draft"
+  ).length;
+
   const summaryStats = {
-    totalPolicies: policyCounts.total,
-    draftPolicies: policyCounts.draft,
-    activePoliciesCount: policyCounts.active,
-    archivedPolicies: policyCounts.archived,
+    totalPolicies: (policyCounts.total || 0) + draftCount,
+    draftPolicies: draftCount,
+    activePoliciesCount: policyCounts.active || 0,
+    archivedPolicies: policyCounts.archived || 0,
     avgPremiumRate:
       allPoliciesRaw.length > 0
         ? (

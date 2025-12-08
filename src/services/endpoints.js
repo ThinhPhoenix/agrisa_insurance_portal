@@ -83,8 +83,15 @@ export const endpoints = {
     delete: (id) => `/policy/protected/api/v2/farms/${id}`,
   },
   profile: {
+    // Partner public profile
     get_partner: (partner_id) =>
       `/profile/public/api/v1/insurance-partners/${partner_id}`,
+    // Account/profile for current authenticated user (protected)
+    me: `/profile/protected/api/v1/me`,
+    // Update user profile (account info)
+    update_user: `/profile/protected/api/v1/users`,
+    // Update partner/company profile for current admin
+    update_partner_me: `/profile/protected/api/v1/insurance-partners/me/profile`,
   },
   riskAnalysis: {
     by_policy: (policy_id) =>
@@ -124,6 +131,7 @@ export const endpoints = {
   payment: {
     createPayout: "protected/payout",
     verifyPayout: "/payment/public/payout/verify",
+    listPayout: "/payment/protected/payout",
   },
   cancelRequest: {
     create: `/policy/protected/api/v2/cancel_request/`,

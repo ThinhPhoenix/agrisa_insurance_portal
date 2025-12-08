@@ -5,10 +5,12 @@ import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { getApprovalInfo } from "@/libs/message";
 import { useActivePolicies } from "@/services/hooks/policy/use-active-policies";
+import { useCreateCancelRequest } from "@/services/hooks/policy/use-create-cancel-request";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   DownloadOutlined,
+  ExclamationCircleOutlined,
   EyeOutlined,
   FileTextOutlined,
   FilterOutlined,
@@ -28,7 +30,7 @@ import {
   Typography,
 } from "antd";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import "../policy.css";
 
 const { Title, Text } = Typography;
@@ -44,6 +46,8 @@ export default function ActivePoliciesPage() {
     loading,
   } = useActivePolicies();
 
+  const { createCancelRequest } = useCreateCancelRequest();
+
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
     "policy_number",
@@ -56,7 +60,13 @@ export default function ActivePoliciesPage() {
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelRequestType, setCancelRequestType] = useState(
+    "policyholder_request"
+  );
+  const [compensateAmount, setCompensateAmount] = useState(0);
+  const [evidenceFields, setEvidenceFields] = useState([]);
   const [submittingCancel, setSubmittingCancel] = useState(false);
+  const formRef = useRef(null);
 
   // Calculate summary stats using allPolicies (unpaginated)
   const summaryStats = {
@@ -87,48 +97,65 @@ export default function ActivePoliciesPage() {
     setSelectedPolicy(policy);
     setCancelModalVisible(true);
     setCancelReason("");
+    setCancelRequestType("policyholder_request");
+    setCompensateAmount(0);
+    setEvidenceFields([]);
   };
 
-  const handleSubmitCancelRequest = async () => {
+  const handleSubmitCancelRequest = () => {
     if (!cancelReason.trim()) {
       message.error("Vui lòng nhập lý do hủy");
       return;
     }
 
-    setSubmittingCancel(true);
-    try {
-      const response = await fetch(
-        `/policy/protected/api/v2/cancel_request/?policy_id=${selectedPolicy.id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            registered_policy_id: selectedPolicy.id,
-            cancel_request_type: "contract_violation",
+    Modal.confirm({
+      title: "Xác nhận gửi yêu cầu hủy",
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>Bạn có chắc chắn muốn gửi yêu cầu hủy hợp đồng này không?</p>
+          <p className="mt-2 text-sm text-gray-500">
+            Hợp đồng sẽ chuyển sang trạng thái "Chờ hủy" và chờ bên bảo hiểm xem
+            xét.
+          </p>
+        </div>
+      ),
+      okText: "Xác nhận gửi",
+      cancelText: "Hủy",
+      onOk: async () => {
+        setSubmittingCancel(true);
+        try {
+          // Transform evidenceFields array into evidence object
+          const evidence = {};
+          evidenceFields.forEach((field) => {
+            if (field.key && field.value) {
+              evidence[field.key] = field.value;
+            }
+          });
+
+          const result = await createCancelRequest(selectedPolicy.id, {
+            cancel_request_type: cancelRequestType,
             reason: cancelReason,
-            evidence: {},
-          }),
+            compensate_amount: compensateAmount,
+            evidence: evidence,
+          });
+
+          if (result.success) {
+            message.success("Gửi yêu cầu hủy thành công");
+            setCancelModalVisible(false);
+            // Refresh the list
+            window.location.reload();
+          } else {
+            throw new Error(result.error || "Gửi yêu cầu thất bại");
+          }
+        } catch (error) {
+          console.error("Error submitting cancel request:", error);
+          message.error(error.message || "Gửi yêu cầu thất bại");
+        } finally {
+          setSubmittingCancel(false);
         }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        message.success("Gửi yêu cầu hủy thành công");
-        setCancelModalVisible(false);
-        // Refresh the list
-        window.location.reload();
-      } else {
-        throw new Error(data.message || "Gửi yêu cầu thất bại");
-      }
-    } catch (error) {
-      console.error("Error submitting cancel request:", error);
-      message.error(error.message || "Gửi yêu cầu thất bại");
-    } finally {
-      setSubmittingCancel(false);
-    }
+      },
+    });
   };
 
   // Get status color for policy status
@@ -149,7 +176,7 @@ export default function ActivePoliciesPage() {
       case "rejected":
         return "red";
       case "dispute":
-        return "red";
+        return "volcano";
       case "pending_cancel":
         return "orange";
       default:
@@ -345,6 +372,41 @@ export default function ActivePoliciesPage() {
     },
   ];
 
+  // Generate evidence fields for CustomForm
+  const generateEvidenceFields = (evidenceArray) => {
+    const fields = [];
+
+    evidenceArray.forEach((evidence, idx) => {
+      fields.push(
+        {
+          name: `evidence_${idx}_key`,
+          type: "input",
+          label: `Tên bằng chứng ${idx + 1}`,
+          placeholder: "e.g., photo_url, description, invoice, etc.",
+          initialValue: evidence.key || "",
+          required: false,
+        },
+        {
+          name: `evidence_${idx}_value`,
+          type: "textarea",
+          label: `Giá trị bằng chứng ${idx + 1}`,
+          placeholder: "Nhập giá trị hoặc nội dung liên quan",
+          initialValue: evidence.value || "",
+          required: false,
+        },
+        {
+          name: `evidence_${idx}_images`,
+          type: "image",
+          label: `Hình ảnh bằng chứng ${idx + 1}`,
+          maxCount: 5,
+          required: false,
+        }
+      );
+    });
+
+    return fields;
+  };
+
   // Search fields - no status filter needed as we already filter active policies
   const searchFields = [
     {
@@ -524,11 +586,11 @@ export default function ActivePoliciesPage() {
           confirmLoading={submittingCancel}
           okText="Gửi yêu cầu"
           cancelText="Hủy"
-          width={600}
+          width={700}
         >
           {selectedPolicy && (
             <div className="space-y-4">
-              <div>
+              <div className="bg-blue-50 p-3 rounded border border-blue-200">
                 <p>
                   <strong>Số hợp đồng:</strong> {selectedPolicy.policy_number}
                 </p>
@@ -536,6 +598,24 @@ export default function ActivePoliciesPage() {
                   <strong>Mã nông dân:</strong> {selectedPolicy.farmer_id}
                 </p>
               </div>
+
+              <div>
+                <label className="block mb-2 font-medium">
+                  Loại yêu cầu <span className="text-red-500">*</span>
+                </label>
+                <select
+                  className="w-full p-2 border rounded"
+                  value={cancelRequestType}
+                  onChange={(e) => setCancelRequestType(e.target.value)}
+                >
+                  <option value="policyholder_request">
+                    Yêu cầu từ nông dân
+                  </option>
+                  <option value="contract_violation">Vi phạm hợp đồng</option>
+                  <option value="other">Khác</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block mb-2 font-medium">
                   Lý do hủy <span className="text-red-500">*</span>
@@ -548,9 +628,72 @@ export default function ActivePoliciesPage() {
                   onChange={(e) => setCancelReason(e.target.value)}
                 />
               </div>
+
+              <div>
+                <label className="block mb-2 font-medium">
+                  Số tiền bồi thường (nếu có)
+                </label>
+                <input
+                  type="number"
+                  className="w-full p-2 border rounded"
+                  min="0"
+                  value={compensateAmount}
+                  onChange={(e) =>
+                    setCompensateAmount(parseInt(e.target.value) || 0)
+                  }
+                  placeholder="0"
+                />
+                <p className="text-sm text-gray-500 mt-1">VND</p>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">
+                  Bằng chứng đính kèm (Tùy chọn)
+                </label>
+                <CustomForm
+                  ref={formRef}
+                  fields={generateEvidenceFields(evidenceFields)}
+                  onValuesChange={(changedValues, allValues) => {
+                    // Transform form values into evidenceFields array
+                    const newEvidenceFields = [];
+                    const keys = Object.keys(allValues).filter((k) =>
+                      k.startsWith("evidence_")
+                    );
+                    const evidenceIndices = new Set();
+
+                    keys.forEach((k) => {
+                      const match = k.match(/^evidence_(\d+)_/);
+                      if (match) evidenceIndices.add(parseInt(match[1]));
+                    });
+
+                    evidenceIndices.forEach((idx) => {
+                      const key = allValues[`evidence_${idx}_key`];
+                      const value = allValues[`evidence_${idx}_value`];
+                      if (key) {
+                        newEvidenceFields[idx] = { key, value, images: [] };
+                      }
+                    });
+
+                    setEvidenceFields(newEvidenceFields.filter((f) => f));
+                  }}
+                />
+                <Button
+                  type="dashed"
+                  className="mt-3"
+                  onClick={() => {
+                    setEvidenceFields([
+                      ...evidenceFields,
+                      { key: "", value: "", images: [] },
+                    ]);
+                  }}
+                >
+                  + Thêm bằng chứng
+                </Button>
+              </div>
+
               <p className="text-sm text-gray-500">
                 ⚠️ Sau khi gửi yêu cầu, hợp đồng sẽ chuyển sang trạng thái "Chờ
-                hủy" và nông dân sẽ được thông báo.
+                hủy" và bên bảo hiểm sẽ xem xét trong vòng 24-48 giờ.
               </p>
             </div>
           )}

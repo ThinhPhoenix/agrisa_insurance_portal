@@ -242,7 +242,6 @@ const ReviewTabComponent = ({
                         <Statistic
                             title="Chi phí Dữ liệu Hàng tháng"
                             value={estimatedCosts.monthlyDataCost}
-                            prefix={<DollarOutlined />}
                             suffix="VND"
                             precision={0}
                         />
@@ -290,9 +289,9 @@ const ReviewTabComponent = ({
                         <Descriptions.Item label="Mã sản phẩm">
                             <Text code>{basicData.productCode || 'Chưa nhập'}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Đối tác bảo hiểm">
+                        {/* <Descriptions.Item label="Đối tác bảo hiểm">
                             {basicData.insuranceProviderId || 'Chưa nhập'}
-                        </Descriptions.Item>
+                        </Descriptions.Item> */}
                         <Descriptions.Item label="Loại cây trồng">
                             {basicData.cropType ? (
                                 <Tag color="green">

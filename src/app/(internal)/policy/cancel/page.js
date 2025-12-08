@@ -52,6 +52,9 @@ export default function CancelRequestsPage() {
     ).length,
     approved: allCancelRequests.filter((r) => r.status === "approved").length,
     denied: allCancelRequests.filter((r) => r.status === "denied").length,
+    dispute: allCancelRequests.filter(
+      (r) => r.status === "dispute" || r.status === "denied"
+    ).length,
   };
 
   // Handle form submit
@@ -73,6 +76,8 @@ export default function CancelRequestsPage() {
         return "green";
       case "denied":
         return "red";
+      case "dispute":
+        return "volcano";
       case "litigation":
         return "purple";
       default:
@@ -89,6 +94,8 @@ export default function CancelRequestsPage() {
         return "Đã chấp thuận";
       case "denied":
         return "Bị từ chối";
+      case "dispute":
+        return "Tranh chấp";
       case "litigation":
         return "Tranh chấp pháp lý";
       default:

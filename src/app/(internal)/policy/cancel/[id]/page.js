@@ -2,7 +2,7 @@
 
 import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
-import { useCancelRequestDetail } from "@/services/hooks/policy/use-cancel-request-detail";
+import { useCancelRequests } from "@/services/hooks/policy/use-cancel-requests";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -40,11 +40,19 @@ export default function CancelRequestDetailPage() {
   const router = useRouter();
   const requestId = params.id;
 
-  const { cancelRequest, loading, reviewCancelRequest } =
-    useCancelRequestDetail(requestId);
+  const {
+    allCancelRequests,
+    loading,
+    reviewCancelRequest,
+    resolveDispute,
+    getCancelRequestById,
+  } = useCancelRequests();
+
+  const cancelRequest = getCancelRequestById(requestId);
 
   const [approveForm] = Form.useForm();
   const [denyForm] = Form.useForm();
+  const [resolveForm] = Form.useForm();
 
   // Related data
   const [policy, setPolicy] = useState(null);
@@ -53,6 +61,8 @@ export default function CancelRequestDetailPage() {
   // Modal states
   const [approveModalVisible, setApproveModalVisible] = useState(false);
   const [denyModalVisible, setDenyModalVisible] = useState(false);
+  const [resolveModalVisible, setResolveModalVisible] = useState(false);
+  const [resolveAction, setResolveAction] = useState(null); // 'approve' or 'keep_active'
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch policy detail when cancelRequest is loaded
@@ -87,6 +97,8 @@ export default function CancelRequestDetailPage() {
         return "green";
       case "denied":
         return "red";
+      case "dispute":
+        return "volcano";
       case "litigation":
         return "purple";
       default:
@@ -103,6 +115,8 @@ export default function CancelRequestDetailPage() {
         return "Đã chấp thuận";
       case "denied":
         return "Bị từ chối";
+      case "dispute":
+        return "Tranh chấp";
       case "litigation":
         return "Tranh chấp pháp lý";
       default:
@@ -187,7 +201,7 @@ export default function CancelRequestDetailPage() {
     setSubmitting(true);
     try {
       const result = await reviewCancelRequest(
-        "approved",
+        true, // approved = true
         values.review_notes || "Chấp thuận hủy hợp đồng",
         values.compensate_amount || 0
       );
@@ -215,7 +229,10 @@ export default function CancelRequestDetailPage() {
 
     setSubmitting(true);
     try {
-      const result = await reviewCancelRequest("denied", values.review_notes);
+      const result = await reviewCancelRequest(
+        false, // approved = false
+        values.review_notes
+      );
 
       if (result.success) {
         setDenyModalVisible(false);
@@ -228,6 +245,37 @@ export default function CancelRequestDetailPage() {
     } catch (error) {
       console.error("Error denying cancel request:", error);
       message.error("Từ chối yêu cầu thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle resolve dispute
+  const handleResolveDispute = (action) => {
+    setResolveAction(action);
+    setResolveModalVisible(true);
+  };
+
+  // Submit resolve dispute
+  const onResolveSubmit = async (values) => {
+    if (!values.resolution_notes?.trim()) {
+      message.error("Vui lòng nhập thông tin giải quyết");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const approved = resolveAction === "approve";
+      const result = await resolveDispute(approved, values.resolution_notes);
+
+      if (result.success) {
+        setResolveModalVisible(false);
+        resolveForm.resetFields();
+        router.push("/policy/cancel");
+      }
+    } catch (error) {
+      console.error("Error resolving dispute:", error);
+      message.error("Giải quyết tranh chấp thất bại");
     } finally {
       setSubmitting(false);
     }
@@ -284,6 +332,24 @@ export default function CancelRequestDetailPage() {
                     onClick={handleDeny}
                   >
                     Từ chối
+                  </Button>
+                </>
+              )}
+              {(cancelRequest.status === "denied" ||
+                cancelRequest.status === "dispute") && (
+                <>
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => handleResolveDispute("approve")}
+                  >
+                    Giải quyết - Hủy hợp đồng
+                  </Button>
+                  <Button
+                    icon={<ExclamationCircleOutlined />}
+                    onClick={() => handleResolveDispute("keep_active")}
+                  >
+                    Giải quyết - Giữ hợp đồng
                   </Button>
                 </>
               )}
@@ -565,6 +631,93 @@ export default function CancelRequestDetailPage() {
                   icon={<CloseCircleOutlined />}
                 >
                   Xác nhận từ chối
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        {/* Resolve Dispute Modal */}
+        <Modal
+          title={
+            resolveAction === "approve"
+              ? "Giải quyết tranh chấp - Hủy hợp đồng"
+              : "Giải quyết tranh chấp - Giữ hợp đồng"
+          }
+          open={resolveModalVisible}
+          onCancel={() => setResolveModalVisible(false)}
+          footer={null}
+          width={600}
+        >
+          <Form form={resolveForm} layout="vertical" onFinish={onResolveSubmit}>
+            <div
+              className={`mb-4 p-3 border rounded ${
+                resolveAction === "approve"
+                  ? "bg-yellow-50 border-yellow-200"
+                  : "bg-blue-50 border-blue-200"
+              }`}
+            >
+              <Space direction="vertical">
+                <Space>
+                  <ExclamationCircleOutlined
+                    style={{
+                      color:
+                        resolveAction === "approve" ? "#faad14" : "#1890ff",
+                    }}
+                  />
+                  <Text strong>
+                    {resolveAction === "approve"
+                      ? "Sau khi xác nhận, hợp đồng sẽ chuyển sang trạng thái 'Đã hủy'"
+                      : "Sau khi xác nhận, hợp đồng sẽ chuyển về trạng thái 'Đang hoạt động'"}
+                  </Text>
+                </Space>
+                <Text type="secondary" className="text-sm">
+                  Vui lòng ghi rõ thông tin thỏa thuận giữa hai bên sau khi liên
+                  lạc offline
+                </Text>
+              </Space>
+            </div>
+
+            <Form.Item
+              label="Thông tin giải quyết"
+              name="resolution_notes"
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập thông tin giải quyết tranh chấp",
+                },
+              ]}
+              extra="Ghi rõ nội dung thỏa thuận, ngày liên lạc, và kết quả thảo luận giữa hai bên"
+            >
+              <TextArea
+                rows={6}
+                placeholder={
+                  resolveAction === "approve"
+                    ? "Ví dụ: Sau buổi họp ngày 08/12/2024, hai bên đã thống nhất hủy hợp đồng. Nông dân sẽ được hoàn trả 50% phí bảo hiểm trong vòng 7 ngày làm việc. Người đại diện: Nguyễn Văn A (SĐT: 0123-456-789)"
+                    : "Ví dụ: Sau buổi họp ngày 08/12/2024, hai bên đã thống nhất tiếp tục hợp đồng. Nông dân cam kết tuân thủ đầy đủ các điều khoản. Công ty sẽ hỗ trợ thêm 1 lần khảo sát miễn phí. Người đại diện: Nguyễn Văn A (SĐT: 0123-456-789)"
+                }
+              />
+            </Form.Item>
+
+            <Form.Item className="mb-0">
+              <Space className="w-full justify-end">
+                <Button onClick={() => setResolveModalVisible(false)}>
+                  Hủy
+                </Button>
+                <Button
+                  type={resolveAction === "approve" ? "primary" : "default"}
+                  danger={resolveAction === "approve"}
+                  htmlType="submit"
+                  loading={submitting}
+                  icon={
+                    resolveAction === "approve" ? (
+                      <CloseCircleOutlined />
+                    ) : (
+                      <CheckCircleOutlined />
+                    )
+                  }
+                >
+                  Xác nhận giải quyết
                 </Button>
               </Space>
             </Form.Item>

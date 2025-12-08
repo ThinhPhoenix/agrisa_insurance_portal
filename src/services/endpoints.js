@@ -126,11 +126,8 @@ export const endpoints = {
     verifyPayout: "/payment/public/payout/verify",
   },
   cancelRequest: {
-    create: (policy_id) =>
-      `/policy/protected/api/v2/cancel_request/?policy_id=${policy_id}`,
+    create: `/policy/protected/api/v2/cancel_request/`,
     listPartner: "/policy/protected/api/v2/cancel_request/read-partner/own",
-    detail: (id) =>
-      `/policy/protected/api/v2/cancel_request/read-partner/detail/${id}`,
     review: (id) => `/policy/protected/api/v2/cancel_request/review/${id}`,
   },
   noti: {

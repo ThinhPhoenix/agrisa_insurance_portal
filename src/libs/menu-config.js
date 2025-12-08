@@ -9,6 +9,7 @@ export const sidebarMenuItems = [
     children: [
       { key: "policy/pending", label: "Duyệt hợp đồng đăng ký" },
       { key: "policy/active", label: "Hợp đồng đang hoạt động" },
+      { key: "policy/cancel", label: "Yêu cầu hủy" },
       {
         key: "policy/policy-detail",
         label: "Chi tiết hợp đồng",

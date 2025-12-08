@@ -542,7 +542,7 @@ const ConfigurationTabComponent = ({
                     </Form>
                 </Panel>
 
-                {/* ✅ NEW: Blackout Periods Section */}
+                {/* Blackout Periods Section */}
                 <Panel
                     header={
                         <Space>
@@ -591,37 +591,60 @@ const ConfigurationTabComponent = ({
                                             return;
                                         }
 
-                                        // Validation 2: Kiểm tra nằm trong valid date range
+                                        // Validation 2: Kiểm tra nằm trong valid date range (xử lý trường hợp vượt năm)
                                         const validFrom = basicData?.insuranceValidFrom ? dayjs(basicData.insuranceValidFrom) : null;
                                         const validTo = basicData?.insuranceValidTo ? dayjs(basicData.insuranceValidTo) : null;
 
                                         if (validFrom && validTo) {
-                                            // Create dates in same year for comparison (using current year)
-                                            const currentYear = dayjs().year();
-                                            const startInYear = dayjs(`${currentYear}-${values.start.format('MM-DD')}`);
-                                            const endInYear = dayjs(`${currentYear}-${values.end.format('MM-DD')}`);
-                                            const validFromInYear = dayjs(`${currentYear}-${validFrom.format('MM-DD')}`);
-                                            const validToInYear = dayjs(`${currentYear}-${validTo.format('MM-DD')}`);
+                                            const validFromMD = validFrom.format('MM-DD');
+                                            const validToMD = validTo.format('MM-DD');
+                                            const startMD = values.start.format('MM-DD');
+                                            const endMD = values.end.format('MM-DD');
+                                            const isValidRangeAcrossYear = validFromMD > validToMD; // e.g., "12-01" > "06-01"
 
-                                            if (startInYear.isBefore(validFromInYear) || endInYear.isAfter(validToInYear)) {
+                                            let isValid = false;
+                                            if (isValidRangeAcrossYear) {
+                                                // Valid range crosses year: start >= validFrom OR start <= validTo AND end >= validFrom OR end <= validTo
+                                                const startValid = startMD >= validFromMD || startMD <= validToMD;
+                                                const endValid = endMD >= validFromMD || endMD <= validToMD;
+                                                isValid = startValid && endValid;
+                                            } else {
+                                                // Normal range within same year
+                                                isValid = startMD >= validFromMD && endMD <= validToMD;
+                                            }
+
+                                            if (!isValid) {
                                                 message.error(`Giai đoạn phải nằm trong khoảng hiệu lực bảo hiểm (${validFrom.format('DD/MM')} - ${validTo.format('DD/MM')})!`);
                                                 return;
                                             }
                                         }
 
-                                        // Validation 3: Kiểm tra không trùng lặp
+                                        // Validation 3: Kiểm tra không trùng lặp (xử lý vượt năm)
                                         const newStart = values.start.format('MM-DD');
                                         const newEnd = values.end.format('MM-DD');
+                                        const isNewAcrossYear = newStart > newEnd;
 
                                         const hasOverlap = configurationData.blackoutPeriods?.periods?.some(period => {
-                                            const existingStart = dayjs(period.start, 'MM-DD');
-                                            const existingEnd = dayjs(period.end, 'MM-DD');
-                                            const newStartDay = dayjs(newStart, 'MM-DD');
-                                            const newEndDay = dayjs(newEnd, 'MM-DD');
+                                            const existingStart = period.start; // MM-DD format
+                                            const existingEnd = period.end;
+                                            const isExistingAcrossYear = existingStart > existingEnd;
+
+                                            // Helper: Check if a date falls within a range
+                                            const isDateInRange = (date, rangeStart, rangeEnd, rangeAcrossYear) => {
+                                                if (rangeAcrossYear) {
+                                                    return date >= rangeStart || date <= rangeEnd;
+                                                } else {
+                                                    return date >= rangeStart && date <= rangeEnd;
+                                                }
+                                            };
 
                                             // Check if ranges overlap
-                                            return (newStartDay.isBefore(existingEnd) || newStartDay.isSame(existingEnd)) &&
-                                                (newEndDay.isAfter(existingStart) || newEndDay.isSame(existingStart));
+                                            const newStartInExisting = isDateInRange(newStart, existingStart, existingEnd, isExistingAcrossYear);
+                                            const newEndInExisting = isDateInRange(newEnd, existingStart, existingEnd, isExistingAcrossYear);
+                                            const existingStartInNew = isDateInRange(existingStart, newStart, newEnd, isNewAcrossYear);
+                                            const existingEndInNew = isDateInRange(existingEnd, newStart, newEnd, isNewAcrossYear);
+
+                                            return newStartInExisting || newEndInExisting || existingStartInNew || existingEndInNew;
                                         });
 
                                         if (hasOverlap) {
@@ -661,25 +684,37 @@ const ConfigurationTabComponent = ({
 
                                                         if (!validFrom || !validTo) return false;
 
-                                                        // Disable dates outside valid range (chỉ so sánh ngày/tháng, bỏ qua năm)
+                                                        // Disable dates outside valid range (xử lý vượt năm)
                                                         const currentMD = current.format('MM-DD');
                                                         const validFromMD = validFrom.format('MM-DD');
                                                         const validToMD = validTo.format('MM-DD');
+                                                        const isValidRangeAcrossYear = validFromMD > validToMD; // e.g., \"12-01\" > \"06-01\"
 
-                                                        if (currentMD < validFromMD || currentMD > validToMD) {
+                                                        let isOutsideValidRange = false;
+                                                        if (isValidRangeAcrossYear) {
+                                                            // Range crosses year: current must be >= validFrom OR <= validTo
+                                                            isOutsideValidRange = !(currentMD >= validFromMD || currentMD <= validToMD);
+                                                        } else {
+                                                            // Normal range: current must be >= validFrom AND <= validTo
+                                                            isOutsideValidRange = currentMD < validFromMD || currentMD > validToMD;
+                                                        }
+
+                                                        if (isOutsideValidRange) {
                                                             return true;
                                                         }
 
                                                         // Disable dates that overlap with existing blackout periods
                                                         const existingPeriods = configurationData.blackoutPeriods?.periods || [];
                                                         const isInExistingPeriod = existingPeriods.some(period => {
-                                                            const periodStart = dayjs(period.start, 'MM-DD');
-                                                            const periodEnd = dayjs(period.end, 'MM-DD');
-                                                            const currentDay = dayjs(currentMD, 'MM-DD');
+                                                            const periodStart = period.start; // MM-DD format
+                                                            const periodEnd = period.end;
+                                                            const isExistingAcrossYear = periodStart > periodEnd;
 
-                                                            // Check if current date falls within any existing period
-                                                            return (currentDay.isAfter(periodStart) || currentDay.isSame(periodStart)) &&
-                                                                (currentDay.isBefore(periodEnd) || currentDay.isSame(periodEnd));
+                                                            if (isExistingAcrossYear) {
+                                                                return currentMD >= periodStart || currentMD <= periodEnd;
+                                                            } else {
+                                                                return currentMD >= periodStart && currentMD <= periodEnd;
+                                                            }
                                                         });
 
                                                         return isInExistingPeriod;
@@ -709,12 +744,22 @@ const ConfigurationTabComponent = ({
 
                                                         if (!validFrom || !validTo) return false;
 
-                                                        // Disable dates outside valid range
+                                                        // Disable dates outside valid range (xử lý vượt năm)
                                                         const currentMD = current.format('MM-DD');
                                                         const validFromMD = validFrom.format('MM-DD');
                                                         const validToMD = validTo.format('MM-DD');
+                                                        const isValidRangeAcrossYear = validFromMD > validToMD; // e.g., \"12-01\" > \"06-01\"
 
-                                                        if (currentMD < validFromMD || currentMD > validToMD) {
+                                                        let isOutsideValidRange = false;
+                                                        if (isValidRangeAcrossYear) {
+                                                            // Range crosses year: current must be >= validFrom OR <= validTo
+                                                            isOutsideValidRange = !(currentMD >= validFromMD || currentMD <= validToMD);
+                                                        } else {
+                                                            // Normal range: current must be >= validFrom AND <= validTo
+                                                            isOutsideValidRange = currentMD < validFromMD || currentMD > validToMD;
+                                                        }
+
+                                                        if (isOutsideValidRange) {
                                                             return true;
                                                         }
 
@@ -726,13 +771,15 @@ const ConfigurationTabComponent = ({
                                                         // Disable dates that overlap with existing blackout periods
                                                         const existingPeriods = configurationData.blackoutPeriods?.periods || [];
                                                         const isInExistingPeriod = existingPeriods.some(period => {
-                                                            const periodStart = dayjs(period.start, 'MM-DD');
-                                                            const periodEnd = dayjs(period.end, 'MM-DD');
-                                                            const currentDay = dayjs(currentMD, 'MM-DD');
+                                                            const periodStart = period.start; // MM-DD format
+                                                            const periodEnd = period.end;
+                                                            const isExistingAcrossYear = periodStart > periodEnd;
 
-                                                            // Check if current date falls within any existing period
-                                                            return (currentDay.isAfter(periodStart) || currentDay.isSame(periodStart)) &&
-                                                                (currentDay.isBefore(periodEnd) || currentDay.isSame(periodEnd));
+                                                            if (isExistingAcrossYear) {
+                                                                return currentMD >= periodStart || currentMD <= periodEnd;
+                                                            } else {
+                                                                return currentMD >= periodStart && currentMD <= periodEnd;
+                                                            }
                                                         });
 
                                                         return isInExistingPeriod;

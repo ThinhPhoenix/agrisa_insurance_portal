@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import Map, { Source, Layer } from "react-map-gl/maplibre";
 import { Button, Space, message } from "antd";
-import { MapIcon, SatelliteIcon, LocateFixed, Maximize, Minimize } from "lucide-react";
+import {
+  LocateFixed,
+  MapIcon,
+  Maximize,
+  Minimize,
+  SatelliteIcon,
+} from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Map, { Layer, Source } from "react-map-gl/maplibre";
 
 // Default center (Vietnam - Ho Chi Minh City)
 const defaultCenter = { lng: 106.660172, lat: 10.762622 };
@@ -12,7 +18,7 @@ const defaultCenter = { lng: 106.660172, lat: 10.762622 };
 // Vietnam geographic bounds for validation
 const VIETNAM_BOUNDS = {
   lng: { min: 102, max: 110 }, // Longitude (kinh độ)
-  lat: { min: 8, max: 24 },    // Latitude (vĩ độ)
+  lat: { min: 8, max: 24 }, // Latitude (vĩ độ)
 };
 
 /**
@@ -93,13 +99,15 @@ export default function MapLibreWithPolygon({
   mapOptions = {},
 }) {
   const mapRef = useRef(null);
-  const [mapStyle, setMapStyle] = useState("normal");
+  const [mapStyle, setMapStyle] = useState("satellite");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentApiKey, setCurrentApiKey] = useState(() => {
     // Random selection between available keys on mount
     if (AVAILABLE_KEYS.length === 0) return "";
     const randomIndex = Math.floor(Math.random() * AVAILABLE_KEYS.length);
-    console.log(`✓ Using API key #${randomIndex + 1} of ${AVAILABLE_KEYS.length}`);
+    console.log(
+      `✓ Using API key #${randomIndex + 1} of ${AVAILABLE_KEYS.length}`
+    );
     return AVAILABLE_KEYS[randomIndex];
   });
   const [errorCount, setErrorCount] = useState(0);
@@ -107,7 +115,9 @@ export default function MapLibreWithPolygon({
   // Check if OpenMap API keys are configured
   useEffect(() => {
     if (AVAILABLE_KEYS.length === 0) {
-      console.error("❌ No OpenMap API keys configured. Please set NEXT_PUBLIC_OPENMAP_API_KEY in .env file");
+      console.error(
+        "❌ No OpenMap API keys configured. Please set NEXT_PUBLIC_OPENMAP_API_KEY in .env file"
+      );
       console.info("ℹ️ Get your API key from: https://openmap.vn");
       message.error("Không tìm thấy API key cho bản đồ");
     } else {
@@ -116,30 +126,33 @@ export default function MapLibreWithPolygon({
   }, []);
 
   // Handle map error - switch to next available key
-  const handleMapError = useCallback((error) => {
-    console.error("❌ Map error:", error);
+  const handleMapError = useCallback(
+    (error) => {
+      console.error("❌ Map error:", error);
 
-    if (AVAILABLE_KEYS.length <= 1) {
-      console.error("❌ No alternative API keys available");
-      message.error("Lỗi tải bản đồ và không có key dự phòng");
-      return;
-    }
+      if (AVAILABLE_KEYS.length <= 1) {
+        console.error("❌ No alternative API keys available");
+        message.error("Lỗi tải bản đồ và không có key dự phòng");
+        return;
+      }
 
-    // Find next key (rotate to different key)
-    const currentIndex = AVAILABLE_KEYS.indexOf(currentApiKey);
-    const nextIndex = (currentIndex + 1) % AVAILABLE_KEYS.length;
-    const nextKey = AVAILABLE_KEYS[nextIndex];
+      // Find next key (rotate to different key)
+      const currentIndex = AVAILABLE_KEYS.indexOf(currentApiKey);
+      const nextIndex = (currentIndex + 1) % AVAILABLE_KEYS.length;
+      const nextKey = AVAILABLE_KEYS[nextIndex];
 
-    console.log(`🔄 Switching to API key #${nextIndex + 1}...`);
-    setCurrentApiKey(nextKey);
-    setErrorCount(prev => prev + 1);
+      console.log(`🔄 Switching to API key #${nextIndex + 1}...`);
+      setCurrentApiKey(nextKey);
+      setErrorCount((prev) => prev + 1);
 
-    if (errorCount < 5) {
-      message.warning(`Đang thử API key khác... (${errorCount + 1})`);
-    } else {
-      message.error("Tất cả API keys đều gặp lỗi");
-    }
-  }, [currentApiKey, errorCount]);
+      if (errorCount < 5) {
+        message.warning(`Đang thử API key khác... (${errorCount + 1})`);
+      } else {
+        message.error("Tất cả API keys đều gặp lỗi");
+      }
+    },
+    [currentApiKey, errorCount]
+  );
 
   // Parse boundary to get coordinates array from GeoJSON or raw array
   const parsedBoundary = useMemo(() => {
@@ -202,7 +215,11 @@ export default function MapLibreWithPolygon({
 
     // Priority 2: Calculate centroid from boundary polygon if centerLocation not available
     // Boundary format: [[[lng, lat], [lng, lat], ...]]
-    if (parsedBoundary && Array.isArray(parsedBoundary) && parsedBoundary.length > 0) {
+    if (
+      parsedBoundary &&
+      Array.isArray(parsedBoundary) &&
+      parsedBoundary.length > 0
+    ) {
       const outerRing = parsedBoundary[0]; // First ring is outer boundary
       if (Array.isArray(outerRing) && outerRing.length > 0) {
         // Calculate polygon centroid using average of all points
@@ -242,7 +259,11 @@ export default function MapLibreWithPolygon({
 
   // Create GeoJSON for polygon with validation
   const polygonGeoJSON = useMemo(() => {
-    if (!parsedBoundary || !Array.isArray(parsedBoundary) || parsedBoundary.length === 0) {
+    if (
+      !parsedBoundary ||
+      !Array.isArray(parsedBoundary) ||
+      parsedBoundary.length === 0
+    ) {
       console.warn("⚠️ No valid boundary data for polygon");
       return null;
     }
@@ -250,7 +271,10 @@ export default function MapLibreWithPolygon({
     // Validate boundary structure: [[[lng, lat], [lng, lat], ...]]
     const outerRing = parsedBoundary[0];
     if (!Array.isArray(outerRing) || outerRing.length < 3) {
-      console.error("❌ Invalid boundary: must have at least 3 points", parsedBoundary);
+      console.error(
+        "❌ Invalid boundary: must have at least 3 points",
+        parsedBoundary
+      );
       return null;
     }
 
@@ -321,14 +345,17 @@ export default function MapLibreWithPolygon({
 
   // Toggle fullscreen mode
   const toggleFullscreen = useCallback(() => {
-    setIsFullscreen(prev => !prev);
+    setIsFullscreen((prev) => !prev);
   }, []);
 
   // Generate map styles dynamically based on current API key
-  const mapStyles = useMemo(() => ({
-    normal: getOpenMapStyleUrl("day-v1", currentApiKey),
-    satellite: getOpenMapStyleUrl("satellite-v1", currentApiKey),
-  }), [currentApiKey]);
+  const mapStyles = useMemo(
+    () => ({
+      normal: getOpenMapStyleUrl("day-v1", currentApiKey),
+      satellite: getOpenMapStyleUrl("satellite-v1", currentApiKey),
+    }),
+    [currentApiKey]
+  );
 
   return (
     <div
@@ -339,7 +366,7 @@ export default function MapLibreWithPolygon({
         top: isFullscreen ? 0 : "auto",
         left: isFullscreen ? 0 : "auto",
         zIndex: isFullscreen ? 9999 : "auto",
-        backgroundColor: "#fff"
+        backgroundColor: "#fff",
       }}
     >
       <Map
@@ -393,7 +420,13 @@ export default function MapLibreWithPolygon({
           {/* Toggle map style button */}
           <Button
             type="primary"
-            icon={mapStyle === "normal" ? <SatelliteIcon size={16} /> : <MapIcon size={16} />}
+            icon={
+              mapStyle === "normal" ? (
+                <SatelliteIcon size={16} />
+              ) : (
+                <MapIcon size={16} />
+              )
+            }
             onClick={toggleMapStyle}
             style={{
               display: "flex",
@@ -420,7 +453,9 @@ export default function MapLibreWithPolygon({
 
           {/* Fullscreen toggle button */}
           <Button
-            icon={isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+            icon={
+              isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />
+            }
             onClick={toggleFullscreen}
             title={isFullscreen ? "Thu nhỏ" : "Toàn màn hình"}
             style={{

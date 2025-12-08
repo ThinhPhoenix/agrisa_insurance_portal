@@ -642,7 +642,7 @@ export default function PolicyDetailPage() {
       label: (
         <span className="flex items-center gap-2">
           <SafetyOutlined />
-          <span className="hidden sm:inline">Gói bảo hiểm</span>
+          <span className="hidden sm:inline">Hợp đồng mẫu</span>
         </span>
       ),
       children: (
@@ -707,7 +707,9 @@ export default function PolicyDetailPage() {
 
   // Add Claims tab for active policies
   if (
-    pageType === "active" && policy.status === "active" && policy.underwriting_status === "approved"
+    pageType === "active" &&
+    policy.status === "active" &&
+    policy.underwriting_status === "approved"
   ) {
     tabItems.push({
       key: "claims",
@@ -725,7 +727,9 @@ export default function PolicyDetailPage() {
     <div className="insurance-content">
       <div className="insurance-space">
         <div className="flex justify-between items-center mb-4">
-          <Title level={2}>Chi tiết đơn bảo hiểm: {policy.policy_number}</Title>
+          <Title level={2}>
+            Chi tiết đơn hợp đồng số: {policy.policy_number}
+          </Title>
           <Space>
             <Button onClick={() => router.push(`/policy/${pageType}`)}>
               Quay lại
@@ -761,11 +765,7 @@ export default function PolicyDetailPage() {
           </Space>
         </div>
 
-        <Tabs
-          items={tabItems}
-          activeKey={activeTab}
-          onChange={setActiveTab}
-        />
+        <Tabs items={tabItems} activeKey={activeTab} onChange={setActiveTab} />
 
         <Modal
           title={

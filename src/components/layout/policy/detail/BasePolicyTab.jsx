@@ -2,16 +2,17 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  DollarOutlined,
   DownloadOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
   SafetyOutlined,
   StopOutlined,
-  ThunderboltOutlined
+  ThunderboltOutlined,
+  WalletOutlined
 } from "@ant-design/icons";
-import { Button, Card, Descriptions, Divider, Space, Table, Tag, Typography } from "antd";
+import { Button, Card, Descriptions, Divider, Space, Tag, Typography } from "antd";
+import CustomTable from '../../../custom-table';
 
 const { Text, Title } = Typography;
 
@@ -113,7 +114,7 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
 
         {/* Premium Info Section */}
         <div className="flex items-center gap-2 mb-4">
-          <DollarOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
+          <WalletOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
           <Title level={4} style={{ margin: 0 }}>Phí bảo hiểm</Title>
         </div>
         <Descriptions
@@ -146,7 +147,7 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
 
         {/* Payout Info Section */}
         <div className="flex items-center gap-2 mb-4">
-          <DollarOutlined style={{ fontSize: '20px', color: '#faad14' }} />
+          <WalletOutlined style={{ fontSize: '20px', color: '#faad14' }} />
           <Title level={4} style={{ margin: 0 }}>Bồi thường</Title>
         </div>
         <Descriptions
@@ -323,7 +324,7 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                     <Text strong className="block mb-2">
                       Chi tiết điều kiện:
                     </Text>
-                    <Table
+                    <CustomTable
                       size="small"
                       dataSource={trigger.conditions}
                       rowKey={(record) => record.id}
@@ -384,14 +385,14 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                           width: 120,
                         },
                         {
-                          title: "Cửa sổ tổng hợp",
+                          title: "Chu kỳ tổng hợp",
                           dataIndex: "aggregation_window_days",
                           key: "agg_window",
                           width: 130,
                           render: (val) => `${val} ngày`,
                         },
                         {
-                          title: "Chi phí tính toán",
+                          title: "Phí tính toán",
                           dataIndex: "calculated_cost",
                           key: "cost",
                           width: 120,

@@ -527,14 +527,15 @@ const ConfigurationTabComponent = ({
                                 <Form.Item
                                     name="growthStage"
                                     label="Giai đoạn sinh trưởng"
-                                    tooltip="Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 500 ký tự)"
+                                    tooltip="Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 50 ký tự)"
+                                    rules={[{ type: 'string', max: 50, message: 'Giai đoạn sinh trưởng tối đa 50 ký tự' }]}
                                 >
-                                    <DebouncedTextArea
+                                    <Input.TextArea
+                                        placeholder="Ví dụ: Toàn chu kỳ sinh trưởng lúa"
                                         rows={2}
-                                        placeholder="Ví dụ: Toàn chu kỳ sinh trưởng lúa (120 ngày)"
                                         size="large"
+                                        maxLength={50}
                                         showCount
-                                        maxLength={500}
                                     />
                                 </Form.Item>
                             </Col>
@@ -1095,12 +1096,28 @@ const ConfigurationTabComponent = ({
                                             <Form.Item
                                                 name="thresholdValue"
                                                 label="Giá trị ngưỡng"
-                                                tooltip="Giá trị ngưỡng (Threshold Value): Mốc giá trị cụ thể để xác định một sự kiện bảo hiểm. Ví dụ: Nếu lượng mưa < 10mm, điều kiện hạn hán được kích hoạt. Đơn vị của ngưỡng phụ thuộc vào nguồn dữ liệu"
-                                                rules={[{ required: true, message: getConditionValidation('THRESHOLD_VALUE_REQUIRED') }]}
+                                                tooltip="Giá trị ngưỡng (Threshold Value): Mốc giá trị cụ thể để xác định một sự kiện bảo hiểm. Đơn vị của ngưỡng phụ thuộc vào nguồn dữ liệu"
+                                                rules={[
+                                                    { required: true, message: getConditionValidation('THRESHOLD_VALUE_REQUIRED') },
+                                                    {
+                                                        validator: (_, value) => {
+                                                            if (value === null || value === undefined || value === '') return Promise.resolve();
+                                                            const abs = Math.abs(Number(value));
+                                                            if (Number.isNaN(abs)) return Promise.reject('Giá trị ngưỡng không hợp lệ');
+                                                            if (abs > 999999.9999) return Promise.reject('Giá trị ngưỡng vượt giới hạn (<= 999999.9999)');
+                                                            const parts = String(value).split('.');
+                                                            const decimals = parts[1] ? parts[1].length : 0;
+                                                            if (decimals > 4) return Promise.reject('Giá trị ngưỡng tối đa 4 chữ số thập phân');
+                                                            return Promise.resolve();
+                                                        }
+                                                    }
+                                                ]}
                                             >
                                                 <InputNumber
                                                     placeholder="200"
                                                     size="large"
+                                                    step={0.0001}
+                                                    max={999999.9999}
                                                     style={{ width: '100%' }}
                                                 />
                                             </Form.Item>
@@ -1378,7 +1395,6 @@ const ConfigurationTabComponent = ({
     );
 };
 
-// ✅ OPTIMIZATION: Wrap with memo and add display name
 const ConfigurationTab = memo(ConfigurationTabComponent);
 ConfigurationTab.displayName = 'ConfigurationTab';
 

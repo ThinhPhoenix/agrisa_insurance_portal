@@ -125,6 +125,18 @@ const BasicTabComponent = ({
         }
     }, [categories, dataSourceForm, fetchTiersByCategory]);
 
+    // Helper: validate decimal precision and scale according to schema limits
+    const validateDecimal = (value, max, maxDecimals) => {
+        if (value === null || value === undefined || value === '') return true;
+        const abs = Math.abs(Number(value));
+        if (Number.isNaN(abs)) return false;
+        if (abs > max) return false;
+        const parts = String(value).split('.');
+        const decimals = parts[1] ? parts[1].length : 0;
+        if (decimals > maxDecimals) return false;
+        return true;
+    };
+
     // Handle tier change
     const handleTierChange = useCallback((tier) => {
         setSelectedTier(tier);
@@ -351,13 +363,22 @@ const BasicTabComponent = ({
                             tooltip="Hệ số tính phí (phải > 0 nếu không dùng phí cố định)"
                             rules={[
                                 { required: true, message: getBasePolicyError('PREMIUM_BASE_RATE_REQUIRED') },
-                                { type: 'number', min: 0, message: getBasePolicyError('PREMIUM_BASE_RATE_NEGATIVE') }
+                                { type: 'number', min: 0, message: getBasePolicyError('PREMIUM_BASE_RATE_NEGATIVE') },
+                                {
+                                    validator: (_, value) => {
+                                        if (value === null || value === undefined || value === '') return Promise.resolve();
+                                        const ok = validateDecimal(value, 999999.9, 1);
+                                        return ok ? Promise.resolve() : Promise.reject(getBasePolicyError('PREMIUM_BASE_RATE_INVALID'));
+                                    }
+                                }
                             ]}
                         >
                             <InputNumber
                                 placeholder="1.0"
                                 min={0}
                                 step={0.1}
+                                max={999999.9}
+                                precision={1}
                                 size="large"
                                 style={{ width: '100%' }}
                             />
@@ -376,7 +397,7 @@ const BasicTabComponent = ({
                             <InputNumber
                                 placeholder="1,000,000"
                                 min={0}
-                                step={100000}
+                                step={1000}
                                 size="large"
                                 style={{ width: '100%' }}
                                 formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -435,13 +456,22 @@ const BasicTabComponent = ({
                             tooltip="Hệ số tính chi trả (phải > 0, VD: 0.75 = 75%)"
                             rules={[
                                 { required: true, message: getBasePolicyError('PAYOUT_BASE_RATE_REQUIRED') },
-                                { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_BASE_RATE_NEGATIVE') }
+                                { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_BASE_RATE_NEGATIVE') },
+                                {
+                                    validator: (_, value) => {
+                                        if (value === null || value === undefined || value === '') return Promise.resolve();
+                                        const ok = validateDecimal(value, 999999.9, 1);
+                                        return ok ? Promise.resolve() : Promise.reject(getBasePolicyError('PAYOUT_BASE_RATE_INVALID'));
+                                    }
+                                }
                             ]}
                         >
                             <InputNumber
                                 placeholder="0.75"
                                 min={0}
-                                step={0.01}
+                                step={0.1}
+                                max={999999.9}
+                                precision={1}
                                 size="large"
                                 style={{ width: '100%' }}
                             />
@@ -460,7 +490,7 @@ const BasicTabComponent = ({
                             <InputNumber
                                 placeholder="5,000,000"
                                 min={0}
-                                step={100000}
+                                step={1000}
                                 size="large"
                                 style={{ width: '100%' }}
                                 formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -483,7 +513,7 @@ const BasicTabComponent = ({
                             <InputNumber
                                 placeholder="10,000,000"
                                 min={0}
-                                step={100000}
+                                step={1000}
                                 size="large"
                                 style={{ width: '100%' }}
                                 formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -497,13 +527,22 @@ const BasicTabComponent = ({
                             label="Hệ số vượt ngưỡng"
                             tooltip="Hệ số nhân khi vượt ngưỡng (phải > 0, mặc định: 1.0)"
                             rules={[
-                                { type: 'number', min: 0, message: getBasePolicyError('OVER_THRESHOLD_MULTIPLIER_NEGATIVE') }
+                                { type: 'number', min: 0, message: getBasePolicyError('OVER_THRESHOLD_MULTIPLIER_NEGATIVE') },
+                                {
+                                    validator: (_, value) => {
+                                        if (value === null || value === undefined || value === '') return Promise.resolve();
+                                        const ok = validateDecimal(value, 999999.9, 1);
+                                        return ok ? Promise.resolve() : Promise.reject(getBasePolicyError('OVER_THRESHOLD_MULTIPLIER_INVALID'));
+                                    }
+                                }
                             ]}
                         >
                             <InputNumber
                                 placeholder="1.0"
                                 min={0}
                                 step={0.1}
+                                max={999999.9}
+                                precision={1}
                                 size="large"
                                 style={{ width: '100%' }}
                             />
@@ -710,16 +749,16 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="renewalDiscountRate"
                             label="Giảm giá khi gia hạn (%)"
-                            tooltip="Phần trăm giảm giá áp dụng cho phí khi gia hạn tự động (auto-renewal) được thực hiện (ví dụ: 10 = giảm 10%). Giá trị từ 0-100%"
+                            tooltip="Phần trăm giảm giá áp dụng cho phí khi gia hạn tự động (ví dụ: 1.25 = 1.25%). Theo schema max 9.99"
                             rules={[
-                                { type: 'number', min: 0, max: 100, message: getBasePolicyError('RENEWAL_DISCOUNT_RATE_INVALID') }
+                                { type: 'number', min: 0, max: 9.99, message: getBasePolicyError('RENEWAL_DISCOUNT_RATE_INVALID') }
                             ]}
                         >
                             <InputNumber
-                                placeholder="10"
+                                placeholder="1.25"
                                 min={0}
-                                max={100}
-                                step={0.1}
+                                max={9.99}
+                                step={0.01}
                                 size="large"
                                 style={{ width: '100%' }}
                                 formatter={value => `${value}%`}

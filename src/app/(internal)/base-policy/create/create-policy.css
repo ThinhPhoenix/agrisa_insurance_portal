@@ -135,6 +135,10 @@
     color: #fff !important;
   }
 
+  .ant-tabs-tab-active .ant-space-item {
+    color: #fff !important;
+  }
+
   .ant-tabs-tab .anticon {
     font-size: 16px !important;
   }

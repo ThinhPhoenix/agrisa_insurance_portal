@@ -39,7 +39,7 @@ export const triggerSchema = z.object({
     }),
 
   // Optional fields
-  growthStage: z.string().max(500).optional().nullable(),
+  growthStage: z.string().max(50).optional().nullable(),
 
   // blackoutPeriods: Object rỗng {} nếu không có, không cần validate
   blackoutPeriods: z.any().optional().default({}),

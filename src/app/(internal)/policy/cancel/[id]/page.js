@@ -2,7 +2,7 @@
 
 import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
-import { useCancelRequests } from "@/services/hooks/policy/use-cancel-requests";
+import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -17,6 +17,7 @@ import {
   Descriptions,
   Divider,
   Form,
+  Image,
   Input,
   InputNumber,
   Layout,
@@ -46,7 +47,7 @@ export default function CancelRequestDetailPage() {
     reviewCancelRequest,
     resolveDispute,
     getCancelRequestById,
-  } = useCancelRequests();
+  } = useCancelPolicy();
 
   const cancelRequest = getCancelRequestById(requestId);
 
@@ -181,6 +182,139 @@ export default function CancelRequestDetailPage() {
       style: "currency",
       currency: "VND",
     }).format(amount);
+  };
+
+  // Parse evidence object into array of { description, images }
+  const parseEvidenceToPairs = (evidence) => {
+    if (!evidence) return [];
+
+    // If evidence is already an array, try to normalize each entry
+    if (Array.isArray(evidence)) {
+      return evidence.map((item) => {
+        if (!item) return { description: "", images: [] };
+        if (typeof item === "string") {
+          // string might be url or text
+          if (item.startsWith("http") || item.startsWith("/"))
+            return { description: "", images: [item] };
+          try {
+            const parsed = JSON.parse(item);
+            if (Array.isArray(parsed))
+              return { description: "", images: parsed };
+            if (typeof parsed === "object" && parsed !== null) {
+              return {
+                description: parsed.description || parsed.desc || "",
+                images:
+                  parsed.images ||
+                  parsed.urls ||
+                  (parsed.url ? [parsed.url] : []),
+              };
+            }
+          } catch (e) {
+            return { description: item, images: [] };
+          }
+        }
+        if (typeof item === "object") {
+          return {
+            description: item.description || item.desc || "",
+            images: item.images || item.urls || (item.url ? [item.url] : []),
+          };
+        }
+        return { description: String(item), images: [] };
+      });
+    }
+
+    // If evidence is an object, try to group keys into indexed pairs
+    if (typeof evidence === "object") {
+      // collect indexed groups: key may be like description_0, images-0, etc.
+      const groups = {};
+      const plain = { description: null, images: [] };
+
+      Object.entries(evidence).forEach(([k, v]) => {
+        // detect index suffix
+        const m = k.match(/^(.*?)(?:[_-]?(\d+))?$/);
+        if (!m) return;
+        const base = m[1];
+        const idx = m[2] ?? "0";
+
+        if (!m[2]) {
+          // no index - treat as plain fields (description or images)
+          if (/desc|description|note|value/i.test(base)) {
+            plain.description = typeof v === "string" ? v : JSON.stringify(v);
+          } else if (/image|img|photo|photos|images|url|urls/i.test(base)) {
+            if (Array.isArray(v)) plain.images = plain.images.concat(v);
+            else if (typeof v === "string") plain.images.push(v);
+            else if (typeof v === "object" && v !== null) {
+              if (v.url) plain.images.push(v.url);
+              else if (Array.isArray(v.urls))
+                plain.images = plain.images.concat(v.urls);
+            }
+          } else {
+            // unknown key without index - ignore or append to description
+            if (!plain.description)
+              plain.description = typeof v === "string" ? v : JSON.stringify(v);
+          }
+          return;
+        }
+
+        if (!groups[idx]) groups[idx] = { description: "", images: [] };
+        if (/desc|description|note|value/i.test(base)) {
+          groups[idx].description =
+            typeof v === "string" ? v : JSON.stringify(v);
+        } else if (/image|img|photo|photos|images|url|urls/i.test(base)) {
+          if (Array.isArray(v))
+            groups[idx].images = groups[idx].images.concat(v);
+          else if (typeof v === "string") groups[idx].images.push(v);
+          else if (typeof v === "object" && v !== null) {
+            if (v.url) groups[idx].images.push(v.url);
+            else if (Array.isArray(v.urls))
+              groups[idx].images = groups[idx].images.concat(v.urls);
+          }
+        } else {
+          // fallback: append to description
+          if (!groups[idx].description)
+            groups[idx].description =
+              typeof v === "string" ? v : JSON.stringify(v);
+        }
+      });
+
+      // build result array
+      const result = Object.keys(groups)
+        .sort((a, b) => Number(a) - Number(b))
+        .map((k) => ({
+          description: groups[k].description || "",
+          images: groups[k].images || [],
+        }));
+
+      // if plain has content, prepend it
+      if (
+        (plain.description && plain.description.length) ||
+        (plain.images && plain.images.length)
+      ) {
+        result.unshift({
+          description: plain.description || "",
+          images: plain.images || [],
+        });
+      }
+
+      // If no groups found, try to interpret top-level object as single pair
+      if (result.length === 0) {
+        // possible shape: { description: 'Bip', images: ['url'] }
+        const desc =
+          evidence.description || evidence.desc || evidence.note || null;
+        const imgs =
+          evidence.images ||
+          evidence.urls ||
+          (evidence.url ? [evidence.url] : []);
+        if (desc || (imgs && imgs.length))
+          return [{ description: desc || "", images: imgs || [] }];
+        // fallback: stringify
+        return [{ description: JSON.stringify(evidence), images: [] }];
+      }
+
+      return result;
+    }
+
+    return [];
   };
 
   // Handle approve
@@ -407,14 +541,42 @@ export default function CancelRequestDetailPage() {
                 </Descriptions.Item>
               </Descriptions>
 
-              {/* Evidence */}
+              {/* Evidence - render descriptions and images instead of raw JSON */}
               {cancelRequest.evidence &&
                 Object.keys(cancelRequest.evidence).length > 0 && (
                   <>
                     <Divider>Bằng chứng đính kèm</Divider>
-                    <pre className="bg-gray-50 p-4 rounded">
-                      {JSON.stringify(cancelRequest.evidence, null, 2)}
-                    </pre>
+                    <div className="grid grid-cols-1 gap-4">
+                      {parseEvidenceToPairs(cancelRequest.evidence).map(
+                        (pair, idx) => (
+                          <Card key={idx} className="p-3">
+                            <div className="mb-2">
+                              <strong>Mô tả</strong>
+                            </div>
+                            <div className="mb-3 text-sm text-gray-700">
+                              {pair.description || "-"}
+                            </div>
+
+                            {pair.images && pair.images.length > 0 && (
+                              <Image.PreviewGroup>
+                                <div className="flex flex-wrap gap-3">
+                                  {pair.images.map((src, i) => (
+                                    <Image
+                                      key={i}
+                                      src={src}
+                                      alt={`evidence-${idx}-${i}`}
+                                      width={200}
+                                      height={150}
+                                      style={{ objectFit: "cover" }}
+                                    />
+                                  ))}
+                                </div>
+                              </Image.PreviewGroup>
+                            )}
+                          </Card>
+                        )
+                      )}
+                    </div>
                   </>
                 )}
             </Card>

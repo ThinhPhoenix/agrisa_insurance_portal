@@ -4,7 +4,7 @@ import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { getApprovalInfo } from "@/libs/message";
-import { useCancelRequests } from "@/services/hooks/policy/use-cancel-requests";
+import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -31,7 +31,7 @@ export default function CancelRequestsPage() {
     handleClearFilters,
     paginationConfig,
     loading,
-  } = useCancelRequests();
+  } = useCancelPolicy();
 
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
@@ -127,18 +127,18 @@ export default function CancelRequestsPage() {
       title: "Mã yêu cầu",
       dataIndex: "id",
       key: "id",
-      width: 120,
+      width: 300,
       render: (text) => (
-        <div className="insurance-package-id">{text.substring(0, 8)}...</div>
+        <div className="insurance-package-id break-all">{text}</div>
       ),
     },
     {
       title: "Mã hợp đồng",
       dataIndex: "registered_policy_id",
       key: "registered_policy_id",
-      width: 120,
+      width: 300,
       render: (text) => (
-        <div className="insurance-package-name">{text.substring(0, 8)}...</div>
+        <div className="insurance-package-name break-all">{text}</div>
       ),
     },
     {

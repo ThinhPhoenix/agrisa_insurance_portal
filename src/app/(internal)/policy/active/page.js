@@ -5,7 +5,7 @@ import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { getApprovalInfo } from "@/libs/message";
 import { useActivePolicies } from "@/services/hooks/policy/use-active-policies";
-import { useCreateCancelRequest } from "@/services/hooks/policy/use-create-cancel-request";
+import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -46,7 +46,7 @@ export default function ActivePoliciesPage() {
     loading,
   } = useActivePolicies();
 
-  const { createCancelRequest } = useCreateCancelRequest();
+  const { createCancelRequest } = useCancelPolicy();
 
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([

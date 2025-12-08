@@ -3,6 +3,7 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
+import { formatUtcDate } from "@/libs/date-utils";
 import { getApprovalInfo } from "@/libs/message";
 import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
 import {
@@ -187,9 +188,7 @@ export default function CancelRequestsPage() {
       width: 120,
       render: (date) => (
         <div className="insurance-statistics">
-          <div className="insurance-stat-item">
-            {new Date(date).toLocaleDateString("vi-VN")}
-          </div>
+          <div className="insurance-stat-item">{formatUtcDate(date)}</div>
         </div>
       ),
     },

@@ -1,12 +1,14 @@
 "use client";
 
 import axiosInstance from "@/libs/axios-instance";
+import { formatUtcDate } from "@/libs/date-utils";
 import { endpoints } from "@/services/endpoints";
 import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
+  FilePdfOutlined,
   FileTextOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
@@ -519,17 +521,16 @@ export default function CancelRequestDetailPage() {
                     {getCancelTypeText(cancelRequest.cancel_request_type)}
                   </Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Mã hợp đồng" span={2}>
-                  {cancelRequest.registered_policy_id}
-                </Descriptions.Item>
                 <Descriptions.Item label="Lý do hủy" span={2}>
                   {cancelRequest.reason}
                 </Descriptions.Item>
-                <Descriptions.Item label="Người yêu cầu" span={1}>
+                <Descriptions.Item label="Mã nông dân yêu cầu" span={1}>
                   {cancelRequest.requested_by}
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày yêu cầu" span={1}>
-                  {new Date(cancelRequest.requested_at).toLocaleString("vi-VN")}
+                  {formatUtcDate(cancelRequest.requested_at, {
+                    withTime: true,
+                  })}
                 </Descriptions.Item>
                 <Descriptions.Item label="Số tiền bồi thường" span={1}>
                   {formatCurrency(cancelRequest.compensate_amount)}
@@ -598,9 +599,9 @@ export default function CancelRequestDetailPage() {
                     {cancelRequest.reviewed_by}
                   </Descriptions.Item>
                   <Descriptions.Item label="Thời gian xem xét" span={1}>
-                    {new Date(cancelRequest.reviewed_at).toLocaleString(
-                      "vi-VN"
-                    )}
+                    {formatUtcDate(cancelRequest.reviewed_at, {
+                      withTime: true,
+                    })}
                   </Descriptions.Item>
                   <Descriptions.Item
                     label="Ghi chú / Thông tin giải quyết"
@@ -658,8 +659,14 @@ export default function CancelRequestDetailPage() {
                   <Descriptions.Item label="Số tiền bảo hiểm" span={1}>
                     {formatCurrency(policy.coverage_amount)}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Phí bảo hiểm" span={1}>
+                  <Descriptions.Item label="Phí bảo hiểm nông dân" span={1}>
                     {formatCurrency(policy.total_farmer_premium)}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Chi phí dữ liệu" span={1}>
+                    {formatCurrency(policy.total_data_cost)}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Hệ số diện tích" span={1}>
+                    {policy.area_multiplier}
                   </Descriptions.Item>
                   <Descriptions.Item label="Ngày bắt đầu" span={1}>
                     {new Date(
@@ -671,6 +678,43 @@ export default function CancelRequestDetailPage() {
                       policy.coverage_end_date * 1000
                     ).toLocaleDateString("vi-VN")}
                   </Descriptions.Item>
+                  <Descriptions.Item label="Ngày trồng" span={1}>
+                    {new Date(policy.planting_date * 1000).toLocaleDateString(
+                      "vi-VN"
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Trạng thái thẩm định" span={1}>
+                    <Tag
+                      color={
+                        policy.underwriting_status === "approved"
+                          ? "green"
+                          : "orange"
+                      }
+                    >
+                      {policy.underwriting_status === "approved"
+                        ? "Đã duyệt"
+                        : policy.underwriting_status}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày tạo" span={1}>
+                    {formatUtcDate(policy.created_at, { withTime: true })}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày cập nhật" span={1}>
+                    {formatUtcDate(policy.updated_at, { withTime: true })}
+                  </Descriptions.Item>
+                  {policy.signed_policy_document_url && (
+                    <Descriptions.Item label="Tài liệu hợp đồng" span={2}>
+                      <a
+                        href={policy.signed_policy_document_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                      >
+                        <FilePdfOutlined />
+                        <span>Tải xuống hợp đồng PDF</span>
+                      </a>
+                    </Descriptions.Item>
+                  )}
                 </Descriptions>
               </Card>
             </Col>

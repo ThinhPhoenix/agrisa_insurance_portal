@@ -251,7 +251,10 @@ export default function PayoutDetailPage() {
       let accountNumber = "09073016692"; // Default account number
 
       // Extract bank info from response
-      if (bankInfoResponse.data?.success && bankInfoResponse.data?.data?.length > 0) {
+      if (
+        bankInfoResponse.data?.success &&
+        bankInfoResponse.data?.data?.length > 0
+      ) {
         const userBankInfo = bankInfoResponse.data.data[0];
         bankCode = userBankInfo.bank_code || bankCode;
         accountNumber = userBankInfo.account_number || accountNumber;

@@ -10,8 +10,8 @@ import { endpoints } from "@/services/endpoints";
 import useClaim from "@/services/hooks/claim/use-claim";
 import usePayout from "@/services/hooks/payout/use-payout";
 import {
-  getClaimErrorMessage,
   CLAIM_SUCCESS_MESSAGES,
+  getClaimErrorMessage,
 } from "@/utils/claim-messages";
 import { Form, Layout, message, Row, Spin, Typography } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -326,7 +326,10 @@ export default function ClaimDetailPage() {
       let accountNumber = "09073016692"; // Default account number
 
       // Extract bank info from response
-      if (bankInfoResponse.data?.success && bankInfoResponse.data?.data?.length > 0) {
+      if (
+        bankInfoResponse.data?.success &&
+        bankInfoResponse.data?.data?.length > 0
+      ) {
         const userBankInfo = bankInfoResponse.data.data[0];
         bankCode = userBankInfo.bank_code || bankCode;
         accountNumber = userBankInfo.account_number || accountNumber;

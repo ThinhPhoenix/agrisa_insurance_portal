@@ -128,12 +128,9 @@ export const basePolicySchema = z
 
     overThresholdMultiplier: z
       .number()
-      .refine(
-        (val) => val === null || val === undefined || val > 0,
-        {
-          message: getBasePolicyError("OVER_THRESHOLD_MULTIPLIER_MUST_POSITIVE"),
-        }
-      )
+      .refine((val) => val === null || val === undefined || val > 0, {
+        message: getBasePolicyError("OVER_THRESHOLD_MULTIPLIER_MUST_POSITIVE"),
+      })
       .optional()
       .nullable(),
 
@@ -228,21 +225,23 @@ export const basePolicySchema = z
   )
   .refine(
     (data) => {
-      // enrollmentEndDay <= insuranceValidFrom
-      if (data.enrollmentEndDay && data.insuranceValidFrom) {
-        const enrollEnd = data.enrollmentEndDay.valueOf
-          ? data.enrollmentEndDay.valueOf()
-          : new Date(data.enrollmentEndDay).valueOf();
+      // insuranceValidFrom >= enrollmentStartDay
+      if (data.enrollmentStartDay && data.insuranceValidFrom) {
+        const enrollStart = data.enrollmentStartDay.valueOf
+          ? data.enrollmentStartDay.valueOf()
+          : new Date(data.enrollmentStartDay).valueOf();
         const validFrom = data.insuranceValidFrom.valueOf
           ? data.insuranceValidFrom.valueOf()
           : new Date(data.insuranceValidFrom).valueOf();
-        return enrollEnd <= validFrom;
+        return validFrom >= enrollStart;
       }
       return true;
     },
     {
-      message: getBasePolicyError("ENROLLMENT_END_AFTER_VALID_FROM"),
-      path: ["enrollmentEndDay"],
+      message: getBasePolicyError(
+        "INSURANCE_VALID_FROM_BEFORE_ENROLLMENT_START"
+      ),
+      path: ["insuranceValidFrom"],
     }
   )
   .refine(

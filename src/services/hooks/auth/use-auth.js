@@ -13,6 +13,43 @@ import { endpoints } from "@/services/endpoints";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCallback, useRef, useState } from "react";
 
+/**
+ * Validates user access permissions based on role and partner assignment
+ * Security: Uses generic error message to avoid leaking system information
+ * @param {object} profile - User profile from /me API
+ * @returns {object} { isValid: boolean, errorMessage: string | null }
+ */
+const validateUserAccess = (profile) => {
+  // Check if role_id is system_admin - FORBIDDEN
+  if (profile.role_id === "system_admin") {
+    console.warn("⚠️ Access denied: system_admin role");
+    return {
+      isValid: false,
+      errorMessage: getSignInError("ACCESS_DENIED"),
+    };
+  }
+
+  // Check if partner_id is null, empty, or string "null" - FORBIDDEN
+  if (
+    !profile.partner_id ||
+    profile.partner_id.trim() === "" ||
+    profile.partner_id === "null" ||
+    profile.partner_id === "undefined"
+  ) {
+    console.warn("⚠️ Access denied: missing or invalid partner_id");
+    return {
+      isValid: false,
+      errorMessage: getSignInError("ACCESS_DENIED"),
+    };
+  }
+
+  // All checks passed
+  return {
+    isValid: true,
+    errorMessage: null,
+  };
+};
+
 const handleError = (error) => {
   // Use the new mapBackendError function to get Vietnamese messages
   const mappedError = mapBackendError(error);
@@ -31,7 +68,7 @@ export const useSignIn = () => {
 
   // DEBUG MODE: Set to false to COMPLETELY skip /me API call after sign-in
   // (useful when BE /me is broken and you need to bypass it entirely)
-  const DEBUG_ENABLE_ME_CHECK = false;
+  const DEBUG_ENABLE_ME_CHECK = true;
 
   const signIn = useCallback(
     async (credentials) => {
@@ -90,6 +127,29 @@ export const useSignIn = () => {
             const meRes = await axiosInstance.get(endpoints.auth.auth_me);
             if (meRes?.data?.success) {
               const profile = meRes.data.data || {};
+
+              // CRITICAL: Validate user access permissions
+              const accessValidation = validateUserAccess(profile);
+              if (!accessValidation.isValid) {
+                // Access denied - clear all data and return error
+                console.error(
+                  "❌ Access denied:",
+                  accessValidation.errorMessage
+                );
+
+                // Clear tokens and user data
+                localStorage.removeItem("token");
+                localStorage.removeItem("refresh_token");
+                localStorage.removeItem("me");
+
+                const { clearUser } = useAuthStore.getState();
+                clearUser();
+
+                return {
+                  success: false,
+                  message: accessValidation.errorMessage,
+                };
+              }
 
               const existingToken =
                 localStorage.getItem("token") || userData.token || null;
@@ -150,11 +210,14 @@ export const useSignIn = () => {
 
             // DEBUG MODE: If false, bypass /me error and allow login
             if (!DEBUG_ENABLE_ME_CHECK) {
-              console.warn("🔧 DEBUG: /me failed but bypassing error. Allowing login with basic data.");
+              console.warn(
+                "🔧 DEBUG: /me failed but bypassing error. Allowing login with basic data."
+              );
 
               // Store token without profile
               try {
-                if (userData.token) localStorage.setItem("token", userData.token);
+                if (userData.token)
+                  localStorage.setItem("token", userData.token);
                 if (userData.refresh_token)
                   localStorage.setItem("refresh_token", userData.refresh_token);
               } catch (storageErr) {
@@ -177,6 +240,11 @@ export const useSignIn = () => {
             // Clear the token since we can't get user profile
             localStorage.removeItem("token");
             localStorage.removeItem("refresh_token");
+            localStorage.removeItem("me");
+
+            // Clear user store
+            const { clearUser } = useAuthStore.getState();
+            clearUser();
 
             // Fixed error message for /me failure
             const errorMsg =

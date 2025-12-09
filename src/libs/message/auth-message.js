@@ -112,14 +112,16 @@ export const AUTH_MESSAGES = {
         "Tài khoản tạm thời bị khóa do nhiều lần đăng nhập thất bại!",
       USER_ALREADY_EXISTS:
         "Tài khoản đã tồn tại. Email hoặc số điện thoại này đã được đăng ký.",
-      ALREADY_OCR_DONE:
-        "Bạn đã hoàn thành xác minh CCCD. Không cần làm lại.",
+      ALREADY_OCR_DONE: "Bạn đã hoàn thành xác minh CCCD. Không cần làm lại.",
       EXTERNAL_API_ERROR: "Lỗi khi xử lý eKYC. Vui lòng thử lại sau.",
-      INTERNAL_ERROR:
-        "Lỗi hệ thống. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
+      INTERNAL_ERROR: "Lỗi hệ thống. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
       NOT_IMPLEMENTED: "Tính năng này chưa được phát hành.",
       NOT_FOUND: "Tài khoản không hợp lệ. Vui lòng liên hệ quản trị viên.",
-      PROFILE_NOT_FOUND: "Không tìm thấy thông tin người dùng. Vui lòng liên hệ quản trị viên.",
+      PROFILE_NOT_FOUND:
+        "Không tìm thấy thông tin người dùng. Vui lòng liên hệ quản trị viên.",
+      // Generic access denied message - does not reveal specific reason for security
+      ACCESS_DENIED:
+        "Tài khoản không đủ điều kiện để truy cập hệ thống. Vui lòng liên hệ quản trị viên.",
 
       // Account status errors
       ACCOUNT_NOT_VERIFIED:
@@ -153,10 +155,8 @@ export const AUTH_MESSAGES = {
         "Email từ {provider} không khớp với tài khoản hiện tại!",
 
       // Network errors
-      NETWORK_ERROR:
-        "Không có kết nối internet. Vui lòng kiểm tra và thử lại.",
-      UNKNOWN_ERROR:
-        "Có lỗi xảy ra. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
+      NETWORK_ERROR: "Không có kết nối internet. Vui lòng kiểm tra và thử lại.",
+      UNKNOWN_ERROR: "Có lỗi xảy ra. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
     },
 
     VALIDATION: {
@@ -339,11 +339,7 @@ const ERROR_MESSAGE_PATTERNS = {
     code: "PASSWORD_INVALID",
   },
   password_incorrect: {
-    patterns: [
-      "invalid password",
-      "password incorrect",
-      "mật khẩu không đúng",
-    ],
+    patterns: ["invalid password", "password incorrect", "mật khẩu không đúng"],
     code: "INVALID_CREDENTIALS",
   },
   // CCCD patterns
@@ -468,8 +464,7 @@ export const mapBackendError = (error) => {
   // Default fallback
   return {
     code: "UNKNOWN_ERROR",
-    message:
-      errorMessage || AUTH_MESSAGES.SIGNIN.ERROR.UNKNOWN_ERROR,
+    message: errorMessage || AUTH_MESSAGES.SIGNIN.ERROR.UNKNOWN_ERROR,
     originalMessage: errorMessage,
   };
 };

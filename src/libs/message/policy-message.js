@@ -58,6 +58,8 @@ export const POLICY_MESSAGES = {
         "Ngày bắt đầu hiệu lực phải trước ngày kết thúc!",
       ENROLLMENT_END_AFTER_VALID_FROM:
         "Ngày kết thúc đăng ký phải trước hoặc bằng ngày bắt đầu hiệu lực!",
+      INSURANCE_VALID_FROM_BEFORE_ENROLLMENT_START:
+        "Ngày bắt đầu hiệu lực phải sau hoặc bằng ngày bắt đầu đăng ký!",
 
       // Cancel rate validation
       CANCEL_PREMIUM_RATE_INVALID: "Tỷ lệ phí hủy phải từ 0 đến 1 (0% - 100%)!",

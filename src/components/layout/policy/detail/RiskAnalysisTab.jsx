@@ -122,9 +122,6 @@ export default function RiskAnalysisTab({
               size="small"
               labelStyle={{ fontWeight: 500 }}
             >
-              <Descriptions.Item label="Mã hợp đồng">
-                <Text code>{riskAnalysis.registered_policy_id}</Text>
-              </Descriptions.Item>
               <Descriptions.Item label="Số lượng đánh giá">
                 <Tag color={riskAnalysis.count > 0 ? "blue" : "orange"} style={{ fontSize: '14px', padding: '4px 12px' }}>
                   {riskAnalysis.count} đánh giá

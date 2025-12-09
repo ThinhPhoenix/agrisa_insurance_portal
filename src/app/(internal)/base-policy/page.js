@@ -8,7 +8,6 @@ import { useFilterableList } from "@/services/hooks/common";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
-  DownloadOutlined,
   EyeOutlined,
   FileTextOutlined,
   FilterOutlined,
@@ -151,12 +150,18 @@ export default function PolicyPage() {
     },
   });
 
-  // Calculate summary stats - use policyCounts from API and calculate average from data
+  // Calculate summary stats
+  // Total = API total + draft list count (to include draft policies)
+  // Draft = draft list count
+  const draftCount = filteredData.filter(
+    (item) => item.status === "draft"
+  ).length;
+
   const summaryStats = {
-    totalPolicies: policyCounts.total,
-    draftPolicies: policyCounts.draft,
-    activePoliciesCount: policyCounts.active,
-    archivedPolicies: policyCounts.archived,
+    totalPolicies: (policyCounts.total || 0) + draftCount,
+    draftPolicies: draftCount,
+    activePoliciesCount: policyCounts.active || 0,
+    archivedPolicies: policyCounts.archived || 0,
     avgPremiumRate:
       allPoliciesRaw.length > 0
         ? (
@@ -371,10 +376,10 @@ export default function PolicyPage() {
             <div>
               <Title level={2} className="policy-title">
                 <SafetyOutlined className="policy-icon" />
-                Quản lý Chính sách Bảo hiểm
+                Quản lý hợp đồng mẫu
               </Title>
               <Text type="secondary" className="policy-subtitle">
-                Quản lý các chính sách bảo hiểm nông nghiệp
+                Quản lý các hợp đồng mẫu bảo hiểm nông nghiệp
               </Text>
             </div>
           </div>
@@ -390,7 +395,7 @@ export default function PolicyPage() {
                   {summaryStats.totalPolicies}
                 </div>
                 <div className="policy-summary-label-compact">
-                  Tổng số chính sách
+                  Tổng số hợp đồng mẫu
                 </div>
               </div>
             </div>
@@ -472,8 +477,8 @@ export default function PolicyPage() {
                   Tạo mới
                 </Button>
               </Link>
-              <Button icon={<DownloadOutlined />}>Nhập excel</Button>
-              <Button icon={<DownloadOutlined />}>Xuất excel</Button>
+              {/* <Button icon={<DownloadOutlined />}>Nhập excel</Button>
+              <Button icon={<DownloadOutlined />}>Xuất excel</Button> */}
               <SelectedColumn
                 columns={columns}
                 visibleColumns={visibleColumns}
@@ -490,7 +495,7 @@ export default function PolicyPage() {
               pagination={{
                 ...paginationConfig,
                 showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} của ${total} chính sách`,
+                  `${range[0]}-${range[1]} của ${total} hợp đồng mẫu`,
               }}
             />
           </div>

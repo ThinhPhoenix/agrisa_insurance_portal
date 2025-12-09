@@ -314,14 +314,14 @@ const FAQTab = () => {
                             header={
                                 <Space>
                                     <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                                    <Text strong>Policy (Chính sách bảo hiểm) là gì?</Text>
+                                    <Text strong>Hợp đồng mẫu là gì?</Text>
                                 </Space>
                             }
                             key="1"
                         >
                             <Paragraph>
-                                <Text strong>Policy</Text> (tiếng Việt: Chính sách bảo hiểm) là một bản hợp đồng điện tử
-                                quy định các điều khoản bảo hiểm cho cây trồng. Mỗi policy bao gồm:
+                                <Text strong>Hợp đồng mẫu</Text> (Base Policy) là một bản hợp đồng điện tử
+                                quy định các điều khoản bảo hiểm cho cây trồng. Mỗi hợp đồng mẫu bao gồm:
                             </Paragraph>
                             <ul>
                                 <li>
@@ -347,13 +347,13 @@ const FAQTab = () => {
                             header={
                                 <Space>
                                     <FileTextOutlined style={{ color: '#52c41a' }} />
-                                    <Text strong>Quy trình tạo Policy bao gồm những bước nào?</Text>
+                                    <Text strong>Quy trình tạo hợp đồng mẫu bao gồm những bước nào?</Text>
                                 </Space>
                             }
                             key="2"
                         >
                             <Paragraph>
-                                Quy trình tạo policy được chia thành <Text strong>4 bước chính</Text>:
+                                Quy trình tạo hợp đồng mẫu được chia thành <Text strong>4 bước chính</Text>:
                             </Paragraph>
                             <ol>
                                 <li>
@@ -366,7 +366,7 @@ const FAQTab = () => {
                                     <Text strong>Tài liệu & Trường thông tin:</Text> Upload mẫu hợp đồng PDF và map các trường dữ liệu
                                 </li>
                                 <li>
-                                    <Text strong>Xem lại & Tạo:</Text> Kiểm tra toàn bộ thông tin và gửi tạo policy
+                                    <Text strong>Xem lại & Tạo:</Text> Kiểm tra toàn bộ thông tin và gửi tạo hợp đồng mẫu
                                 </li>
                             </ol>
                         </Panel>
@@ -491,7 +491,7 @@ const FAQTab = () => {
                             key="5"
                         >
                             <Paragraph>
-                                <Text strong>Trigger (Điều kiện kích hoạt)</Text> là bộ quy tắc xác định khi nào policy sẽ chi trả bảo hiểm.
+                                <Text strong>Trigger (Điều kiện kích hoạt)</Text> là bộ quy tắc xác định khi nào hợp đồng mẫu sẽ chi trả bảo hiểm.
                                 Trigger bao gồm:
                             </Paragraph>
 
@@ -553,7 +553,7 @@ const FAQTab = () => {
                             </ul>
                             <Paragraph>
                                 → Kết quả: Nếu lượng mưa 7 ngày {'<'} 10mm <Text strong>HOẶC</Text> nhiệt độ 3 ngày {'>'} 38°C
-                                → Policy sẽ kích hoạt và chi trả bảo hiểm.
+                                → Hợp đồng mẫu sẽ kích hoạt và chi trả bảo hiểm.
                             </Paragraph>
                         </Panel>
 
@@ -609,7 +609,7 @@ const FAQTab = () => {
                             <Paragraph>
                                 <Text type="secondary">
                                     Lưu ý: Chi phí ước tính hiển thị trên giao diện chỉ mang tính tham khảo, chi phí thực tế sẽ được
-                                    tính khi policy được kích hoạt.
+                                    tính khi hợp đồng mẫu được kích hoạt.
                                 </Text>
                             </Paragraph>
                         </Panel>
@@ -1065,7 +1065,7 @@ const FAQTab = () => {
                             <ul>
                                 <li>Mặc định, Data Quality được set là <Tag color="green">good</Tag> nếu không chọn</li>
                                 <li>Nên chọn chất lượng phù hợp với thực tế để tránh tranh chấp sau này</li>
-                                <li>Policy với nhiều điều kiện <Tag color="red">poor</Tag> có thể bị từ chối phê duyệt</li>
+                                <li>Hợp đồng mẫu với nhiều điều kiện <Tag color="red">poor</Tag> có thể bị từ chối phê duyệt</li>
                                 <li>Data Quality hiển thị trong bảng điều kiện để dễ theo dõi</li>
                             </ul>
                         </Panel>
@@ -1075,7 +1075,7 @@ const FAQTab = () => {
                             header={
                                 <Space>
                                     <InfoCircleOutlined style={{ color: '#f5222d' }} />
-                                    <Text strong>Những lưu ý quan trọng khi tạo Policy?</Text>
+                                    <Text strong>Những lưu ý quan trọng khi tạo hợp đồng mẫu?</Text>
                                 </Space>
                             }
                             key="7"
@@ -1101,7 +1101,7 @@ const FAQTab = () => {
                                     Đây là các hệ số nhân nên phải dương.
                                 </li>
                                 <li>
-                                    <Text strong>Nguồn dữ liệu:</Text> Mỗi nguồn chỉ được chọn 1 lần trong cùng một policy.
+                                    <Text strong>Nguồn dữ liệu:</Text> Mỗi nguồn chỉ được chọn 1 lần trong cùng một hợp đồng mẫu.
                                     Hệ thống sẽ tự động loại bỏ các nguồn đã chọn khỏi danh sách.
                                 </li>
                             </ul>
@@ -1124,8 +1124,8 @@ const FAQTab = () => {
                             </Paragraph>
                             <ul>
                                 <li>Nên nhập đầy đủ mô tả sản phẩm để người dùng dễ hiểu</li>
-                                <li>Kiểm tra kỹ các công thức tính toán trước khi tạo policy</li>
-                                <li>Test policy với nhiều kịch bản khác nhau để đảm bảo hoạt động đúng</li>
+                                <li>Kiểm tra kỹ các công thức tính toán trước khi tạo hợp đồng mẫu</li>
+                                <li>Kiểm tra hợp đồng mẫu với nhiều kịch bản khác nhau để đảm bảo hoạt động đúng</li>
                                 <li>Sử dụng mã sản phẩm dễ nhớ và có ý nghĩa (VD: RICE_WINTER_2025)</li>
                             </ul>
                         </Panel>

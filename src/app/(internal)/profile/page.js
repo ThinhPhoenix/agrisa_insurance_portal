@@ -1,10 +1,14 @@
 "use client";
-import { useGetPartnerProfile } from "@/services/hooks/profile/use-profile";
+import {
+  useAccountProfile,
+  useGetPartnerProfile,
+} from "@/services/hooks/profile/use-profile";
 import { useAuthStore } from "@/stores/auth-store";
 import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  EditOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
   GlobalOutlined,
@@ -14,24 +18,431 @@ import {
   TeamOutlined,
 } from "@ant-design/icons";
 import {
+  Button,
   Card,
   Col,
   Divider,
+  Form,
   Image,
+  Input,
   message,
+  Modal,
   Rate,
   Row,
   Space,
   Spin,
+  Tabs,
   Tag,
   Typography,
 } from "antd";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./profile.css";
 
 const { Title, Text, Paragraph } = Typography;
 
-export default function ProfilePage() {
+// Account Edit Modal Component
+function AccountEditModal({ visible, onClose, data, onSave, loading }) {
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (visible && data) {
+      const init = { ...data };
+      if (init.date_of_birth) {
+        try {
+          init.date_of_birth = new Date(init.date_of_birth)
+            .toISOString()
+            .slice(0, 10);
+        } catch (e) {}
+      }
+      form.setFieldsValue(init);
+    }
+  }, [visible, data, form]);
+
+  const handleSubmit = async (values) => {
+    const payload = { ...values };
+    if (payload.date_of_birth) {
+      try {
+        const d = new Date(payload.date_of_birth);
+        payload.date_of_birth = d.toISOString();
+      } catch (e) {}
+    }
+    const result = await onSave(payload);
+    if (result.success) {
+      message.success("Cập nhật thông tin tài khoản thành công");
+      onClose();
+    } else {
+      message.error(result.message || "Cập nhật không thành công");
+    }
+  };
+
+  return (
+    <Modal
+      title="Chỉnh sửa thông tin tài khoản"
+      open={visible}
+      onCancel={onClose}
+      width={800}
+      footer={null}
+    >
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Row gutter={16}>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="full_name"
+              label="Họ và tên"
+              rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+            >
+              <Input placeholder="Họ và tên" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="date_of_birth" label="Ngày sinh">
+              <Input type="date" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="gender" label="Giới tính">
+              <Input placeholder="M/F" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="nationality" label="Quốc tịch">
+              <Input placeholder="VN" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="primary_phone"
+              label="Số điện thoại chính"
+              rules={[
+                { required: true, message: "Vui lòng nhập số điện thoại" },
+              ]}
+            >
+              <Input placeholder="0867801057" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="alternate_phone" label="Số điện thoại phụ">
+              <Input placeholder="0867801058" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="permanent_address" label="Địa chỉ thường trú">
+              <Input placeholder="Địa chỉ" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="current_address" label="Địa chỉ hiện tại">
+              <Input placeholder="Địa chỉ" />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={8}>
+            <Form.Item name="province_code" label="Mã tỉnh">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={8}>
+            <Form.Item name="district_code" label="Mã huyện">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={8}>
+            <Form.Item name="ward_code" label="Mã xã">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="postal_code" label="Mã bưu chính">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="province_name" label="Tỉnh/Thành">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="district_name" label="Quận/Huyện">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="ward_name" label="Phường/Xã">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="account_number" label="Số tài khoản">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="account_name" label="Tên chủ tài khoản">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} sm={12}>
+            <Form.Item name="bank_code" label="Mã ngân hàng">
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24}>
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={loading}>
+                  Lưu thay đổi
+                </Button>
+                <Button onClick={onClose}>Hủy</Button>
+              </Space>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form>
+    </Modal>
+  );
+}
+
+// Account Info Tab Content
+function AccountInfoTab() {
+  const [modalVisible, setModalVisible] = useState(false);
+  const {
+    getAccountProfile,
+    updateAccountProfile,
+    isLoading: accountLoading,
+    data: accountData,
+  } = useAccountProfile();
+
+  useEffect(() => {
+    getAccountProfile();
+  }, []);
+
+  if (accountLoading && !accountData) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 400,
+        }}
+      >
+        <Spin tip="Đang tải thông tin tài khoản..." />
+      </div>
+    );
+  }
+
+  if (!accountData) {
+    return <Text type="danger">Không thể tải thông tin tài khoản</Text>;
+  }
+
+  // Helper function to render icon-based field
+  const renderField = (label, value, icon) => (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+      {icon}
+      <div style={{ flex: 1 }}>
+        <Text type="secondary" style={{ fontSize: 12, color: "#999" }}>
+          {label}
+        </Text>
+        <div
+          style={{ fontSize: 16, fontWeight: 500, marginTop: 4, color: "#000" }}
+        >
+          {value || "—"}
+        </div>
+      </div>
+    </div>
+  );
+
+  const primaryColor = "#18573f";
+  const iconStyle = {
+    fontSize: 20,
+    color: primaryColor,
+    flexShrink: 0,
+    marginTop: 2,
+  };
+
+  return (
+    <>
+      <Card>
+        <Row gutter={[16, 24]}>
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Họ và tên",
+              accountData.full_name,
+              <FileTextOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Ngày sinh",
+              accountData.date_of_birth
+                ? new Date(accountData.date_of_birth).toLocaleDateString(
+                    "vi-VN"
+                  )
+                : null,
+              <CalendarOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Giới tính",
+              accountData.gender === "M"
+                ? "Nam"
+                : accountData.gender === "F"
+                ? "Nữ"
+                : accountData.gender,
+              <TeamOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Quốc tịch",
+              accountData.nationality,
+              <GlobalOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Số điện thoại chính",
+              accountData.primary_phone,
+              <PhoneOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Số điện thoại phụ",
+              accountData.alternate_phone,
+              <PhoneOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Email",
+              accountData.email,
+              <MailOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Địa chỉ thường trú",
+              accountData.permanent_address,
+              <EnvironmentOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Địa chỉ hiện tại",
+              accountData.current_address,
+              <EnvironmentOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Tỉnh/Thành",
+              accountData.province_name,
+              <EnvironmentOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Quận/Huyện",
+              accountData.district_name,
+              <EnvironmentOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Phường/Xã",
+              accountData.ward_name,
+              <EnvironmentOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Mã bưu chính",
+              accountData.postal_code,
+              <FileTextOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Số tài khoản",
+              accountData.account_number,
+              <FileTextOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Tên chủ tài khoản",
+              accountData.account_name,
+              <FileTextOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24} sm={12}>
+            {renderField(
+              "Mã ngân hàng",
+              accountData.bank_code,
+              <FileTextOutlined style={iconStyle} />
+            )}
+          </Col>
+
+          <Col xs={24}>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => setModalVisible(true)}
+            >
+              Chỉnh sửa
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
+      <AccountEditModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        data={accountData}
+        onSave={updateAccountProfile}
+        loading={accountLoading}
+      />
+    </>
+  );
+}
+
+// Company Info Tab Content (View Only)
+// Company Info Tab Content (View Only)
+function CompanyInfoTab() {
   const { user } = useAuthStore();
   const { getPartnerProfile, isLoading, error, data } = useGetPartnerProfile();
 
@@ -73,31 +484,20 @@ export default function ProfilePage() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: "400px",
+          minHeight: 400,
         }}
       >
-        <Spin size="large" tip="Đang tải thông tin đối tác..." />
+        <Spin tip="Đang tải thông tin công ty..." />
       </div>
     );
   }
 
   if (!data) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "400px",
-        }}
-      >
-        <Text type="danger">Không thể tải thông tin đối tác</Text>
-      </div>
-    );
+    return <Text type="danger">Không thể tải thông tin công ty</Text>;
   }
 
   return (
-    <div className="space-y-4">
+    <>
       {/* Cover Photo + Avatar Header */}
       <div
         style={{
@@ -214,7 +614,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Trust Metrics */}
-      <Row gutter={12}>
+      <Row gutter={12} style={{ marginBottom: 24 }}>
         <Col xs={12} sm={6}>
           <Card
             style={{
@@ -224,17 +624,10 @@ export default function ProfilePage() {
             }}
             bodyStyle={{ padding: "16px" }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 8,
-              }}
-            >
-              <CalendarOutlined style={{ fontSize: 20, color: "#1890ff" }} />
+            <CalendarOutlined style={{ fontSize: 20, color: "#1890ff" }} />
+            <div style={{ fontSize: 14, color: "#8c8c8c", marginTop: 8 }}>
+              Kinh nghiệm
             </div>
-            <div style={{ fontSize: 14, color: "#8c8c8c" }}>Kinh nghiệm</div>
             <div
               style={{
                 fontSize: 24,
@@ -675,8 +1068,40 @@ export default function ProfilePage() {
                 : data.company_type}
             </Text>
           </Col>
+
+          <Col xs={24}>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => (window.location.href = "/profile/edit")}
+            >
+              Chỉnh sửa thông tin công ty
+            </Button>
+          </Col>
         </Row>
       </Card>
+    </>
+  );
+}
+
+// Main Profile Page
+export default function ProfilePage() {
+  const tabItems = [
+    {
+      key: "company",
+      label: "Thông tin công ty",
+      children: <CompanyInfoTab />,
+    },
+    {
+      key: "account",
+      label: "Thông tin tài khoản",
+      children: <AccountInfoTab />,
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Tabs defaultActiveKey="company" items={tabItems} />
     </div>
   );
 }

@@ -174,7 +174,13 @@ const useCreatePolicy = () => {
       );
 
       if (response.data.success) {
-        setCategories(response.data.data);
+        if (response.data.data === null) {
+          setCategories([]);
+          setCategoriesError("Không có danh mục dữ liệu nào");
+          message.info("Không có danh mục dữ liệu nào");
+        } else {
+          setCategories(response.data.data);
+        }
       } else {
         throw new Error(response.data.message || "Failed to fetch categories");
       }
@@ -219,18 +225,24 @@ const useCreatePolicy = () => {
       );
 
       if (response.data.success) {
-        const transformedTiers = response.data.data.map((tier) => ({
-          id: tier.id,
-          value: tier.tier_name.toLowerCase(),
-          label: tier.tier_name,
-          description: `${tier.tier_name} Tier`,
-          tierMultiplier: tier.data_tier_multiplier,
-          data_tier_category_id: tier.data_tier_category_id,
-          tier_level: tier.tier_level,
-          tier_name: tier.tier_name,
-          data_tier_multiplier: tier.data_tier_multiplier,
-        }));
-        setTiers(transformedTiers);
+        if (response.data.data === null) {
+          setTiers([]);
+          setTiersError("Không có gói dịch vụ nào cho danh mục này");
+          message.info("Không có gói dịch vụ nào cho danh mục này");
+        } else {
+          const transformedTiers = response.data.data.map((tier) => ({
+            id: tier.id,
+            value: tier.tier_name.toLowerCase(),
+            label: tier.tier_name,
+            description: `${tier.tier_name} Tier`,
+            tierMultiplier: tier.data_tier_multiplier,
+            data_tier_category_id: tier.data_tier_category_id,
+            tier_level: tier.tier_level,
+            tier_name: tier.tier_name,
+            data_tier_multiplier: tier.data_tier_multiplier,
+          }));
+          setTiers(transformedTiers);
+        }
       } else {
         throw new Error(response.data.message || "Failed to fetch tiers");
       }
@@ -276,28 +288,34 @@ const useCreatePolicy = () => {
       );
 
       if (response.data.success) {
-        const transformedDataSources = response.data.data.map((source) => ({
-          id:
-            source.id ||
-            source.data_source_id ||
-            `${source.data_source}_${source.parameter_name}`,
-          label: source.display_name_vi || source.parameter_name,
-          parameterName: source.parameter_name,
-          unit: source.unit,
-          description: source.description_vi || source.parameter_name,
-          baseCost: source.base_cost,
-          data_tier_id: source.data_tier_id,
-          data_provider: source.data_provider,
-          parameter_type: source.parameter_type,
-          min_value: source.min_value,
-          max_value: source.max_value,
-          update_frequency: source.update_frequency,
-          spatial_resolution: source.spatial_resolution,
-          accuracy_rating: source.accuracy_rating,
-          api_endpoint: source.api_endpoint,
-          ...source,
-        }));
-        setDataSources(transformedDataSources);
+        if (response.data.data === null) {
+          setDataSources([]);
+          setDataSourcesError("Không có nguồn dữ liệu nào cho gói này");
+          message.info("Không có nguồn dữ liệu nào cho gói này");
+        } else {
+          const transformedDataSources = response.data.data.map((source) => ({
+            id:
+              source.id ||
+              source.data_source_id ||
+              `${source.data_source}_${source.parameter_name}`,
+            label: source.display_name_vi || source.parameter_name,
+            parameterName: source.parameter_name,
+            unit: source.unit,
+            description: source.description_vi || source.parameter_name,
+            baseCost: source.base_cost,
+            data_tier_id: source.data_tier_id,
+            data_provider: source.data_provider,
+            parameter_type: source.parameter_type,
+            min_value: source.min_value,
+            max_value: source.max_value,
+            update_frequency: source.update_frequency,
+            spatial_resolution: source.spatial_resolution,
+            accuracy_rating: source.accuracy_rating,
+            api_endpoint: source.api_endpoint,
+            ...source,
+          }));
+          setDataSources(transformedDataSources);
+        }
       } else {
         throw new Error(
           response.data.message || "Failed to fetch data sources"
@@ -334,7 +352,6 @@ const useCreatePolicy = () => {
     const requiredFields = [
       "productName",
       "productCode",
-      "coverageCurrency",
       "coverageDurationDays",
       "isPerHectare",
       "premiumBaseRate",

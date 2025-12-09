@@ -367,7 +367,7 @@ const PolicyDetailPage = ({ params }) => {
       : POLICY_MESSAGES.BASE_POLICY.WARNING.CANCEL_WITH_COMPENSATION_CONFIRM;
 
     Modal.confirm({
-      title: "Xác nhận huỷ hợp đồng gốc",
+      title: "Xác nhận huỷ hợp đồng mẫu",
       content: cancelMessage,
       okText: "Tiếp tục",
       cancelText: "Hủy",
@@ -512,7 +512,7 @@ const PolicyDetailPage = ({ params }) => {
                 onClick={() => setCancelModalVisible(true)}
                 loading={cancelLoading}
               >
-                Huỷ hợp đồng gốc
+                Huỷ hợp đồng mẫu
               </Button>
             </Col>
           )}
@@ -574,7 +574,7 @@ const PolicyDetailPage = ({ params }) => {
 
       {/* Cancel Policy Modal */}
       <Modal
-        title="Huỷ hợp đồng gốc"
+        title="Huỷ hợp đồng mẫu"
         open={cancelModalVisible}
         onOk={handleCancelPolicy}
         onCancel={() => setCancelModalVisible(false)}

@@ -3,17 +3,16 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
-import { useTransaction } from "@/services/hooks/transaction-history/use-transaction";
+import { usePayout } from "@/services/hooks/transaction-history/use-payout";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  DownloadOutlined,
   EyeOutlined,
   FilterOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Collapse, Layout, Space, Tag, Typography } from "antd";
+import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import { useState } from "react";
 import "./transaction-history.css";
 
@@ -39,20 +38,23 @@ const VNDIcon = ({ style }) => (
 export default function TransactionHistoryPage() {
   const {
     filteredData,
+    loading,
+    error,
+    pagination,
     filterOptions,
     summaryStats,
     searchText,
     filters,
     handleFormSubmit,
     handleClearFilters,
-  } = useTransaction();
+    handlePageChange,
+  } = usePayout();
 
   // Visible columns state - action column is always visible
   const [visibleColumns, setVisibleColumns] = useState([
-    "invoice_id",
-    "recipient_name",
-    "date",
-    "location",
+    "id",
+    "description",
+    "created_at",
     "amount",
     "status",
     "action", // Always visible
@@ -64,7 +66,8 @@ export default function TransactionHistoryPage() {
       name: "search",
       label: "Tìm kiếm",
       type: "input",
-      placeholder: "Tìm kiếm theo mã hóa đơn, tên người nhận, địa điểm...",
+      placeholder:
+        "Tìm kiếm theo mã chi trả, mô tả, số tài khoản, mã ngân hàng...",
       value: searchText,
     },
     {
@@ -72,22 +75,8 @@ export default function TransactionHistoryPage() {
       label: "Trạng thái",
       type: "combobox",
       placeholder: "Chọn trạng thái",
-      options: filterOptions.statuses.map((status) => ({
-        label: status,
-        value: status,
-      })),
+      options: filterOptions.statuses,
       value: filters.status,
-    },
-    {
-      name: "location",
-      label: "Địa điểm",
-      type: "combobox",
-      placeholder: "Chọn địa điểm",
-      options: filterOptions.locations.map((location) => ({
-        label: location,
-        value: location,
-      })),
-      value: filters.location,
     },
     {
       name: "minAmount",
@@ -134,12 +123,14 @@ export default function TransactionHistoryPage() {
   ];
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "Completed":
+    if (!status) return "default";
+    const code = status.code || status;
+    switch (code) {
+      case "completed":
         return "green";
-      case "Pending":
+      case "pending":
         return "orange";
-      case "Cancelled":
+      case "cancelled":
         return "red";
       default:
         return "default";
@@ -147,71 +138,64 @@ export default function TransactionHistoryPage() {
   };
 
   const getStatusText = (status) => {
-    switch (status) {
-      case "Completed":
-        return "Hoàn thành";
-      case "Pending":
-        return "Đang xử lý";
-      case "Cancelled":
-        return "Đã hủy";
-      default:
-        return status;
-    }
+    if (!status) return "—";
+    return status.label || status;
   };
 
   const columns = [
     {
-      title: "Mã hóa đơn",
-      dataIndex: "invoice_id",
-      key: "invoice_id",
-      sorter: (a, b) => a.invoice_id.localeCompare(b.invoice_id),
+      title: "Mã chi trả",
+      dataIndex: "id",
+      key: "id",
+      sorter: (a, b) => (a.id || "").localeCompare(b.id || ""),
       render: (text) => <span className="transaction-id">{text}</span>,
     },
     {
-      title: "Người nhận",
-      dataIndex: "recipient_name",
-      key: "recipient_name",
-      sorter: (a, b) => a.recipient_name.localeCompare(b.recipient_name),
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      sorter: (a, b) =>
+        (a.description || "").localeCompare(b.description || ""),
       render: (text) => <Text strong>{text}</Text>,
     },
     {
       title: "Ngày giao dịch",
-      dataIndex: "date",
-      key: "date",
-      sorter: (a, b) => new Date(a.date) - new Date(b.date),
-      render: (date) => <span className="transaction-date">{date}</span>,
-    },
-    {
-      title: "Địa điểm",
-      dataIndex: "location",
-      key: "location",
-      filters: filterOptions.locations.map((location) => ({
-        text: location,
-        value: location,
-      })),
-      onFilter: (value, record) => record.location === value,
-      render: (location) => (
-        <span className="transaction-location">{location}</span>
+      dataIndex: "created_at",
+      key: "created_at",
+      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
+      render: (date) => (
+        <span className="transaction-date">
+          {date
+            ? new Date(date).toLocaleDateString("vi-VN", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              })
+            : "—"}
+        </span>
       ),
     },
     {
       title: "Số tiền",
-      dataIndex: "amount_formatted",
+      dataIndex: "amount",
       key: "amount",
-      sorter: (a, b) => a.amount - b.amount,
+      sorter: (a, b) => (a.amount || 0) - (b.amount || 0),
       render: (amount, record) => (
         <span
           className="transaction-amount"
           style={{
             color:
-              record.status === "Completed"
+              record.status?.code === "completed"
                 ? "#52c41a"
-                : record.status === "Pending"
+                : record.status?.code === "pending"
                 ? "#faad14"
                 : "#ff4d4f",
           }}
         >
-          {amount}
+          {new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND",
+          }).format(amount || 0)}
         </span>
       ),
     },
@@ -219,28 +203,27 @@ export default function TransactionHistoryPage() {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      filters: filterOptions.statuses.map((status) => ({
-        text: status,
-        value: status,
-      })),
-      onFilter: (value, record) => getStatusText(record.status) === value,
-      render: (status) => (
-        <Tag
-          color={getStatusColor(status)}
-          className="transaction-status-tag"
-          icon={
-            status === "Completed" ? (
-              <CheckCircleOutlined />
-            ) : status === "Pending" ? (
-              <ClockCircleOutlined />
-            ) : (
-              <CloseCircleOutlined />
-            )
-          }
-        >
-          {getStatusText(status)}
-        </Tag>
-      ),
+      render: (status) => {
+        const statusCode = status?.code || status;
+        const statusLabel = status?.label || status;
+        const icon =
+          statusCode === "completed" ? (
+            <CheckCircleOutlined />
+          ) : statusCode === "pending" ? (
+            <ClockCircleOutlined />
+          ) : (
+            <CloseCircleOutlined />
+          );
+        return (
+          <Tag
+            color={getStatusColor(status)}
+            className="transaction-status-tag"
+            icon={icon}
+          >
+            {statusLabel}
+          </Tag>
+        );
+      },
     },
     {
       title: "Thao tác",
@@ -262,19 +245,6 @@ export default function TransactionHistoryPage() {
           >
             Xem
           </Button>
-          <Button
-            type="default"
-            size="small"
-            icon={<DownloadOutlined />}
-            className="transaction-action-btn"
-            style={{
-              background: "#f6ffed",
-              borderColor: "#b7eb8f",
-              color: "#52c41a",
-            }}
-          >
-            Tải
-          </Button>
         </Space>
       ),
     },
@@ -282,130 +252,148 @@ export default function TransactionHistoryPage() {
 
   return (
     <Layout.Content className="transaction-content">
-      <Space direction="vertical" size="large" className="transaction-space">
-        {/* Header */}
-        <Space direction="vertical" className="transaction-space">
-          <div className="transaction-header">
-            <div>
-              <Title level={3} className="transaction-title">
-                Lịch sử giao dịch
-              </Title>
-              <Typography.Text type="secondary">
-                Tổng số: <Text strong>{summaryStats.total}</Text> giao dịch
-              </Typography.Text>
+      <Spin spinning={loading} tip="Đang tải danh sách chi trả...">
+        <Space direction="vertical" size="large" className="transaction-space">
+          {/* Header */}
+          <Space direction="vertical" className="transaction-space">
+            <div className="transaction-header">
+              <div>
+                <Title level={3} className="transaction-title">
+                  Lịch sử chi trả
+                </Title>
+                <Typography.Text type="secondary">
+                  Tổng số: <Text strong>{summaryStats.total}</Text> chi trả
+                </Typography.Text>
+              </div>
+            </div>
+          </Space>
+
+          {/* Summary Cards */}
+          <div className="transaction-summary-row">
+            <div className="transaction-summary-card-compact">
+              <div className="transaction-summary-icon total">₫</div>
+              <div className="transaction-summary-content">
+                <div className="transaction-summary-value-compact">
+                  {summaryStats.totalAmountFormatted}
+                </div>
+                <div className="transaction-summary-label-compact">
+                  Tổng giá trị chi trả
+                </div>
+              </div>
+            </div>
+            <div className="transaction-summary-card-compact">
+              <div className="transaction-summary-icon completed">
+                <CheckCircleOutlined style={{ fontSize: "16px" }} />
+              </div>
+              <div className="transaction-summary-content">
+                <div className="transaction-summary-value-compact">
+                  {summaryStats.completed}
+                </div>
+                <div className="transaction-summary-label-compact">
+                  Đã chi trả
+                </div>
+              </div>
+            </div>
+            <div className="transaction-summary-card-compact">
+              <div className="transaction-summary-icon pending">
+                <ClockCircleOutlined style={{ fontSize: "16px" }} />
+              </div>
+              <div className="transaction-summary-content">
+                <div className="transaction-summary-value-compact">
+                  {summaryStats.pending}
+                </div>
+                <div className="transaction-summary-label-compact">
+                  Đang xử lý
+                </div>
+              </div>
+            </div>
+            <div className="transaction-summary-card-compact">
+              <div className="transaction-summary-icon cancelled">
+                <CloseCircleOutlined style={{ fontSize: "16px" }} />
+              </div>
+              <div className="transaction-summary-content">
+                <div className="transaction-summary-value-compact">
+                  {summaryStats.cancelled}
+                </div>
+                <div className="transaction-summary-label-compact">Đã hủy</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <Collapse
+            size="small"
+            className="transaction-filters"
+            items={[
+              {
+                key: "1",
+                label: (
+                  <Space>
+                    <SearchOutlined />
+                    Bộ lọc & Tìm kiếm
+                  </Space>
+                ),
+                children: (
+                  <div className="transaction-filter-form">
+                    <CustomForm
+                      fields={searchFields}
+                      gridColumns="2fr 1fr 1fr 1fr 1fr 1fr"
+                      gap="12px"
+                      onSubmit={handleFormSubmit}
+                    />
+                  </div>
+                ),
+              },
+            ]}
+          />
+
+          {/* Error message */}
+          {error && (
+            <div
+              style={{
+                padding: "12px 16px",
+                backgroundColor: "#fff7f6",
+                border: "1px solid #ffccc7",
+                borderRadius: "4px",
+                color: "#ff4d4f",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Table */}
+          <div className="transaction-overflow">
+            <div className="flex justify-end items-center gap-2 mb-2">
+              <SelectedColumn
+                columns={columns}
+                visibleColumns={visibleColumns}
+                setVisibleColumns={setVisibleColumns}
+              />
+            </div>
+            <div className="transaction-table-wrapper">
+              <CustomTable
+                dataSource={filteredData}
+                columns={columns}
+                visibleColumns={visibleColumns}
+                rowKey="id"
+                scroll={{ x: true }}
+                size="middle"
+                pagination={{
+                  current: pagination.page,
+                  pageSize: pagination.limit,
+                  total: pagination.total_items,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} trong ${total} chi trả`,
+                  onChange: (page, limit) => handlePageChange(page, limit),
+                }}
+              />
             </div>
           </div>
         </Space>
-
-        {/* Summary Cards */}
-        <div className="transaction-summary-row">
-          <div className="transaction-summary-card-compact">
-            <div className="transaction-summary-icon total">₫</div>
-            <div className="transaction-summary-content">
-              <div className="transaction-summary-value-compact">
-                {summaryStats.totalAmountFormatted}
-              </div>
-              <div className="transaction-summary-label-compact">
-                Tổng giá trị giao dịch
-              </div>
-            </div>
-          </div>
-          <div className="transaction-summary-card-compact">
-            <div className="transaction-summary-icon completed">
-              <CheckCircleOutlined style={{ fontSize: "16px" }} />
-            </div>
-            <div className="transaction-summary-content">
-              <div className="transaction-summary-value-compact">
-                {summaryStats.completed}
-              </div>
-              <div className="transaction-summary-label-compact">
-                Giao dịch hoàn thành
-              </div>
-            </div>
-          </div>
-          <div className="transaction-summary-card-compact">
-            <div className="transaction-summary-icon pending">
-              <ClockCircleOutlined style={{ fontSize: "16px" }} />
-            </div>
-            <div className="transaction-summary-content">
-              <div className="transaction-summary-value-compact">
-                {summaryStats.pending}
-              </div>
-              <div className="transaction-summary-label-compact">
-                Giao dịch đang xử lý
-              </div>
-            </div>
-          </div>
-          <div className="transaction-summary-card-compact">
-            <div className="transaction-summary-icon cancelled">
-              <CloseCircleOutlined style={{ fontSize: "16px" }} />
-            </div>
-            <div className="transaction-summary-content">
-              <div className="transaction-summary-value-compact">
-                {summaryStats.cancelled}
-              </div>
-              <div className="transaction-summary-label-compact">
-                Giao dịch đã hủy
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <Collapse
-          size="small"
-          className="transaction-filters"
-          items={[
-            {
-              key: "1",
-              label: (
-                <Space>
-                  <SearchOutlined />
-                  Bộ lọc & Tìm kiếm
-                </Space>
-              ),
-              children: (
-                <div className="transaction-filter-form">
-                  <CustomForm
-                    fields={searchFields}
-                    gridColumns="2fr 1fr 1fr 1fr 1fr 1fr 1fr"
-                    gap="12px"
-                    onSubmit={handleFormSubmit}
-                  />
-                </div>
-              ),
-            },
-          ]}
-        />
-
-        {/* Table */}
-        <div className="transaction-overflow">
-          <div className="flex justify-end items-center gap-2 mb-2">
-            <SelectedColumn
-              columns={columns}
-              visibleColumns={visibleColumns}
-              setVisibleColumns={setVisibleColumns}
-            />
-          </div>
-          <div className="transaction-table-wrapper">
-            <CustomTable
-              dataSource={filteredData}
-              columns={columns}
-              visibleColumns={visibleColumns}
-              rowKey="invoice_id"
-              scroll={{ x: true }}
-              size="middle"
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} trong ${total} giao dịch`,
-              }}
-            />
-          </div>
-        </div>
-      </Space>
+      </Spin>
     </Layout.Content>
   );
 }

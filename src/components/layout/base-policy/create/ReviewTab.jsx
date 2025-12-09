@@ -197,12 +197,12 @@ const ReviewTabComponent = ({
 
     return (
         <div className="review-tab">
-            <Title level={4}>Xem lại & Tạo Policy</Title>
+            <Title level={4}>Xem lại & Tạo Hợp đồng mẫu</Title>
 
             {/* Validation Summary */}
             {validationIssues.length > 0 ? (
                 <Alert
-                    message="Policy chưa sẵn sàng để tạo"
+                    message="Hợp đồng mẫu chưa sẵn sàng để tạo"
                     description={
                         <ul>
                             {validationIssues.map((issue, index) => (
@@ -217,8 +217,8 @@ const ReviewTabComponent = ({
                 />
             ) : (
                 <Alert
-                    message="Policy đã sẵn sàng để tạo"
-                    description="Tất cả thông tin bắt buộc đã được hoàn thành. Bạn có thể tiến hành tạo policy."
+                    message="Hợp đồng mẫu đã sẵn sàng để tạo"
+                    description="Tất cả thông tin bắt buộc đã được hoàn thành. Bạn có thể tiến hành tạo hợp đồng mẫu."
                     type="success"
                     icon={<CheckCircleOutlined />}
                     showIcon
@@ -242,7 +242,6 @@ const ReviewTabComponent = ({
                         <Statistic
                             title="Chi phí Dữ liệu Hàng tháng"
                             value={estimatedCosts.monthlyDataCost}
-                            prefix={<DollarOutlined />}
                             suffix="VND"
                             precision={0}
                         />
@@ -290,9 +289,9 @@ const ReviewTabComponent = ({
                         <Descriptions.Item label="Mã sản phẩm">
                             <Text code>{basicData.productCode || 'Chưa nhập'}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Đối tác bảo hiểm">
+                        {/* <Descriptions.Item label="Đối tác bảo hiểm">
                             {basicData.insuranceProviderId || 'Chưa nhập'}
-                        </Descriptions.Item>
+                        </Descriptions.Item> */}
                         <Descriptions.Item label="Loại cây trồng">
                             {basicData.cropType ? (
                                 <Tag color="green">

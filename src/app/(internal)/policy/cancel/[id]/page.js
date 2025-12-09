@@ -1,12 +1,14 @@
 "use client";
 
 import axiosInstance from "@/libs/axios-instance";
+import { formatUtcDate } from "@/libs/date-utils";
 import { endpoints } from "@/services/endpoints";
-import { useCancelRequestDetail } from "@/services/hooks/policy/use-cancel-request-detail";
+import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
+  FilePdfOutlined,
   FileTextOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
@@ -17,6 +19,7 @@ import {
   Descriptions,
   Divider,
   Form,
+  Image,
   Input,
   InputNumber,
   Layout,
@@ -40,11 +43,19 @@ export default function CancelRequestDetailPage() {
   const router = useRouter();
   const requestId = params.id;
 
-  const { cancelRequest, loading, reviewCancelRequest } =
-    useCancelRequestDetail(requestId);
+  const {
+    allCancelRequests,
+    loading,
+    reviewCancelRequest,
+    resolveDispute,
+    getCancelRequestById,
+  } = useCancelPolicy();
+
+  const cancelRequest = getCancelRequestById(requestId);
 
   const [approveForm] = Form.useForm();
   const [denyForm] = Form.useForm();
+  const [resolveForm] = Form.useForm();
 
   // Related data
   const [policy, setPolicy] = useState(null);
@@ -53,6 +64,8 @@ export default function CancelRequestDetailPage() {
   // Modal states
   const [approveModalVisible, setApproveModalVisible] = useState(false);
   const [denyModalVisible, setDenyModalVisible] = useState(false);
+  const [resolveModalVisible, setResolveModalVisible] = useState(false);
+  const [resolveAction, setResolveAction] = useState(null); // 'approve' or 'keep_active'
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch policy detail when cancelRequest is loaded
@@ -87,6 +100,8 @@ export default function CancelRequestDetailPage() {
         return "green";
       case "denied":
         return "red";
+      case "dispute":
+        return "volcano";
       case "litigation":
         return "purple";
       default:
@@ -103,6 +118,8 @@ export default function CancelRequestDetailPage() {
         return "Đã chấp thuận";
       case "denied":
         return "Bị từ chối";
+      case "dispute":
+        return "Tranh chấp";
       case "litigation":
         return "Tranh chấp pháp lý";
       default:
@@ -169,6 +186,139 @@ export default function CancelRequestDetailPage() {
     }).format(amount);
   };
 
+  // Parse evidence object into array of { description, images }
+  const parseEvidenceToPairs = (evidence) => {
+    if (!evidence) return [];
+
+    // If evidence is already an array, try to normalize each entry
+    if (Array.isArray(evidence)) {
+      return evidence.map((item) => {
+        if (!item) return { description: "", images: [] };
+        if (typeof item === "string") {
+          // string might be url or text
+          if (item.startsWith("http") || item.startsWith("/"))
+            return { description: "", images: [item] };
+          try {
+            const parsed = JSON.parse(item);
+            if (Array.isArray(parsed))
+              return { description: "", images: parsed };
+            if (typeof parsed === "object" && parsed !== null) {
+              return {
+                description: parsed.description || parsed.desc || "",
+                images:
+                  parsed.images ||
+                  parsed.urls ||
+                  (parsed.url ? [parsed.url] : []),
+              };
+            }
+          } catch (e) {
+            return { description: item, images: [] };
+          }
+        }
+        if (typeof item === "object") {
+          return {
+            description: item.description || item.desc || "",
+            images: item.images || item.urls || (item.url ? [item.url] : []),
+          };
+        }
+        return { description: String(item), images: [] };
+      });
+    }
+
+    // If evidence is an object, try to group keys into indexed pairs
+    if (typeof evidence === "object") {
+      // collect indexed groups: key may be like description_0, images-0, etc.
+      const groups = {};
+      const plain = { description: null, images: [] };
+
+      Object.entries(evidence).forEach(([k, v]) => {
+        // detect index suffix
+        const m = k.match(/^(.*?)(?:[_-]?(\d+))?$/);
+        if (!m) return;
+        const base = m[1];
+        const idx = m[2] ?? "0";
+
+        if (!m[2]) {
+          // no index - treat as plain fields (description or images)
+          if (/desc|description|note|value/i.test(base)) {
+            plain.description = typeof v === "string" ? v : JSON.stringify(v);
+          } else if (/image|img|photo|photos|images|url|urls/i.test(base)) {
+            if (Array.isArray(v)) plain.images = plain.images.concat(v);
+            else if (typeof v === "string") plain.images.push(v);
+            else if (typeof v === "object" && v !== null) {
+              if (v.url) plain.images.push(v.url);
+              else if (Array.isArray(v.urls))
+                plain.images = plain.images.concat(v.urls);
+            }
+          } else {
+            // unknown key without index - ignore or append to description
+            if (!plain.description)
+              plain.description = typeof v === "string" ? v : JSON.stringify(v);
+          }
+          return;
+        }
+
+        if (!groups[idx]) groups[idx] = { description: "", images: [] };
+        if (/desc|description|note|value/i.test(base)) {
+          groups[idx].description =
+            typeof v === "string" ? v : JSON.stringify(v);
+        } else if (/image|img|photo|photos|images|url|urls/i.test(base)) {
+          if (Array.isArray(v))
+            groups[idx].images = groups[idx].images.concat(v);
+          else if (typeof v === "string") groups[idx].images.push(v);
+          else if (typeof v === "object" && v !== null) {
+            if (v.url) groups[idx].images.push(v.url);
+            else if (Array.isArray(v.urls))
+              groups[idx].images = groups[idx].images.concat(v.urls);
+          }
+        } else {
+          // fallback: append to description
+          if (!groups[idx].description)
+            groups[idx].description =
+              typeof v === "string" ? v : JSON.stringify(v);
+        }
+      });
+
+      // build result array
+      const result = Object.keys(groups)
+        .sort((a, b) => Number(a) - Number(b))
+        .map((k) => ({
+          description: groups[k].description || "",
+          images: groups[k].images || [],
+        }));
+
+      // if plain has content, prepend it
+      if (
+        (plain.description && plain.description.length) ||
+        (plain.images && plain.images.length)
+      ) {
+        result.unshift({
+          description: plain.description || "",
+          images: plain.images || [],
+        });
+      }
+
+      // If no groups found, try to interpret top-level object as single pair
+      if (result.length === 0) {
+        // possible shape: { description: 'Bip', images: ['url'] }
+        const desc =
+          evidence.description || evidence.desc || evidence.note || null;
+        const imgs =
+          evidence.images ||
+          evidence.urls ||
+          (evidence.url ? [evidence.url] : []);
+        if (desc || (imgs && imgs.length))
+          return [{ description: desc || "", images: imgs || [] }];
+        // fallback: stringify
+        return [{ description: JSON.stringify(evidence), images: [] }];
+      }
+
+      return result;
+    }
+
+    return [];
+  };
+
   // Handle approve
   const handleApprove = () => {
     setApproveModalVisible(true);
@@ -187,7 +337,7 @@ export default function CancelRequestDetailPage() {
     setSubmitting(true);
     try {
       const result = await reviewCancelRequest(
-        "approved",
+        true, // approved = true
         values.review_notes || "Chấp thuận hủy hợp đồng",
         values.compensate_amount || 0
       );
@@ -215,7 +365,10 @@ export default function CancelRequestDetailPage() {
 
     setSubmitting(true);
     try {
-      const result = await reviewCancelRequest("denied", values.review_notes);
+      const result = await reviewCancelRequest(
+        false, // approved = false
+        values.review_notes
+      );
 
       if (result.success) {
         setDenyModalVisible(false);
@@ -228,6 +381,37 @@ export default function CancelRequestDetailPage() {
     } catch (error) {
       console.error("Error denying cancel request:", error);
       message.error("Từ chối yêu cầu thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle resolve dispute
+  const handleResolveDispute = (action) => {
+    setResolveAction(action);
+    setResolveModalVisible(true);
+  };
+
+  // Submit resolve dispute
+  const onResolveSubmit = async (values) => {
+    if (!values.resolution_notes?.trim()) {
+      message.error("Vui lòng nhập thông tin giải quyết");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const approved = resolveAction === "approve";
+      const result = await resolveDispute(approved, values.resolution_notes);
+
+      if (result.success) {
+        setResolveModalVisible(false);
+        resolveForm.resetFields();
+        router.push("/policy/cancel");
+      }
+    } catch (error) {
+      console.error("Error resolving dispute:", error);
+      message.error("Giải quyết tranh chấp thất bại");
     } finally {
       setSubmitting(false);
     }
@@ -287,6 +471,24 @@ export default function CancelRequestDetailPage() {
                   </Button>
                 </>
               )}
+              {(cancelRequest.status === "denied" ||
+                cancelRequest.status === "dispute") && (
+                <>
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => handleResolveDispute("approve")}
+                  >
+                    Giải quyết - Hủy hợp đồng
+                  </Button>
+                  <Button
+                    icon={<ExclamationCircleOutlined />}
+                    onClick={() => handleResolveDispute("keep_active")}
+                  >
+                    Giải quyết - Giữ hợp đồng
+                  </Button>
+                </>
+              )}
             </Space>
           </div>
         </div>
@@ -319,17 +521,16 @@ export default function CancelRequestDetailPage() {
                     {getCancelTypeText(cancelRequest.cancel_request_type)}
                   </Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Mã hợp đồng" span={2}>
-                  {cancelRequest.registered_policy_id}
-                </Descriptions.Item>
                 <Descriptions.Item label="Lý do hủy" span={2}>
                   {cancelRequest.reason}
                 </Descriptions.Item>
-                <Descriptions.Item label="Người yêu cầu" span={1}>
+                <Descriptions.Item label="Mã nông dân yêu cầu" span={1}>
                   {cancelRequest.requested_by}
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày yêu cầu" span={1}>
-                  {new Date(cancelRequest.requested_at).toLocaleString("vi-VN")}
+                  {formatUtcDate(cancelRequest.requested_at, {
+                    withTime: true,
+                  })}
                 </Descriptions.Item>
                 <Descriptions.Item label="Số tiền bồi thường" span={1}>
                   {formatCurrency(cancelRequest.compensate_amount)}
@@ -341,14 +542,42 @@ export default function CancelRequestDetailPage() {
                 </Descriptions.Item>
               </Descriptions>
 
-              {/* Evidence */}
+              {/* Evidence - render descriptions and images instead of raw JSON */}
               {cancelRequest.evidence &&
                 Object.keys(cancelRequest.evidence).length > 0 && (
                   <>
                     <Divider>Bằng chứng đính kèm</Divider>
-                    <pre className="bg-gray-50 p-4 rounded">
-                      {JSON.stringify(cancelRequest.evidence, null, 2)}
-                    </pre>
+                    <div className="grid grid-cols-1 gap-4">
+                      {parseEvidenceToPairs(cancelRequest.evidence).map(
+                        (pair, idx) => (
+                          <Card key={idx} className="p-3">
+                            <div className="mb-2">
+                              <strong>Mô tả</strong>
+                            </div>
+                            <div className="mb-3 text-sm text-gray-700">
+                              {pair.description || "-"}
+                            </div>
+
+                            {pair.images && pair.images.length > 0 && (
+                              <Image.PreviewGroup>
+                                <div className="flex flex-wrap gap-3">
+                                  {pair.images.map((src, i) => (
+                                    <Image
+                                      key={i}
+                                      src={src}
+                                      alt={`evidence-${idx}-${i}`}
+                                      width={200}
+                                      height={150}
+                                      style={{ objectFit: "cover" }}
+                                    />
+                                  ))}
+                                </div>
+                              </Image.PreviewGroup>
+                            )}
+                          </Card>
+                        )
+                      )}
+                    </div>
                   </>
                 )}
             </Card>
@@ -370,9 +599,9 @@ export default function CancelRequestDetailPage() {
                     {cancelRequest.reviewed_by}
                   </Descriptions.Item>
                   <Descriptions.Item label="Thời gian xem xét" span={1}>
-                    {new Date(cancelRequest.reviewed_at).toLocaleString(
-                      "vi-VN"
-                    )}
+                    {formatUtcDate(cancelRequest.reviewed_at, {
+                      withTime: true,
+                    })}
                   </Descriptions.Item>
                   <Descriptions.Item
                     label="Ghi chú / Thông tin giải quyết"
@@ -430,8 +659,14 @@ export default function CancelRequestDetailPage() {
                   <Descriptions.Item label="Số tiền bảo hiểm" span={1}>
                     {formatCurrency(policy.coverage_amount)}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Phí bảo hiểm" span={1}>
+                  <Descriptions.Item label="Phí bảo hiểm nông dân" span={1}>
                     {formatCurrency(policy.total_farmer_premium)}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Chi phí dữ liệu" span={1}>
+                    {formatCurrency(policy.total_data_cost)}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Hệ số diện tích" span={1}>
+                    {policy.area_multiplier}
                   </Descriptions.Item>
                   <Descriptions.Item label="Ngày bắt đầu" span={1}>
                     {new Date(
@@ -443,6 +678,43 @@ export default function CancelRequestDetailPage() {
                       policy.coverage_end_date * 1000
                     ).toLocaleDateString("vi-VN")}
                   </Descriptions.Item>
+                  <Descriptions.Item label="Ngày trồng" span={1}>
+                    {new Date(policy.planting_date * 1000).toLocaleDateString(
+                      "vi-VN"
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Trạng thái thẩm định" span={1}>
+                    <Tag
+                      color={
+                        policy.underwriting_status === "approved"
+                          ? "green"
+                          : "orange"
+                      }
+                    >
+                      {policy.underwriting_status === "approved"
+                        ? "Đã duyệt"
+                        : policy.underwriting_status}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày tạo" span={1}>
+                    {formatUtcDate(policy.created_at, { withTime: true })}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày cập nhật" span={1}>
+                    {formatUtcDate(policy.updated_at, { withTime: true })}
+                  </Descriptions.Item>
+                  {policy.signed_policy_document_url && (
+                    <Descriptions.Item label="Tài liệu hợp đồng" span={2}>
+                      <a
+                        href={policy.signed_policy_document_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                      >
+                        <FilePdfOutlined />
+                        <span>Tải xuống hợp đồng PDF</span>
+                      </a>
+                    </Descriptions.Item>
+                  )}
                 </Descriptions>
               </Card>
             </Col>
@@ -565,6 +837,93 @@ export default function CancelRequestDetailPage() {
                   icon={<CloseCircleOutlined />}
                 >
                   Xác nhận từ chối
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        {/* Resolve Dispute Modal */}
+        <Modal
+          title={
+            resolveAction === "approve"
+              ? "Giải quyết tranh chấp - Hủy hợp đồng"
+              : "Giải quyết tranh chấp - Giữ hợp đồng"
+          }
+          open={resolveModalVisible}
+          onCancel={() => setResolveModalVisible(false)}
+          footer={null}
+          width={600}
+        >
+          <Form form={resolveForm} layout="vertical" onFinish={onResolveSubmit}>
+            <div
+              className={`mb-4 p-3 border rounded ${
+                resolveAction === "approve"
+                  ? "bg-yellow-50 border-yellow-200"
+                  : "bg-blue-50 border-blue-200"
+              }`}
+            >
+              <Space direction="vertical">
+                <Space>
+                  <ExclamationCircleOutlined
+                    style={{
+                      color:
+                        resolveAction === "approve" ? "#faad14" : "#1890ff",
+                    }}
+                  />
+                  <Text strong>
+                    {resolveAction === "approve"
+                      ? "Sau khi xác nhận, hợp đồng sẽ chuyển sang trạng thái 'Đã hủy'"
+                      : "Sau khi xác nhận, hợp đồng sẽ chuyển về trạng thái 'Đang hoạt động'"}
+                  </Text>
+                </Space>
+                <Text type="secondary" className="text-sm">
+                  Vui lòng ghi rõ thông tin thỏa thuận giữa hai bên sau khi liên
+                  lạc offline
+                </Text>
+              </Space>
+            </div>
+
+            <Form.Item
+              label="Thông tin giải quyết"
+              name="resolution_notes"
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập thông tin giải quyết tranh chấp",
+                },
+              ]}
+              extra="Ghi rõ nội dung thỏa thuận, ngày liên lạc, và kết quả thảo luận giữa hai bên"
+            >
+              <TextArea
+                rows={6}
+                placeholder={
+                  resolveAction === "approve"
+                    ? "Ví dụ: Sau buổi họp ngày 08/12/2024, hai bên đã thống nhất hủy hợp đồng. Nông dân sẽ được hoàn trả 50% phí bảo hiểm trong vòng 7 ngày làm việc. Người đại diện: Nguyễn Văn A (SĐT: 0123-456-789)"
+                    : "Ví dụ: Sau buổi họp ngày 08/12/2024, hai bên đã thống nhất tiếp tục hợp đồng. Nông dân cam kết tuân thủ đầy đủ các điều khoản. Công ty sẽ hỗ trợ thêm 1 lần khảo sát miễn phí. Người đại diện: Nguyễn Văn A (SĐT: 0123-456-789)"
+                }
+              />
+            </Form.Item>
+
+            <Form.Item className="mb-0">
+              <Space className="w-full justify-end">
+                <Button onClick={() => setResolveModalVisible(false)}>
+                  Hủy
+                </Button>
+                <Button
+                  type={resolveAction === "approve" ? "primary" : "default"}
+                  danger={resolveAction === "approve"}
+                  htmlType="submit"
+                  loading={submitting}
+                  icon={
+                    resolveAction === "approve" ? (
+                      <CloseCircleOutlined />
+                    ) : (
+                      <CheckCircleOutlined />
+                    )
+                  }
+                >
+                  Xác nhận giải quyết
                 </Button>
               </Space>
             </Form.Item>

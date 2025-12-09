@@ -3,8 +3,9 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
+import { formatUtcDate } from "@/libs/date-utils";
 import { getApprovalInfo } from "@/libs/message";
-import { useCancelRequests } from "@/services/hooks/policy/use-cancel-requests";
+import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -31,7 +32,7 @@ export default function CancelRequestsPage() {
     handleClearFilters,
     paginationConfig,
     loading,
-  } = useCancelRequests();
+  } = useCancelPolicy();
 
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
@@ -52,6 +53,9 @@ export default function CancelRequestsPage() {
     ).length,
     approved: allCancelRequests.filter((r) => r.status === "approved").length,
     denied: allCancelRequests.filter((r) => r.status === "denied").length,
+    dispute: allCancelRequests.filter(
+      (r) => r.status === "dispute" || r.status === "denied"
+    ).length,
   };
 
   // Handle form submit
@@ -73,6 +77,8 @@ export default function CancelRequestsPage() {
         return "green";
       case "denied":
         return "red";
+      case "dispute":
+        return "volcano";
       case "litigation":
         return "purple";
       default:
@@ -89,6 +95,8 @@ export default function CancelRequestsPage() {
         return "Đã chấp thuận";
       case "denied":
         return "Bị từ chối";
+      case "dispute":
+        return "Tranh chấp";
       case "litigation":
         return "Tranh chấp pháp lý";
       default:
@@ -120,18 +128,18 @@ export default function CancelRequestsPage() {
       title: "Mã yêu cầu",
       dataIndex: "id",
       key: "id",
-      width: 120,
+      width: 300,
       render: (text) => (
-        <div className="insurance-package-id">{text.substring(0, 8)}...</div>
+        <div className="insurance-package-id break-all">{text}</div>
       ),
     },
     {
       title: "Mã hợp đồng",
       dataIndex: "registered_policy_id",
       key: "registered_policy_id",
-      width: 120,
+      width: 300,
       render: (text) => (
-        <div className="insurance-package-name">{text.substring(0, 8)}...</div>
+        <div className="insurance-package-name break-all">{text}</div>
       ),
     },
     {
@@ -180,9 +188,7 @@ export default function CancelRequestsPage() {
       width: 120,
       render: (date) => (
         <div className="insurance-statistics">
-          <div className="insurance-stat-item">
-            {new Date(date).toLocaleDateString("vi-VN")}
-          </div>
+          <div className="insurance-stat-item">{formatUtcDate(date)}</div>
         </div>
       ),
     },

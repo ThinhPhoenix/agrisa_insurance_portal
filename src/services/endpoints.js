@@ -92,6 +92,8 @@ export const endpoints = {
     update_user: `/profile/protected/api/v1/users`,
     // Update partner/company profile for current admin
     update_partner_me: `/profile/protected/api/v1/insurance-partners/me/profile`,
+    // Get bank info for users
+    bank_info: `/profile/protected/api/v1/users/bank-info`,
   },
   riskAnalysis: {
     by_policy: (policy_id) =>

@@ -312,12 +312,32 @@ export default function ClaimDetailPage() {
     setPaymentModalVisible(true);
 
     try {
+      const userId = payout.farmer_id || "test_id";
+
+      // Fetch bank info for the user
+      const bankInfoResponse = await axiosInstance.post(
+        endpoints.profile.bank_info,
+        {
+          user_ids: [userId],
+        }
+      );
+
+      let bankCode = "970423"; // Default bank code
+      let accountNumber = "09073016692"; // Default account number
+
+      // Extract bank info from response
+      if (bankInfoResponse.data?.success && bankInfoResponse.data?.data?.length > 0) {
+        const userBankInfo = bankInfoResponse.data.data[0];
+        bankCode = userBankInfo.bank_code || bankCode;
+        accountNumber = userBankInfo.account_number || accountNumber;
+      }
+
       // Build payment request with new structure
       const paymentRequest = {
         amount: payout.payout_amount,
-        bank_code: "970423",
-        account_number: "09073016692",
-        user_id: payout.farmer_id || "test_id",
+        bank_code: bankCode,
+        account_number: accountNumber,
+        user_id: userId,
         description: "Chi trả bảo hiểm",
         type: "policy_payout_payment",
         items: [

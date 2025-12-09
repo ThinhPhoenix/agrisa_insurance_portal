@@ -269,6 +269,7 @@ function getIconForKey(key) {
     beneficiary: <Users size={16} />,
     policy: <FileText size={16} />,
     configuration: <Settings size={16} />,
+    "general-settings": <Settings size={16} />,
   };
 
   return iconMap[key] || <FileText size={16} />;

@@ -207,7 +207,7 @@ export default function ClaimListPage() {
   // Table columns
   const columns = [
     {
-      title: "Mã bồi thường",
+      title: "Mã Chi trả",
       dataIndex: "claim_number",
       key: "claim_number",
       width: 150,
@@ -223,7 +223,7 @@ export default function ClaimListPage() {
       ),
     },
     {
-      title: "Số tiền bồi thường",
+      title: "Số tiền chi trả",
       dataIndex: "claim_amount",
       key: "claim_amount",
       width: 180,
@@ -234,7 +234,7 @@ export default function ClaimListPage() {
         }).format(amount || 0),
     },
     {
-      title: "Bồi thường cố định",
+      title: "Chi trả cố định",
       dataIndex: "calculated_fix_payout",
       key: "calculated_fix_payout",
       width: 180,
@@ -247,7 +247,7 @@ export default function ClaimListPage() {
           : "-",
     },
     {
-      title: "Bồi thường theo ngưỡng",
+      title: "Chi trả theo ngưỡng",
       dataIndex: "calculated_threshold_payout",
       key: "calculated_threshold_payout",
       width: 180,
@@ -326,7 +326,7 @@ export default function ClaimListPage() {
       name: "search",
       label: "Tìm kiếm",
       type: "input",
-      placeholder: "Tìm theo mã bồi thường...",
+      placeholder: "Tìm theo mã Chi trả...",
     },
     {
       name: "status",
@@ -389,10 +389,10 @@ export default function ClaimListPage() {
         <div className="insurance-header">
           <div>
             <Title level={2} className="insurance-title">
-              Quản Lý Bồi Thường
+              Quản Lý Chi trả
             </Title>
             <Text className="insurance-subtitle">
-              Theo dõi và quản lý các yêu cầu bồi thường bảo hiểm nông nghiệp
+              Theo dõi và quản lý các yêu cầu Chi trả bảo hiểm nông nghiệp
             </Text>
           </div>
           <div>
@@ -415,7 +415,7 @@ export default function ClaimListPage() {
                 {summaryStats.total}
               </div>
               <div className="insurance-summary-label-compact">
-                Tổng bồi thường
+                Tổng Chi trả
               </div>
             </div>
           </div>
@@ -519,7 +519,7 @@ export default function ClaimListPage() {
 
       {/* Rejection Details Modal */}
       <Modal
-        title="Chi tiết lý do từ chối bồi thường"
+        title="Chi tiết lý do từ chối Chi trả"
         open={rejectionModalVisible}
         onCancel={() => {
           setRejectionModalVisible(false);

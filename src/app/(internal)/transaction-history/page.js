@@ -3,16 +3,16 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
+import { formatUtcDate } from "@/libs/date-utils";
 import { usePayout } from "@/services/hooks/transaction-history/use-payout";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  EyeOutlined,
   FilterOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { Button, Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
+import { Collapse, Layout, Space, Spin, Tag, Typography } from "antd";
 import { useState } from "react";
 import "./transaction-history.css";
 
@@ -164,15 +164,7 @@ export default function TransactionHistoryPage() {
       key: "created_at",
       sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
       render: (date) => (
-        <span className="transaction-date">
-          {date
-            ? new Date(date).toLocaleDateString("vi-VN", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              })
-            : "—"}
-        </span>
+        <span className="transaction-date">{formatUtcDate(date)}</span>
       ),
     },
     {
@@ -225,29 +217,29 @@ export default function TransactionHistoryPage() {
         );
       },
     },
-    {
-      title: "Thao tác",
-      key: "action",
-      fixed: "right",
-      width: 150,
-      render: (_, record) => (
-        <Space className="transaction-actions">
-          <Button
-            type="default"
-            size="small"
-            icon={<EyeOutlined />}
-            className="transaction-action-btn"
-            style={{
-              background: "#e6f7ff",
-              borderColor: "#91d5ff",
-              color: "#1890ff",
-            }}
-          >
-            Xem
-          </Button>
-        </Space>
-      ),
-    },
+    // {
+    //   title: "Thao tác",
+    //   key: "action",
+    //   fixed: "right",
+    //   width: 150,
+    //   render: (_, record) => (
+    //     <Space className="transaction-actions">
+    //       <Button
+    //         type="default"
+    //         size="small"
+    //         icon={<EyeOutlined />}
+    //         className="transaction-action-btn"
+    //         style={{
+    //           background: "#e6f7ff",
+    //           borderColor: "#91d5ff",
+    //           color: "#1890ff",
+    //         }}
+    //       >
+    //         Xem
+    //       </Button>
+    //     </Space>
+    //   ),
+    // },
   ];
 
   return (

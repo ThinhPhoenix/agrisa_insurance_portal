@@ -58,8 +58,11 @@ export const usePayout = () => {
         }
       );
 
-      if (response.data && response.data.items) {
-        setPayouts(response.data.items);
+      // Handle response structure: response.data.data.items
+      const responseData = response.data?.data || response.data;
+
+      if (responseData && responseData.items) {
+        setPayouts(responseData.items);
         setPagination({
           page: response.data.metadata.page,
           limit: response.data.metadata.limit,

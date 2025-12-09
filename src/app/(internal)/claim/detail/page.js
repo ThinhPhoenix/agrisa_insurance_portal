@@ -9,6 +9,10 @@ import axiosInstance from "@/libs/axios-instance";
 import { endpoints } from "@/services/endpoints";
 import useClaim from "@/services/hooks/claim/use-claim";
 import usePayout from "@/services/hooks/payout/use-payout";
+import {
+  getClaimErrorMessage,
+  CLAIM_SUCCESS_MESSAGES,
+} from "@/utils/claim-messages";
 import { Form, Layout, message, Row, Spin, Typography } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -199,22 +203,24 @@ export default function ClaimDetailPage() {
       const payload = {
         registered_policy_id: claimDetail.registered_policy_id,
         status: "approved",
-        partner_decision: values.partner_decision,
+        partner_decision: "approved", // Hard code "approved"
         partner_notes: values.partner_notes,
       };
 
       const result = await validateClaim(claimDetail.id, payload);
 
       if (result.success) {
-        message.success("Duyệt bồi thường thành công!");
+        message.success(CLAIM_SUCCESS_MESSAGES.APPROVE);
         setApproveModalVisible(false);
         approveForm.resetFields();
         await fetchClaimDetail(claimId);
       } else {
-        message.error(result.error || "Có lỗi xảy ra khi duyệt bồi thường");
+        const errorMsg = getClaimErrorMessage(result);
+        message.error(errorMsg);
       }
     } catch (error) {
-      message.error("Có lỗi xảy ra khi duyệt bồi thường");
+      const errorMsg = getClaimErrorMessage(error);
+      message.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -249,7 +255,7 @@ export default function ClaimDetailPage() {
       const validatePayload = {
         registered_policy_id: claimDetail.registered_policy_id,
         status: "rejected",
-        partner_decision: values.reason,
+        partner_decision: "rejected", // Hard code "rejected"
         partner_notes: values.validation_notes,
       };
 
@@ -272,7 +278,7 @@ export default function ClaimDetailPage() {
       ]);
 
       if (validateResult.success && rejectionResult.success) {
-        message.success("Từ chối bồi thường thành công!");
+        message.success(CLAIM_SUCCESS_MESSAGES.REJECT);
         setRejectModalVisible(false);
         rejectForm.resetFields();
         await fetchClaimDetail(claimId);
@@ -288,10 +294,12 @@ export default function ClaimDetailPage() {
           "Đã lưu chi tiết lý do nhưng chưa cập nhật trạng thái từ chối"
         );
       } else {
-        message.error("Có lỗi xảy ra khi từ chối bồi thường");
+        const errorMsg = getClaimErrorMessage(validateResult);
+        message.error(errorMsg);
       }
     } catch (error) {
-      message.error("Có lỗi xảy ra khi từ chối bồi thường");
+      const errorMsg = getClaimErrorMessage(error);
+      message.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -332,12 +340,14 @@ export default function ClaimDetailPage() {
         const payoutData = response.data.data?.data || response.data.data;
         setQrData(payoutData);
       } else {
-        message.error("Không thể tạo mã QR thanh toán");
+        const errorMsg = getClaimErrorMessage(response);
+        message.error(errorMsg);
         setPaymentModalVisible(false);
       }
     } catch (error) {
       console.error("Error creating payout:", error);
-      message.error("Có lỗi xảy ra khi tạo thanh toán");
+      const errorMsg = getClaimErrorMessage(error);
+      message.error(errorMsg);
       setPaymentModalVisible(false);
     } finally {
       setPaymentLoading(false);
@@ -364,11 +374,13 @@ export default function ClaimDetailPage() {
           await fetchPayoutsByPolicy(claimDetail.registered_policy_id);
         }
       } else {
-        message.error("Xác nhận thanh toán thất bại");
+        const errorMsg = getClaimErrorMessage(response);
+        message.error(errorMsg);
       }
     } catch (error) {
       console.error("Error verifying payment:", error);
-      message.error("Có lỗi xảy ra khi xác nhận thanh toán");
+      const errorMsg = getClaimErrorMessage(error);
+      message.error(errorMsg);
     } finally {
       setPaymentLoading(false);
     }

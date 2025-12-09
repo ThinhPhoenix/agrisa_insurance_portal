@@ -80,20 +80,6 @@ export default function ClaimModals({
       >
         <Form form={approveForm} layout="vertical" onFinish={onApproveSubmit}>
           <Form.Item
-            name="partner_decision"
-            label="Quyết định"
-            rules={[
-              { required: true, message: "Vui lòng nhập quyết định" },
-              { max: 500, message: "Tối đa 500 ký tự" },
-            ]}
-          >
-            <TextArea
-              rows={3}
-              placeholder="Ví dụ: Yêu cầu chi trả đáp ứng đầy đủ các điều kiện. Đã xác minh tài liệu vào ngày..."
-            />
-          </Form.Item>
-
-          <Form.Item
             name="partner_notes"
             label="Ghi chú chi tiết"
             rules={[
@@ -102,8 +88,8 @@ export default function ClaimModals({
             ]}
           >
             <TextArea
-              rows={4}
-              placeholder="Nhập các ghi chú chi tiết về quá trình xem xét, bằng chứng đã kiểm tra..."
+              rows={6}
+              placeholder="Nhập các ghi chú chi tiết về quá trình xem xét, bằng chứng đã kiểm tra, lý do phê duyệt..."
             />
           </Form.Item>
 
@@ -182,58 +168,53 @@ export default function ClaimModals({
               style={{ marginBottom: 12 }}
             >
               <TextArea
-                rows={2}
+                rows={3}
                 placeholder="Ví dụ: Dữ liệu lượng mưa báo cáo không khớp với dữ liệu vệ tinh..."
                 maxLength={500}
               />
             </Form.Item>
 
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="validated_by"
-                  label="Người Đánh Giá"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập tên người đánh giá",
-                    },
-                    { max: 200, message: "Tối đa 200 ký tự" },
-                  ]}
-                  style={{ marginBottom: 0 }}
-                >
-                  <Input
-                    placeholder="Ví dụ: Nguyễn Văn A - Chuyên viên thẩm định"
-                    size="large"
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="validation_notes"
-                  label="Ghi Chú Chi Tiết"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập ghi chú chi tiết",
-                    },
-                    { max: 1000, message: "Tối đa 1000 ký tự" },
-                  ]}
-                  style={{ marginBottom: 0 }}
-                  extra={
-                    <span style={{ fontSize: "11px" }}>
-                      Giải thích chi tiết lý do từ chối, bằng chứng đã xem xét
-                    </span>
-                  }
-                >
-                  <TextArea
-                    rows={2}
-                    placeholder="Sau khi xem xét kỹ lưỡng hình ảnh vệ tinh..."
-                    maxLength={1000}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+            <Form.Item
+              name="validated_by"
+              label="Người Đánh Giá"
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập tên người đánh giá",
+                },
+                { max: 200, message: "Tối đa 200 ký tự" },
+              ]}
+              style={{ marginBottom: 12 }}
+            >
+              <Input
+                placeholder="Ví dụ: Nguyễn Văn A - Chuyên viên thẩm định"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="validation_notes"
+              label="Ghi Chú Chi Tiết"
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập ghi chú chi tiết",
+                },
+                { max: 1000, message: "Tối đa 1000 ký tự" },
+              ]}
+              style={{ marginBottom: 0 }}
+              extra={
+                <span style={{ fontSize: "11px" }}>
+                  Giải thích chi tiết lý do từ chối, bằng chứng đã xem xét
+                </span>
+              }
+            >
+              <TextArea
+                rows={3}
+                placeholder="Sau khi xem xét kỹ lưỡng hình ảnh vệ tinh..."
+                maxLength={1000}
+              />
+            </Form.Item>
           </Card>
 
           {/* Section 2: Bằng chứng chi tiết */}
@@ -337,14 +318,14 @@ export default function ClaimModals({
                   label={
                     <span>
                       Tên Tài Liệu Bằng Chứng{" "}
-                      <Tooltip title="Nhập tên các file, cách nhau bởi dấu phẩy. Sẽ được chuyển thành array khi gửi API">
+                      <Tooltip title="Nhập đường dẫn các file, cách nhau bởi dấu phẩy.">
                         <InfoCircleOutlined
                           style={{ color: "#1890ff", fontSize: "12px" }}
                         />
                       </Tooltip>
                     </span>
                   }
-                  extra="Nhập tên các file, cách nhau bởi dấu phẩy (ví dụ: file1.pdf, file2.pdf)"
+                  extra="Nhập đường dẫn các file, cách nhau bởi dấu phẩy (ví dụ: file1.pdf, file2.pdf)"
                   style={{ marginBottom: 0 }}
                 >
                   <Input

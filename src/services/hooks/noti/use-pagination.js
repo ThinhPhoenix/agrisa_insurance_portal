@@ -14,6 +14,7 @@ export const useNotificationsInfinite = (limit = 20) => {
     const [page, setPage] = useState(1);
     const [hasNextPage, setHasNextPage] = useState(true);
     const [totalPages, setTotalPages] = useState(0);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const fetchNotifications = useCallback(
         async (pageNum, isLoadMore = false) => {
@@ -32,6 +33,7 @@ export const useNotificationsInfinite = (limit = 20) => {
                 }
 
                 setTotalPages(response.pagination.totalPages);
+                setUnreadCount(response.unread || 0);
                 setHasNextPage(
                     response.pagination.page < response.pagination.totalPages
                 );
@@ -59,6 +61,7 @@ export const useNotificationsInfinite = (limit = 20) => {
         setPage(1);
         setData([]);
         setHasNextPage(true);
+        setUnreadCount(0);
         fetchNotifications(1, false);
     }, [fetchNotifications]);
 
@@ -75,5 +78,6 @@ export const useNotificationsInfinite = (limit = 20) => {
         refresh,
         totalPages,
         currentPage: page,
+        unreadCount,
     };
 };

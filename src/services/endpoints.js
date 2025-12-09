@@ -139,5 +139,8 @@ export const endpoints = {
         subscribe: "/noti/protected/subscribe/web",
         unsubscribe: "/noti/protected/unsubscribe/web",
         validate: `/noti/protected/validate?platform=web`,
+        pagination: (page, limit) =>
+            `/noti/protected/notifications?page=${page}&limit=${limit}&platform=web`,
+        mark_as_read: `/noti/protected/mark-read`,
     },
 };

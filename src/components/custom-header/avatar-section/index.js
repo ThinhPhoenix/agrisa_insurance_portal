@@ -1,6 +1,8 @@
 import { useSignOut } from "@/services/hooks/auth/use-auth";
 import { useMarkAsRead } from "@/services/hooks/noti/use-mark-as-read";
 import { useNotificationsInfinite } from "@/services/hooks/noti/use-pagination";
+import { useGetPartnerProfile } from "@/services/hooks/profile/use-profile";
+import { useAuthStore } from "@/stores/auth-store";
 import {
     App,
     Avatar,
@@ -22,6 +24,15 @@ export default function AvatarSection({ isMobile }) {
     const { message } = App.useApp();
     const { signOut, isLoading: isLoggingOut } = useSignOut();
     const dropdownRef = useRef(null);
+    const { user } = useAuthStore();
+    const { getPartnerProfile, data: partnerData } = useGetPartnerProfile();
+
+    // Fetch partner profile on mount
+    useEffect(() => {
+        if (user?.user?.partner_id) {
+            getPartnerProfile(user.user.partner_id);
+        }
+    }, [user?.user?.partner_id, getPartnerProfile]);
 
     // Notification hooks
     const {
@@ -37,25 +48,6 @@ export default function AvatarSection({ isMobile }) {
 
     // Local state for tracking read status
     const [readNotifications, setReadNotifications] = useState(new Set());
-
-    // Handle infinite scroll
-    useEffect(() => {
-        const handleScroll = (e) => {
-            const { scrollTop, scrollHeight, clientHeight } = e.target;
-            if (
-                scrollHeight - scrollTop <= clientHeight + 50 &&
-                hasNextPage &&
-                !loading
-            ) {
-                loadMore();
-            }
-        };
-
-        // The scroll listener will be added when dropdown opens via onOpenChange
-        return () => {
-            // Cleanup will happen in onOpenChange
-        };
-    }, [hasNextPage, loading, loadMore]);
 
     const handleDropdownOpenChange = useCallback(
         (open) => {
@@ -474,10 +466,18 @@ export default function AvatarSection({ isMobile }) {
                 onOpenChange={handleDropdownOpenChange}
                 overlayStyle={{
                     width: isMobile ? "280px" : "360px",
-                    maxHeight: "480px",
-                    overflow: "auto",
                 }}
-                dropdownRender={(menu) => <div ref={dropdownRef}>{menu}</div>}
+                dropdownRender={(menu) => (
+                    <div
+                        ref={dropdownRef}
+                        style={{
+                            maxHeight: "480px",
+                            overflow: "auto",
+                        }}
+                    >
+                        {menu}
+                    </div>
+                )}
             >
                 <div className="cursor-pointer">
                     <Badge count={unreadCount} size="small">
@@ -496,9 +496,21 @@ export default function AvatarSection({ isMobile }) {
             >
                 <Avatar
                     size={32}
-                    src="https://www.baovietnhantho.com.vn/storage/8f698cfe-2689-4637-bee7-62e592122dee/c/tap-doan-bao-viet-large.jpg"
+                    src={partnerData?.partner_logo_url}
+                    alt={
+                        partnerData?.partner_display_name ||
+                        user?.user?.full_name
+                    }
                     style={{ cursor: "pointer" }}
-                />
+                >
+                    {partnerData?.partner_display_name
+                        ? partnerData.partner_display_name
+                              .charAt(0)
+                              .toUpperCase()
+                        : user?.user?.full_name
+                        ? user.user.full_name.charAt(0).toUpperCase()
+                        : "U"}
+                </Avatar>
             </Dropdown>
         </div>
     );

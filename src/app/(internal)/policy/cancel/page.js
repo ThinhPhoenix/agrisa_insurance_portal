@@ -180,6 +180,16 @@ export default function CancelRequestsPage() {
       dataIndex: "requested_by",
       key: "requested_by",
       width: 150,
+      render: (id) => {
+        if (!id) return "-";
+        // Check if it's a UUID (contains hyphens and longer format)
+        const isUUID = id.includes("-") && id.length > 30;
+        return (
+          <Tag color={isUUID ? "blue" : "green"}>
+            {isUUID ? "Đối tác bảo hiểm" : "Nông dân"}
+          </Tag>
+        );
+      },
     },
     {
       title: "Ngày yêu cầu",

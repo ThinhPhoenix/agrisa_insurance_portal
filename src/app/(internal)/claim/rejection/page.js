@@ -80,8 +80,7 @@ export default function RejectionListPage() {
     current: currentPage,
     pageSize: pageSize,
     total: filteredRejections.length,
-    showTotal: (total, range) =>
-      `${range[0]}-${range[1]} của ${total} bản ghi`,
+    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bản ghi`,
     onChange: (page, pageSize) => {
       setCurrentPage(page);
       setPageSize(pageSize);
@@ -207,9 +206,7 @@ export default function RejectionListPage() {
       key: "reason",
       width: 300,
       ellipsis: true,
-      render: (text) => (
-        <Text ellipsis={{ tooltip: text }}>{text}</Text>
-      ),
+      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
     },
     {
       title: "Người đánh giá",
@@ -239,11 +236,7 @@ export default function RejectionListPage() {
       width: 120,
       render: (_, record) => (
         <Link href={`/claim/detail?id=${record.claim_id}`}>
-          <Button
-            type="primary"
-            size="small"
-            icon={<EyeOutlined />}
-          >
+          <Button type="primary" size="small" icon={<EyeOutlined />}>
             Xem Claim
           </Button>
         </Link>
@@ -339,10 +332,10 @@ export default function RejectionListPage() {
         <div className="insurance-header">
           <div>
             <Title level={2} className="insurance-title">
-              Danh Sách Từ Chối Bồi Thường
+              Danh Sách Từ Chối Chi trả
             </Title>
             <Text className="insurance-subtitle">
-              Quản lý và theo dõi các yêu cầu bồi thường đã bị từ chối
+              Quản lý và theo dõi các yêu cầu chi trả đã bị từ chối
             </Text>
           </div>
           <div>

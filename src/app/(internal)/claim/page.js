@@ -3,6 +3,7 @@
 import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
+import { formatUtcDate } from "@/libs/date-utils";
 import { getApprovalInfo } from "@/libs/message";
 import useClaim from "@/services/hooks/claim/use-claim";
 import { statusFilter, useFilterableList } from "@/services/hooks/common";
@@ -142,27 +143,6 @@ export default function ClaimListPage() {
     }
   };
 
-  // Format date from epoch timestamp or ISO string
-  const formatDate = (timestamp) => {
-    if (!timestamp) return "-";
-    let date;
-    if (typeof timestamp === "string") {
-      // ISO string format
-      date = new Date(timestamp);
-    } else {
-      // Unix timestamp
-      date =
-        timestamp < 5000000000
-          ? new Date(timestamp * 1000)
-          : new Date(timestamp);
-    }
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
-
   // Get rejection type text
   const getRejectionTypeText = (type) => {
     switch (type) {
@@ -279,14 +259,14 @@ export default function ClaimListPage() {
       dataIndex: "trigger_timestamp",
       key: "trigger_timestamp",
       width: 150,
-      render: (timestamp) => formatDate(timestamp),
+      render: (timestamp) => formatUtcDate(timestamp),
     },
     {
       title: "Ngày tạo",
       dataIndex: "created_at",
       key: "created_at",
       width: 150,
-      render: (date) => formatDate(date),
+      render: (date) => formatUtcDate(date),
     },
     {
       title: "Hành động",
@@ -563,7 +543,7 @@ export default function ClaimListPage() {
               {selectedRejection.validation_notes}
             </Descriptions.Item>
             <Descriptions.Item label="Thời gian đánh giá">
-              {formatDate(selectedRejection.validation_timestamp)}
+              {formatUtcDate(selectedRejection.validation_timestamp)}
             </Descriptions.Item>
             {selectedRejection.reason_evidence &&
               Object.keys(selectedRejection.reason_evidence).length > 0 && (

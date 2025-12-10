@@ -123,7 +123,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     </Tag>
                     <br />
                     <Text type="secondary" style={{ fontSize: 11 }}>
-                        Cửa sổ: {record.aggregationWindowDays} ngày
+                        Chu kỳ: {record.aggregationWindowDays} ngày
                         {record.baselineWindowDays > 0 && (
                             <> | Baseline: {record.baselineWindowDays} ngày</>
                         )}
@@ -200,6 +200,24 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                         <Descriptions.Item label="Giai đoạn sinh trưởng">
                             <Tag color="cyan">{policyData.configuration?.growthStage || 'N/A'}</Tag>
                         </Descriptions.Item>
+                        {policyData.configuration?.blackoutPeriods?.periods?.length > 0 && (
+                            <Descriptions.Item label="Giai đoạn không kích hoạt" span={2}>
+                                <Space size="small" wrap>
+                                    {policyData.configuration.blackoutPeriods.periods.map((period, index) => {
+                                        const formatDate = (dateStr) => {
+                                            if (!dateStr) return dateStr;
+                                            const [month, day] = dateStr.split('-');
+                                            return `${day}/${month}`;
+                                        };
+                                        return (
+                                            <Tag key={index} color="red" style={{ fontSize: '13px', padding: '4px 10px' }}>
+                                                {formatDate(period.start)} đến {formatDate(period.end)}
+                                            </Tag>
+                                        );
+                                    })}
+                                </Space>
+                            </Descriptions.Item>
+                        )}
                     </Descriptions>
                 </div>
 

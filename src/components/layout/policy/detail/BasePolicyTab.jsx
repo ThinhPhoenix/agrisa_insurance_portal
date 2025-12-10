@@ -317,6 +317,24 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                       {trigger.monitor_frequency_unit === "day" ? "ngày" : trigger.monitor_frequency_unit}
                     </Tag>
                   </Descriptions.Item>
+                  {trigger.blackout_periods?.periods?.length > 0 && (
+                    <Descriptions.Item label="Giai đoạn không kích hoạt" span={2}>
+                      <Space size="small" wrap>
+                        {trigger.blackout_periods.periods.map((period, index) => {
+                          const formatDate = (dateStr) => {
+                            if (!dateStr) return dateStr;
+                            const [month, day] = dateStr.split('-');
+                            return `${day}/${month}`;
+                          };
+                          return (
+                            <Tag key={index} color="red" style={{ fontSize: '13px', padding: '4px 10px' }}>
+                              {formatDate(period.start)} đến {formatDate(period.end)}
+                            </Tag>
+                          );
+                        })}
+                      </Space>
+                    </Descriptions.Item>
+                  )}
                 </Descriptions>
 
                 {trigger.conditions && trigger.conditions.length > 0 && (

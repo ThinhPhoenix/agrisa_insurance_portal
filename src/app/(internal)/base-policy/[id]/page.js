@@ -288,6 +288,7 @@ const PolicyDetailPage = ({ params }) => {
       growthStage: trigger?.growth_stage || "",
       monitorInterval: trigger?.monitor_interval || 1,
       monitorFrequencyUnit: trigger?.monitor_frequency_unit || "day",
+      blackoutPeriods: trigger?.blackout_periods || null,
       triggerConditions: conditions.map((condition) => {
         const dataSourceDetail = enrichedDataSources[condition.data_source_id];
         return {

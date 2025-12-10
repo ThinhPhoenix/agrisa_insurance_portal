@@ -1,6 +1,10 @@
-import { getBasePolicyError, getBasePolicyValidation } from '@/libs/message';
-import { useAuthStore } from '@/stores/auth-store';
-import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { getBasePolicyError, getBasePolicyValidation } from "@/libs/message";
+import { useAuthStore } from "@/stores/auth-store";
+import {
+    DeleteOutlined,
+    InfoCircleOutlined,
+    PlusOutlined,
+} from "@ant-design/icons";
 import {
     Alert,
     Button,
@@ -18,9 +22,9 @@ import {
     Switch,
     Table,
     Tooltip,
-    Typography
-} from 'antd';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+    Typography,
+} from "antd";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -40,12 +44,12 @@ const BasicTabComponent = ({
     dataSources = [],
     dataSourcesLoading = false,
     fetchTiersByCategory,
-    fetchDataSourcesByTier
+    fetchDataSourcesByTier,
 }) => {
     const [form] = Form.useForm();
     const [dataSourceForm] = Form.useForm();
-    const [selectedCategory, setSelectedCategory] = useState('');
-    const [selectedTier, setSelectedTier] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [selectedTier, setSelectedTier] = useState("");
     const { user } = useAuthStore();
 
     useEffect(() => {
@@ -53,22 +57,26 @@ const BasicTabComponent = ({
         const updates = {};
 
         if (!basicData.product_description) {
-            updates.product_description = "Bảo hiểm tham số theo chỉ số lượng mưa cho cây lúa mùa khô. Chi trả tự động khi lượng mưa tích lũy thấp hơn ngưỡng 50mm trong 30 ngày liên tục, không cần kiểm tra thiệt hại tại hiện trường.";
+            updates.product_description =
+                "Bảo hiểm tham số theo chỉ số lượng mưa cho cây lúa mùa khô. Chi trả tự động khi lượng mưa tích lũy thấp hơn ngưỡng 50mm trong 30 ngày liên tục, không cần kiểm tra thiệt hại tại hiện trường.";
         }
 
         // Auto-fill insurance provider ID from logged-in user's partner_id (if available)
         if (!basicData.insuranceProviderId && user?.partner_id) {
             // Only use partner_id for creating base policy
             updates.insuranceProviderId = user.partner_id;
-            console.log("🔍 BasicTab - Set insuranceProviderId from user partner_id:", {
-                partner_id: user.partner_id,
-                full_user: user
-            });
+            console.log(
+                "🔍 BasicTab - Set insuranceProviderId from user partner_id:",
+                {
+                    partner_id: user.partner_id,
+                    full_user: user,
+                }
+            );
         }
 
         // Default status to 'draft'
         if (!basicData.status) {
-            updates.status = 'draft';
+            updates.status = "draft";
         }
 
         // Always set premium and payout per hectare to true
@@ -80,28 +88,58 @@ const BasicTabComponent = ({
             updates.isPayoutPerHectare = true;
         }
 
+        // Auto-calculate insuranceValidTo = insuranceValidFrom + coverageDurationDays
+        if (basicData.insuranceValidFrom && basicData.coverageDurationDays) {
+            const validTo = basicData.insuranceValidFrom
+                .clone()
+                .add(basicData.coverageDurationDays, "days");
+            // Only update if the calculated value is different from current value
+            if (
+                !basicData.insuranceValidTo ||
+                !basicData.insuranceValidTo.isSame(validTo, "day")
+            ) {
+                updates.insuranceValidTo = validTo;
+            }
+        }
+
         if (Object.keys(updates).length > 0) {
             onDataChange({
                 ...basicData,
-                ...updates
+                ...updates,
             });
+            // Update form values to reflect the changes
+            form.setFieldsValue(updates);
         }
-    }, [basicData, onDataChange, user]);
+    }, [
+        basicData.insuranceValidFrom,
+        basicData.coverageDurationDays,
+        basicData.product_description,
+        basicData.insuranceProviderId,
+        basicData.status,
+        basicData.isPerHectare,
+        basicData.isPayoutPerHectare,
+        user,
+        onDataChange,
+        form,
+    ]);
 
     // ✅ OPTIMIZATION: Debounce form changes to prevent input lag with Vietnamese typing
     const timeoutRef = useRef(null);
-    const handleValuesChange = useCallback((changedValues, allValues) => {
-        // Clear previous timeout
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
+    const handleValuesChange = useCallback(
+        (changedValues, allValues) => {
+            // Clear previous timeout
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
 
-        // Debounce the onChange call to prevent re-render during typing
-        // This fixes Vietnamese input composition issues
-        timeoutRef.current = setTimeout(() => {
-            onDataChange(allValues);
-        }, 300); // 300ms debounce
-    }, [onDataChange]);
+            // Debounce the onChange call to prevent re-render during typing
+            // This fixes Vietnamese input composition issues
+            timeoutRef.current = setTimeout(() => {
+                onDataChange(allValues);
+            }, 300); // 300ms debounce
+        },
+        [onDataChange]
+    );
 
     // Cleanup timeout on unmount
     useEffect(() => {
@@ -113,60 +151,77 @@ const BasicTabComponent = ({
     }, []);
 
     // Handle category change
-    const handleCategoryChange = useCallback((categoryName) => {
-        setSelectedCategory(categoryName);
-        setSelectedTier('');
-        dataSourceForm.setFieldsValue({ tier: undefined, dataSource: undefined });
+    const handleCategoryChange = useCallback(
+        (categoryName) => {
+            setSelectedCategory(categoryName);
+            setSelectedTier("");
+            dataSourceForm.setFieldsValue({
+                tier: undefined,
+                dataSource: undefined,
+            });
 
-        // Find the selected category to get its ID
-        const selectedCategoryObj = categories.find(cat => cat.category_name === categoryName);
-        if (selectedCategoryObj && fetchTiersByCategory) {
-            fetchTiersByCategory(selectedCategoryObj.id);
-        }
-    }, [categories, dataSourceForm, fetchTiersByCategory]);
+            // Find the selected category to get its ID
+            const selectedCategoryObj = categories.find(
+                (cat) => cat.category_name === categoryName
+            );
+            if (selectedCategoryObj && fetchTiersByCategory) {
+                fetchTiersByCategory(selectedCategoryObj.id);
+            }
+        },
+        [categories, dataSourceForm, fetchTiersByCategory]
+    );
 
     // Helper: validate decimal precision and scale according to schema limits
     const validateDecimal = (value, max, maxDecimals) => {
-        if (value === null || value === undefined || value === '') return true;
+        if (value === null || value === undefined || value === "") return true;
         const abs = Math.abs(Number(value));
         if (Number.isNaN(abs)) return false;
         if (abs > max) return false;
-        const parts = String(value).split('.');
+        const parts = String(value).split(".");
         const decimals = parts[1] ? parts[1].length : 0;
         if (decimals > maxDecimals) return false;
         return true;
     };
 
     // Handle tier change
-    const handleTierChange = useCallback((tier) => {
-        setSelectedTier(tier);
-        dataSourceForm.setFieldsValue({ dataSource: undefined });
+    const handleTierChange = useCallback(
+        (tier) => {
+            setSelectedTier(tier);
+            dataSourceForm.setFieldsValue({ dataSource: undefined });
 
-        // Find the selected tier data to get its ID
-        const selectedTierData = tiers.find(t => t.value === tier);
-        if (selectedTierData && fetchDataSourcesByTier) {
-            fetchDataSourcesByTier(selectedTierData.id);
-        }
-    }, [tiers, dataSourceForm, fetchDataSourcesByTier]);
+            // Find the selected tier data to get its ID
+            const selectedTierData = tiers.find((t) => t.value === tier);
+            if (selectedTierData && fetchDataSourcesByTier) {
+                fetchDataSourcesByTier(selectedTierData.id);
+            }
+        },
+        [tiers, dataSourceForm, fetchDataSourcesByTier]
+    );
 
     // Handle add data source
     const handleAddDataSource = useCallback(() => {
-        dataSourceForm.validateFields().then(values => {
-            const selectedSource = dataSources.find(source => source.id === values.dataSource);
+        dataSourceForm.validateFields().then((values) => {
+            const selectedSource = dataSources.find(
+                (source) => source.id === values.dataSource
+            );
             if (selectedSource) {
                 // Check if already added
                 const exists = basicData.selectedDataSources.find(
-                    source => source.id === selectedSource.id
+                    (source) => source.id === selectedSource.id
                 );
 
                 if (exists) {
-                    message.warning('Nguồn dữ liệu này đã được thêm');
+                    message.warning("Nguồn dữ liệu này đã được thêm");
                     return;
                 }
 
                 // Find category and tier to get multipliers
-                const selectedCategoryObj = categories.find(cat => cat.category_name === selectedCategory);
-                const selectedTierObj = tiers.find(t => t.value === selectedTier);
+                const selectedCategoryObj = categories.find(
+                    (cat) => cat.category_name === selectedCategory
+                );
+                const selectedTierObj = tiers.find(
+                    (t) => t.value === selectedTier
+                );
 
                 const dataSourceToAdd = {
                     ...selectedSource,
@@ -175,53 +230,63 @@ const BasicTabComponent = ({
                     categoryLabel: selectedCategory, // Since selectedCategory is already the name
                     tierLabel: selectedTierObj?.label || selectedTier,
                     // Add multipliers for condition calculation
-                    categoryMultiplier: selectedCategoryObj?.category_cost_multiplier || 1,
-                    tierMultiplier: selectedTierObj?.data_tier_multiplier || 1
+                    categoryMultiplier:
+                        selectedCategoryObj?.category_cost_multiplier || 1,
+                    tierMultiplier: selectedTierObj?.data_tier_multiplier || 1,
                 };
 
                 onAddDataSource(dataSourceToAdd);
                 dataSourceForm.resetFields();
-                setSelectedCategory('');
-                setSelectedTier('');
+                setSelectedCategory("");
+                setSelectedTier("");
             }
         });
-    }, [dataSourceForm, dataSources, onAddDataSource, selectedCategory, selectedTier, basicData.selectedDataSources, categories, tiers]);
+    }, [
+        dataSourceForm,
+        dataSources,
+        onAddDataSource,
+        selectedCategory,
+        selectedTier,
+        basicData.selectedDataSources,
+        categories,
+        tiers,
+    ]);
 
     // Data source table columns
     const dataSourceColumns = [
         {
-            title: 'Tên nguồn dữ liệu',
-            dataIndex: 'label',
-            key: 'label',
+            title: "Tên nguồn dữ liệu",
+            dataIndex: "label",
+            key: "label",
             render: (text, record) => (
                 <div>
                     <Text strong>{text}</Text>
                     <br />
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <Text type="secondary" style={{ fontSize: "12px" }}>
                         {record.parameterName} ({record.unit})
                     </Text>
                 </div>
             ),
         },
         {
-            title: 'Danh mục',
-            dataIndex: 'categoryLabel',
-            key: 'categoryLabel',
+            title: "Danh mục",
+            dataIndex: "categoryLabel",
+            key: "categoryLabel",
         },
         {
-            title: 'Gói',
-            dataIndex: 'tierLabel',
-            key: 'tierLabel',
+            title: "Gói",
+            dataIndex: "tierLabel",
+            key: "tierLabel",
         },
         {
-            title: 'Chi phí cơ sở',
-            dataIndex: 'baseCost',
-            key: 'baseCost',
+            title: "Chi phí cơ sở",
+            dataIndex: "baseCost",
+            key: "baseCost",
             render: (cost) => `${cost.toLocaleString()} ₫/tháng`,
         },
         {
-            title: 'Hành động',
-            key: 'action',
+            title: "Hành động",
+            key: "action",
             render: (_, record) => (
                 <Popconfirm
                     title="Xóa nguồn dữ liệu"
@@ -257,8 +322,18 @@ const BasicTabComponent = ({
                             label="Tên Sản phẩm"
                             tooltip="Tên hiển thị (VD: Bảo hiểm lúa mùa đông 2025)"
                             rules={[
-                                { required: true, message: getBasePolicyError('PRODUCT_NAME_REQUIRED') },
-                                { min: 3, message: getBasePolicyValidation('PRODUCT_NAME_MIN_LENGTH') }
+                                {
+                                    required: true,
+                                    message: getBasePolicyError(
+                                        "PRODUCT_NAME_REQUIRED"
+                                    ),
+                                },
+                                {
+                                    min: 3,
+                                    message: getBasePolicyValidation(
+                                        "PRODUCT_NAME_MIN_LENGTH"
+                                    ),
+                                },
                             ]}
                         >
                             <Input
@@ -273,18 +348,26 @@ const BasicTabComponent = ({
                             label="Mã Sản phẩm"
                             tooltip="Mã duy nhất (chữ, số, _ - tự động viết hoa)"
                             rules={[
-                                { required: true, message: getBasePolicyError('PRODUCT_CODE_REQUIRED') },
+                                {
+                                    required: true,
+                                    message: getBasePolicyError(
+                                        "PRODUCT_CODE_REQUIRED"
+                                    ),
+                                },
                                 {
                                     pattern: /^[A-Za-z0-9_]+$/,
-                                    message: 'Mã sản phẩm chỉ được chứa chữ cái, số và dấu gạch dưới (_)!'
-                                }
+                                    message:
+                                        "Mã sản phẩm chỉ được chứa chữ cái, số và dấu gạch dưới (_)!",
+                                },
                             ]}
-                            normalize={(value) => value ? value.toUpperCase() : value}
+                            normalize={(value) =>
+                                value ? value.toUpperCase() : value
+                            }
                         >
                             <Input
                                 placeholder="Ví dụ: rice_winter_2025"
                                 size="large"
-                                style={{ textTransform: 'uppercase' }}
+                                style={{ textTransform: "uppercase" }}
                             />
                         </Form.Item>
                     </Col>
@@ -310,7 +393,10 @@ const BasicTabComponent = ({
                             label="Loại Cây trồng"
                             tooltip="Chọn loại cây trồng được bảo hiểm"
                             rules={[
-                                { required: true, message: 'Vui lòng chọn loại cây trồng!' }
+                                {
+                                    required: true,
+                                    message: "Vui lòng chọn loại cây trồng!",
+                                },
                             ]}
                         >
                             <Select
@@ -318,12 +404,19 @@ const BasicTabComponent = ({
                                 size="large"
                                 optionLabelProp="label"
                             >
-                                {mockData.cropTypes.map(crop => (
-                                    <Option key={crop.value} value={crop.value} label={crop.label}>
+                                {mockData.cropTypes.map((crop) => (
+                                    <Option
+                                        key={crop.value}
+                                        value={crop.value}
+                                        label={crop.label}
+                                    >
                                         <div>
                                             <Text>{crop.label}</Text>
                                             <br />
-                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                            <Text
+                                                type="secondary"
+                                                style={{ fontSize: "12px" }}
+                                            >
                                                 {crop.description}
                                             </Text>
                                         </div>
@@ -341,15 +434,26 @@ const BasicTabComponent = ({
                             label="Thời hạn bảo hiểm (ngày)"
                             tooltip="Số ngày hợp đồng có hiệu lực (VD: 120 ngày)"
                             rules={[
-                                { required: true, message: getBasePolicyError('COVERAGE_DURATION_INVALID') },
-                                { type: 'number', min: 1, message: getBasePolicyValidation('COVERAGE_DURATION_MIN') }
+                                {
+                                    required: true,
+                                    message: getBasePolicyError(
+                                        "COVERAGE_DURATION_INVALID"
+                                    ),
+                                },
+                                {
+                                    type: "number",
+                                    min: 1,
+                                    message: getBasePolicyValidation(
+                                        "COVERAGE_DURATION_MIN"
+                                    ),
+                                },
                             ]}
                         >
                             <InputNumber
                                 placeholder="120"
                                 min={1}
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                             />
                         </Form.Item>
                     </Col>
@@ -362,15 +466,41 @@ const BasicTabComponent = ({
                             label="Tỷ lệ phí cơ bản"
                             tooltip="Hệ số tính phí (phải > 0 nếu không dùng phí cố định)"
                             rules={[
-                                { required: true, message: getBasePolicyError('PREMIUM_BASE_RATE_REQUIRED') },
-                                { type: 'number', min: 0, message: getBasePolicyError('PREMIUM_BASE_RATE_NEGATIVE') },
+                                {
+                                    required: true,
+                                    message: getBasePolicyError(
+                                        "PREMIUM_BASE_RATE_REQUIRED"
+                                    ),
+                                },
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    message: getBasePolicyError(
+                                        "PREMIUM_BASE_RATE_NEGATIVE"
+                                    ),
+                                },
                                 {
                                     validator: (_, value) => {
-                                        if (value === null || value === undefined || value === '') return Promise.resolve();
-                                        const ok = validateDecimal(value, 999999.9, 1);
-                                        return ok ? Promise.resolve() : Promise.reject(getBasePolicyError('PREMIUM_BASE_RATE_INVALID'));
-                                    }
-                                }
+                                        if (
+                                            value === null ||
+                                            value === undefined ||
+                                            value === ""
+                                        )
+                                            return Promise.resolve();
+                                        const ok = validateDecimal(
+                                            value,
+                                            999999.9,
+                                            1
+                                        );
+                                        return ok
+                                            ? Promise.resolve()
+                                            : Promise.reject(
+                                                  getBasePolicyError(
+                                                      "PREMIUM_BASE_RATE_INVALID"
+                                                  )
+                                              );
+                                    },
+                                },
                             ]}
                         >
                             <InputNumber
@@ -380,7 +510,7 @@ const BasicTabComponent = ({
                                 max={999999.9}
                                 precision={1}
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                             />
                         </Form.Item>
                     </Col>
@@ -390,8 +520,19 @@ const BasicTabComponent = ({
                             label="Phí bảo hiểm cố định"
                             tooltip="Số tiền phí cố định cho hợp đồng (không tính toán)"
                             rules={[
-                                { required: true, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_REQUIRED') },
-                                { type: 'number', min: 0, message: getBasePolicyError('FIX_PREMIUM_AMOUNT_NEGATIVE') }
+                                {
+                                    required: true,
+                                    message: getBasePolicyError(
+                                        "FIX_PREMIUM_AMOUNT_REQUIRED"
+                                    ),
+                                },
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    message: getBasePolicyError(
+                                        "FIX_PREMIUM_AMOUNT_NEGATIVE"
+                                    ),
+                                },
                             ]}
                         >
                             <InputNumber
@@ -399,9 +540,16 @@ const BasicTabComponent = ({
                                 min={0}
                                 step={1000}
                                 size="large"
-                                style={{ width: '100%' }}
-                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                style={{ width: "100%" }}
+                                formatter={(value) =>
+                                    `${value}`.replace(
+                                        /\B(?=(\d{3})+(?!\d))/g,
+                                        ","
+                                    )
+                                }
+                                parser={(value) =>
+                                    value.replace(/\$\s?|(,*)/g, "")
+                                }
                             />
                         </Form.Item>
                     </Col>
@@ -411,14 +559,18 @@ const BasicTabComponent = ({
                             label="Gia hạn thanh toán (ngày)"
                             tooltip="Số ngày tối đa cho phép trả chậm phí"
                             rules={[
-                                { type: 'number', min: 0, message: 'Phải >= 0' }
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    message: "Phải >= 0",
+                                },
                             ]}
                         >
                             <InputNumber
                                 placeholder="7"
                                 min={0}
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                             />
                         </Form.Item>
                     </Col>
@@ -431,7 +583,14 @@ const BasicTabComponent = ({
                             label="Tỷ lệ phí khi hủy hợp đồng"
                             tooltip="Tỷ lệ hoàn phí khi hủy sớm (0-1, VD: 0.8 = hoàn 80%)"
                             rules={[
-                                { type: 'number', min: 0, max: 1, message: getBasePolicyError('CANCEL_PREMIUM_RATE_INVALID') }
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    max: 1,
+                                    message: getBasePolicyError(
+                                        "CANCEL_PREMIUM_RATE_INVALID"
+                                    ),
+                                },
                             ]}
                         >
                             <InputNumber
@@ -440,7 +599,7 @@ const BasicTabComponent = ({
                                 max={1}
                                 step={0.01}
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                             />
                         </Form.Item>
                     </Col>
@@ -455,15 +614,41 @@ const BasicTabComponent = ({
                             label="Tỷ lệ chi trả cơ bản"
                             tooltip="Hệ số tính chi trả (phải > 0, VD: 0.75 = 75%)"
                             rules={[
-                                { required: true, message: getBasePolicyError('PAYOUT_BASE_RATE_REQUIRED') },
-                                { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_BASE_RATE_NEGATIVE') },
+                                {
+                                    required: true,
+                                    message: getBasePolicyError(
+                                        "PAYOUT_BASE_RATE_REQUIRED"
+                                    ),
+                                },
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    message: getBasePolicyError(
+                                        "PAYOUT_BASE_RATE_NEGATIVE"
+                                    ),
+                                },
                                 {
                                     validator: (_, value) => {
-                                        if (value === null || value === undefined || value === '') return Promise.resolve();
-                                        const ok = validateDecimal(value, 999999.9, 1);
-                                        return ok ? Promise.resolve() : Promise.reject(getBasePolicyError('PAYOUT_BASE_RATE_INVALID'));
-                                    }
-                                }
+                                        if (
+                                            value === null ||
+                                            value === undefined ||
+                                            value === ""
+                                        )
+                                            return Promise.resolve();
+                                        const ok = validateDecimal(
+                                            value,
+                                            999999.9,
+                                            1
+                                        );
+                                        return ok
+                                            ? Promise.resolve()
+                                            : Promise.reject(
+                                                  getBasePolicyError(
+                                                      "PAYOUT_BASE_RATE_INVALID"
+                                                  )
+                                              );
+                                    },
+                                },
                             ]}
                         >
                             <InputNumber
@@ -473,7 +658,7 @@ const BasicTabComponent = ({
                                 max={999999.9}
                                 precision={1}
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                             />
                         </Form.Item>
                     </Col>
@@ -483,8 +668,19 @@ const BasicTabComponent = ({
                             label="Số tiền chi trả cố định"
                             tooltip="Số tiền chi trả cố định khi xảy ra sự cố"
                             rules={[
-                                { required: true, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_REQUIRED') },
-                                { type: 'number', min: 0, message: getBasePolicyError('FIX_PAYOUT_AMOUNT_NEGATIVE') }
+                                {
+                                    required: true,
+                                    message: getBasePolicyError(
+                                        "FIX_PAYOUT_AMOUNT_REQUIRED"
+                                    ),
+                                },
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    message: getBasePolicyError(
+                                        "FIX_PAYOUT_AMOUNT_NEGATIVE"
+                                    ),
+                                },
                             ]}
                         >
                             <InputNumber
@@ -492,9 +688,16 @@ const BasicTabComponent = ({
                                 min={0}
                                 step={1000}
                                 size="large"
-                                style={{ width: '100%' }}
-                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                style={{ width: "100%" }}
+                                formatter={(value) =>
+                                    `${value}`.replace(
+                                        /\B(?=(\d{3})+(?!\d))/g,
+                                        ","
+                                    )
+                                }
+                                parser={(value) =>
+                                    value.replace(/\$\s?|(,*)/g, "")
+                                }
                             />
                         </Form.Item>
                     </Col>
@@ -507,7 +710,13 @@ const BasicTabComponent = ({
                             label="Trần chi trả"
                             tooltip="Số tiền chi trả tối đa cho một hợp đồng"
                             rules={[
-                                { type: 'number', min: 0, message: getBasePolicyError('PAYOUT_CAP_NEGATIVE') }
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    message: getBasePolicyError(
+                                        "PAYOUT_CAP_NEGATIVE"
+                                    ),
+                                },
                             ]}
                         >
                             <InputNumber
@@ -515,9 +724,16 @@ const BasicTabComponent = ({
                                 min={0}
                                 step={1000}
                                 size="large"
-                                style={{ width: '100%' }}
-                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                style={{ width: "100%" }}
+                                formatter={(value) =>
+                                    `${value}`.replace(
+                                        /\B(?=(\d{3})+(?!\d))/g,
+                                        ","
+                                    )
+                                }
+                                parser={(value) =>
+                                    value.replace(/\$\s?|(,*)/g, "")
+                                }
                             />
                         </Form.Item>
                     </Col>
@@ -527,14 +743,35 @@ const BasicTabComponent = ({
                             label="Hệ số vượt ngưỡng"
                             tooltip="Hệ số nhân khi vượt ngưỡng (phải > 0, mặc định: 1.0)"
                             rules={[
-                                { type: 'number', min: 0, message: getBasePolicyError('OVER_THRESHOLD_MULTIPLIER_NEGATIVE') },
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    message: getBasePolicyError(
+                                        "OVER_THRESHOLD_MULTIPLIER_NEGATIVE"
+                                    ),
+                                },
                                 {
                                     validator: (_, value) => {
-                                        if (value === null || value === undefined || value === '') return Promise.resolve();
-                                        const ok = validateDecimal(value, 999999.9, 1);
-                                        return ok ? Promise.resolve() : Promise.reject(getBasePolicyError('OVER_THRESHOLD_MULTIPLIER_INVALID'));
-                                    }
-                                }
+                                        if (
+                                            value === null ||
+                                            value === undefined ||
+                                            value === ""
+                                        )
+                                            return Promise.resolve();
+                                        const ok = validateDecimal(
+                                            value,
+                                            999999.9,
+                                            1
+                                        );
+                                        return ok
+                                            ? Promise.resolve()
+                                            : Promise.reject(
+                                                  getBasePolicyError(
+                                                      "OVER_THRESHOLD_MULTIPLIER_INVALID"
+                                                  )
+                                              );
+                                    },
+                                },
                             ]}
                         >
                             <InputNumber
@@ -544,13 +781,15 @@ const BasicTabComponent = ({
                                 max={999999.9}
                                 precision={1}
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                             />
                         </Form.Item>
                     </Col>
                 </Row>
 
-                <Divider orientation="left">Thời gian đăng ký & Hiệu lực</Divider>
+                <Divider orientation="left">
+                    Thời gian đăng ký & Hiệu lực
+                </Divider>
 
                 <Row gutter={24}>
                     <Col span={12}>
@@ -562,11 +801,14 @@ const BasicTabComponent = ({
                             <DatePicker
                                 placeholder="Chọn ngày bắt đầu đăng ký"
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                                 format="DD/MM/YYYY"
                                 disabledDate={(current) => {
                                     // Disable past dates (before today)
-                                    return current && current.isBefore(new Date(), 'day');
+                                    return (
+                                        current &&
+                                        current.isBefore(new Date(), "day")
+                                    );
                                 }}
                             />
                         </Form.Item>
@@ -581,47 +823,91 @@ const BasicTabComponent = ({
                                     validator(_, value) {
                                         if (!value) return Promise.resolve();
 
-                                        const startDay = getFieldValue('enrollmentStartDay');
+                                        const startDay =
+                                            getFieldValue("enrollmentStartDay");
                                         if (!startDay) {
-                                            return Promise.reject(new Error('Vui lòng chọn ngày bắt đầu đăng ký trước'));
+                                            return Promise.reject(
+                                                new Error(
+                                                    "Vui lòng chọn ngày bắt đầu đăng ký trước"
+                                                )
+                                            );
                                         }
 
-                                        if (startDay && !value.isAfter(startDay)) {
-                                            return Promise.reject(new Error(getBasePolicyError('ENROLLMENT_START_AFTER_END')));
+                                        if (
+                                            startDay &&
+                                            !value.isAfter(startDay)
+                                        ) {
+                                            return Promise.reject(
+                                                new Error(
+                                                    getBasePolicyError(
+                                                        "ENROLLMENT_START_AFTER_END"
+                                                    )
+                                                )
+                                            );
                                         }
 
-                                        const validFrom = getFieldValue('insuranceValidFrom');
-                                        if (validFrom && value.isAfter(validFrom)) {
-                                            return Promise.reject(new Error(getBasePolicyError('ENROLLMENT_END_AFTER_VALID_FROM')));
+                                        const validFrom =
+                                            getFieldValue("insuranceValidFrom");
+                                        if (
+                                            validFrom &&
+                                            value.isAfter(validFrom)
+                                        ) {
+                                            return Promise.reject(
+                                                new Error(
+                                                    getBasePolicyError(
+                                                        "ENROLLMENT_END_AFTER_VALID_FROM"
+                                                    )
+                                                )
+                                            );
                                         }
 
                                         return Promise.resolve();
-                                    }
-                                })
+                                    },
+                                }),
                             ]}
                         >
                             <DatePicker
                                 placeholder="Chọn ngày kết thúc đăng ký"
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                                 format="DD/MM/YYYY"
-                                disabled={!form.getFieldValue('enrollmentStartDay')}
+                                disabled={
+                                    !form.getFieldValue("enrollmentStartDay")
+                                }
                                 disabledDate={(current) => {
                                     // Disable past dates (before today)
-                                    if (current && current.isBefore(new Date(), 'day')) {
+                                    if (
+                                        current &&
+                                        current.isBefore(new Date(), "day")
+                                    ) {
                                         return true;
                                     }
 
-                                    const startDay = form.getFieldValue('enrollmentStartDay');
-                                    const validFrom = form.getFieldValue('insuranceValidFrom');
+                                    const startDay =
+                                        form.getFieldValue(
+                                            "enrollmentStartDay"
+                                        );
+                                    const validFrom =
+                                        form.getFieldValue(
+                                            "insuranceValidFrom"
+                                        );
 
                                     // Disable dates before or equal to start day
-                                    if (startDay && current && (current.isBefore(startDay, 'day') || current.isSame(startDay, 'day'))) {
+                                    if (
+                                        startDay &&
+                                        current &&
+                                        (current.isBefore(startDay, "day") ||
+                                            current.isSame(startDay, "day"))
+                                    ) {
                                         return true;
                                     }
 
                                     // Disable dates after insurance valid from
-                                    if (validFrom && current && current.isAfter(validFrom, 'day')) {
+                                    if (
+                                        validFrom &&
+                                        current &&
+                                        current.isAfter(validFrom, "day")
+                                    ) {
                                         return true;
                                     }
 
@@ -639,37 +925,72 @@ const BasicTabComponent = ({
                             label="Bảo hiểm có hiệu lực từ"
                             tooltip="Ngày bắt đầu bảo hiểm (bắt buộc)"
                             rules={[
-                                { required: true, message: getBasePolicyValidation('INSURANCE_VALID_FROM_REQUIRED') },
+                                {
+                                    required: true,
+                                    message: getBasePolicyValidation(
+                                        "INSURANCE_VALID_FROM_REQUIRED"
+                                    ),
+                                },
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
                                         if (!value) return Promise.resolve();
 
-                                        const enrollmentStartDay = getFieldValue('enrollmentStartDay');
-                                        if (enrollmentStartDay && value.isBefore(enrollmentStartDay, 'day')) {
-                                            return Promise.reject(new Error('Bảo hiểm có hiệu lực từ phải sau ngày bắt đầu đăng ký'));
+                                        const enrollmentStartDay =
+                                            getFieldValue("enrollmentStartDay");
+                                        if (
+                                            enrollmentStartDay &&
+                                            value.isBefore(
+                                                enrollmentStartDay,
+                                                "day"
+                                            )
+                                        ) {
+                                            return Promise.reject(
+                                                new Error(
+                                                    "Bảo hiểm có hiệu lực từ phải sau ngày bắt đầu đăng ký"
+                                                )
+                                            );
                                         }
 
                                         return Promise.resolve();
-                                    }
-                                })
+                                    },
+                                }),
                             ]}
                         >
                             <DatePicker
                                 placeholder="Chọn ngày bắt đầu hiệu lực"
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                                 format="DD/MM/YYYY"
-                                disabled={!form.getFieldValue('enrollmentStartDay')}
+                                disabled={
+                                    !form.getFieldValue("enrollmentStartDay")
+                                }
                                 disabledDate={(current) => {
                                     // Disable past dates (before today)
-                                    if (current && current.isBefore(new Date(), 'day')) {
+                                    if (
+                                        current &&
+                                        current.isBefore(new Date(), "day")
+                                    ) {
                                         return true;
                                     }
 
-                                    const enrollmentStartDay = form.getFieldValue('enrollmentStartDay');
+                                    const enrollmentStartDay =
+                                        form.getFieldValue(
+                                            "enrollmentStartDay"
+                                        );
 
                                     // Disable dates before enrollment start day
-                                    if (enrollmentStartDay && current && (current.isBefore(enrollmentStartDay, 'day') || current.isSame(enrollmentStartDay, 'day'))) {
+                                    if (
+                                        enrollmentStartDay &&
+                                        current &&
+                                        (current.isBefore(
+                                            enrollmentStartDay,
+                                            "day"
+                                        ) ||
+                                            current.isSame(
+                                                enrollmentStartDay,
+                                                "day"
+                                            ))
+                                    ) {
                                         return true;
                                     }
 
@@ -682,44 +1003,72 @@ const BasicTabComponent = ({
                         <Form.Item
                             name="insuranceValidTo"
                             label="Bảo hiểm có hiệu lực đến"
-                            tooltip="Ngày kết thúc bảo hiểm (bắt buộc)"
+                            tooltip="Ngày kết thúc bảo hiểm (tự động tính = ngày bắt đầu + thời hạn bảo hiểm)"
                             rules={[
-                                { required: true, message: getBasePolicyValidation('INSURANCE_VALID_TO_REQUIRED') },
+                                {
+                                    required: true,
+                                    message: getBasePolicyValidation(
+                                        "INSURANCE_VALID_TO_REQUIRED"
+                                    ),
+                                },
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
                                         if (!value) return Promise.resolve();
 
-                                        const validFrom = getFieldValue('insuranceValidFrom');
+                                        const validFrom =
+                                            getFieldValue("insuranceValidFrom");
                                         if (!validFrom) {
-                                            return Promise.reject(new Error('Vui lòng chọn ngày bắt đầu hiệu lực trước'));
+                                            return Promise.reject(
+                                                new Error(
+                                                    "Vui lòng chọn ngày bắt đầu hiệu lực trước"
+                                                )
+                                            );
                                         }
 
                                         if (!value.isAfter(validFrom)) {
-                                            return Promise.reject(new Error(getBasePolicyError('INSURANCE_VALID_FROM_AFTER_TO')));
+                                            return Promise.reject(
+                                                new Error(
+                                                    getBasePolicyError(
+                                                        "INSURANCE_VALID_FROM_AFTER_TO"
+                                                    )
+                                                )
+                                            );
                                         }
 
                                         return Promise.resolve();
-                                    }
-                                })
+                                    },
+                                }),
                             ]}
                         >
                             <DatePicker
-                                placeholder="Chọn ngày kết thúc hiệu lực"
+                                placeholder="Tự động tính dựa trên ngày bắt đầu + thời hạn"
                                 size="large"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                                 format="DD/MM/YYYY"
-                                disabled={!form.getFieldValue('insuranceValidFrom')}
+                                disabled
                                 disabledDate={(current) => {
                                     // Disable past dates (before today)
-                                    if (current && current.isBefore(new Date(), 'day')) {
+                                    if (
+                                        current &&
+                                        current.isBefore(new Date(), "day")
+                                    ) {
                                         return true;
                                     }
 
-                                    const validFrom = form.getFieldValue('insuranceValidFrom');
+                                    const validFrom =
+                                        form.getFieldValue(
+                                            "insuranceValidFrom"
+                                        );
 
                                     // Disable dates before or equal to insurance valid from
                                     if (validFrom && current) {
-                                        return current.isBefore(validFrom, 'day') || current.isSame(validFrom, 'day');
+                                        return (
+                                            current.isBefore(
+                                                validFrom,
+                                                "day"
+                                            ) ||
+                                            current.isSame(validFrom, "day")
+                                        );
                                     }
 
                                     return false;
@@ -729,7 +1078,9 @@ const BasicTabComponent = ({
                     </Col>
                 </Row>
 
-                <Divider orientation="left">Cài đặt gia hạn & Trạng thái</Divider>
+                <Divider orientation="left">
+                    Cài đặt gia hạn & Trạng thái
+                </Divider>
 
                 <Row gutter={24}>
                     <Col span={8}>
@@ -751,7 +1102,14 @@ const BasicTabComponent = ({
                             label="Giảm giá khi gia hạn (%)"
                             tooltip="Phần trăm giảm giá áp dụng cho phí khi gia hạn tự động (ví dụ: 1.25 = 1.25%). Theo schema max 9.99"
                             rules={[
-                                { type: 'number', min: 0, max: 9.99, message: getBasePolicyError('RENEWAL_DISCOUNT_RATE_INVALID') }
+                                {
+                                    type: "number",
+                                    min: 0,
+                                    max: 9.99,
+                                    message: getBasePolicyError(
+                                        "RENEWAL_DISCOUNT_RATE_INVALID"
+                                    ),
+                                },
                             ]}
                         >
                             <InputNumber
@@ -760,15 +1118,17 @@ const BasicTabComponent = ({
                                 max={9.99}
                                 step={0.01}
                                 size="large"
-                                style={{ width: '100%' }}
-                                formatter={value => `${value}%`}
-                                parser={value => value.replace('%', '')}
+                                style={{ width: "100%" }}
+                                formatter={(value) => `${value}%`}
+                                parser={(value) => value.replace("%", "")}
                             />
                         </Form.Item>
                     </Col>
                 </Row>
 
-                <Divider orientation="left">Tài liệu & Thông tin bổ sung</Divider>
+                <Divider orientation="left">
+                    Tài liệu & Thông tin bổ sung
+                </Divider>
 
                 <Row gutter={24}>
                     <Col span={24}>
@@ -802,19 +1162,29 @@ const BasicTabComponent = ({
                         </Form.Item>
                     </Col>
                 </Row>
-
             </Form>
 
             <Divider />
 
             <Title level={4}>
                 Cấu hình Gói Dữ liệu
-                <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
-                    (Chi phí ước tính: {estimatedCosts.monthlyDataCost.toLocaleString()} ₫/tháng)
+                <Text
+                    type="secondary"
+                    style={{
+                        fontSize: "14px",
+                        fontWeight: "normal",
+                        marginLeft: "8px",
+                    }}
+                >
+                    (Chi phí ước tính:{" "}
+                    {estimatedCosts.monthlyDataCost.toLocaleString()} ₫/tháng)
                 </Text>
             </Title>
 
-            <Card className="data-source-card" styles={{ body: { padding: '24px' } }}>
+            <Card
+                className="data-source-card"
+                styles={{ body: { padding: "24px" } }}
+            >
                 <Form
                     form={dataSourceForm}
                     layout="vertical"
@@ -822,10 +1192,7 @@ const BasicTabComponent = ({
                 >
                     <Row gutter={16} align="middle">
                         <Col span={6}>
-                            <Form.Item
-                                name="category"
-                                label="Mục dữ liệu"
-                            >
+                            <Form.Item name="category" label="Mục dữ liệu">
                                 <Select
                                     placeholder="Chọn danh mục"
                                     onChange={handleCategoryChange}
@@ -833,23 +1200,55 @@ const BasicTabComponent = ({
                                     optionLabelProp="label"
                                     loading={categoriesLoading}
                                 >
-                                    {categories?.map(category => (
-                                        <Option key={category.id} value={category.category_name} label={category.category_name}>
+                                    {categories?.map((category) => (
+                                        <Option
+                                            key={category.id}
+                                            value={category.category_name}
+                                            label={category.category_name}
+                                        >
                                             <Tooltip
                                                 title={
                                                     <div>
-                                                        <div><strong>{category.category_name}</strong></div>
-                                                        <div style={{ marginTop: '4px' }}>{category.category_description}</div>
+                                                        <div>
+                                                            <strong>
+                                                                {
+                                                                    category.category_name
+                                                                }
+                                                            </strong>
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                marginTop:
+                                                                    "4px",
+                                                            }}
+                                                        >
+                                                            {
+                                                                category.category_description
+                                                            }
+                                                        </div>
                                                     </div>
                                                 }
                                                 placement="right"
                                                 mouseEnterDelay={0.3}
                                             >
-                                                <div style={{ cursor: 'pointer' }}>
-                                                    <Text>{category.category_name}</Text>
+                                                <div
+                                                    style={{
+                                                        cursor: "pointer",
+                                                    }}
+                                                >
+                                                    <Text>
+                                                        {category.category_name}
+                                                    </Text>
                                                     <br />
-                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        {category.category_description}
+                                                    <Text
+                                                        type="secondary"
+                                                        style={{
+                                                            fontSize: "12px",
+                                                        }}
+                                                    >
+                                                        {
+                                                            category.category_description
+                                                        }
                                                     </Text>
                                                 </div>
                                             </Tooltip>
@@ -859,10 +1258,7 @@ const BasicTabComponent = ({
                             </Form.Item>
                         </Col>
                         <Col span={6}>
-                            <Form.Item
-                                name="tier"
-                                label="Gói dịch vụ"
-                            >
+                            <Form.Item name="tier" label="Gói dịch vụ">
                                 <Select
                                     placeholder="Chọn gói"
                                     disabled={!selectedCategory}
@@ -871,26 +1267,60 @@ const BasicTabComponent = ({
                                     optionLabelProp="label"
                                     loading={tiersLoading}
                                 >
-                                    {tiers.map(tier => (
-                                        <Option key={tier.value} value={tier.value} label={tier.label}>
+                                    {tiers.map((tier) => (
+                                        <Option
+                                            key={tier.value}
+                                            value={tier.value}
+                                            label={tier.label}
+                                        >
                                             <Tooltip
                                                 title={
                                                     <div>
-                                                        <div><strong>{tier.label}</strong></div>
-                                                        <div style={{ marginTop: '4px' }}>{tier.description}</div>
-                                                        <div style={{ marginTop: '4px', color: '#52c41a' }}>
-                                                            Hệ số nhân: x{tier.tierMultiplier}
+                                                        <div>
+                                                            <strong>
+                                                                {tier.label}
+                                                            </strong>
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                marginTop:
+                                                                    "4px",
+                                                            }}
+                                                        >
+                                                            {tier.description}
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                marginTop:
+                                                                    "4px",
+                                                                color: "#52c41a",
+                                                            }}
+                                                        >
+                                                            Hệ số nhân: x
+                                                            {
+                                                                tier.tierMultiplier
+                                                            }
                                                         </div>
                                                     </div>
                                                 }
                                                 placement="right"
                                                 mouseEnterDelay={0.3}
                                             >
-                                                <div style={{ cursor: 'pointer' }}>
+                                                <div
+                                                    style={{
+                                                        cursor: "pointer",
+                                                    }}
+                                                >
                                                     <Text>{tier.label}</Text>
                                                     <br />
-                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        {tier.description} (x{tier.tierMultiplier})
+                                                    <Text
+                                                        type="secondary"
+                                                        style={{
+                                                            fontSize: "12px",
+                                                        }}
+                                                    >
+                                                        {tier.description} (x
+                                                        {tier.tierMultiplier})
                                                     </Text>
                                                 </div>
                                             </Tooltip>
@@ -900,10 +1330,7 @@ const BasicTabComponent = ({
                             </Form.Item>
                         </Col>
                         <Col span={8}>
-                            <Form.Item
-                                name="dataSource"
-                                label="Nguồn dữ liệu"
-                            >
+                            <Form.Item name="dataSource" label="Nguồn dữ liệu">
                                 <Select
                                     placeholder="Chọn nguồn dữ liệu"
                                     disabled={!selectedTier}
@@ -911,36 +1338,96 @@ const BasicTabComponent = ({
                                     optionLabelProp="label"
                                     loading={dataSourcesLoading}
                                 >
-                                    {dataSources.filter(source =>
-                                        !basicData.selectedDataSources.some(selected => selected.id === source.id)
-                                    ).map(source => (
-                                        <Option key={source.id} value={source.id} label={source.label}>
-                                            <Tooltip
-                                                title={
-                                                    <div>
-                                                        <div><strong>{source.label}</strong></div>
-                                                        <div style={{ marginTop: '4px' }}>{source.description}</div>
-                                                        <div style={{ marginTop: '4px', color: '#52c41a' }}>
-                                                            Nhà cung cấp: {source.data_provider}
-                                                        </div>
-                                                        <div style={{ marginTop: '4px', color: '#1890ff' }}>
-                                                            Chi phí: {source.baseCost.toLocaleString()} ₫/tháng
-                                                        </div>
-                                                    </div>
-                                                }
-                                                placement="right"
-                                                mouseEnterDelay={0.3}
+                                    {dataSources
+                                        .filter(
+                                            (source) =>
+                                                !basicData.selectedDataSources.some(
+                                                    (selected) =>
+                                                        selected.id ===
+                                                        source.id
+                                                )
+                                        )
+                                        .map((source) => (
+                                            <Option
+                                                key={source.id}
+                                                value={source.id}
+                                                label={source.label}
                                             >
-                                                <div style={{ cursor: 'pointer' }}>
-                                                    <Text>{source.label}</Text>
-                                                    <br />
-                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        {source.data_provider} - {source.baseCost.toLocaleString()} ₫/tháng
-                                                    </Text>
-                                                </div>
-                                            </Tooltip>
-                                        </Option>
-                                    ))}
+                                                <Tooltip
+                                                    title={
+                                                        <div>
+                                                            <div>
+                                                                <strong>
+                                                                    {
+                                                                        source.label
+                                                                    }
+                                                                </strong>
+                                                            </div>
+                                                            <div
+                                                                style={{
+                                                                    marginTop:
+                                                                        "4px",
+                                                                }}
+                                                            >
+                                                                {
+                                                                    source.description
+                                                                }
+                                                            </div>
+                                                            <div
+                                                                style={{
+                                                                    marginTop:
+                                                                        "4px",
+                                                                    color: "#52c41a",
+                                                                }}
+                                                            >
+                                                                Nhà cung cấp:{" "}
+                                                                {
+                                                                    source.data_provider
+                                                                }
+                                                            </div>
+                                                            <div
+                                                                style={{
+                                                                    marginTop:
+                                                                        "4px",
+                                                                    color: "#1890ff",
+                                                                }}
+                                                            >
+                                                                Chi phí:{" "}
+                                                                {source.baseCost.toLocaleString()}{" "}
+                                                                ₫/tháng
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    placement="right"
+                                                    mouseEnterDelay={0.3}
+                                                >
+                                                    <div
+                                                        style={{
+                                                            cursor: "pointer",
+                                                        }}
+                                                    >
+                                                        <Text>
+                                                            {source.label}
+                                                        </Text>
+                                                        <br />
+                                                        <Text
+                                                            type="secondary"
+                                                            style={{
+                                                                fontSize:
+                                                                    "12px",
+                                                            }}
+                                                        >
+                                                            {
+                                                                source.data_provider
+                                                            }{" "}
+                                                            -{" "}
+                                                            {source.baseCost.toLocaleString()}{" "}
+                                                            ₫/tháng
+                                                        </Text>
+                                                    </div>
+                                                </Tooltip>
+                                            </Option>
+                                        ))}
                                 </Select>
                             </Form.Item>
                         </Col>
@@ -950,7 +1437,9 @@ const BasicTabComponent = ({
                                     type="primary"
                                     icon={<PlusOutlined />}
                                     onClick={handleAddDataSource}
-                                    disabled={!selectedCategory || !selectedTier}
+                                    disabled={
+                                        !selectedCategory || !selectedTier
+                                    }
                                     size="large"
                                     block
                                 >
@@ -986,6 +1475,6 @@ const BasicTabComponent = ({
 
 // ✅ OPTIMIZATION: Wrap with memo and add display name
 const BasicTab = memo(BasicTabComponent);
-BasicTab.displayName = 'BasicTab';
+BasicTab.displayName = "BasicTab";
 
 export default BasicTab;

@@ -246,6 +246,16 @@ const PolicyDetailPage = ({ params }) => {
     return date.toLocaleDateString("vi-VN");
   };
 
+  // Format UTC date string (for created_at and updated_at)
+  const formatUtcDateString = (utcDateString) => {
+    if (!utcDateString || utcDateString === "0001-01-01T00:00:00Z") return "N/A";
+
+    const date = new Date(utcDateString);
+    if (isNaN(date.getTime())) return "N/A";
+
+    return date.toLocaleString("vi-VN", { timeZone: "UTC" });
+  };
+
   const policyDetail = {
     id: basePolicy.id,
     productName: basePolicy.product_name,
@@ -256,8 +266,8 @@ const PolicyDetailPage = ({ params }) => {
     coverageDurationDays: basePolicy.coverage_duration_days,
     coverageAmount: basePolicy.fix_payout_amount || 0,
     status: basePolicy.status,
-    createdAt: formatDate(basePolicy.created_at),
-    updatedAt: formatDate(basePolicy.updated_at),
+    createdAt: formatUtcDateString(basePolicy.created_at),
+    updatedAt: formatUtcDateString(basePolicy.updated_at),
     description: basePolicy.product_description || "",
     coverageCurrency: basePolicy.coverage_currency,
     fixPremiumAmount: basePolicy.fix_premium_amount,

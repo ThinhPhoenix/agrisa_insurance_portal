@@ -248,7 +248,8 @@ const PolicyDetailPage = ({ params }) => {
 
   // Format UTC date string (for created_at and updated_at)
   const formatUtcDateString = (utcDateString) => {
-    if (!utcDateString || utcDateString === "0001-01-01T00:00:00Z") return "N/A";
+    if (!utcDateString || utcDateString === "0001-01-01T00:00:00Z")
+      return "N/A";
 
     const date = new Date(utcDateString);
     if (isNaN(date.getTime())) return "N/A";
@@ -532,7 +533,7 @@ const PolicyDetailPage = ({ params }) => {
         <Divider />
 
         <Row gutter={16}>
-          <Col span={6}>
+          {/* <Col span={6}>
             <Text type="secondary">Ngày tạo:</Text>
             <br />
             <Text strong>{policyDetail.createdAt}</Text>
@@ -541,7 +542,7 @@ const PolicyDetailPage = ({ params }) => {
             <Text type="secondary">Cập nhật:</Text>
             <br />
             <Text strong>{policyDetail.updatedAt}</Text>
-          </Col>
+          </Col> */}
           <Col span={6}>
             <Text type="secondary">Thời hạn:</Text>
             <br />

@@ -1,3 +1,4 @@
+import { useGetPublicUser } from "@/services/hooks/profile/use-profile";
 import {
   CalendarOutlined,
   DollarOutlined,
@@ -8,6 +9,7 @@ import {
   UserOutlined
 } from "@ant-design/icons";
 import { Button, Card, Descriptions, Divider, Tag, Typography } from "antd";
+import { useEffect, useState } from "react";
 
 const { Text, Title } = Typography;
 
@@ -64,6 +66,35 @@ const getStatusText = (status) => {
 };
 
 export default function BasicInfoTab({ policy, farm }) {
+  const { getPublicUser } = useGetPublicUser();
+  const [farmerLabel, setFarmerLabel] = useState(
+    policy?.farmer_id ? `Nông dân đăng kí ${policy.farmer_id}` : ""
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    const id = policy?.farmer_id;
+    if (!id) return;
+
+    // attempt to fetch public user display name; fallback to id label
+    getPublicUser(id)
+      .then((res) => {
+        if (!mounted) return;
+        if (res.success && res.data?.display_name) {
+          setFarmerLabel(res.data.display_name);
+        } else {
+          setFarmerLabel(`Nông dân đăng kí ${id}`);
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setFarmerLabel(`Nông dân đăng kí ${id}`);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [policy?.farmer_id, getPublicUser]);
   return (
     <Card>
       {/* Policy Info Section */}
@@ -84,8 +115,8 @@ export default function BasicInfoTab({ policy, farm }) {
             {getStatusText(policy.status)}
           </Tag>
         </Descriptions.Item>
-        <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UserOutlined /> Mã nông dân</span>}>
-          {policy.farmer_id}
+        <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UserOutlined /> Nông dân đăng kí</span>}>
+          <Text strong>{farmerLabel || policy.farmer_id}</Text>
         </Descriptions.Item>
         <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CalendarOutlined /> Ngày tạo</span>}>
           {new Date(policy.created_at).toLocaleDateString("vi-VN")}

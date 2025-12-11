@@ -716,7 +716,7 @@ export default function PolicyDetailPage() {
       label: (
         <span className="flex items-center gap-2">
           <WalletOutlined style={{ color: "#52c41a" }} />
-          <span className="hidden sm:inline">Bồi thường</span>
+          <span className="hidden sm:inline">Chi trả</span>
         </span>
       ),
       children: <ClaimsTab policyId={policyId} />,

@@ -150,15 +150,15 @@ export default function InsuranceApprovalPage() {
         <div className="insurance-package-id">{record.policy_number}</div>
       ),
     },
-    {
-      title: "Mã nông dân",
-      dataIndex: "farmer_id",
-      key: "farmer_id",
-      width: 150,
-      render: (_, record) => (
-        <div className="insurance-package-name">{record.farmer_id}</div>
-      ),
-    },
+    // {
+    //   title: "Mã nông dân",
+    //   dataIndex: "farmer_id",
+    //   key: "farmer_id",
+    //   width: 150,
+    //   render: (_, record) => (
+    //     <div className="insurance-package-name">{record.farmer_id}</div>
+    //   ),
+    // },
     {
       title: "Trạng thái đơn",
       dataIndex: "status",
@@ -239,7 +239,7 @@ export default function InsuranceApprovalPage() {
       name: "search",
       label: "Tìm kiếm",
       type: "input",
-      placeholder: "Tìm theo số HĐ hoặc mã nông dân...",
+      placeholder: "Tìm theo số HĐ...",
       value: searchText,
     },
     {

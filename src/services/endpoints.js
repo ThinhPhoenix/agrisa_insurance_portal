@@ -94,6 +94,9 @@ export const endpoints = {
     update_partner_me: `/profile/protected/api/v1/insurance-partners/me/profile`,
     // Get bank info for users
     bank_info: `/profile/protected/api/v1/users/bank-info`,
+    // Public: get user by public user id (own endpoint)
+    get_public_user_by_id: (user_id) =>
+      `/profile/public/api/v1/users/own/${user_id}`,
   },
   riskAnalysis: {
     by_policy: (policy_id) =>

@@ -204,3 +204,42 @@ export const useUpdatePartnerProfile = () => {
 
   return { updatePartnerProfile, isLoading, error };
 };
+
+// Public user lookup by public user id (e.g. UCpLBiZD6d)
+export const useGetPublicUser = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  const getPublicUser = useCallback(async (userId) => {
+    if (!userId) {
+      const msg = "User ID is required";
+      setError(msg);
+      return { success: false, message: msg };
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const url = endpoints.profile.get_public_user_by_id(userId);
+      const response = await axiosInstance.get(url);
+      if (response.data?.success) {
+        setData(response.data.data || null);
+        return { success: true, data: response.data.data };
+      } else {
+        const msg =
+          response.data?.message || "Không lấy được thông tin người dùng";
+        setError(msg);
+        return { success: false, message: msg };
+      }
+    } catch (err) {
+      const msg = handleError(err) || "Có lỗi khi lấy thông tin người dùng";
+      setError(msg);
+      return { success: false, message: msg };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { getPublicUser, isLoading, error, data };
+};

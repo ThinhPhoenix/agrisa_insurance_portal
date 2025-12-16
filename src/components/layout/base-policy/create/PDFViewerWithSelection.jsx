@@ -4,6 +4,7 @@ import {
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Form, Input, InputNumber, message, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
+import VisualMarkerOverlay from './VisualMarkerOverlay'; // 🆕 BATCH MODE: Visual markers
 
 /**
  * Convert screen coordinates to PDF coordinates with accurate scaling
@@ -55,7 +56,10 @@ const PDFViewerWithSelection = ({
     placeholders = [], // NEW: to check for duplicate positions
     tagDataTypes = [], // NEW: available data types
     onCreateAndApplyField, // NEW: callback to create field and immediately apply AcroForm
-    onCloseFullscreen // NEW: callback to close fullscreen modal after field creation
+    onCloseFullscreen, // NEW: callback to close fullscreen modal after field creation
+    isBatchMode = false, // 🆕 BATCH MODE: Enable batch field creation
+    onScanComplete, // 🆕 BATCH MODE: Callback when field scan is complete (for staging)
+    stagedFields = [] // 🆕 BATCH MODE: Staged fields for visual markers
 }) => {
     const [numPages, setNumPages] = useState(null);
     const [clickedPosition, setClickedPosition] = useState(null);
@@ -421,14 +425,19 @@ const PDFViewerWithSelection = ({
     const handleConfirmPosition = () => {
         if (!clickedPosition) return;
 
-        // Auto-suggest next position number
+        // 🔧 FIX: Auto-suggest dựa trên cả existing placeholders VÀ staged fields
         const existingPositions = placeholders.map(p => {
-            const match = p.original.match(/\((\d+)\)/);
+            const original = (p && (typeof p.original === 'string' ? p.original : (typeof p.fullText === 'string' ? p.fullText : '')));
+            const match = original ? original.match(/\((\d+)\)/) : null;
             return match ? parseInt(match[1]) : null;
         }).filter(Boolean);
 
-        const nextPosition = existingPositions.length > 0
-            ? Math.max(...existingPositions) + 1
+        // 🆕 BATCH MODE: Include staged fields in position calculation
+        const stagedPositions = stagedFields.map(f => f.position).filter(Boolean);
+        const allPositions = [...existingPositions, ...stagedPositions];
+
+        const nextPosition = allPositions.length > 0
+            ? Math.max(...allPositions) + 1
             : 1;
 
         // Set default values
@@ -447,13 +456,18 @@ const PDFViewerWithSelection = ({
             const values = await fieldForm.validateFields();
             const { position, key, dataType } = values;
 
-            // Check for duplicate positions
+            // 🔧 FIX: Check duplicate positions trong CẢ placeholders VÀ staged fields
             const existingPositions = placeholders.map(p => {
-                const match = p.original.match(/\((\d+)\)/);
+                const original = (p && (typeof p.original === 'string' ? p.original : (typeof p.fullText === 'string' ? p.fullText : '')));
+                const match = original ? original.match(/\((\d+)\)/) : null;
                 return match ? parseInt(match[1]) : null;
             }).filter(Boolean);
 
-            if (existingPositions.includes(position)) {
+            // 🆕 BATCH MODE: Include staged fields
+            const stagedPositions = stagedFields.map(f => f.position).filter(Boolean);
+            const allPositions = [...existingPositions, ...stagedPositions];
+
+            if (allPositions.includes(position)) {
                 message.error(`Vị trí (${position}) đã tồn tại. Vui lòng chọn vị trí khác.`);
                 return;
             }
@@ -482,41 +496,80 @@ const PDFViewerWithSelection = ({
                 mappedDataType: dataType
             };
 
-            // Call parent callback to create field and immediately apply AcroForm
-            console.log('🔍 Callbacks available:', {
-                hasCreateAndApply: !!onCreateAndApplyField,
-                hasCreatePlaceholder: !!onCreatePlaceholder
-            });
+            // 🆕 BATCH MODE: Different behavior for batch vs normal mode
+            if (isBatchMode) {
+                // Batch mode: Add to staging area, don't apply to PDF yet
+                console.log('🔵 [BATCH MODE] Adding field to staging:', { position, key, dataType });
 
-            if (onCreateAndApplyField) {
-                console.log('✅ Calling onCreateAndApplyField with:', { newPlaceholder, fieldData: { key, dataType } });
-                try {
-                    await onCreateAndApplyField(newPlaceholder, { key, dataType });
-                    console.log('✅ onCreateAndApplyField completed successfully');
-                } catch (error) {
-                    console.error('❌ onCreateAndApplyField failed:', error);
-                    message.error(`Không thể tạo AcroForm: ${error.message}`);
-                    return; // Don't close modal if failed
+                const stagedField = {
+                    tempId: `staged-${Date.now()}`,
+                    position,
+                    key,
+                    dataType,
+                    page: clickedPosition.page,
+                    x: clickedPosition.pdfX,
+                    y: clickedPosition.pdfY,
+                    width: clickedPosition.pdfWidth,
+                    height: clickedPosition.pdfHeight,
+                    backgroundX: clickedPosition.pdfX,
+                    backgroundWidth: clickedPosition.pdfWidth,
+                    fontSize: clickedPosition.fontSize,
+                    isManual: true,
+                    createdAt: Date.now(),
+                    // 🔧 FIX: Store canvas coordinates for visual marker display
+                    canvasX: clickedPosition.canvasX,
+                    canvasY: clickedPosition.canvasY,
+                    canvasWidth: clickedPosition.canvasWidth,
+                    canvasHeight: clickedPosition.canvasHeight
+                };
+
+                if (onScanComplete) {
+                    onScanComplete(stagedField);
                 }
-            } else if (onCreatePlaceholder) {
-                // Fallback to old behavior
-                console.log('⚠️ Falling back to onCreatePlaceholder (no AcroForm)');
-                onCreatePlaceholder(newPlaceholder);
-            }
 
-            message.success(`Đã tạo trường (${position}) - ${key}`);
+                message.success(`Đã thêm trường (${position}) vào danh sách`);
 
-            // Reset state
-            setFieldFormVisible(false);
-            fieldForm.resetFields();
-            setClickedPosition(null);
+                // Reset form but stay in batch mode (don't close modal)
+                setFieldFormVisible(false);
+                fieldForm.resetFields();
+                setClickedPosition(null);
+            } else {
+                // Normal mode: Create field and immediately apply AcroForm
+                console.log('🔍 Callbacks available:', {
+                    hasCreateAndApply: !!onCreateAndApplyField,
+                    hasCreatePlaceholder: !!onCreatePlaceholder
+                });
 
-            // Close fullscreen modal and exit placement mode after successful field creation
-            if (onCloseFullscreen) {
-                onCloseFullscreen();
-            }
-            if (onExitPlacementMode) {
-                onExitPlacementMode();
+                if (onCreateAndApplyField) {
+                    console.log('✅ Calling onCreateAndApplyField with:', { newPlaceholder, fieldData: { key, dataType } });
+                    try {
+                        await onCreateAndApplyField(newPlaceholder, { key, dataType });
+                        console.log('✅ onCreateAndApplyField completed successfully');
+                    } catch (error) {
+                        console.error('❌ onCreateAndApplyField failed:', error);
+                        message.error(`Không thể tạo AcroForm: ${error.message}`);
+                        return; // Don't close modal if failed
+                    }
+                } else if (onCreatePlaceholder) {
+                    // Fallback to old behavior
+                    console.log('⚠️ Falling back to onCreatePlaceholder (no AcroForm)');
+                    onCreatePlaceholder(newPlaceholder);
+                }
+
+                message.success(`Đã tạo trường (${position}) - ${key}`);
+
+                // Reset state
+                setFieldFormVisible(false);
+                fieldForm.resetFields();
+                setClickedPosition(null);
+
+                // Close fullscreen modal and exit placement mode after successful field creation
+                if (onCloseFullscreen) {
+                    onCloseFullscreen();
+                }
+                if (onExitPlacementMode) {
+                    onExitPlacementMode();
+                }
             }
         } catch (error) {
             console.error('Form validation failed:', error);
@@ -691,6 +744,16 @@ const PDFViewerWithSelection = ({
                         </>
                     );
                 })()}
+
+                {/* 🆕 BATCH MODE: Show visual markers for staged fields */}
+                {isBatchMode && stagedFields.length > 0 && (
+                    <VisualMarkerOverlay
+                        stagedFields={stagedFields}
+                        canvasRefs={canvasRefs}
+                        containerRef={containerRef}
+                        scale={1}
+                    />
+                )}
             </div>
 
             <style>{`

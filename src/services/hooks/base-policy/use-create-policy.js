@@ -89,6 +89,8 @@ const useCreatePolicy = () => {
     documentTagsObject: {},
     placeholders: [], // 🆕 Store placeholders
     mappings: {}, // 🆕 Store mappings
+    stagedFields: [], // 🆕 Batch mode: Staged fields not yet applied to PDF
+    batchMode: false, // 🆕 Batch mode: Is batch modal open?
   });
 
   const [validationStatus, setValidationStatus] = useState({
@@ -634,6 +636,39 @@ const useCreatePolicy = () => {
     }));
   }, []);
 
+  // 🆕 BATCH MODE HANDLERS
+  const handleAddStagedField = useCallback((field) => {
+    setTagsData((prev) => ({
+      ...prev,
+      stagedFields: [
+        ...prev.stagedFields,
+        {
+          ...field,
+          tempId: field.tempId || `staged-${Date.now()}`,
+          createdAt: field.createdAt || Date.now(),
+        },
+      ],
+    }));
+  }, []);
+
+  const handleUpdateStagedField = useCallback((tempId, updates) => {
+    setTagsData((prev) => ({
+      ...prev,
+      stagedFields: prev.stagedFields.map((field) =>
+        field.tempId === tempId ? { ...field, ...updates } : field
+      ),
+    }));
+  }, []);
+
+  const handleDeleteStagedField = useCallback((tempId) => {
+    setTagsData((prev) => ({
+      ...prev,
+      stagedFields: prev.stagedFields.filter(
+        (field) => field.tempId !== tempId
+      ),
+    }));
+  }, []);
+
   const getAvailableDataSourcesForTrigger = useCallback(() => {
     return basicData.selectedDataSources.map((source) => ({
       value: source.id,
@@ -890,6 +925,9 @@ const useCreatePolicy = () => {
     handleAddTag,
     handleRemoveTag,
     handleUpdateTag,
+    handleAddStagedField,
+    handleUpdateStagedField,
+    handleDeleteStagedField,
     handleCreatePolicy,
     handleReset,
     fetchCategories,

@@ -1,4 +1,4 @@
-import { CalculatorOutlined, DollarOutlined, PercentageOutlined } from '@ant-design/icons';
+import { CalculatorOutlined, PercentageOutlined } from '@ant-design/icons';
 import { Card, Col, Divider, Progress, Row, Space, Statistic, Tag, Typography } from 'antd';
 import { memo, useMemo } from 'react';
 
@@ -128,7 +128,6 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                         <Statistic
                             title="Tổng Chi phí Điều kiện"
                             value={totalConditionCost}
-                            prefix={<DollarOutlined />}
                             suffix="VND"
                             precision={0}
                             valueStyle={{

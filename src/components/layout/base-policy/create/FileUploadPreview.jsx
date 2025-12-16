@@ -43,7 +43,8 @@ const FileUploadPreview = forwardRef(({
     tags = [], //  NEW: Tags for manual placement
     // allow parent to control/persist uploaded file across unmounts
     uploadedFile: uploadedFileProp = null,
-    fileUrl: fileUrlProp = null
+    fileUrl: fileUrlProp = null,
+    onOpenBatchModal // 🆕 BATCH MODE: Callback to open batch modal
 }, ref) => {
     useImperativeHandle(ref, () => ({
         openFullscreen: () => handleFullscreenOpen(),
@@ -411,16 +412,14 @@ const FileUploadPreview = forwardRef(({
         setFullscreenVisible(false);
     }, []);
 
-    // Xử lý placement mode
-    const handleEnterPlacementMode = useCallback(() => {
-        setIsPlacementMode(true);
-        setFullscreenVisible(true); // Tự động mở fullscreen để chọn vùng dễ hơn
-        message.info({
-            content: 'Chế độ quét đã bật. Kéo chuột để chọn vùng trường trên PDF.',
-            duration: 4,
-            icon: <AimOutlined style={{ color: '#1890ff' }} />
-        });
-    }, []);
+    // 🆕 BATCH MODE: Open batch modal instead of old scan mode
+    const handleOpenBatchMode = useCallback(() => {
+        if (onOpenBatchModal) {
+            onOpenBatchModal();
+        } else {
+            message.warning('Vui lòng sử dụng nút "Tạo nhiều trường (Batch)" trong tab bên phải');
+        }
+    }, [onOpenBatchModal]);
 
     const handleExitPlacementMode = useCallback(() => {
         setIsPlacementMode(false);
@@ -526,15 +525,14 @@ const FileUploadPreview = forwardRef(({
 
                     <div style={{ marginLeft: 'auto' }}>
                         <Space>
-                            <Tooltip title={isPlacementMode ? "Thoát chế độ quét" : "Chế độ quét - Tạo trường thông tin"}>
+                            <Tooltip title="Tạo nhiều trường thông tin cùng lúc (Batch mode - nhanh hơn 10x)">
                                 <Button
-                                    type={isPlacementMode ? "primary" : "default"}
+                                    type="primary"
                                     icon={<AimOutlined />}
-                                    onClick={isPlacementMode ? handleExitPlacementMode : handleEnterPlacementMode}
+                                    onClick={handleOpenBatchMode}
                                     size="small"
-                                    danger={isPlacementMode}
                                 >
-                                    {isPlacementMode ? "Thoát chế độ quét" : "Chế độ quét"}
+                                    Tạo nhiều trường (Batch)
                                 </Button>
                             </Tooltip>
 

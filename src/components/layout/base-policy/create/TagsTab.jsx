@@ -23,9 +23,10 @@ import {
     TimePicker,
     Typography
 } from 'antd';
-import React, { memo, useRef } from 'react';
+import React, { memo, useRef, useState } from 'react';
 import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 import { createFillablePDFFromMappings } from '@/libs/pdf/pdfAcroFormEditor';
+import BatchFieldCreationModal from './BatchFieldCreationModal'; // 🆕 BATCH MODE
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -41,15 +42,21 @@ const TagsTabComponent = ({
     previewVisible = true,
     onPreviewVisibleChange,
     onFileUpload,
-    onFileRemove
-    ,
+    onFileRemove,
     // New handlers from parent (page.js)
     onOpenPaste,
     onOpenFullscreen,
     placeholders = [],
     onDeletePlaceholder,  // 🆕 Handler to delete placeholder from parent state
     filePreviewRef,  //  NEW - receive from parent to pass down to PlaceholderMappingPanel
-    onCreateAndApplyField  // NEW - pass to FileUploadPreview for scan mode
+    onCreateAndApplyField,  // NEW - pass to FileUploadPreview for scan mode
+    // 🆕 BATCH MODE: New props for batch field creation
+    handleBatchCreateFields,
+    handleAddStagedField,
+    handleUpdateStagedField,
+    handleDeleteStagedField,
+    uploadedFile,
+    fileUrl
 }) => {
     const [tagForm] = Form.useForm();
     const placeholderMappingRef = useRef(null);
@@ -60,6 +67,34 @@ const TagsTabComponent = ({
     const [editingRows, setEditingRows] = React.useState(new Set()); // Track which rows are in edit mode
     const [fieldWidth, setFieldWidth] = React.useState(40); // Field width percentage for layout (default 40% = 2 fields/row)
     const [textareaRows, setTextareaRows] = React.useState(3); // Number of rows for textarea
+
+    // 🆕 BATCH MODE: State for batch modal
+    const [batchModalVisible, setBatchModalVisible] = useState(false);
+
+    // 🆕 BATCH MODE: Handlers
+    const handleOpenBatchModal = () => {
+        if (!uploadedFile || !fileUrl) {
+            message.warning('Vui lòng tải lên file PDF trước khi sử dụng chế độ batch');
+            return;
+        }
+        setBatchModalVisible(true);
+        // Update parent state
+        onDataChange({ batchMode: true });
+    };
+
+    const handleCloseBatchModal = () => {
+        setBatchModalVisible(false);
+        // Clear staging and update parent state
+        onDataChange({ batchMode: false, stagedFields: [] });
+    };
+
+    const handleApplyBatch = async (stagedFields) => {
+        const success = await handleBatchCreateFields(stagedFields);
+        if (success) {
+            handleCloseBatchModal();
+        }
+        return success;
+    };
 
     // Handle apply button
     const handleApply = async () => {
@@ -762,6 +797,35 @@ const TagsTabComponent = ({
                     }
                     type="info"
                     showIcon
+                    style={{ marginBottom: 16 }}
+                />
+
+                {/* 🆕 BATCH MODE: New batch creation option */}
+                <Alert
+                    message="🆕 Chế độ Batch - Tạo nhiều trường cùng lúc (Khuyến nghị)"
+                    description={
+                        <div>
+                            <p style={{ marginBottom: 8 }}>
+                                Sử dụng chế độ batch để tạo nhiều trường thông tin cùng lúc - nhanh hơn 10x so với chế độ thường:
+                            </p>
+                            <ol style={{ marginBottom: 12, paddingLeft: 20 }}>
+                                <li>Bấm nút "Tạo nhiều trường (Batch)" bên dưới</li>
+                                <li>Quét nhiều vùng trên PDF liên tiếp (không cần đợi PDF rebuild)</li>
+                                <li>Xem danh sách trường đã thêm, có thể chỉnh sửa hoặc xóa</li>
+                                <li>Bấm "Thêm" để áp dụng TẤT CẢ trường vào PDF chỉ với 1 lần rebuild</li>
+                            </ol>
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={handleOpenBatchModal}
+                                size="large"
+                            >
+                                Tạo nhiều trường (Batch)
+                            </Button>
+                        </div>
+                    }
+                    type="success"
+                    showIcon
                     style={{ marginBottom: 24 }}
                 />
 
@@ -844,6 +908,21 @@ const TagsTabComponent = ({
                 <div style={{ marginTop: 12 }}>
                     <Text type="secondary">Tổng số trường đã tạo: <Text strong>{placeholders?.length || 0}</Text></Text>
                 </div>
+
+                {/* 🆕 BATCH MODE: Batch Field Creation Modal */}
+                <BatchFieldCreationModal
+                    visible={batchModalVisible}
+                    onClose={handleCloseBatchModal}
+                    onApplyAll={handleApplyBatch}
+                    pdfUrl={fileUrl}
+                    stagedFields={tagsData?.stagedFields || []}
+                    onAddStagedField={handleAddStagedField}
+                    onUpdateStagedField={handleUpdateStagedField}
+                    onDeleteStagedField={handleDeleteStagedField}
+                    existingFieldKeys={tagsData?.tags?.map(t => t.key) || []}
+                    tagDataTypes={mockData?.tagDataTypes || []}
+                    existingPlaceholders={placeholders || []}
+                />
             </div>
         </div>
     );

@@ -25,6 +25,7 @@ import {
   Tabs,
   Tooltip,
   Typography,
+  message,
 } from "antd";
 import { useRouter } from "next/navigation";
 
@@ -89,6 +90,9 @@ const CreatePolicyPage = () => {
     handleAddTag,
     handleRemoveTag,
     handleUpdateTag,
+    handleAddStagedField,
+    handleUpdateStagedField,
+    handleDeleteStagedField,
     handleCreatePolicy,
     handleReset,
     fetchCategories,
@@ -288,6 +292,159 @@ const CreatePolicyPage = () => {
     ]
   );
 
+  // 🆕 BATCH MODE: Xử lý tạo nhiều trường cùng lúc với single PDF rebuild
+  const handleBatchCreateFields = useCallback(
+    async (stagedFields) => {
+      try {
+        message.loading({ content: "Đang tạo tất cả trường thông tin...", key: "batch-create", duration: 0 });
+
+        // 1. Validate all fields
+        const existingKeys = tagsData.tags.map((t) => t.key);
+        const newKeys = stagedFields.map((f) => f.key);
+
+        // Check duplicates within staged fields
+        const duplicates = newKeys.filter((k, i) => newKeys.indexOf(k) !== i);
+        if (duplicates.length > 0) {
+          message.destroy("batch-create");
+          message.error(`Tên trường trùng lặp: ${duplicates.join(", ")}`);
+          return false;
+        }
+
+        // Check conflicts with existing
+        const conflicts = newKeys.filter((k) => existingKeys.includes(k));
+        if (conflicts.length > 0) {
+          message.destroy("batch-create");
+          message.error(`Tên trường đã tồn tại: ${conflicts.join(", ")}`);
+          return false;
+        }
+
+        // Check empty fields
+        const empty = stagedFields.filter((f) => !f.key || !f.dataType);
+        if (empty.length > 0) {
+          message.destroy("batch-create");
+          message.error(`Có ${empty.length} trường chưa điền đầy đủ thông tin`);
+          return false;
+        }
+
+        // 2. Convert stagedFields → placeholders + tags + mappings
+        const newPlaceholders = [];
+        const newTags = [];
+        const newMappings = {};
+
+        stagedFields.forEach((field) => {
+          const placeholderId = `batch-${Date.now()}-${field.position}`;
+          const tagId = `tag-batch-${Date.now()}-${field.position}`;
+
+          newPlaceholders.push({
+            id: placeholderId,
+            original: `(${field.position})`,
+            fullText: `(${field.position})`,
+            page: field.page,
+            x: field.x,
+            y: field.y,
+            width: field.width,
+            height: field.height,
+            backgroundX: field.backgroundX,
+            backgroundWidth: field.backgroundWidth,
+            fontSize: field.fontSize,
+            isManual: true,
+            mappedKey: field.key,
+            mappedDataType: field.dataType,
+          });
+
+          newTags.push({
+            id: tagId,
+            key: field.key,
+            dataType: field.dataType,
+            dataTypeLabel:
+              mockData.tagDataTypes?.find((t) => t.value === field.dataType)
+                ?.label || field.dataType,
+            defaultValue: field.key,
+            createdFromScan: true,
+          });
+
+          newMappings[placeholderId] = tagId;
+        });
+
+        // 3. Call createFillablePDFFromMappings ONCE with ALL fields
+        if (!uploadedFile) {
+          throw new Error("Không tìm thấy file PDF");
+        }
+
+        const arrayBuffer = await uploadedFile.arrayBuffer();
+        const result = await createFillablePDFFromMappings(
+          arrayBuffer,
+          newPlaceholders, // All placeholders
+          newMappings, // All mappings
+          newTags, // All tags
+          {
+            tagDataTypes: mockData.tagDataTypes || [],
+            fillFields: true,
+            makeFieldsEditable: true,
+          }
+        );
+
+        // 4. Create new File
+        const newFile = new File(
+          [result.pdfBytes],
+          uploadedFile?.name || "contract.pdf",
+          { type: "application/pdf" }
+        );
+
+        const newUrl = URL.createObjectURL(newFile);
+
+        // 5. Update states
+        setUploadedFile(newFile);
+        setFileUrl(newUrl);
+
+        // 6. Update tagsData with ALL new data
+        handleTagsDataChange((prev) => ({
+          ...prev,
+          tags: [...prev.tags, ...newTags],
+          modifiedPdfBytes: result.pdfBytes,
+          uploadedFile: newFile,
+          placeholders: [...prev.placeholders, ...newPlaceholders],
+          mappings: { ...prev.mappings, ...newMappings },
+          documentTagsObject: {
+            ...prev.documentTagsObject,
+            ...Object.fromEntries(
+              newTags.map((tag) => [tag.key, tag.dataType])
+            ),
+          },
+          stagedFields: [], // Clear staging
+          batchMode: false, // Exit batch mode
+        }));
+
+        setDetectedPlaceholders((prev) => [...prev, ...newPlaceholders]);
+
+        // 7. Refresh preview
+        setTimeout(() => {
+          if (filePreviewRef?.current?.updateFillablePDF) {
+            filePreviewRef.current.updateFillablePDF(newFile, result.pdfBytes);
+          }
+        }, 300);
+
+        message.destroy("batch-create");
+        message.success(`Đã tạo thành công ${stagedFields.length} trường thông tin!`);
+        return true;
+      } catch (error) {
+        message.destroy("batch-create");
+        message.error(`Lỗi khi tạo trường: ${error.message}`);
+        console.error("❌ Batch create error:", error);
+        return false;
+      }
+    },
+    [
+      uploadedFile,
+      mockData.tagDataTypes,
+      handleTagsDataChange,
+      tagsData.tags,
+      filePreviewRef,
+      setUploadedFile,
+      setFileUrl,
+    ]
+  );
+
   // Lấy index của bước hiện tại
   const getCurrentStepIndex = () => {
     const tabs = Object.values(TABS);
@@ -472,6 +629,12 @@ const CreatePolicyPage = () => {
           placeholders={detectedPlaceholders}
           onDeletePlaceholder={handleDeletePlaceholder}
           filePreviewRef={filePreviewRef}
+          handleBatchCreateFields={handleBatchCreateFields}
+          handleAddStagedField={handleAddStagedField}
+          handleUpdateStagedField={handleUpdateStagedField}
+          handleDeleteStagedField={handleDeleteStagedField}
+          uploadedFile={uploadedFile}
+          fileUrl={fileUrl}
         />
       ),
     },

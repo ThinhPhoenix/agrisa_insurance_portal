@@ -296,7 +296,11 @@ const CreatePolicyPage = () => {
   const handleBatchCreateFields = useCallback(
     async (stagedFields) => {
       try {
-        message.loading({ content: "Đang tạo tất cả trường thông tin...", key: "batch-create", duration: 0 });
+        message.loading({
+          content: "Đang tạo tất cả trường thông tin...",
+          key: "batch-create",
+          duration: 0,
+        });
 
         // 1. Validate all fields
         const existingKeys = tagsData.tags.map((t) => t.key);
@@ -425,7 +429,9 @@ const CreatePolicyPage = () => {
         }, 300);
 
         message.destroy("batch-create");
-        message.success(`Đã tạo thành công ${stagedFields.length} trường thông tin!`);
+        message.success(
+          `Đã tạo thành công ${stagedFields.length} trường thông tin!`
+        );
         return true;
       } catch (error) {
         message.destroy("batch-create");

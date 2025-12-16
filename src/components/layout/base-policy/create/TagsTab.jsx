@@ -1,5 +1,5 @@
+import { createFillablePDFFromMappings } from '@/libs/pdf/pdfAcroFormEditor';
 import {
-    CheckCircleOutlined,
     DeleteOutlined,
     DragOutlined,
     EditOutlined,
@@ -24,9 +24,8 @@ import {
     Typography
 } from 'antd';
 import React, { memo, useRef, useState } from 'react';
-import PlaceholderMappingPanel from './PlaceholderMappingPanel';
-import { createFillablePDFFromMappings } from '@/libs/pdf/pdfAcroFormEditor';
 import BatchFieldCreationModal from './BatchFieldCreationModal'; // 🆕 BATCH MODE
+import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -74,7 +73,7 @@ const TagsTabComponent = ({
     // 🆕 BATCH MODE: Handlers
     const handleOpenBatchModal = () => {
         if (!uploadedFile || !fileUrl) {
-            message.warning('Vui lòng tải lên file PDF trước khi sử dụng chế độ batch');
+            message.warning('Vui lòng tải lên file PDF');
             return;
         }
         setBatchModalVisible(true);
@@ -780,7 +779,7 @@ const TagsTabComponent = ({
                         </Button>
                     </Space>
                 </div>
-
+                {/* 
                 <Alert
                     message="Tạo trường thông tin qua chế độ quét PDF"
                     description={
@@ -798,21 +797,21 @@ const TagsTabComponent = ({
                     type="info"
                     showIcon
                     style={{ marginBottom: 16 }}
-                />
+                /> */}
 
-                {/* 🆕 BATCH MODE: New batch creation option */}
+                {/* BATCH MODE: New batch creation option */}
                 <Alert
-                    message="🆕 Chế độ Batch - Tạo nhiều trường cùng lúc (Khuyến nghị)"
+                    message="Tạo trường thông tin "
                     description={
                         <div>
                             <p style={{ marginBottom: 8 }}>
-                                Sử dụng chế độ batch để tạo nhiều trường thông tin cùng lúc - nhanh hơn 10x so với chế độ thường:
+                                Tạo trường thông tin nhanh chóng bằng cách quét nhiều vùng trên PDF và áp dụng tất cả cùng lúc:
                             </p>
                             <ol style={{ marginBottom: 12, paddingLeft: 20 }}>
-                                <li>Bấm nút "Tạo nhiều trường (Batch)" bên dưới</li>
-                                <li>Quét nhiều vùng trên PDF liên tiếp (không cần đợi PDF rebuild)</li>
+                                <li>Bấm nút "Tạo trường thông tin" bên dưới</li>
+                                <li>Quét nhiều vùng trên PDF liên tiếp</li>
                                 <li>Xem danh sách trường đã thêm, có thể chỉnh sửa hoặc xóa</li>
-                                <li>Bấm "Thêm" để áp dụng TẤT CẢ trường vào PDF chỉ với 1 lần rebuild</li>
+                                <li>Bấm "Thêm" để áp dụng TẤT CẢ trường vào tệp PDF</li>
                             </ol>
                             <Button
                                 type="primary"
@@ -820,7 +819,7 @@ const TagsTabComponent = ({
                                 onClick={handleOpenBatchModal}
                                 size="large"
                             >
-                                Tạo nhiều trường (Batch)
+                                Tạo trường thông tin
                             </Button>
                         </div>
                     }
@@ -893,7 +892,7 @@ const TagsTabComponent = ({
                                 return updates;
                             });
                         }}
-                        onExportSchema={(schema) => {/* Export schema */}}
+                        onExportSchema={(schema) => {/* Export schema */ }}
                         filePreviewRef={filePreviewRef}
                     />
                 ) : (

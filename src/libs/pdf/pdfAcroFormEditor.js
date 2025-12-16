@@ -161,8 +161,8 @@ export const createAcroFormFields = async (
             readOnly = false,
             multiline = false,
             backgroundColor = [1, 1, 1], // Nền trắng
-            borderColor = [0.7, 0.7, 0.7], // Viền xám
-            borderWidth = showBorders ? 1 : 0,
+            borderColor = [1, 1, 1],
+            borderWidth = 0,
             backgroundX,
             backgroundWidth,
           } = field;
@@ -253,14 +253,67 @@ export const createAcroFormFields = async (
               const fieldHeightCalculated = fieldHeight || fontSize * 1.5;
 
               // Thêm widget (giao diện hiển thị) vào trang
-              // Sử dụng tùy chọn tối thiểu để tránh trigger WinAnsi appearance generation
+              // 🔧 FIX: Thêm appearance options để set background trắng và không có border
               formField.addToPage(page, {
                 x: fieldX,
                 y: fieldY,
                 width: fieldWidth,
                 height: fieldHeightCalculated,
-                // Bỏ qua appearance options để tránh lỗi WinAnsi encoding
+                backgroundColor: rgb(1, 1, 1), // Force white background
+                borderColor: rgb(1, 1, 1), // Force white border (invisible)
+                borderWidth: 0, // No border
+                textColor: rgb(0, 0, 0), // Black text
               });
+
+              // 🔧 FIX: Create appearance stream to eliminate purple background
+              try {
+                const widget = formField.acroField.getWidgets()[0];
+                if (widget) {
+                  const widgetDict = widget.dict;
+
+                  // Set MK (appearance characteristics) to force white background
+                  const mk = pdfDoc.context.obj({
+                    BG: [1, 1, 1], // Background: white
+                    BC: [1, 1, 1], // Border: white
+                  });
+                  widgetDict.set(pdfDoc.context.obj("MK"), mk);
+
+                  // Create appearance stream (AP) to override PDF viewer's default rendering
+                  // This explicitly draws a white background, preventing purple highlight
+                  const appearanceStream = `q
+1 1 1 rg
+0 0 ${fieldWidth} ${fieldHeightCalculated} re
+f
+Q`;
+
+                  // Create form XObject for appearance using pdf-lib's stream API
+                  const streamRef = pdfDoc.context.nextRef();
+                  const streamDict = pdfDoc.context.obj({
+                    Type: "XObject",
+                    Subtype: "Form",
+                    FormType: 1,
+                    BBox: [0, 0, fieldWidth, fieldHeightCalculated],
+                    Matrix: [1, 0, 0, 1, 0, 0],
+                    Resources: pdfDoc.context.obj({}),
+                  });
+
+                  // Create stream with content
+                  const streamBytes = new TextEncoder().encode(
+                    appearanceStream
+                  );
+                  const stream = pdfDoc.context.stream(streamBytes, streamDict);
+                  pdfDoc.context.assign(streamRef, stream);
+
+                  // Set as normal appearance (AP -> N)
+                  const apDict = pdfDoc.context.obj({
+                    N: streamRef,
+                  });
+
+                  widgetDict.set(pdfDoc.context.obj("AP"), apDict);
+                }
+              } catch (err) {
+                console.warn("Could not create appearance stream:", err);
+              }
 
               // Set text tiếng Việt SAU addToPage
               if (textValue) {

@@ -525,7 +525,7 @@ const FileUploadPreview = forwardRef(({
 
                     <div style={{ marginLeft: 'auto' }}>
                         <Space>
-                            <Tooltip title="Tạo nhiều trường thông tin cùng lúc (Batch mode - nhanh hơn 10x)">
+                            {/* <Tooltip title="Tạo nhiều trường thông tin cùng lúc (Batch mode - nhanh hơn 10x)">
                                 <Button
                                     type="primary"
                                     icon={<AimOutlined />}
@@ -534,7 +534,7 @@ const FileUploadPreview = forwardRef(({
                                 >
                                     Tạo nhiều trường (Batch)
                                 </Button>
-                            </Tooltip>
+                            </Tooltip> */}
 
                             <Tooltip title="Toàn màn hình">
                                 <Button

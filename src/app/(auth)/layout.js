@@ -50,10 +50,10 @@ export default function Layout({ children }) {
 
         <footer className="w-full py-4 px-6 border-t border-secondary-200">
           <div className="flex flex-wrap justify-center gap-6 text-sm">
-            <Link href="/legal/help">Trợ giúp</Link>
-            <Link href="/legal/contact">Liên hệ</Link>
-            <Link href="/legal/terms-of-services">Điều khoản sử dụng</Link>
-            <Link href="/legal/privacy-policy">Chính sách bảo mật</Link>
+            <Link href="/#">Trợ giúp</Link>
+            <Link href="/#">Liên hệ</Link>
+            <Link href="/terms">Điều khoản sử dụng</Link>
+            <Link href="/#">Chính sách bảo mật</Link>
           </div>
         </footer>
       </div>

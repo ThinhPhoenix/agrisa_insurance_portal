@@ -11,7 +11,6 @@ import {
     FileTextOutlined,
     InfoCircleOutlined,
     LineChartOutlined,
-    LinkOutlined,
     QuestionCircleOutlined,
     SearchOutlined,
     SettingOutlined,
@@ -342,6 +341,8 @@ const FAQTab = () => {
                             </ul>
                         </Panel>
 
+
+
                         {/* Quy trình tạo Policy */}
                         <Panel
                             header={
@@ -657,9 +658,6 @@ const FAQTab = () => {
                                     <Text strong>Ngày kết thúc:</Text> Chọn ngày kết thúc giai đoạn không kích hoạt (hiển thị: <Text code>dd/mm/yyyy</Text>, VD: 10/02/2024)
                                 </li>
                                 <li>
-                                    <Text strong>Lưu trữ backend:</Text> Hệ thống tự động chuyển sang format <Text code>MM-DD</Text> (tháng-ngày) để lưu vào database
-                                </li>
-                                <li>
                                     <Text strong>Hiển thị trong bảng:</Text> Format <Text code>dd/mm</Text> (VD: 15/01) để dễ đọc
                                 </li>
                                 <li>
@@ -741,13 +739,13 @@ const FAQTab = () => {
                             <Title level={5}><CheckCircleOutlined /> Các ràng buộc quan trọng</Title>
                             <ul>
                                 <li>
-                                    <Text strong>Ngày bắt đầu {'<'} Ngày kết thúc:</Text> Ngày bắt đầu phải nhỏ hơn ngày kết thúc (hệ thống tự động disable)
+                                    <Text strong>Ngày bắt đầu {'<'} Ngày kết thúc:</Text> Ngày bắt đầu phải nhỏ hơn ngày kết thúc.
                                 </li>
                                 <li>
-                                    <Text strong>Nằm trong vùng hiệu lực:</Text> Các giai đoạn phải nằm trong khoảng ngày bắt đầu và kết thúc hiệu lực bảo hiểm (hệ thống tự động disable ngày ngoài phạm vi)
+                                    <Text strong>Nằm trong vùng hiệu lực:</Text> Các giai đoạn phải nằm trong khoảng ngày bắt đầu và kết thúc hiệu lực bảo hiểm.
                                 </li>
                                 <li>
-                                    <Text strong type="danger">Không trùng lặp:</Text> Các giai đoạn không được trùng hoặc giao nhau - <Text mark>Hệ thống tự động disable các ngày đã nằm trong blackout periods khác</Text>
+                                    <Text strong type="danger">Không trùng lặp:</Text> Các giai đoạn không được trùng hoặc giao nhau
                                 </li>
                             </ul>
 
@@ -802,7 +800,7 @@ const FAQTab = () => {
                                 </li>
                             </ul>
                             <Paragraph>
-                                Với các toán tử khác (<Text code>{'<'}</Text>, <Text code>{'>'}</Text>, <Text code>{'<='}</Text>, <Text code>{'>='}</Text>), baseline sẽ <Text strong>BỊ ẨN ĐI</Text> và tự động set về <Text code>null</Text>.
+                                Với các toán tử khác (<Text code>{'<'}</Text>, <Text code>{'>'}</Text>, <Text code>{'<='}</Text>, <Text code>{'>='}</Text>), sẽ không cần baseline.
                             </Paragraph>
 
                             <Divider />
@@ -913,14 +911,14 @@ const FAQTab = () => {
                             <ul>
                                 <li>
                                     <Text strong>Với toán tử {'<'}, {'>'}, {'<='}, {'>='}: </Text>
-                                    Baseline fields sẽ <Text strong>tự động ẩn</Text> và set về <Text code>null</Text>. Không cần nhập.
+                                    Bạn không cần điền phần tham chiếu (baseline).
                                 </li>
                                 <li>
                                     <Text strong>Với toán tử change_gt, change_lt:</Text>
-                                    Baseline fields sẽ <Text strong>hiện ra</Text> và <Text strong type="danger">BẮT BUỘC</Text> phải nhập cả 2 trường (baseline_window_days và baseline_function).
+                                    Cần điền đủ 2 mục tham chiếu: thời gian tham chiếu và cách tính (baseline_window_days, baseline_function).
                                 </li>
                                 <li>
-                                    <Text strong>Khi đổi toán tử:</Text> Hệ thống tự động xóa giá trị baseline nếu chuyển từ change_gt/change_lt sang toán tử khác.
+                                    <Text strong>Khi đổi toán tử:</Text> Nếu chuyển từ change_gt/change_lt sang toán tử khác, vui lòng kiểm tra lại phần tham chiếu vì nội dung này có thể không còn áp dụng.
                                 </li>
                             </ul>
 
@@ -956,7 +954,7 @@ const FAQTab = () => {
                             key="6c"
                         >
                             <Paragraph>
-                                <Text strong>Data Quality</Text> (tiếng Việt: Chất lượng Dữ liệu) đánh giá mức độ tin cậy, chính xác và hoàn chỉnh của nguồn dữ liệu được sử dụng trong điều kiện trigger. Đây là thông tin quan trọng giúp hệ thống và người dùng hiểu rõ độ tin cậy của dữ liệu khi ra quyết định chi trả.
+                                <Text strong>Data Quality</Text> (tiếng Việt: Chất lượng Dữ liệu) đánh giá mức độ tin cậy, chính xác và hoàn chỉnh của nguồn dữ liệu được sử dụng trong điều kiện trigger. Đây là thông tin quan trọng giúp bạn hiểu rõ độ tin cậy của dữ liệu khi ra quyết định chi trả.
                             </Paragraph>
 
                             <Divider />
@@ -1034,9 +1032,6 @@ const FAQTab = () => {
                                     <Text strong>Quản lý rủi ro:</Text> Dữ liệu kém chất lượng có thể dẫn đến quyết định chi trả sai
                                 </li>
                                 <li>
-                                    <Text strong>Điều chỉnh hệ số:</Text> Backend có thể điều chỉnh tính toán dựa trên chất lượng dữ liệu
-                                </li>
-                                <li>
                                     <Text strong>Minh bạch:</Text> Người mua bảo hiểm hiểu rõ nguồn gốc và chất lượng dữ liệu giám sát
                                 </li>
                             </ul>
@@ -1055,7 +1050,7 @@ const FAQTab = () => {
                                     <Tag color="orange">acceptable</Tag> - Nếu dùng dữ liệu từ nguồn thương mại, có một số giới hạn
                                 </li>
                                 <li>
-                                    <Tag color="red">poor</Tag> - Nếu dùng dữ liệu thử nghiệm, không chính thức (không khuyến khích cho production)
+                                    <Tag color="red">poor</Tag> - Nếu dùng dữ liệu thử nghiệm, không chính thức
                                 </li>
                             </ul>
 
@@ -1135,161 +1130,136 @@ const FAQTab = () => {
                             header={
                                 <Space>
                                     <FileTextOutlined style={{ color: '#fa8c16' }} />
-                                    <Text strong>Hướng dẫn xử lý Tài liệu và Trường thông tin</Text>
+                                    <Text strong>Hướng dẫn tạo trường thông tin trên PDF</Text>
                                 </Space>
                             }
                             key="8"
                         >
                             <Space direction="vertical" size="large" style={{ width: '100%' }}>
                                 <div>
-                                    <Title level={5}><FileTextOutlined /> 1. Tải lên file PDF mẫu hợp đồng</Title>
+                                    <Title level={5}><FileTextOutlined /> Bước 1: Tải lên file PDF mẫu hợp đồng</Title>
                                     <Paragraph>
-                                        <Text strong>Mục đích:</Text> Tải lên (Upload) file PDF mẫu hợp đồng bảo hiểm để hệ thống tự động phát hiện các vị trí cần điền thông tin.
+                                        Tải lên file PDF mẫu hợp đồng bảo hiểm mà bạn muốn thêm các trường thông tin.
                                     </Paragraph>
                                     <ul>
                                         <li><strong>Định dạng:</strong> Chỉ chấp nhận file PDF</li>
                                         <li><strong>Kích thước tối đa:</strong> 10 MB</li>
-                                        <li><strong>Phát hiện tự động:</strong> Hệ thống sẽ tìm các vị trí cần điền (Placeholder) dạng (1), (2), (3)...</li>
-                                        <li><strong>Thêm vị trí thủ công:</strong> Có thể kéo thả trên PDF để chọn vùng và tạo vị trí mới</li>
+                                        <li><strong>Vị trí:</strong> Click nút <Tag color="blue">Chọn file</Tag> để upload</li>
                                     </ul>
                                 </div>
 
                                 <Divider />
 
                                 <div>
-                                    <Title level={5}><EnvironmentOutlined /> 2. Vị trí cần điền (Placeholder)</Title>
+                                    <Title level={5}><EditOutlined /> Bước 2: Mở chế độ tạo trường thông tin</Title>
                                     <Paragraph>
-                                        <Text strong>Khái niệm:</Text> Vị trí cần điền (Placeholder) là các vùng trên PDF sẽ được điền thông tin khi tạo hợp đồng.
+                                        Sau khi tải PDF lên, click nút <Tag color="purple">tạo trường thông tin</Tag> để mở giao diện tạo trường.
                                     </Paragraph>
-                                    <Table
-                                        dataSource={[
-                                            {
-                                                key: '1',
-                                                field: 'Vị trí cần điền',
-                                                englishTerm: 'Placeholder',
-                                                description: 'Vùng trên PDF sẽ được điền thông tin (VD: họ tên, CMND)',
-                                                example: '(1), (2), (3)...'
-                                            },
-                                            {
-                                                key: '2',
-                                                field: 'Tự động phát hiện',
-                                                englishTerm: 'Auto-detection',
-                                                description: 'Hệ thống tự động tìm vị trí có số trong ngoặc đơn',
-                                                example: 'Tìm (1), (2) trong PDF'
-                                            },
-                                            {
-                                                key: '3',
-                                                field: 'Đặt thủ công',
-                                                englishTerm: 'Manual Placement',
-                                                description: 'Kéo thả trên PDF để chọn vùng và nhập số vị trí',
-                                                example: 'Kéo chọn vùng → Nhập (4)'
-                                            },
-                                        ]}
-                                        columns={[
-                                            { title: 'Tên trường', dataIndex: 'field', key: 'field', width: '25%', render: (text) => <Text strong>{text}</Text> },
-                                            { title: 'Thuật ngữ Anh', dataIndex: 'englishTerm', key: 'englishTerm', width: '20%', render: (text) => <Tag color="orange">{text}</Tag> },
-                                            { title: 'Giải thích', dataIndex: 'description', key: 'description', width: '35%' },
-                                            { title: 'Ví dụ', dataIndex: 'example', key: 'example', width: '20%', render: (text) => <Text code>{text}</Text> },
-                                        ]}
-                                        pagination={false}
-                                        size="small"
-                                        bordered
-                                    />
-                                </div>
-
-                                <Divider />
-
-                                <div>
-                                    <Title level={5}><TagOutlined /> 3. Trường thông tin (Tags)</Title>
                                     <Paragraph>
-                                        <Text strong>Khái niệm:</Text> Trường thông tin (Tag) là các trường dữ liệu cần thiết cho hợp đồng (họ tên, CMND, địa chỉ...).
-                                    </Paragraph>
-                                    <Table
-                                        dataSource={[
-                                            {
-                                                key: '1',
-                                                field: 'Tên trường',
-                                                englishTerm: 'key',
-                                                description: 'Tên định danh của trường, chỉ chứa chữ thường và dấu gạch dưới',
-                                                example: 'họ và tên, số điện thoại',
-                                                required: 'Có'
-                                            },
-                                            {
-                                                key: '2',
-                                                field: 'Loại dữ liệu',
-                                                englishTerm: 'dataType',
-                                                description: 'Kiểu dữ liệu của trường để hệ thống validate đúng',
-                                                example: 'string, integer, date, textarea',
-                                                required: 'Có'
-                                            },
-                                            {
-                                                key: '3',
-                                                field: 'Giá trị mặc định',
-                                                englishTerm: 'value',
-                                                description: 'Giá trị mẫu hoặc mặc định (có thể để trống)',
-                                                example: 'Nguyễn Văn A, 01/01/1990',
-                                                required: 'Không'
-                                            },
-                                        ]}
-                                        columns={basicFieldsColumns}
-                                        pagination={false}
-                                        size="small"
-                                        bordered
-                                    />
-                                </div>
-
-                                <Divider />
-
-                                <div>
-                                    <Title level={5}><LinkOutlined /> 4. Liên kết vị trí với trường thông tin (Mapping)</Title>
-                                    <Paragraph>
-                                        <Text strong>Quy trình:</Text> Liên kết (Mapping) mỗi vị trí cần điền với một trường thông tin để hệ thống biết điền dữ liệu gì vào đâu.
-                                    </Paragraph>
-                                    <ol style={{ lineHeight: '2' }}>
-                                        <li><strong>Bước 1 - Nhập thông tin:</strong> Điền <Text code>key</Text> (tên trường) và chọn <Text code>dataType</Text> (loại dữ liệu) cho mỗi vị trí</li>
-                                        <li><strong>Bước 2 - Chọn vị trí:</strong> Tick chọn các vị trí muốn áp dụng (có thể chọn nhiều cùng lúc)</li>
-                                        <li><strong>Bước 3 - Áp dụng:</strong> Bấm nút <Tag color="blue">Áp dụng</Tag> để tạo PDF có thể điền (Fillable PDF)</li>
-                                        <li><strong>Bước 4 - Xem trước:</strong> Bấm <Tag color="green">Tải xuống PDF</Tag> để xem kết quả cuối cùng</li>
-                                    </ol>
-                                    <Paragraph type="warning">
-                                        <InfoCircleOutlined /> <strong>Lưu ý:</strong> Checkbox chỉ mở khi đã điền đủ key + dataType cho vị trí đó.
-                                    </Paragraph>
-                                </div>
-
-                                <Divider />
-
-                                <div>
-                                    <Title level={5}><EditOutlined /> 5. PDF có thể điền (Fillable PDF)</Title>
-                                    <Paragraph>
-                                        <Text strong>Khái niệm:</Text> PDF có thể điền (Fillable PDF) là file PDF có các ô nhập liệu (Form Fields) mà hệ thống backend có thể tự động điền thông tin vào.
+                                        <Text strong>Giao diện gồm 2 phần:</Text>
                                     </Paragraph>
                                     <ul>
-                                        <li><strong>Ô nhập liệu (AcroForm Fields):</strong> Các ô input được tạo trên PDF tại vị trí đã chọn</li>
-                                        <li><strong>Có thể chỉnh sửa (Editable):</strong> Backend có thể điền dữ liệu vào các ô này</li>
-                                        <li><strong>Viền hiển thị (Borders):</strong> Hiển thị viền để dễ nhận biết vị trí ô nhập</li>
-                                        <li><strong>Xóa text gốc:</strong> Text placeholder ban đầu (như (1), (2)) sẽ bị xóa đi</li>
+                                        <li><strong>Bên trái:</strong> Hiển thị PDF để bạn click chọn vùng cần tạo trường</li>
+                                        <li><strong>Bên phải:</strong> Bảng danh sách các trường đã tạo, cho phép chỉnh sửa và xóa</li>
                                     </ul>
                                 </div>
 
                                 <Divider />
 
                                 <div>
-                                    <Title level={5}><BarChartOutlined /> 6. Các loại dữ liệu (Data Types)</Title>
+                                    <Title level={5}><EnvironmentOutlined /> Bước 3: Click vào PDF để chọn vùng tạo trường</Title>
+                                    <Paragraph>
+                                        <Text strong>Cách thao tác:</Text>
+                                    </Paragraph>
+                                    <ol style={{ lineHeight: '2' }}>
+                                        <li>
+                                            <strong>Click vào vị trí trên PDF</strong> mà bạn muốn tạo trường thông tin (ví dụ: vị trí họ tên, CMND...)
+                                        </li>
+                                        <li>
+                                            <strong>Popup hiện ra</strong> yêu cầu bạn nhập 3 thông tin:
+                                            <ul>
+                                                <li><Text code>Vị trí (Position)</Text>: Số thứ tự của trường (tự động gợi ý số tiếp theo)</li>
+                                                <li><Text code>Tên trường</Text>: Viết bằng chữ thường tiếng Việt có dấu, không viết hoa, không ký tự đặc biệt (ví dụ: họ và tên, số căn cước)</li>
+                                                <li><Text code>Loại dữ liệu (Data Type)</Text>: Chọn loại dữ liệu phù hợp (string, number, date...)</li>
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            <strong>Click OK</strong> để thêm trường vào danh sách
+                                        </li>
+                                    </ol>
+
+                                    <Paragraph type="warning">
+                                        <InfoCircleOutlined /> <strong>Lưu ý quan trọng:</strong>
+                                    </Paragraph>
+                                    <ul>
+                                        <li><Text strong>Vị trí (Position) không được trùng:</Text> Mỗi số vị trí chỉ dùng 1 lần duy nhất</li>
+                                        <li><Text strong>Tên trường (Key) không được trùng:</Text> Mỗi tên trường chỉ dùng 1 lần duy nhất</li>
+                                        <li><Text strong>Tự động gợi ý:</Text> Số vị trí tiếp theo sẽ tự động tăng (1 → 2 → 3...)</li>
+                                    </ul>
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><TagOutlined /> Bước 4: Kiểm tra và chỉnh sửa trường trong bảng</Title>
+                                    <Paragraph>
+                                        Sau khi tạo các trường, bạn có thể xem danh sách tất cả các trường ở <Text strong>bảng bên phải</Text>.
+                                    </Paragraph>
+                                    <Paragraph>
+                                        <Text strong>Các thao tác có thể thực hiện:</Text>
+                                    </Paragraph>
+                                    <ul>
+                                        <li><strong>Xem thông tin:</strong> Xem vị trí, tên trường, loại dữ liệu, trang PDF của từng trường</li>
+                                        <li><strong>Chỉnh sửa:</strong> Click nút <Tag color="blue">Sửa</Tag> để thay đổi thông tin trường</li>
+                                        <li><strong>Xóa:</strong> Click nút <Tag color="red">Xóa</Tag> để loại bỏ trường không cần thiết</li>
+                                        <li><strong>Visual markers:</strong> Các hình chữ nhật màu xanh hiển thị trên PDF cho biết vị trí các trường đã tạo</li>
+                                    </ul>
+
+                                    <Paragraph type="success">
+                                        <CheckCircleOutlined /> <Text strong>Mẹo:</Text> Bạn có thể tạo nhiều trường liên tục trước khi áp dụng, giúp tiết kiệm thời gian
+                                    </Paragraph>
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><ThunderboltOutlined /> Bước 5: Áp dụng tất cả trường</Title>
+                                    <Paragraph>
+                                        Sau khi tạo đủ các trường cần thiết, click nút <Tag color="green">Áp dụng tất cả</Tag> ở góc dưới bên phải.
+                                    </Paragraph>
+                                    <Paragraph>
+                                        <Text strong>Điều gì sẽ xảy ra:</Text>
+                                    </Paragraph>
+                                    <ul>
+                                        <li>Tất cả các trường bạn đã tạo sẽ được thêm vào PDF</li>
+                                        <li>PDF sẽ có các ô nhập liệu tại các vị trí bạn đã chọn</li>
+                                        <li>Modal sẽ tự động đóng lại</li>
+                                        <li>Bạn có thể tải xuống PDF để kiểm tra kết quả</li>
+                                    </ul>
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><BarChartOutlined /> Các loại dữ liệu (Data Types)</Title>
+                                    <Paragraph>
+                                        Khi tạo trường, bạn cần chọn loại dữ liệu phù hợp với thông tin cần điền:
+                                    </Paragraph>
                                     <Table
                                         dataSource={[
-                                            { key: '1', field: 'Chuỗi/Text', englishTerm: 'string', example: 'Nguyễn Văn A, TP.HCM', validation: 'Không giới hạn' },
-                                            { key: '2', field: 'Văn bản dài', englishTerm: 'textarea', example: 'Địa chỉ chi tiết...', validation: 'Nhiều dòng' },
-                                            { key: '3', field: 'Số nguyên', englishTerm: 'integer', example: '25, 100, 1990', validation: 'Chỉ số nguyên' },
-                                            { key: '4', field: 'Số thực', englishTerm: 'float', example: '3.14, 99.9', validation: 'Số có dấu phẩy' },
-                                            { key: '5', field: 'Ngày tháng', englishTerm: 'date', example: '01/01/2025', validation: 'Định dạng ngày' },
-                                            { key: '6', field: 'Ngày giờ', englishTerm: 'datetime', example: '01/01/2025 14:30', validation: 'Ngày + giờ' },
-                                            { key: '7', field: 'Giờ phút', englishTerm: 'time', example: '14:30', validation: 'Chỉ giờ' },
+                                            { key: '1', field: 'Chuỗi/Text', englishTerm: 'string', example: 'Nguyễn Văn A, TP.HCM', usage: 'Họ tên, địa chỉ, mô tả ngắn' },
+                                            { key: '2', field: 'Văn bản dài', englishTerm: 'textarea', example: 'Địa chỉ chi tiết gồm 2-3 dòng', usage: 'Mô tả dài, ghi chú' },
+                                            { key: '3', field: 'Số nguyên', englishTerm: 'integer', example: '25, 100, 1990', usage: 'Tuổi, năm sinh, số lượng' },
+                                            { key: '4', field: 'Số thực', englishTerm: 'float', example: '3.14, 99.9', usage: 'Diện tích, giá trị có số thập phân' },
+                                            { key: '5', field: 'Ngày tháng', englishTerm: 'date', example: '01/01/2025', usage: 'Ngày sinh, ngày ký hợp đồng' },
+                                            { key: '6', field: 'Ngày giờ', englishTerm: 'datetime', example: '01/01/2025 14:30', usage: 'Thời điểm chính xác' },
+                                            { key: '7', field: 'Giờ phút', englishTerm: 'time', example: '14:30', usage: 'Giờ hẹn, giờ làm việc' },
                                         ]}
                                         columns={[
-                                            { title: 'Loại dữ liệu', dataIndex: 'field', key: 'field', width: '20%', render: (text) => <Text strong>{text}</Text> },
-                                            { title: 'Thuật ngữ Anh', dataIndex: 'englishTerm', key: 'englishTerm', width: '15%', render: (text) => <Tag color="purple">{text}</Tag> },
-                                            { title: 'Ví dụ', dataIndex: 'example', key: 'example', width: '30%' },
-                                            { title: 'Quy tắc', dataIndex: 'validation', key: 'validation', width: '35%', render: (text) => <Text type="secondary">{text}</Text> },
+                                            { title: 'Loại dữ liệu', dataIndex: 'field', key: 'field', width: '18%', render: (text) => <Text strong>{text}</Text> },
+                                            { title: 'Thuật ngữ', dataIndex: 'englishTerm', key: 'englishTerm', width: '12%', render: (text) => <Tag color="purple">{text}</Tag> },
+                                            { title: 'Ví dụ', dataIndex: 'example', key: 'example', width: '30%', render: (text) => <Text type="secondary">{text}</Text> },
+                                            { title: 'Dùng cho', dataIndex: 'usage', key: 'usage', width: '40%' },
                                         ]}
                                         pagination={false}
                                         size="small"
@@ -1300,16 +1270,63 @@ const FAQTab = () => {
                                 <Divider />
 
                                 <div>
-                                    <Title level={5}><BulbOutlined /> 7. Lời khuyên khi sử dụng</Title>
+                                    <Title level={5}><BulbOutlined /> Lời khuyên khi tạo trường</Title>
+                                    <Paragraph>
+                                        <Text strong type="success">✅ NÊN:</Text>
+                                    </Paragraph>
                                     <ul style={{ lineHeight: '2' }}>
-                                        <li>✅ Đặt tên trường ngắn gọn, dễ hiểu: <Text code>họ và tên</Text> thay vì <Text code>hvt</Text></li>
-                                        <li>✅ Chọn loại dữ liệu (Data Type) chính xác để hệ thống kiểm tra đúng</li>
-                                        <li>✅ Xem trước PDF trước khi hoàn tất</li>
-                                        <li>✅ Xóa các vị trí không cần thiết để giảm dung lượng PDF</li>
-                                        <li>❌ Tránh đặt tên trường có dấu tiếng Việt hoặc ký tự đặc biệt</li>
-                                        <li>❌ Không liên kết nhiều vị trí vào cùng một trường thông tin</li>
-                                        <li>❌ Không để trùng số vị trí (1), (2)...</li>
+                                        <li>Đặt tên trường ngắn gọn, dễ hiểu: <Text code>họ và tên</Text>, <Text code>số căn cước</Text></li>
+                                        <li>Đặt tên trường bằng chữ thường tiếng Việt có dấu, dùng khoảng trắng; không dùng ký tự đặc biệt</li>
+                                        <li>Chọn loại dữ liệu chính xác (string cho text, integer cho số nguyên...)</li>
+                                        <li>Tạo nhiều trường cùng lúc trước khi áp dụng (tiết kiệm thời gian)</li>
+                                        <li>Kiểm tra kỹ visual markers (hình chữ nhật xanh) xem có đúng vị trí không</li>
+                                        <li>Sử dụng chức năng sửa/xóa trong bảng nếu cần điều chỉnh</li>
                                     </ul>
+
+                                    <Paragraph>
+                                        <Text strong type="danger">❌ TRÁNH:</Text>
+                                    </Paragraph>
+                                    <ul style={{ lineHeight: '2' }}>
+                                        <li>Đặt tên trường có ký tự đặc biệt: <Text delete>họ&tên</Text>, <Text delete>số-cmnd</Text></li>
+                                        <li>Để trùng số vị trí (sẽ báo lỗi và không cho tạo)</li>
+                                        <li>Để trùng tên trường (sẽ báo lỗi khi áp dụng)</li>
+                                    </ul>
+                                </div>
+
+                                <Divider />
+
+                                <div>
+                                    <Title level={5}><WarningOutlined /> Xử lý lỗi thường gặp</Title>
+                                    <Table
+                                        dataSource={[
+                                            {
+                                                key: '1',
+                                                error: 'Vị trí đã tồn tại',
+                                                reason: 'Bạn đã tạo trường với số vị trí này rồi',
+                                                solution: 'Dùng số vị trí khác (hệ thống tự động gợi ý)'
+                                            },
+                                            {
+                                                key: '2',
+                                                error: 'Tên trường đã tồn tại',
+                                                reason: 'Tên trường bị trùng với trường khác',
+                                                solution: 'Đặt tên trường khác, ví dụ: họ và tên 2'
+                                            },
+                                            {
+                                                key: '3',
+                                                error: 'Tên trường không hợp lệ',
+                                                reason: 'Có chữ in hoa hoặc ký tự đặc biệt',
+                                                solution: 'Dùng chữ thường tiếng Việt có dấu, có thể dùng khoảng trắng; không dùng ký tự đặc biệt'
+                                            },
+                                        ]}
+                                        columns={[
+                                            { title: 'Lỗi', dataIndex: 'error', key: 'error', width: '25%', render: (text) => <Text type="danger" strong>{text}</Text> },
+                                            { title: 'Nguyên nhân', dataIndex: 'reason', key: 'reason', width: '35%' },
+                                            { title: 'Cách xử lý', dataIndex: 'solution', key: 'solution', width: '40%', render: (text) => <Text type="success">{text}</Text> },
+                                        ]}
+                                        pagination={false}
+                                        size="small"
+                                        bordered
+                                    />
                                 </div>
                             </Space>
                         </Panel>

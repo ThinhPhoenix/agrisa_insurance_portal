@@ -34,9 +34,9 @@ import BasicTab from "@/components/layout/base-policy/create/BasicTab";
 import ConfigurationTab from "@/components/layout/base-policy/create/ConfigurationTab";
 import EstimatedCosts from "@/components/layout/base-policy/create/EstimatedCosts";
 import FAQTab from "@/components/layout/base-policy/create/FAQTab";
-import FileUploadPreview from "@/components/layout/base-policy/create/FileUploadPreview";
 import ReviewTab from "@/components/layout/base-policy/create/ReviewTab";
-import TagsTab from "@/components/layout/base-policy/create/TagsTab";
+import FileUploadPreview from "@/components/layout/base-policy/create/TagsTab/FileUploadPreview";
+import TagsTab from "@/components/layout/base-policy/create/TagsTab/TagsTab";
 
 // Hook
 import { createFillablePDFFromMappings } from "@/libs/pdf/pdfAcroFormEditor";

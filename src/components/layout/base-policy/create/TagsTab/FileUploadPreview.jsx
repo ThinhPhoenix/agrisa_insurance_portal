@@ -24,7 +24,7 @@ import {
     Upload
 } from 'antd';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { analyzePDFForPlaceholders } from '../../../../libs/pdf/PDFPlaceholderDetector';
+import { analyzePDFForPlaceholders } from '../../../../../libs/pdf/PDFPlaceholderDetector';
 import PDFViewerWithSelection from './PDFViewerWithSelection';
 
 const { Title, Text } = Typography;

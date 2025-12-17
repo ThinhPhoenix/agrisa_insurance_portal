@@ -31,7 +31,7 @@ import {
     message
 } from 'antd';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import CustomTable from '../../../custom-table';
+import CustomTable from '../../../../custom-table';
 
 const { Text, Title } = Typography;
 
@@ -465,8 +465,8 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 const arrayBuffer = await originalFile.arrayBuffer();
 
                 // Import function - use pdfAcroFormEditor for manual scan workflow
-                const { createFillablePDFFromMappings } = await import('../../../../libs/pdf/pdfAcroFormEditor');
-                const { pdfBytesToFile } = await import('../../../../libs/pdf/pdfFormHelper');
+                const { createFillablePDFFromMappings } = await import('../../../../../libs/pdf/pdfAcroFormEditor');
+                const { pdfBytesToFile } = await import('../../../../../libs/pdf/pdfFormHelper');
 
                 // ✅ FIX: Keep ALL placeholders except deleted one for form field creation
                 const remainingPlaceholders = placeholders.filter(p => p.id !== placeholderId);
@@ -643,8 +643,8 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             const arrayBuffer = await currentFile.arrayBuffer();
 
             // Import functions - use pdfAcroFormEditor for manual scan workflow
-            const { createFillablePDFFromMappings } = await import('../../../../libs/pdf/pdfAcroFormEditor');
-            const { pdfBytesToFile } = await import('../../../../libs/pdf/pdfFormHelper');
+            const { createFillablePDFFromMappings } = await import('../../../../../libs/pdf/pdfAcroFormEditor');
+            const { pdfBytesToFile } = await import('../../../../../libs/pdf/pdfFormHelper');
 
             // Filter: Only selected placeholders
             const selectedPlaceholders = placeholders.filter(p => selectedRows.includes(p.id));

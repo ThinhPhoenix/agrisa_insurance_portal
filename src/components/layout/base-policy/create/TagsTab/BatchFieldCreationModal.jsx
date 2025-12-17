@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react';
-import { Modal, Button, Space, Typography } from 'antd';
-import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Modal, Space, Typography } from 'antd';
+import { useCallback } from 'react';
 import PDFViewerWithSelection from './PDFViewerWithSelection';
 import StagingFieldsTable from './StagingFieldsTable';
 

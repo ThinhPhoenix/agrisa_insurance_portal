@@ -65,13 +65,9 @@ const TagsDetail = ({ policyData, mockData }) => {
             dataIndex: 'dataType',
             width: 150,
             render: (value) => (
-                <Tag style={{
-                    backgroundColor: 'var(--color-primary-200)',
-                    color: 'var(--color-primary-700)',
-                    border: 'none'
-                }}>
+                <Text strong style={{ color: 'var(--color-primary-700)' }}>
                     {getDataTypeLabel(value)}
-                </Tag>
+                </Text>
             ),
         },
     ];
@@ -115,13 +111,9 @@ const TagsDetail = ({ policyData, mockData }) => {
                                     <Col span={12}>
                                         <Text type="secondary" style={{ fontSize: '12px' }}>Loại tệp:</Text>
                                         <br />
-                                        <Tag style={{
-                                            backgroundColor: 'var(--color-primary-200)',
-                                            color: 'var(--color-primary-700)',
-                                            border: 'none'
-                                        }}>
+                                        <Text strong style={{ color: 'var(--color-primary-700)' }}>
                                             {policyData.document.content_type || 'PDF'}
-                                        </Tag>
+                                        </Text>
                                     </Col>
                                     <Col span={12}>
                                         <Text type="secondary" style={{ fontSize: '12px' }}>Kích thước:</Text>

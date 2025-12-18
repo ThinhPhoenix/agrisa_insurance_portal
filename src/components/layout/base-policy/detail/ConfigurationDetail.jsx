@@ -22,30 +22,6 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
         return mockData.monitoringFrequencies.find(m => m.value === value)?.label || value;
     };
 
-    // Map validation status to Vietnamese
-    const getValidationStatusText = (status) => {
-        const mapping = {
-            'pending': 'Đang chờ xác thực',
-            'passed': 'Đã xác thực',
-            'passed_ai': 'Đã xác thực bởi AI',
-            'failed': 'Xác thực thất bại',
-            'warning': 'Cảnh báo'
-        };
-        return mapping[status] || status;
-    };
-
-    // Get validation status color
-    const getValidationStatusColor = (status) => {
-        const colorMapping = {
-            'pending': 'orange',
-            'passed': 'green',
-            'passed_ai': 'blue',
-            'failed': 'red',
-            'warning': 'gold'
-        };
-        return colorMapping[status] || 'default';
-    };
-
     // Map monitor frequency unit to Vietnamese
     const getMonitorFrequencyUnitText = (unit) => {
         const mapping = {
@@ -201,9 +177,9 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                             </Space>
                         </Descriptions.Item>
                         <Descriptions.Item label="Giai đoạn sinh trưởng">
-                            <Tag style={{ backgroundColor: 'var(--color-primary-300)', color: 'var(--color-primary-800)', border: 'none' }}>
+                            <Text strong style={{ color: 'var(--color-primary-800)' }}>
                                 {policyData.configuration?.growthStage || 'N/A'}
-                            </Tag>
+                            </Text>
                         </Descriptions.Item>
                         {policyData.configuration?.blackoutPeriods?.periods?.length > 0 && (
                             <Descriptions.Item label="Giai đoạn không kích hoạt" span={2}>
@@ -215,9 +191,9 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                                             return `${day}/${month}`;
                                         };
                                         return (
-                                            <Tag key={index} style={{ backgroundColor: 'var(--color-secondary-400)', color: 'var(--color-secondary-800)', border: 'none', fontSize: '13px', padding: '4px 10px' }}>
+                                            <Text key={index} style={{ color: 'var(--color-secondary-800)', fontSize: '13px', padding: '4px 10px', display: 'inline-block' }}>
                                                 {formatDate(period.start)} đến {formatDate(period.end)}
-                                            </Tag>
+                                            </Text>
                                         );
                                     })}
                                 </Space>

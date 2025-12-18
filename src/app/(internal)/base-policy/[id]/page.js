@@ -3,7 +3,6 @@
 import {
   BasicInfoDetail,
   ConfigurationDetail,
-  CostSummary,
   TagsDetail,
 } from "@/components/layout/base-policy/detail";
 import { POLICY_MESSAGES } from "@/libs/message/policy-message";
@@ -12,7 +11,6 @@ import useDetailPolicy from "@/services/hooks/base-policy/use-detail-policy";
 import usePolicy from "@/services/hooks/base-policy/use-policy";
 import useDataSource from "@/services/hooks/common/use-data-source";
 import {
-  ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
@@ -423,29 +421,48 @@ const PolicyDetailPage = ({ params }) => {
   const getStatusTag = (status) => {
     const statusConfig = {
       draft: {
-        color: "processing",
+        background: "rgba(252, 242, 205, 0.6)",
+        color: "var(--color-secondary-800)",
+        border: "1px solid rgba(252, 242, 205, 0.8)",
         icon: <ClockCircleOutlined />,
         text: "Chờ duyệt",
       },
       active: {
-        color: "success",
+        background: "rgba(165, 215, 190, 0.6)",
+        color: "var(--color-primary-800)",
+        border: "1px solid rgba(165, 215, 190, 0.8)",
         icon: <CheckCircleOutlined />,
         text: "Đang hoạt động",
       },
       closed: {
-        color: "error",
+        background: "rgba(255, 240, 240, 0.6)",
+        color: "#d32f2f",
+        border: "1px solid rgba(255, 200, 200, 0.8)",
         icon: <ClockCircleOutlined />,
         text: "Đã đóng",
       },
       archived: {
-        color: "default",
+        background: "rgba(245, 245, 245, 0.6)",
+        color: "#666",
+        border: "1px solid rgba(220, 220, 220, 0.8)",
         icon: <FileTextOutlined />,
         text: "Đã lưu trữ",
       },
     };
     const config = statusConfig[status] || statusConfig.draft;
     return (
-      <Tag color={config.color} icon={config.icon}>
+      <Tag
+        icon={config.icon}
+        style={{
+          background: config.background,
+          color: config.color,
+          border: config.border,
+          backdropFilter: "blur(10px)",
+          padding: "4px 12px",
+          fontSize: "13px",
+          fontWeight: "500",
+        }}
+      >
         {config.text}
       </Tag>
     );
@@ -491,98 +508,46 @@ const PolicyDetailPage = ({ params }) => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card>
-        <Row align="middle" justify="space-between">
-          <Col>
-            <Space direction="vertical" size={0}>
-              <Button
-                type="link"
-                icon={<ArrowLeftOutlined />}
-                onClick={handleBack}
-                style={{ padding: 0, height: "auto" }}
-              >
-                Quay lại danh sách
-              </Button>
-              <Title level={3} style={{ margin: 0 }}>
-                {policyDetail.productName}
-              </Title>
-              <Space>
-                <Text type="secondary" code>
-                  {policyDetail.productCode}
-                </Text>
-                {getStatusTag(policyDetail.status)}
-              </Space>
+
+      <Row align="middle" justify="space-between">
+        <Col>
+          <Space direction="vertical" size={0}>
+            <Title level={3} style={{ margin: 0 }}>
+              {policyDetail.productName}
+            </Title>
+            <Space>
+              <Text type="secondary" code>
+                {policyDetail.productCode}
+              </Text>
+              {getStatusTag(policyDetail.status)}
             </Space>
-          </Col>
-          {/* Cancel Button - Only show for active policies */}
-          {policyDetail.status === "active" && (
-            <Col>
-              <Button
-                danger
-                type="primary"
-                icon={<DeleteOutlined />}
-                onClick={() => setCancelModalVisible(true)}
-                loading={cancelLoading}
-              >
-                Huỷ hợp đồng mẫu
-              </Button>
-            </Col>
-          )}
-        </Row>
-
-        <Divider />
-
-        <Row gutter={16}>
-          {/* <Col span={6}>
-            <Text type="secondary">Ngày tạo:</Text>
-            <br />
-            <Text strong>{policyDetail.createdAt}</Text>
-          </Col>
-          <Col span={6}>
-            <Text type="secondary">Cập nhật:</Text>
-            <br />
-            <Text strong>{policyDetail.updatedAt}</Text>
-          </Col> */}
-          <Col span={6}>
-            <Text type="secondary">Thời hạn:</Text>
-            <br />
-            <Text strong>{policyDetail.coverageDurationDays} ngày</Text>
-          </Col>
-          <Col span={6}>
-            <Text type="secondary">Số tiền bảo hiểm:</Text>
-            <br />
-            <Text strong style={{ color: "#52c41a" }}>
-              {policyDetail.coverageAmount?.toLocaleString()} ₫
-            </Text>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Main Content */}
-      <Row gutter={24}>
-        {/* Left Content - Details Tabs */}
-        <Col span={16}>
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={tabItems}
-            size="large"
-          />
+          </Space>
         </Col>
-
-        {/* Right Content - Cost Summary */}
-        <Col span={8}>
-          <div
-            style={{
-              position: "sticky",
-              top: "24px",
-              height: "fit-content",
-            }}
-          >
-            <CostSummary policyData={policyDetail} mockData={mockData} />
-          </div>
-        </Col>
+        {/* Cancel Button - Only show for active policies */}
+        {policyDetail.status === "active" && (
+          <Col>
+            <Button
+              danger
+              type="primary"
+              icon={<DeleteOutlined />}
+              onClick={() => setCancelModalVisible(true)}
+              loading={cancelLoading}
+            >
+              Huỷ hợp đồng mẫu
+            </Button>
+          </Col>
+        )}
       </Row>
+
+      <Divider />
+
+      {/* Main Content - Full Width Tabs */}
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={tabItems}
+        size="large"
+      />
 
       {/* Cancel Policy Modal */}
       <Modal

@@ -65,50 +65,66 @@ const TagsDetail = ({ policyData, mockData }) => {
             dataIndex: 'dataType',
             width: 150,
             render: (value) => (
-                <Tag color="blue">{getDataTypeLabel(value)}</Tag>
+                <Tag style={{
+                    backgroundColor: 'var(--color-primary-200)',
+                    color: 'var(--color-primary-700)',
+                    border: 'none'
+                }}>
+                    {getDataTypeLabel(value)}
+                </Tag>
             ),
         },
     ];
 
     return (
         <Card>
-            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                 {/* Header */}
                 <div>
-                    <Title level={4} style={{ marginBottom: 0 }}>
+                    <Title level={4} style={{ marginBottom: 4, color: 'var(--color-primary-700)' }}>
                         <TagOutlined style={{ marginRight: 8 }} />
                         Tài liệu & Trường thông tin
                     </Title>
-                    <Text type="secondary">Trường dữ liệu và tài liệu hợp đồng PDF</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>Trường dữ liệu và tài liệu hợp đồng PDF</Text>
                 </div>
 
                 {/* Section 1: PDF Document */}
                 {policyData.document?.has_document && (
                     <div>
-                        <Text strong>
-                            <FilePdfOutlined style={{ marginRight: 6, color: '#ff4d4f' }} />
+                        <Text strong style={{ color: 'var(--color-primary-700)', fontSize: '14px' }}>
+                            <FilePdfOutlined style={{ marginRight: 6 }} />
                             Tài liệu PDF Hợp đồng
                         </Text>
-                        <Card size="small" style={{ marginTop: 8, backgroundColor: '#fafafa' }}>
+                        <Divider style={{ margin: '8px 0' }} />
+                        <div style={{
+                            padding: '16px',
+                            backgroundColor: 'var(--color-secondary-100)',
+                            borderRadius: '6px',
+                            border: '1px solid var(--color-secondary-300)',
+                        }}>
                             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                                 {/* Document info */}
                                 <Row gutter={[16, 16]}>
                                     <Col span={12}>
-                                        <Text type="secondary">Tên tài liệu:</Text>
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>Tên tài liệu:</Text>
                                         <br />
                                         <Text strong code style={{ fontSize: 12 }}>
                                             {policyData.document.document_url}
                                         </Text>
                                     </Col>
                                     <Col span={12}>
-                                        <Text type="secondary">Loại tệp:</Text>
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>Loại tệp:</Text>
                                         <br />
-                                        <Tag color="blue">
+                                        <Tag style={{
+                                            backgroundColor: 'var(--color-primary-200)',
+                                            color: 'var(--color-primary-700)',
+                                            border: 'none'
+                                        }}>
                                             {policyData.document.content_type || 'PDF'}
                                         </Tag>
                                     </Col>
                                     <Col span={12}>
-                                        <Text type="secondary">Kích thước:</Text>
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>Kích thước:</Text>
                                         <br />
                                         <Text strong>
                                             {policyData.document.file_size_bytes
@@ -117,15 +133,17 @@ const TagsDetail = ({ policyData, mockData }) => {
                                         </Text>
                                     </Col>
                                     <Col span={12}>
-                                        <Text type="secondary">Trạng thái:</Text>
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>Trạng thái:</Text>
                                         <br />
-                                        <Tag
-                                            color={
-                                                policyData.documentValidationStatus === 'passed'
-                                                    ? 'green'
-                                                    : 'orange'
-                                            }
-                                        >
+                                        <Tag style={{
+                                            backgroundColor: policyData.documentValidationStatus === 'passed'
+                                                ? 'var(--color-primary-300)'
+                                                : 'var(--color-secondary-400)',
+                                            color: policyData.documentValidationStatus === 'passed'
+                                                ? 'var(--color-primary-800)'
+                                                : 'var(--color-secondary-800)',
+                                            border: 'none'
+                                        }}>
                                             {policyData.documentValidationStatus === 'passed'
                                                 ? 'Đã xác thực'
                                                 : 'Chưa xác thực'}
@@ -136,7 +154,11 @@ const TagsDetail = ({ policyData, mockData }) => {
                                 {/* Action button */}
                                 <Space>
                                     <Button
-                                        type="primary"
+                                        style={{
+                                            backgroundColor: 'var(--color-primary-500)',
+                                            borderColor: 'var(--color-primary-500)',
+                                            color: 'white'
+                                        }}
                                         icon={<EyeOutlined />}
                                         onClick={() => {
                                             if (policyData.document.presigned_url) {
@@ -148,28 +170,41 @@ const TagsDetail = ({ policyData, mockData }) => {
                                         Xem Tài liệu PDF
                                     </Button>
                                     {policyData.document.presigned_url_expiry && (
-                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                        <Text type="secondary" style={{ fontSize: 11 }}>
                                             Link hết hạn:{' '}
                                             {new Date(policyData.document.presigned_url_expiry).toLocaleString('vi-VN')}
                                         </Text>
                                     )}
                                 </Space>
                             </Space>
-                        </Card>
+                        </div>
                     </div>
                 )}
 
-                <Divider style={{ margin: '8px 0' }} />
+                <Divider style={{ margin: '12px 0' }} />
 
                 {/* Section 2: Tags/Fields */}
                 <div>
-                    <Text strong>
-                        <TagOutlined style={{ marginRight: 6, color: '#1890ff' }} />
-                        Trường thông tin
-                        <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '8px' }}>
-                            ({tags.length} trường)
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px'
+                    }}>
+                        <Text strong style={{ color: 'var(--color-primary-700)', fontSize: '14px' }}>
+                            <TagOutlined style={{ marginRight: 6 }} />
+                            Trường thông tin
                         </Text>
-                    </Text>
+                        <Tag style={{
+                            background: 'rgba(199, 230, 215, 0.6)',
+                            color: 'var(--color-primary-800)',
+                            border: '1px solid rgba(165, 215, 190, 0.4)',
+                            backdropFilter: 'blur(8px)',
+                            fontWeight: '500',
+                        }}>
+                            {tags.length} trường
+                        </Tag>
+                    </div>
 
                     {tags.length === 0 ? (
                         <Empty description="Không có trường thông tin nào" style={{ marginTop: 16 }} />
@@ -182,7 +217,6 @@ const TagsDetail = ({ policyData, mockData }) => {
                                 showSizeChanger: false,
                                 showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} trường`,
                             }}
-                            style={{ marginTop: 8 }}
                         />
                     )}
                 </div>

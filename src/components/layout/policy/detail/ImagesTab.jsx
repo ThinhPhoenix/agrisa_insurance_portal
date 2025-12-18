@@ -1,3 +1,4 @@
+import { formatUtcDate } from "@/libs/date-utils";
 import { CameraOutlined, FileImageOutlined } from "@ant-design/icons";
 import { Card, Col, Image, Pagination, Row, Space, Tag, Typography } from "antd";
 import { useState } from "react";
@@ -9,6 +10,8 @@ const formatUrl = (url) => {
   if (url.startsWith("http")) return url;
   return `https://${url}`;
 };
+
+// use shared formatUtcDate from libs with unixSeconds option when needed
 
 const QUALITY_LABELS = {
   excellent: "Xuất sắc",
@@ -30,6 +33,8 @@ export default function ImagesTab({ farm }) {
   const handlePageChange = (page) => {
     setCurrentPhotoPage(page);
   };
+
+  // no custom preview modal — use Ant Design Image.PreviewGroup default behavior
 
   return (
     <Space direction="vertical" size="middle" className="w-full">
@@ -72,68 +77,57 @@ export default function ImagesTab({ farm }) {
           <>
             <Image.PreviewGroup>
               <Row gutter={[16, 16]}>
-                {currentPhotos.map((photo, index) => (
-                  <Col xs={12} sm={8} md={6} lg={4} key={photo.id || index}>
-                    <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
-                      <div className="relative pt-[75%]">
-                        <div className="absolute inset-0">
-                          <Image
-                            width="100%"
-                            height="100%"
-                            src={formatUrl(photo.photo_url)}
-                            alt={`Ảnh ${photo.photo_type}`}
-                            style={{ objectFit: "cover" }}
-                          />
+                {currentPhotos.map((photo, index) => {
+                  const ts = photo.taken_at ?? photo.captured_at;
+                  return (
+                    <Col xs={12} sm={8} md={6} lg={4} key={photo.id || index}>
+                      <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
+                        <div className="relative pt-[75%]">
+                          <div className="absolute inset-0">
+                            <Image
+                              width="100%"
+                              height="100%"
+                              src={formatUrl(photo.photo_url)}
+                              alt={`Ảnh ${photo.photo_type}`}
+                              style={{ objectFit: "cover" }}
+                            />
+                          </div>
+                        </div>
+                        <div className="p-2 bg-gray-50 border-t border-gray-100">
+                          <Tag color={photo.photo_type === "satellite" ? "blue" : "green"} className="mb-1">
+                            {photo.photo_type === "satellite" ? "Vệ tinh" : "Thực địa"}
+                          </Tag>
+                          {photo.quality_score && (
+                            <Tag
+                              color={
+                                photo.quality_score >= 0.8
+                                  ? "green"
+                                  : photo.quality_score >= 0.6
+                                    ? "gold"
+                                    : "orange"
+                              }
+                            >
+                              {QUALITY_LABELS[
+                                photo.quality_score >= 0.8
+                                  ? "excellent"
+                                  : photo.quality_score >= 0.6
+                                    ? "good"
+                                    : photo.quality_score >= 0.4
+                                      ? "fair"
+                                      : "poor"
+                              ] || "N/A"}
+                            </Tag>
+                          )}
+                          {ts && (
+                            <Text type="secondary" className="text-xs block mt-1">
+                              {formatUtcDate(ts, { withTime: true, unixSeconds: true })}
+                            </Text>
+                          )}
                         </div>
                       </div>
-                      <div className="p-2 bg-gray-50 border-t border-gray-100">
-                        <Tag
-                          color={
-                            photo.photo_type === "satellite"
-                              ? "blue"
-                              : "green"
-                          }
-                          className="mb-1"
-                        >
-                          {photo.photo_type === "satellite"
-                            ? "Vệ tinh"
-                            : "Thực địa"}
-                        </Tag>
-                        {photo.quality_score && (
-                          <Tag
-                            color={
-                              photo.quality_score >= 0.8
-                                ? "green"
-                                : photo.quality_score >= 0.6
-                                  ? "gold"
-                                  : "orange"
-                            }
-                          >
-                            {QUALITY_LABELS[
-                              photo.quality_score >= 0.8
-                                ? "excellent"
-                                : photo.quality_score >= 0.6
-                                  ? "good"
-                                  : photo.quality_score >= 0.4
-                                    ? "fair"
-                                    : "poor"
-                            ] || "N/A"}
-                          </Tag>
-                        )}
-                        {photo.captured_at && (
-                          <Text
-                            type="secondary"
-                            className="text-xs block mt-1"
-                          >
-                            {new Date(
-                              photo.captured_at
-                            ).toLocaleDateString("vi-VN")}
-                          </Text>
-                        )}
-                      </div>
-                    </div>
-                  </Col>
-                ))}
+                    </Col>
+                  );
+                })}
               </Row>
             </Image.PreviewGroup>
 

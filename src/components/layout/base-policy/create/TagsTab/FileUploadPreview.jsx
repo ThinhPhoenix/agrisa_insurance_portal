@@ -44,7 +44,7 @@ const FileUploadPreview = forwardRef(({
     // allow parent to control/persist uploaded file across unmounts
     uploadedFile: uploadedFileProp = null,
     fileUrl: fileUrlProp = null,
-    onOpenBatchModal // 🆕 BATCH MODE: Callback to open batch modal
+    onOpenBatchModal //  BATCH MODE: Callback to open batch modal
 }, ref) => {
     useImperativeHandle(ref, () => ({
         openFullscreen: () => handleFullscreenOpen(),

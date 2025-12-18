@@ -93,9 +93,9 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             key: 'conditionOrder',
             width: 60,
             render: (order) => (
-                <Tag color="blue" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                <Text strong style={{ color: 'var(--color-primary-600)', fontSize: '14px' }}>
                     {order || 1}
-                </Tag>
+                </Text>
             ),
         },
         {
@@ -103,9 +103,9 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             key: 'dataSource',
             render: (_, record) => (
                 <div>
-                    <Tag color="blue">
+                    <Text strong style={{ color: 'var(--color-primary-700)' }}>
                         {getDataSourceLabel(record)}
-                    </Tag>
+                    </Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: 11 }}>
                         {getDataSourceParameterName(record)} {getDataSourceUnit(record) && `(${getDataSourceUnit(record)})`}
@@ -118,9 +118,9 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             key: 'aggregation',
             render: (_, record) => (
                 <div>
-                    <Tag color="green">
+                    <Text style={{ color: 'var(--color-primary-600)' }}>
                         {getAggregationFunctionLabel(record.aggregationFunction)}
-                    </Tag>
+                    </Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: 11 }}>
                         Chu kỳ: {record.aggregationWindowDays} ngày
@@ -131,7 +131,9 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     {record.consecutiveRequired && (
                         <>
                             <br />
-                            <Tag color="orange" style={{ fontSize: 10 }}>Yêu cầu liên tục</Tag>
+                            <Text style={{ fontSize: 10, color: 'var(--color-secondary-700)' }}>
+                                Yêu cầu liên tục
+                            </Text>
                         </>
                     )}
                 </div>
@@ -142,9 +144,9 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             key: 'condition',
             render: (_, record) => (
                 <div>
-                    <Tag color="red">
+                    <Text style={{ color: 'var(--color-secondary-700)' }}>
                         {getThresholdOperatorLabel(record.thresholdOperator)}
-                    </Tag>
+                    </Text>
                     <Text strong> {record.thresholdValue}</Text> {getDataSourceUnit(record)}
                     {record.earlyWarningThreshold && (
                         <>
@@ -162,7 +164,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             key: 'cost',
             render: (_, record) => (
                 <div>
-                    <Text strong>{record.calculatedCost?.toLocaleString()} ₫</Text>
+                    <Text strong style={{ color: 'var(--color-primary-600)' }}>{record.calculatedCost?.toLocaleString()} ₫</Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: 10 }}>
                         Cơ sở: {record.baseCost?.toLocaleString()}
@@ -174,31 +176,34 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
 
     return (
         <Card>
-            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                 {/* Header */}
                 <div>
-                    <Title level={4} style={{ marginBottom: 0 }}>
+                    <Title level={4} style={{ marginBottom: 4, color: 'var(--color-primary-700)' }}>
                         <SettingOutlined style={{ marginRight: 8 }} />
                         Cấu hình Nâng cao
                     </Title>
-                    <Text type="secondary">Giám sát và điều kiện kích hoạt</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>Giám sát và điều kiện kích hoạt</Text>
                 </div>
 
                 {/* Section 1: Monitoring & Alerts */}
                 <div>
-                    <Text strong>
-                        <ClockCircleOutlined style={{ marginRight: 6, color: '#1890ff' }} />
+                    <Text strong style={{ color: 'var(--color-primary-700)', fontSize: '14px' }}>
+                        <ClockCircleOutlined style={{ marginRight: 6, color: 'var(--color-primary-500)' }} />
                         Giám sát & Cảnh báo
                     </Text>
-                    <Descriptions bordered column={2} size="small" style={{ marginTop: 8 }}>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <Descriptions bordered column={2} size="small">
                         <Descriptions.Item label="Tần suất giám sát">
                             <Space>
-                                <ClockCircleOutlined style={{ color: '#52c41a' }} />
+                                <ClockCircleOutlined style={{ color: 'var(--color-primary-500)' }} />
                                 <Text strong>{policyData.configuration?.monitorInterval} {getMonitorFrequencyUnitText(policyData.configuration?.monitorFrequencyUnit)}</Text>
                             </Space>
                         </Descriptions.Item>
                         <Descriptions.Item label="Giai đoạn sinh trưởng">
-                            <Tag color="cyan">{policyData.configuration?.growthStage || 'N/A'}</Tag>
+                            <Tag style={{ backgroundColor: 'var(--color-primary-300)', color: 'var(--color-primary-800)', border: 'none' }}>
+                                {policyData.configuration?.growthStage || 'N/A'}
+                            </Tag>
                         </Descriptions.Item>
                         {policyData.configuration?.blackoutPeriods?.periods?.length > 0 && (
                             <Descriptions.Item label="Giai đoạn không kích hoạt" span={2}>
@@ -210,7 +215,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                                             return `${day}/${month}`;
                                         };
                                         return (
-                                            <Tag key={index} color="red" style={{ fontSize: '13px', padding: '4px 10px' }}>
+                                            <Tag key={index} style={{ backgroundColor: 'var(--color-secondary-400)', color: 'var(--color-secondary-800)', border: 'none', fontSize: '13px', padding: '4px 10px' }}>
                                                 {formatDate(period.start)} đến {formatDate(period.end)}
                                             </Tag>
                                         );
@@ -221,31 +226,59 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     </Descriptions>
                 </div>
 
-                <Divider style={{ margin: '8px 0' }} />
+                <Divider style={{ margin: '12px 0' }} />
 
                 {/* Section 2: Trigger Conditions */}
                 <div>
-                    <Space style={{ marginBottom: 12 }}>
-                        <ThunderboltOutlined style={{ color: '#ff4d4f' }} />
-                        <Text strong>Điều kiện Kích hoạt</Text>
-                        <Tag color="blue">{policyData.configuration?.triggerConditions?.length || 0} điều kiện</Tag>
-                    </Space>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px'
+                    }}>
+                        <Text strong style={{ color: 'var(--color-primary-700)', fontSize: '14px' }}>
+                            <ThunderboltOutlined style={{ marginRight: 6, color: 'var(--color-primary-500)' }} />
+                            Điều kiện Kích hoạt
+                        </Text>
+                        <Tag style={{
+                            background: 'rgba(199, 230, 215, 0.6)',
+                            color: 'var(--color-primary-800)',
+                            border: '1px solid rgba(165, 215, 190, 0.4)',
+                            backdropFilter: 'blur(8px)',
+                            fontWeight: '500',
+                        }}>
+                            {policyData.configuration?.triggerConditions?.length || 0} điều kiện
+                        </Tag>
+                    </div>
+                    <Divider style={{ margin: '8px 0' }} />
 
                     {policyData.configuration?.triggerConditions?.length > 0 ? (
                         <>
-                            {/* Logical Operator Info */}
-                            <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f0f5ff' }}>
-                                <Space>
-                                    <AlertOutlined style={{ color: '#1890ff' }} />
-                                    <Text strong>Toán tử Logic:</Text>
-                                    <Tag color="blue" style={{ fontSize: 13 }}>
+                            {/* Logical Operator inline info */}
+                            <div style={{
+                                padding: '12px 16px',
+                                backgroundColor: 'var(--color-primary-100)',
+                                borderLeft: '3px solid var(--color-primary-500)',
+                                borderRadius: '4px',
+                                marginBottom: '16px',
+                            }}>
+                                <Space size="small">
+                                    <AlertOutlined style={{ color: 'var(--color-primary-600)', fontSize: '14px' }} />
+                                    <Text style={{ fontSize: '13px' }}>Toán tử Logic:</Text>
+                                    <Tag style={{
+                                        backgroundColor: 'var(--color-primary-300)',
+                                        color: 'var(--color-primary-800)',
+                                        border: 'none',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                    }}>
                                         {policyData.configuration?.logicalOperator}
                                     </Tag>
-                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                    <Text type="secondary" style={{ fontSize: '12px' }}>
                                         {mockData.logicalOperators.find(op => op.value === policyData.configuration?.logicalOperator)?.description || ''}
                                     </Text>
                                 </Space>
-                            </Card>
+                            </div>
 
                             {/* Conditions Table */}
                             <CustomTable
@@ -254,51 +287,75 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                                 pagination={false}
                             />
 
-                            {/* Logic Preview */}
-                            <Card
-                                size="small"
-                                title={
-                                    <Space>
-                                        <ThunderboltOutlined style={{ color: '#faad14' }} />
-                                        <span>Xem trước Logic Kích hoạt</span>
-                                    </Space>
-                                }
-                                style={{ marginTop: 16, borderColor: '#faad14' }}
-                            >
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Text>
-                                        <Text strong style={{ color: '#52c41a' }}>Chi trả {(policyData.payoutBaseRate * 100)?.toFixed(2)}%</Text>
-                                        {' '}(tối đa <Text strong>{policyData.payoutCap?.toLocaleString()} {policyData.coverageCurrency}</Text>) khi{' '}
-                                        <Tag color="blue">
-                                            {policyData.configuration?.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
-                                        </Tag>
-                                        {' '}các điều kiện sau được thỏa mãn:
+                            {/* Logic Preview - Clean section without heavy card */}
+                            <div style={{ marginTop: '20px' }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    marginBottom: '12px',
+                                }}>
+                                    <ThunderboltOutlined style={{ color: 'var(--color-primary-600)', fontSize: '16px' }} />
+                                    <Text strong style={{ color: 'var(--color-primary-700)', fontSize: '14px' }}>
+                                        Xem trước Logic Kích hoạt
                                     </Text>
-                                    <ul style={{ marginTop: 8, marginBottom: 0 }}>
-                                        {policyData.configuration?.triggerConditions?.map((condition, index) => (
-                                            <li key={condition.id}>
-                                                <Text>
-                                                    <Tag color="green">{getAggregationFunctionLabel(condition.aggregationFunction)}</Tag>
-                                                    {' '}của <Tag color="blue">{getDataSourceLabel(condition)}</Tag>
-                                                    {' '}trong <Text strong>{condition.aggregationWindowDays} ngày</Text>
-                                                    {' '}<Tag color="red">{getThresholdOperatorLabel(condition.thresholdOperator)}</Tag>
-                                                    {' '}<Text strong>{condition.thresholdValue} {getDataSourceUnit(condition)}</Text>
-                                                    {condition.baselineWindowDays > 0 && (
-                                                        <Text type="secondary" style={{ fontSize: 11 }}>
-                                                            {' '}(baseline: {condition.baselineWindowDays} ngày)
+                                </div>
+                                <div style={{
+                                    padding: '16px',
+                                    backgroundColor: 'var(--color-secondary-100)',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--color-secondary-300)',
+                                }}>
+                                    <Space direction="vertical" style={{ width: '100%' }} size="small">
+                                        <Text style={{ fontSize: '13px', lineHeight: '1.6' }}>
+                                            <Text strong style={{ color: 'var(--color-primary-600)' }}>
+                                                Chi trả {(policyData.payoutBaseRate * 100)?.toFixed(2)}%
+                                            </Text>
+                                            {' '}(tối đa <Text strong>{policyData.payoutCap?.toLocaleString()} {policyData.coverageCurrency}</Text>) khi{' '}
+                                            <Text strong style={{ color: 'var(--color-primary-700)' }}>
+                                                {policyData.configuration?.logicalOperator === 'AND' ? 'TẤT CẢ' : 'BẤT KỲ'}
+                                            </Text>
+                                            {' '}các điều kiện sau được thỏa mãn:
+                                        </Text>
+                                        <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: '20px' }}>
+                                            {policyData.configuration?.triggerConditions?.map((condition, index) => (
+                                                <li key={condition.id} style={{ marginBottom: '8px' }}>
+                                                    <Text style={{ fontSize: '13px', lineHeight: '1.6' }}>
+                                                        <Text style={{ color: 'var(--color-primary-600)' }}>
+                                                            {getAggregationFunctionLabel(condition.aggregationFunction)}
                                                         </Text>
-                                                    )}
-                                                </Text>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </Space>
-                            </Card>
+                                                        {' '}của{' '}
+                                                        <Text strong style={{ color: 'var(--color-primary-700)' }}>
+                                                            {getDataSourceLabel(condition)}
+                                                        </Text>
+                                                        {' '}trong <Text strong>{condition.aggregationWindowDays} ngày</Text>
+                                                        {' '}
+                                                        <Text style={{ color: 'var(--color-secondary-700)' }}>
+                                                            {getThresholdOperatorLabel(condition.thresholdOperator)}
+                                                        </Text>
+                                                        {' '}<Text strong>{condition.thresholdValue} {getDataSourceUnit(condition)}</Text>
+                                                        {condition.baselineWindowDays > 0 && (
+                                                            <Text type="secondary" style={{ fontSize: '11px' }}>
+                                                                {' '}(baseline: {condition.baselineWindowDays} ngày)
+                                                            </Text>
+                                                        )}
+                                                    </Text>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </Space>
+                                </div>
+                            </div>
                         </>
                     ) : (
-                        <Card size="small">
+                        <div style={{
+                            padding: '24px',
+                            textAlign: 'center',
+                            backgroundColor: '#fafafa',
+                            borderRadius: '6px',
+                        }}>
                             <Text type="secondary">Chưa có điều kiện kích hoạt nào được cấu hình</Text>
-                        </Card>
+                        </div>
                     )}
                 </div>
             </Space>

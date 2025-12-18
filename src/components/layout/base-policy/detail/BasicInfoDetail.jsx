@@ -28,6 +28,9 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
         return 'var(--color-primary-800)';
     };
 
+    // Shared style for field values to keep visual balance
+    const fieldValueStyle = { fontSize: 14 };
+
     // Data source table columns
     const dataSourceColumns = [
         {
@@ -101,7 +104,7 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                     <Divider style={{ margin: '8px 0' }} />
                     <Descriptions bordered column={2} size="small">
                         <Descriptions.Item label="Tên Sản phẩm" span={2}>
-                            <Text strong style={{ fontSize: 15 }}>{policyData.productName}</Text>
+                            <Text strong style={fieldValueStyle}>{policyData.productName}</Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Mã Sản phẩm" span={2}>
                             <Text code>{policyData.productCode}</Text>
@@ -122,7 +125,7 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                     <Descriptions bordered column={2} size="small">
                         <Descriptions.Item label="Loại Cây trồng" span={2}>
                             <Space>
-                                <Text strong style={{ color: getCropTypeColor(policyData.cropType) }}>
+                                <Text strong style={{ ...fieldValueStyle, color: getCropTypeColor(policyData.cropType) }}>
                                     {getCropTypeLabel(policyData.cropType)}
                                 </Text>
                                 <Text type="secondary" style={{ fontSize: 12 }}>
@@ -131,7 +134,7 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                             </Space>
                         </Descriptions.Item>
                         <Descriptions.Item label="Thời hạn Bảo hiểm">
-                            <Text strong>{policyData.coverageDurationDays} ngày</Text>
+                            <Text strong style={fieldValueStyle}>{policyData.coverageDurationDays} ngày</Text>
                         </Descriptions.Item>
                     </Descriptions>
                 </div>
@@ -145,13 +148,13 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                     <Divider style={{ margin: '8px 0' }} />
                     <Descriptions bordered column={2} size="small">
                         <Descriptions.Item label="Tỷ lệ Phí BH Cơ sở">
-                            <Text strong style={{ color: 'var(--color-primary-600)' }}>
+                            <Text strong style={{ ...fieldValueStyle, color: 'var(--color-primary-600)' }}>
                                 {(policyData.premiumBaseRate * 100).toFixed(2)}%
                             </Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Phí cố định">
                             <Space>
-                                <Text strong>{policyData.fixPremiumAmount?.toLocaleString()} ₫</Text>
+                                <Text strong style={fieldValueStyle}>{policyData.fixPremiumAmount?.toLocaleString()} ₫</Text>
                                 {policyData.isPerHectare && (
                                     <Text style={{ color: 'var(--color-primary-700)' }}>/ ha</Text>
                                 )}
@@ -161,13 +164,13 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                             </Space>
                         </Descriptions.Item>
                         <Descriptions.Item label="Tỷ lệ Chi trả Cơ sở">
-                            <Text strong style={{ color: 'var(--color-primary-600)' }}>
+                            <Text strong style={{ ...fieldValueStyle, color: 'var(--color-primary-600)' }}>
                                 {(policyData.payoutBaseRate * 100)?.toFixed(2)}%
                             </Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Số tiền Chi trả Cố định">
                             <Space>
-                                <Text strong style={{ color: '' }}>
+                                <Text strong style={fieldValueStyle}>
                                     {policyData.fixPayoutAmount?.toLocaleString()} ₫
                                 </Text>
                                 {policyData.isPayoutPerHectare && (

@@ -79,9 +79,7 @@ export const dateToEpochSeconds = (date) => {
 };
 
 /**
- * Map UI frequency unit to BE canonical format
  * UI: 'hours' | 'days' | 'weeks' | 'months' | 'years'
- * BE: 'hour' | 'day' | 'week' | 'month' | 'year'
  */
 export const mapFrequencyUnit = (uiUnit) => {
   const mapping = {
@@ -97,6 +95,20 @@ export const mapFrequencyUnit = (uiUnit) => {
     year: "year",
   };
   return mapping[uiUnit] || "day";
+};
+
+/**
+ * Return Vietnamese label for frequency unit (BE format)
+ */
+export const getFrequencyUnitLabel = (unit) => {
+  const labels = {
+    hour: "giờ",
+    day: "ngày",
+    week: "tuần",
+    month: "tháng",
+    year: "năm",
+  };
+  return labels[unit] || unit;
 };
 
 /**

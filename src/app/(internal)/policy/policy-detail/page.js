@@ -41,7 +41,6 @@ import {
   Space,
   Spin,
   Tabs,
-  Tag,
   Typography,
 } from "antd";
 import {
@@ -715,7 +714,7 @@ export default function PolicyDetailPage() {
       key: "claims",
       label: (
         <span className="flex items-center gap-2">
-          <WalletOutlined style={{ color: "#52c41a" }} />
+          <WalletOutlined />
           <span className="hidden sm:inline">Chi trả</span>
         </span>
       ),
@@ -833,15 +832,33 @@ export default function PolicyDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <Text type="secondary">Mức độ rủi ro:</Text>
-                  <Tag
-                    color={getRiskLevelColor(
-                      riskAnalysis.risk_analyses[0].overall_risk_level
-                    )}
+                  <Text
+                    strong
+                    style={{
+                      color:
+                        getRiskLevelColor(
+                          riskAnalysis.risk_analyses[0].overall_risk_level
+                        ) === "green"
+                          ? "#18573f"
+                          : getRiskLevelColor(
+                              riskAnalysis.risk_analyses[0].overall_risk_level
+                            ) === "red"
+                          ? "#cf1322"
+                          : getRiskLevelColor(
+                              riskAnalysis.risk_analyses[0].overall_risk_level
+                            ) === "orange"
+                          ? "#d46b08"
+                          : getRiskLevelColor(
+                              riskAnalysis.risk_analyses[0].overall_risk_level
+                            ) === "gold"
+                          ? "#d48806"
+                          : "#595959",
+                    }}
                   >
                     {getRiskLevelText(
                       riskAnalysis.risk_analyses[0].overall_risk_level
                     )}
-                  </Tag>
+                  </Text>
                 </div>
                 {riskAnalysis.risk_analyses[0].analysis_notes && (
                   <div>

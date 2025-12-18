@@ -8,7 +8,7 @@ import {
   InfoCircleOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Card, Space, Spin, Tag, Typography } from "antd";
+import { Alert, Button, Card, Space, Spin, Typography } from "antd";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -113,11 +113,20 @@ const ClaimsTab = ({ policyId }) => {
       dataIndex: "status",
       key: "status",
       width: 180,
-      render: (status) => (
-        <Tag color={getStatusColor(status)} style={{ fontSize: '13px' }}>
-          {getStatusText(status)}
-        </Tag>
-      ),
+      render: (status) => {
+        const colorMap = {
+          generated: '#595959',
+          pending_partner_review: '#d46b08',
+          approved: '#18573f',
+          rejected: '#cf1322',
+          paid: '#096dd9',
+        };
+        return (
+          <Text strong style={{ fontSize: '13px', color: colorMap[status] || '#595959' }}>
+            {getStatusText(status)}
+          </Text>
+        );
+      },
     },
     {
       title: "Số tiền bồi thường",
@@ -150,9 +159,9 @@ const ClaimsTab = ({ policyId }) => {
       key: "over_threshold_value",
       width: 170,
       render: (value) => value ? (
-        <Tag color="orange" style={{ fontSize: '13px' }}>
+        <Text strong style={{ fontSize: '13px', color: '#d46b08' }}>
           {value.toFixed(2)}%
-        </Tag>
+        </Text>
       ) : "-",
     },
     {
@@ -160,12 +169,15 @@ const ClaimsTab = ({ policyId }) => {
       dataIndex: "auto_generated",
       key: "auto_generated",
       width: 130,
-      render: (auto) =>
-        auto ? (
-          <Tag color="blue" icon={<InfoCircleOutlined />}>Tự động</Tag>
-        ) : (
-          <Tag>Thủ công</Tag>
-        ),
+      render: (auto) => (
+        <Text strong style={{ fontSize: '13px', color: auto ? '#096dd9' : '#595959' }}>
+          {auto ? (
+            <span><InfoCircleOutlined /> Tự động</span>
+          ) : (
+            <span>Thủ công</span>
+          )}
+        </Text>
+      ),
     },
     {
       title: "Thời điểm kích hoạt",

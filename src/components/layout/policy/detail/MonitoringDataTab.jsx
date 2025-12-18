@@ -1,6 +1,6 @@
 import MonitoringDataView from "@/components/layout/policy/detail/monitoring-data-view";
 import { BarChartOutlined } from "@ant-design/icons";
-import { Card, Empty, Space, Tag, Typography } from "antd";
+import { Card, Empty, Space, Typography } from "antd";
 
 const { Text, Title } = Typography;
 
@@ -32,9 +32,9 @@ export default function MonitoringDataTab({ monitoringData }) {
                 </Text>
               </div>
             </div>
-            <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+            <Text strong style={{ fontSize: '14px', color: '#096dd9' }}>
               {item.monitoringData?.count || 0} bản ghi
-            </Tag>
+            </Text>
           </div>
           <MonitoringDataView item={item} />
         </Card>

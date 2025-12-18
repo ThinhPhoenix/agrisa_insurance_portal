@@ -8,7 +8,6 @@ import {
   InputNumber,
   Row,
   Space,
-  Tag,
   Typography,
 } from "antd";
 import { useState } from "react";
@@ -296,7 +295,9 @@ export default function MonitoringDataView({ item }) {
             {item.dataSource?.data_provider}
           </Descriptions.Item>
           <Descriptions.Item label="Tên tham số">
-            <Tag color="blue">{item.parameterName}</Tag>
+            <Text strong style={{ fontSize: '13px', color: '#595959' }}>
+              {item.parameterName}
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Đơn vị">
             {item.dataSource?.unit}
@@ -309,7 +310,9 @@ export default function MonitoringDataView({ item }) {
             {item.dataSource?.spatial_resolution}
           </Descriptions.Item>
           <Descriptions.Item label="Tổng số bản ghi">
-            <Tag color="purple">{count} bản ghi</Tag>
+            <Text strong style={{ fontSize: '13px', color: '#595959' }}>
+              {count} bản ghi
+            </Text>
           </Descriptions.Item>
         </Descriptions>
       </Card>
@@ -406,9 +409,9 @@ export default function MonitoringDataView({ item }) {
         </Row>
         {dateRange && (
           <div className="mt-2">
-            <Tag color="blue">
-              Hiển thị {chartRecords.length} mẫu trong khoảng thời gian đã chọn
-            </Tag>
+            <Text type="secondary" style={{ fontSize: '13px' }}>
+              Hiển thị <Text strong>{chartRecords.length}</Text> mẫu trong khoảng thời gian đã chọn
+            </Text>
           </div>
         )}
       </Card>
@@ -459,24 +462,26 @@ export default function MonitoringDataView({ item }) {
       <Card size="small" className="mb-4" title="Phân bố chất lượng dữ liệu">
         <Space wrap>
           {Object.entries(qualityCount).map(([quality, count]) => (
-            <Tag
+            <Text
               key={quality}
-              color={
-                quality === "excellent"
-                  ? "green"
+              strong
+              style={{
+                fontSize: '13px',
+                color: quality === "excellent"
+                  ? "#18573f"
                   : quality === "good"
-                  ? "blue"
+                  ? "#18573f"
                   : quality === "fair"
-                  ? "orange"
+                  ? "#d46b08"
                   : quality === "poor"
-                  ? "red"
-                  : "default"
-              }
-              className="text-sm py-1 px-3"
+                  ? "#cf1322"
+                  : "#595959",
+                marginRight: '16px',
+                display: 'inline-block'
+              }}
             >
-              {QUALITY_LABELS[quality] || quality}: <strong>{count}</strong> bản
-              ghi
-            </Tag>
+              {QUALITY_LABELS[quality] || quality}: <strong>{count}</strong> bản ghi
+            </Text>
           ))}
         </Space>
       </Card>
@@ -549,21 +554,23 @@ export default function MonitoringDataView({ item }) {
                       onFilter: (value, record) =>
                         record.data_quality === value,
                       render: (quality) => (
-                        <Tag
-                          color={
-                            quality === "excellent"
-                              ? "green"
+                        <Text
+                          strong
+                          style={{
+                            fontSize: '12px',
+                            color: quality === "excellent"
+                              ? "#18573f"
                               : quality === "good"
-                              ? "blue"
+                              ? "#18573f"
                               : quality === "fair"
-                              ? "orange"
+                              ? "#d46b08"
                               : quality === "poor"
-                              ? "red"
-                              : "default"
-                          }
+                              ? "#cf1322"
+                              : "#595959"
+                          }}
                         >
                           {QUALITY_LABELS[quality] || quality}
-                        </Tag>
+                        </Text>
                       ),
                     },
                     {
@@ -650,9 +657,9 @@ export default function MonitoringDataView({ item }) {
                       onFilter: (value, record) =>
                         record.policy_status === value,
                       render: (status) => (
-                        <Tag color={status === "active" ? "green" : "orange"}>
+                        <Text strong style={{ fontSize: '12px', color: status === "active" ? "#18573f" : "#d46b08" }}>
                           {STATUS_LABELS[status] || status}
-                        </Tag>
+                        </Text>
                       ),
                     },
                   ]}

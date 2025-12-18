@@ -1,62 +1,20 @@
+import GlassmorphismBadge from "@/components/layout/policy/detail/glassmorphism-badge";
+import { getFrequencyUnitLabel } from "@/stores/policy-store";
 import {
   CalendarOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
   DownloadOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
   SafetyOutlined,
-  StopOutlined,
   ThunderboltOutlined,
   WalletOutlined
 } from "@ant-design/icons";
-import { Button, Card, Descriptions, Divider, Space, Tag, Typography } from "antd";
+import { Button, Card, Descriptions, Divider, Space, Typography } from "antd";
 import CustomTable from '../../../custom-table';
 
 const { Text, Title } = Typography;
 
-const getStatusTag = (status) => {
-  const statusConfig = {
-    draft: {
-      color: "processing",
-      icon: <ClockCircleOutlined />,
-      text: "Chờ duyệt",
-    },
-    active: {
-      color: "success",
-      icon: <CheckCircleOutlined />,
-      text: "Đang hoạt động",
-    },
-    closed: {
-      color: "error",
-      icon: <StopOutlined />,
-      text: "Đã đóng",
-    },
-    archived: {
-      color: "default",
-      icon: <FileTextOutlined />,
-      text: "Đã lưu trữ",
-    },
-    pending_review: {
-      color: "warning",
-      icon: <ClockCircleOutlined />,
-      text: "Chờ duyệt",
-    },
-  };
-
-  const config = statusConfig[status] || {
-    color: "default",
-    icon: null,
-    text: status,
-  };
-
-  return (
-    <Tag color={config.color} icon={config.icon}>
-      {config.text}
-    </Tag>
-  );
-};
 
 const CROP_TYPE_LABELS = {
   rice: "Lúa",
@@ -92,18 +50,18 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
             <Text strong style={{ fontSize: '15px' }}>{basePolicy.base_policy?.product_name}</Text>
           </Descriptions.Item>
           <Descriptions.Item label="Mã sản phẩm">
-            <Tag color="blue" style={{ fontSize: '13px', padding: '4px 10px' }}>
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
               {basePolicy.base_policy?.product_code}
-            </Tag>
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Trạng thái">
-            {getStatusTag(basePolicy.base_policy?.status)}
+            <GlassmorphismBadge status={basePolicy.base_policy?.status} size="sm" />
           </Descriptions.Item>
           <Descriptions.Item label="Loại cây trồng">
-            <Tag color="green" style={{ fontSize: '13px', padding: '4px 10px' }}>
+            <Text strong style={{ fontSize: '14px', color: '#18573f' }}>
               {CROP_TYPE_LABELS[basePolicy.base_policy?.crop_type] ||
                 basePolicy.base_policy?.crop_type}
-            </Tag>
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Mô tả sản phẩm" span={2}>
             <Text type="secondary">{basePolicy.base_policy?.product_description}</Text>
@@ -131,15 +89,19 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
             </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Tỷ lệ phí cơ bản">
-            <Tag color="blue">{(basePolicy.base_policy?.premium_base_rate * 100).toFixed(2)}%</Tag>
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
+              {(basePolicy.base_policy?.premium_base_rate * 100).toFixed(2)}%
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Tính theo hecta">
-            <Tag color={basePolicy.base_policy?.is_per_hectare ? "green" : "orange"}>
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
               {basePolicy.base_policy?.is_per_hectare ? "Có" : "Không"}
-            </Tag>
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Tỷ lệ phí hủy">
-            <Tag color="volcano">{(basePolicy.base_policy?.cancel_premium_rate * 100).toFixed(2)}%</Tag>
+            <Text strong style={{ fontSize: '14px', color: '#cf1322' }}>
+              {(basePolicy.base_policy?.cancel_premium_rate * 100).toFixed(2)}%
+            </Text>
           </Descriptions.Item>
         </Descriptions>
 
@@ -156,7 +118,7 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
           labelStyle={{ fontWeight: 500 }}
         >
           <Descriptions.Item label="Số tiền cố định">
-            <Text strong style={{ color: '#faad14' }}>
+            <Text strong>
               {new Intl.NumberFormat("vi-VN", {
                 style: "currency",
                 currency: basePolicy.base_policy?.coverage_currency || "VND",
@@ -164,18 +126,22 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
             </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Tỷ lệ chi trả">
-            <Tag color="gold">{(basePolicy.base_policy?.payout_base_rate * 100).toFixed(2)}%</Tag>
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
+              {(basePolicy.base_policy?.payout_base_rate * 100).toFixed(2)}%
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Chi trả theo hecta">
-            <Tag color={basePolicy.base_policy?.is_payout_per_hectare ? "green" : "orange"}>
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
               {basePolicy.base_policy?.is_payout_per_hectare ? "Có" : "Không"}
-            </Tag>
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Hệ số vượt ngưỡng">
-            <Tag color="purple">{basePolicy.base_policy?.over_threshold_multiplier}x</Tag>
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
+              {basePolicy.base_policy?.over_threshold_multiplier}x
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Giới hạn tối đa" span={2}>
-            <Text strong style={{ color: '#ff4d4f' }}>
+            <Text strong>
               {new Intl.NumberFormat("vi-VN", {
                 style: "currency",
                 currency: basePolicy.base_policy?.coverage_currency || "VND",
@@ -197,9 +163,9 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
           labelStyle={{ fontWeight: 500 }}
         >
           <Descriptions.Item label="Thời hạn BH">
-            <Tag color="purple" style={{ fontSize: '14px', padding: '4px 12px' }}>
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
               {basePolicy.base_policy?.coverage_duration_days} ngày
-            </Tag>
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Đăng ký: Bắt đầu">
             {new Date(
@@ -236,19 +202,19 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
           labelStyle={{ fontWeight: 500 }}
         >
           <Descriptions.Item label="Tự động gia hạn">
-            <Tag color={basePolicy.base_policy?.auto_renewal ? "green" : "red"}>
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
               {basePolicy.base_policy?.auto_renewal ? "Có" : "Không"}
-            </Tag>
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Giảm giá gia hạn">
-            <Tag color="cyan">
+            <Text strong style={{ fontSize: '14px', color: '#595959' }}>
               {(basePolicy.base_policy?.renewal_discount_rate * 100).toFixed(2)}%
-            </Tag>
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Xác thực tài liệu">
-            <Tag color={basePolicy.base_policy?.document_validation_status === "passed" ? "green" : "orange"}>
+            <Text strong style={{ fontSize: '14px', color: basePolicy.base_policy?.document_validation_status === "passed" ? '#18573f' : '#595959' }}>
               {basePolicy.base_policy?.document_validation_status === "passed" ? "Đã xác thực" : "Chờ xác thực"}
-            </Tag>
+            </Text>
           </Descriptions.Item>
           {basePolicy.base_policy?.important_additional_information && (
             <Descriptions.Item label="Thông tin bổ sung" span={2}>
@@ -297,8 +263,10 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                 title={
                   <Space>
                     <Text strong>Trigger #{idx + 1}</Text>
-                    <Tag color="purple">{trigger.logical_operator}</Tag>
-                    <Tag color="blue">{trigger.conditions?.length || 0} điều kiện</Tag>
+                    <Text strong style={{ fontSize: '13px', color: '#595959' }}>{trigger.logical_operator}</Text>
+                    <Text strong style={{ fontSize: '13px', color: '#595959' }}>
+                      {trigger.conditions?.length || 0} điều kiện
+                    </Text>
                   </Space>
                 }
               >
@@ -309,13 +277,15 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                   labelStyle={{ fontWeight: 500 }}
                 >
                   <Descriptions.Item label="Giai đoạn sinh trưởng">
-                    <Tag color="green">{trigger.growth_stage || "Tất cả"}</Tag>
+                    <Text strong style={{ fontSize: '13px', color: '#595959' }}>
+                      {trigger.growth_stage || "Tất cả"}
+                    </Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="Tần suất giám sát">
-                    <Tag color="cyan">
+                    <Text strong style={{ fontSize: '13px', color: '#595959' }}>
                       {trigger.monitor_interval}{" "}
-                      {trigger.monitor_frequency_unit === "day" ? "ngày" : trigger.monitor_frequency_unit}
-                    </Tag>
+                      {getFrequencyUnitLabel(trigger.monitor_frequency_unit)}
+                    </Text>
                   </Descriptions.Item>
                   {trigger.blackout_periods?.periods?.length > 0 && (
                     <Descriptions.Item label="Giai đoạn không kích hoạt" span={2}>
@@ -327,9 +297,9 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                             return `${day}/${month}`;
                           };
                           return (
-                            <Tag key={index} color="red" style={{ fontSize: '13px', padding: '4px 10px' }}>
+                            <Text key={index} strong style={{ fontSize: '13px', color: '#595959', marginRight: '8px' }}>
                               {formatDate(period.start)} đến {formatDate(period.end)}
-                            </Tag>
+                            </Text>
                           );
                         })}
                       </Space>
@@ -353,7 +323,7 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                           dataIndex: "condition_order",
                           key: "order",
                           width: 80,
-                          render: (val) => <Tag color="blue">#{val}</Tag>,
+                          render: (val) => <Text strong style={{ fontSize: '13px', color: '#595959' }}>#{val}</Text>,
                         },
                         {
                           title: "Nguồn dữ liệu",
@@ -379,7 +349,7 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                           key: "operator",
                           width: 100,
                           render: (val) => (
-                            <Tag color="orange">{val}</Tag>
+                            <Text strong style={{ fontSize: '13px', color: '#595959' }}>{val}</Text>
                           ),
                         },
                         {
@@ -394,7 +364,7 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
                           dataIndex: "early_warning_threshold",
                           key: "warning",
                           width: 120,
-                          render: (val) => <Tag color="gold">{val}</Tag>,
+                          render: (val) => <Text strong style={{ fontSize: '13px', color: '#595959' }}>{val}</Text>,
                         },
                         {
                           title: "Hàm tổng hợp",
@@ -443,13 +413,19 @@ export default function BasePolicyTab({ basePolicy, dataSourceNames }) {
             labelStyle={{ fontWeight: 500 }}
           >
             <Descriptions.Item label="Tổng triggers">
-              <Tag color="blue">{basePolicy.metadata.total_triggers}</Tag>
+              <Text strong style={{ fontSize: '14px', color: '#595959' }}>
+                {basePolicy.metadata.total_triggers}
+              </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Tổng điều kiện">
-              <Tag color="cyan">{basePolicy.metadata.total_conditions}</Tag>
+              <Text strong style={{ fontSize: '14px', color: '#595959' }}>
+                {basePolicy.metadata.total_conditions}
+              </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Nguồn dữ liệu">
-              <Tag color="purple">{basePolicy.metadata.data_source_count}</Tag>
+              <Text strong style={{ fontSize: '14px', color: '#595959' }}>
+                {basePolicy.metadata.data_source_count}
+              </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Chi phí dữ liệu">
               <Text strong style={{ color: '#52c41a' }}>

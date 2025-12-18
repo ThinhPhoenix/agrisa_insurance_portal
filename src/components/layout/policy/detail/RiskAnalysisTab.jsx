@@ -1,5 +1,5 @@
 import { CheckCircleOutlined, ExclamationCircleOutlined, SafetyOutlined, WarningOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Descriptions, Space, Tag, Typography } from "antd";
+import { Alert, Button, Card, Descriptions, Space, Typography } from "antd";
 
 const { Text, Title } = Typography;
 
@@ -123,9 +123,9 @@ export default function RiskAnalysisTab({
               labelStyle={{ fontWeight: 500 }}
             >
               <Descriptions.Item label="Số lượng đánh giá">
-                <Tag color={riskAnalysis.count > 0 ? "blue" : "orange"} style={{ fontSize: '14px', padding: '4px 12px' }}>
+                <Text strong style={{ fontSize: '14px', color: riskAnalysis.count > 0 ? '#096dd9' : '#d46b08' }}>
                   {riskAnalysis.count} đánh giá
-                </Tag>
+                </Text>
               </Descriptions.Item>
             </Descriptions>
           </Card>
@@ -141,12 +141,23 @@ export default function RiskAnalysisTab({
                       <Title level={4} style={{ margin: 0 }}>Đánh giá rủi ro #{idx + 1}</Title>
                     </div>
                     <Space>
-                      <Tag color={getAnalysisStatusColor(analysis.analysis_status)} style={{ fontSize: '13px', padding: '4px 10px' }}>
+                      <Text strong style={{
+                        fontSize: '13px',
+                        color: getAnalysisStatusColor(analysis.analysis_status) === 'green' ? '#18573f' :
+                               getAnalysisStatusColor(analysis.analysis_status) === 'red' ? '#cf1322' :
+                               getAnalysisStatusColor(analysis.analysis_status) === 'orange' ? '#d46b08' : '#595959'
+                      }}>
                         {getAnalysisStatusText(analysis.analysis_status)}
-                      </Tag>
-                      <Tag color={getRiskLevelColor(analysis.overall_risk_level)} style={{ fontSize: '13px', padding: '4px 10px' }}>
+                      </Text>
+                      <Text strong style={{
+                        fontSize: '13px',
+                        color: getRiskLevelColor(analysis.overall_risk_level) === 'green' ? '#18573f' :
+                               getRiskLevelColor(analysis.overall_risk_level) === 'red' ? '#cf1322' :
+                               getRiskLevelColor(analysis.overall_risk_level) === 'orange' ? '#d46b08' :
+                               getRiskLevelColor(analysis.overall_risk_level) === 'gold' ? '#d48806' : '#595959'
+                      }}>
                         {getRiskLevelText(analysis.overall_risk_level)}
-                      </Tag>
+                      </Text>
                     </Space>
                   </div>
                   <Space direction="vertical" size="middle" className="w-full">
@@ -156,7 +167,9 @@ export default function RiskAnalysisTab({
                         label="Loại phân tích"
                         span={1}
                       >
-                        <Tag color="blue">{getAnalysisTypeText(analysis.analysis_type)}</Tag>
+                        <Text strong style={{ fontSize: '13px', color: '#096dd9' }}>
+                          {getAnalysisTypeText(analysis.analysis_type)}
+                        </Text>
                       </Descriptions.Item>
                       <Descriptions.Item
                         label="Nguồn phân tích"

@@ -1,3 +1,4 @@
+import GlassmorphismBadge from "@/components/layout/policy/detail/glassmorphism-badge";
 import { useGetPublicUser } from "@/services/hooks/profile/use-profile";
 import {
   CalendarOutlined,
@@ -8,7 +9,7 @@ import {
   HomeOutlined,
   UserOutlined
 } from "@ant-design/icons";
-import { Button, Card, Descriptions, Divider, Tag, Typography } from "antd";
+import { Button, Card, Descriptions, Divider, Typography } from "antd";
 import { useEffect, useState } from "react";
 
 const { Text, Title } = Typography;
@@ -22,47 +23,12 @@ const CROP_TYPE_LABELS = {
   tea: "Chè",
 };
 
-const getStatusColor = (status) => {
-  switch (status) {
-    case "active":
-      return "green";
-    case "rejected":
-      return "red";
-    case "pending_review":
-      return "orange";
-    case "pending_payment":
-      return "gold";
-    case "pending":
-    case "draft":
-      return "blue";
-    case "expired":
-      return "default";
-    case "cancelled":
-      return "volcano";
-    default:
-      return "default";
-  }
-};
-
-const getStatusText = (status) => {
-  switch (status) {
-    case "draft":
-      return "Nháp";
-    case "pending_review":
-      return "Chờ duyệt";
-    case "pending_payment":
-      return "Chờ thanh toán";
-    case "active":
-      return "Đang hoạt động";
-    case "expired":
-      return "Hết hạn";
-    case "cancelled":
-      return "Đã hủy";
-    case "rejected":
-      return "Đã từ chối";
-    default:
-      return status;
-  }
+const CROP_TYPE_COLORS = {
+  rice: "#18573f",
+  coffee: "#d46b08",
+  corn: "#d48806",
+  wheat: "#ad8b00",
+  tea: "#389e0d",
 };
 
 export default function BasicInfoTab({ policy, farm }) {
@@ -111,9 +77,7 @@ export default function BasicInfoTab({ policy, farm }) {
           <Text strong>{policy.policy_number}</Text>
         </Descriptions.Item>
         <Descriptions.Item label="Trạng thái">
-          <Tag color={getStatusColor(policy.status)}>
-            {getStatusText(policy.status)}
-          </Tag>
+          <GlassmorphismBadge status={policy.status} />
         </Descriptions.Item>
         <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UserOutlined /> Nông dân đăng kí</span>}>
           <Text strong>{farmerLabel || policy.farmer_id}</Text>
@@ -169,9 +133,9 @@ export default function BasicInfoTab({ policy, farm }) {
             <Text strong>{farm.area_sqm} ha</Text>
           </Descriptions.Item>
           <Descriptions.Item label="Loại cây trồng" span={2}>
-            <Tag color="green" style={{ fontSize: '14px', padding: '4px 12px' }}>
+            <Text strong style={{ fontSize: '15px', color: CROP_TYPE_COLORS[farm.crop_type] || '#18573f' }}>
               {CROP_TYPE_LABELS[farm.crop_type] || farm.crop_type}
-            </Tag>
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><EnvironmentOutlined /> Địa chỉ</span>} span={2}>
             {farm.address}, {farm.commune}, {farm.district}, {farm.province}

@@ -1,6 +1,6 @@
 import { formatUtcDate } from "@/libs/date-utils";
 import { CameraOutlined, FileImageOutlined } from "@ant-design/icons";
-import { Card, Col, Image, Pagination, Row, Space, Tag, Typography } from "antd";
+import { Card, Col, Image, Pagination, Row, Space, Typography } from "antd";
 import { useState } from "react";
 
 const { Text, Title } = Typography;
@@ -94,18 +94,22 @@ export default function ImagesTab({ farm }) {
                           </div>
                         </div>
                         <div className="p-2 bg-gray-50 border-t border-gray-100">
-                          <Tag color={photo.photo_type === "satellite" ? "blue" : "green"} className="mb-1">
+                          <Text strong style={{ fontSize: '12px', color: photo.photo_type === "satellite" ? '#096dd9' : '#18573f', display: 'block', marginBottom: '4px' }}>
                             {photo.photo_type === "satellite" ? "Vệ tinh" : "Thực địa"}
-                          </Tag>
+                          </Text>
                           {photo.quality_score && (
-                            <Tag
-                              color={
-                                photo.quality_score >= 0.8
-                                  ? "green"
+                            <Text
+                              strong
+                              style={{
+                                fontSize: '12px',
+                                color: photo.quality_score >= 0.8
+                                  ? "#18573f"
                                   : photo.quality_score >= 0.6
-                                    ? "gold"
-                                    : "orange"
-                              }
+                                    ? "#d48806"
+                                    : "#d46b08",
+                                display: 'block',
+                                marginBottom: '4px'
+                              }}
                             >
                               {QUALITY_LABELS[
                                 photo.quality_score >= 0.8
@@ -116,7 +120,7 @@ export default function ImagesTab({ farm }) {
                                       ? "fair"
                                       : "poor"
                               ] || "N/A"}
-                            </Tag>
+                            </Text>
                           )}
                           {ts && (
                             <Text type="secondary" className="text-xs block mt-1">

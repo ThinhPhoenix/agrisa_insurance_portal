@@ -7,43 +7,55 @@ import {
   WalletOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Col, Row, Space, Tag, Typography } from "antd";
+import { Button, Card, Col, Row, Space, Typography } from "antd";
 
 const { Title, Text } = Typography;
 
-// Get status color
-const getStatusColor = (status) => {
+// Get status config with glassmorphism styling
+const getStatusConfig = (status) => {
   switch (status) {
     case "generated":
-      return "default";
+      return {
+        background: "rgba(140, 140, 140, 0.12)",
+        border: "1px solid rgba(140, 140, 140, 0.3)",
+        color: "#595959",
+        text: "Đã tạo",
+      };
     case "pending_partner_review":
-      return "orange";
+      return {
+        background: "rgba(250, 173, 20, 0.12)",
+        border: "1px solid rgba(250, 173, 20, 0.3)",
+        color: "#d46b08",
+        text: "Chờ đối tác xem xét",
+      };
     case "approved":
-      return "green";
+      return {
+        background: "rgba(82, 196, 154, 0.12)",
+        border: "1px solid rgba(82, 196, 154, 0.3)",
+        color: "#18573f",
+        text: "Đã phê duyệt",
+      };
     case "rejected":
-      return "red";
+      return {
+        background: "rgba(255, 77, 79, 0.12)",
+        border: "1px solid rgba(255, 77, 79, 0.3)",
+        color: "#cf1322",
+        text: "Đã từ chối",
+      };
     case "paid":
-      return "blue";
+      return {
+        background: "rgba(24, 144, 255, 0.12)",
+        border: "1px solid rgba(24, 144, 255, 0.3)",
+        color: "#096dd9",
+        text: "Đã thanh toán",
+      };
     default:
-      return "default";
-  }
-};
-
-// Get status text (tiếng Việt)
-const getStatusText = (status) => {
-  switch (status) {
-    case "generated":
-      return "Đã tạo";
-    case "pending_partner_review":
-      return "Chờ đối tác xem xét";
-    case "approved":
-      return "Đã phê duyệt";
-    case "rejected":
-      return "Đã từ chối";
-    case "paid":
-      return "Đã thanh toán";
-    default:
-      return status;
+      return {
+        background: "rgba(140, 140, 140, 0.12)",
+        border: "1px solid rgba(140, 140, 140, 0.3)",
+        color: "#595959",
+        text: status,
+      };
   }
 };
 
@@ -75,16 +87,38 @@ export default function ClaimHeader({
             <Text>Mã: {claimDetail.claim_number}</Text>
             <Text>|</Text>
             <Text>Trạng thái:</Text>
-            <Tag
-              color={getStatusColor(claimDetail.status)}
-              style={{ fontSize: "13px" }}
+            <span
+              className="inline-block backdrop-blur-sm"
+              style={{
+                background: getStatusConfig(claimDetail.status).background,
+                border: getStatusConfig(claimDetail.status).border,
+                padding: "4px 12px",
+                borderRadius: "8px",
+                fontWeight: 500,
+                transition: "all 0.2s ease-in-out",
+              }}
             >
-              {getStatusText(claimDetail.status)}
-            </Tag>
+              <Text
+                style={{
+                  color: getStatusConfig(claimDetail.status).color,
+                  fontWeight: 500,
+                  fontSize: "13px",
+                }}
+              >
+                {getStatusConfig(claimDetail.status).text}
+              </Text>
+            </span>
             {claimDetail.auto_generated && (
-              <Tag color="blue" icon={<InfoCircleOutlined />}>
+              <Text
+                style={{
+                  fontSize: "13px",
+                  color: "#096dd9",
+                  fontWeight: 500,
+                }}
+              >
+                <InfoCircleOutlined style={{ marginRight: 4 }} />
                 Tự động
-              </Tag>
+              </Text>
             )}
           </Space>
         </div>
@@ -118,12 +152,31 @@ export default function ClaimHeader({
 
       {/* Summary Cards */}
       <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} className="shadow-sm">
-            <div className="text-center">
+        <Col xs={24} sm={12} lg={6} style={{ display: "flex" }}>
+          <Card bordered={false} className="shadow-sm" style={{ flex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                flex: 1,
+                textAlign: "center",
+              }}
+            >
               <div className="flex justify-center mb-3">
-                <div className="bg-blue-100 p-4 rounded-full">
-                  <WalletOutlined style={{ fontSize: 32, color: "#1890ff" }} />
+                <div
+                  style={{
+                    background: "var(--icon-blue-bg)",
+                    padding: 16,
+                    borderRadius: "9999px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <WalletOutlined
+                    style={{ fontSize: 32, color: "var(--icon-blue-color)" }}
+                  />
                 </div>
               </div>
               <Text
@@ -146,13 +199,30 @@ export default function ClaimHeader({
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} className="shadow-sm">
-            <div className="text-center">
+        <Col xs={24} sm={12} lg={6} style={{ display: "flex" }}>
+          <Card bordered={false} className="shadow-sm" style={{ flex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                flex: 1,
+                textAlign: "center",
+              }}
+            >
               <div className="flex justify-center mb-3">
-                <div className="bg-green-100 p-4 rounded-full">
+                <div
+                  style={{
+                    background: "var(--icon-green-bg)",
+                    padding: 16,
+                    borderRadius: "9999px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <CheckCircleOutlined
-                    style={{ fontSize: 32, color: "#52c41a" }}
+                    style={{ fontSize: 32, color: "var(--icon-green-color)" }}
                   />
                 </div>
               </div>
@@ -176,12 +246,31 @@ export default function ClaimHeader({
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} className="shadow-sm">
-            <div className="text-center">
+        <Col xs={24} sm={12} lg={6} style={{ display: "flex" }}>
+          <Card bordered={false} className="shadow-sm" style={{ flex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                flex: 1,
+                textAlign: "center",
+              }}
+            >
               <div className="flex justify-center mb-3">
-                <div className="bg-purple-100 p-4 rounded-full">
-                  <WalletOutlined style={{ fontSize: 32, color: "#722ed1" }} />
+                <div
+                  style={{
+                    background: "var(--icon-purple-bg)",
+                    padding: 16,
+                    borderRadius: "9999px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <WalletOutlined
+                    style={{ fontSize: 32, color: "var(--icon-purple-color)" }}
+                  />
                 </div>
               </div>
               <Text
@@ -204,12 +293,31 @@ export default function ClaimHeader({
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} className="shadow-sm">
-            <div className="text-center">
+        <Col xs={24} sm={12} lg={6} style={{ display: "flex" }}>
+          <Card bordered={false} className="shadow-sm" style={{ flex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                flex: 1,
+                textAlign: "center",
+              }}
+            >
               <div className="flex justify-center mb-3">
-                <div className="bg-orange-100 p-4 rounded-full">
-                  <WarningOutlined style={{ fontSize: 32, color: "#fa8c16" }} />
+                <div
+                  style={{
+                    background: "var(--icon-orange-bg)",
+                    padding: 16,
+                    borderRadius: "9999px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <WarningOutlined
+                    style={{ fontSize: 32, color: "var(--icon-orange-color)" }}
+                  />
                 </div>
               </div>
               <Text

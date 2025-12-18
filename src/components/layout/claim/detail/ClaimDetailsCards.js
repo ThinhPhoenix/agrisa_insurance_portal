@@ -6,44 +6,56 @@ import {
   FileTextOutlined,
   InfoCircleOutlined,
 } from "@ant-design/icons";
-import { Card, Col, Descriptions, Space, Tag, Typography } from "antd";
+import { Card, Col, Descriptions, Space, Typography } from "antd";
 import Link from "next/link";
 
 const { Text } = Typography;
 
-// Get status color
-const getStatusColor = (status) => {
+// Get status config with glassmorphism styling
+const getStatusConfig = (status) => {
   switch (status) {
     case "generated":
-      return "default";
+      return {
+        background: "rgba(140, 140, 140, 0.12)",
+        border: "1px solid rgba(140, 140, 140, 0.3)",
+        color: "#595959",
+        text: "Đã tạo",
+      };
     case "pending_partner_review":
-      return "orange";
+      return {
+        background: "rgba(250, 173, 20, 0.12)",
+        border: "1px solid rgba(250, 173, 20, 0.3)",
+        color: "#d46b08",
+        text: "Chờ đối tác xem xét",
+      };
     case "approved":
-      return "green";
+      return {
+        background: "rgba(82, 196, 154, 0.12)",
+        border: "1px solid rgba(82, 196, 154, 0.3)",
+        color: "#18573f",
+        text: "Đã phê duyệt",
+      };
     case "rejected":
-      return "red";
+      return {
+        background: "rgba(255, 77, 79, 0.12)",
+        border: "1px solid rgba(255, 77, 79, 0.3)",
+        color: "#cf1322",
+        text: "Đã từ chối",
+      };
     case "paid":
-      return "blue";
+      return {
+        background: "rgba(24, 144, 255, 0.12)",
+        border: "1px solid rgba(24, 144, 255, 0.3)",
+        color: "#096dd9",
+        text: "Đã thanh toán",
+      };
     default:
-      return "default";
-  }
-};
-
-// Get status text (tiếng Việt)
-const getStatusText = (status) => {
-  switch (status) {
-    case "generated":
-      return "Đã tạo";
-    case "pending_partner_review":
-      return "Chờ đối tác xem xét";
-    case "approved":
-      return "Đã phê duyệt";
-    case "rejected":
-      return "Đã từ chối";
-    case "paid":
-      return "Đã thanh toán";
-    default:
-      return status;
+      return {
+        background: "rgba(140, 140, 140, 0.12)",
+        border: "1px solid rgba(140, 140, 140, 0.3)",
+        color: "#595959",
+        text: status,
+      };
   }
 };
 
@@ -133,11 +145,26 @@ export default function ClaimDetailsCards({
             </Descriptions.Item>
             <Descriptions.Item label="Phương thức tạo">
               {claimDetail.auto_generated ? (
-                <Tag color="blue" icon={<InfoCircleOutlined />}>
+                <Text
+                  style={{
+                    fontSize: "13px",
+                    color: "#096dd9",
+                    fontWeight: 500,
+                  }}
+                >
+                  <InfoCircleOutlined style={{ marginRight: 4 }} />
                   Tự động
-                </Tag>
+                </Text>
               ) : (
-                <Tag>Thủ công</Tag>
+                <Text
+                  style={{
+                    fontSize: "13px",
+                    color: "#595959",
+                    fontWeight: 500,
+                  }}
+                >
+                  Thủ công
+                </Text>
               )}
             </Descriptions.Item>
           </Descriptions>
@@ -170,12 +197,27 @@ export default function ClaimDetailsCards({
               {formatDate(claimDetail.updated_at)}
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái hiện tại">
-              <Tag
-                color={getStatusColor(claimDetail.status)}
-                style={{ fontSize: "13px" }}
+              <span
+                className="inline-block backdrop-blur-sm"
+                style={{
+                  background: getStatusConfig(claimDetail.status).background,
+                  border: getStatusConfig(claimDetail.status).border,
+                  padding: "4px 12px",
+                  borderRadius: "8px",
+                  fontWeight: 500,
+                  transition: "all 0.2s ease-in-out",
+                }}
               >
-                {getStatusText(claimDetail.status)}
-              </Tag>
+                <Text
+                  style={{
+                    color: getStatusConfig(claimDetail.status).color,
+                    fontWeight: 500,
+                    fontSize: "13px",
+                  }}
+                >
+                  {getStatusConfig(claimDetail.status).text}
+                </Text>
+              </span>
             </Descriptions.Item>
           </Descriptions>
         </Card>

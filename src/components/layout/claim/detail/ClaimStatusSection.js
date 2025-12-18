@@ -18,33 +18,21 @@ import {
   Space,
   Spin,
   Table,
-  Tag,
   Tooltip,
   Typography,
 } from "antd";
 import Link from "next/link";
+import { formatLocalDate } from "../../../../libs/date-utils";
 
 const { Text } = Typography;
 
-// Format date from epoch timestamp or ISO string
-const formatDate = (timestamp) => {
-  if (!timestamp) return "-";
-  let date;
-  if (typeof timestamp === "string") {
-    date = new Date(timestamp);
-  } else {
-    date =
-      timestamp < 5000000000 ? new Date(timestamp * 1000) : new Date(timestamp);
-  }
-  return date.toLocaleString("vi-VN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Ho_Chi_Minh",
-  });
-};
+// Helper to detect likely unix-second timestamps
+const isLikelyUnixSeconds = (timestamp) =>
+  typeof timestamp === "number"
+    ? timestamp < 5000000000
+    : typeof timestamp === "string" &&
+      /^\d+$/.test(timestamp) &&
+      Number(timestamp) < 5000000000;
 
 // Format currency
 const formatCurrency = (amount) => {
@@ -89,22 +77,22 @@ export default function ClaimStatusSection({
 }) {
   const payoutStatusConfig = {
     pending: {
-      color: "default",
+      color: "#595959",
       text: "Chờ xử lý",
       icon: <ClockCircleOutlined />,
     },
     processing: {
-      color: "orange",
+      color: "#d46b08",
       text: "Đang xử lý",
       icon: <ClockCircleOutlined />,
     },
     completed: {
-      color: "green",
+      color: "#18573f",
       text: "Hoàn tất",
       icon: <CheckCircleOutlined />,
     },
     failed: {
-      color: "red",
+      color: "#cf1322",
       text: "Thất bại",
       icon: <CloseCircleOutlined />,
     },
@@ -146,7 +134,11 @@ export default function ClaimStatusSection({
       dataIndex: "currency",
       key: "currency",
       width: 80,
-      render: (currency) => <Tag color="blue">{currency || "VND"}</Tag>,
+      render: (currency) => (
+        <Text strong style={{ fontSize: "13px", color: "#595959" }}>
+          {currency || "VND"}
+        </Text>
+      ),
     },
     {
       title: "Trạng thái",
@@ -156,9 +148,9 @@ export default function ClaimStatusSection({
       render: (status) => {
         const config = payoutStatusConfig[status] || payoutStatusConfig.pending;
         return (
-          <Tag color={config.color} icon={config.icon}>
-            {config.text}
-          </Tag>
+          <Text strong style={{ fontSize: "13px", color: config.color }}>
+            {config.icon} {config.text}
+          </Text>
         );
       },
     },
@@ -168,7 +160,12 @@ export default function ClaimStatusSection({
       key: "initiated_at",
       width: 150,
       render: (timestamp) => (
-        <Text style={{ fontSize: "12px" }}>{formatDate(timestamp)}</Text>
+        <Text style={{ fontSize: "12px" }}>
+          {formatLocalDate(timestamp, {
+            withTime: true,
+            unixSeconds: isLikelyUnixSeconds(timestamp),
+          })}
+        </Text>
       ),
     },
     {
@@ -177,7 +174,12 @@ export default function ClaimStatusSection({
       key: "completed_at",
       width: 150,
       render: (timestamp) => (
-        <Text style={{ fontSize: "12px" }}>{formatDate(timestamp)}</Text>
+        <Text style={{ fontSize: "12px" }}>
+          {formatLocalDate(timestamp, {
+            withTime: true,
+            unixSeconds: isLikelyUnixSeconds(timestamp),
+          })}
+        </Text>
       ),
     },
     {
@@ -187,12 +189,16 @@ export default function ClaimStatusSection({
       width: 130,
       align: "center",
       render: (confirmed) => (
-        <Tag
-          color={confirmed ? "green" : "default"}
-          icon={confirmed ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
+        <Text
+          strong
+          style={{
+            fontSize: "13px",
+            color: confirmed ? "#18573f" : "#595959",
+          }}
         >
+          {confirmed ? <CheckCircleOutlined /> : <ClockCircleOutlined />}{" "}
           {confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
-        </Tag>
+        </Text>
       ),
     },
     {
@@ -246,9 +252,9 @@ export default function ClaimStatusSection({
               <>
                 <Descriptions column={2} bordered size="small">
                   <Descriptions.Item label="Loại từ chối" span={2}>
-                    <Tag color="red" style={{ fontSize: "14px" }}>
+                    <Text strong style={{ fontSize: "14px", color: "#cf1322" }}>
                       {getRejectionTypeText(rejection.claim_rejection_type)}
-                    </Tag>
+                    </Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="Lý do từ chối" span={2}>
                     <Text strong>{rejection.reason}</Text>
@@ -258,7 +264,12 @@ export default function ClaimStatusSection({
                   </Descriptions.Item>
                   <Descriptions.Item label="Thời gian đánh giá" span={1}>
                     <Text strong style={{ color: "#ff4d4f" }}>
-                      {formatDate(rejection.validation_timestamp)}
+                      {formatLocalDate(rejection.validation_timestamp, {
+                        withTime: true,
+                        unixSeconds: isLikelyUnixSeconds(
+                          rejection.validation_timestamp
+                        ),
+                      })}
                     </Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="Ghi chú chi tiết" span={2}>
@@ -503,20 +514,24 @@ export default function ClaimStatusSection({
                     >
                       Phương thức tạo
                     </Text>
-                    <Tag
-                      color={
-                        claimDetail.evidence_summary.generation_method ===
-                        "automatic"
-                          ? "blue"
-                          : "default"
-                      }
-                      style={{ marginTop: "4px" }}
+                    <Text
+                      strong
+                      style={{
+                        fontSize: "14px",
+                        color:
+                          claimDetail.evidence_summary.generation_method ===
+                          "automatic"
+                            ? "#096dd9"
+                            : "#595959",
+                        marginTop: "4px",
+                        display: "block",
+                      }}
                     >
                       {claimDetail.evidence_summary.generation_method ===
                       "automatic"
                         ? "Tự động"
                         : "Thủ công"}
-                    </Tag>
+                    </Text>
                   </div>
                 </div>
 
@@ -549,7 +564,15 @@ export default function ClaimStatusSection({
                       Thời điểm kích hoạt
                     </Text>
                     <Text strong style={{ fontSize: "14px", color: "#fa8c16" }}>
-                      {formatDate(claimDetail.evidence_summary.triggered_at)}
+                      {formatLocalDate(
+                        claimDetail.evidence_summary.triggered_at,
+                        {
+                          withTime: true,
+                          unixSeconds: isLikelyUnixSeconds(
+                            claimDetail.evidence_summary.triggered_at
+                          ),
+                        }
+                      )}
                     </Text>
                   </div>
                 </div>
@@ -582,15 +605,16 @@ export default function ClaimStatusSection({
                           width: 100,
                           fixed: "left",
                           render: (text) => (
-                            <Tag
-                              color="blue"
+                            <Text
+                              strong
                               style={{
                                 fontSize: "13px",
+                                color: "#096dd9",
                                 fontWeight: "bold",
                               }}
                             >
                               {text?.toUpperCase()}
-                            </Tag>
+                            </Text>
                           ),
                         },
                         {
@@ -661,25 +685,31 @@ export default function ClaimStatusSection({
                           width: 120,
                           align: "center",
                           render: (val) => (
-                            <Tag
-                              color={val ? "orange" : "green"}
-                              style={{ fontSize: "12px" }}
+                            <Text
+                              strong
+                              style={{
+                                fontSize: "12px",
+                                color: val ? "#d46b08" : "#18573f",
+                              }}
                             >
                               {val ? "Có" : "Không"}
-                            </Tag>
-                          ),
-                        },
-                        {
-                          title: "Thời điểm đo",
-                          dataIndex: "timestamp",
-                          key: "timestamp",
-                          width: 150,
-                          render: (timestamp) => (
-                            <Text type="secondary" style={{ fontSize: "12px" }}>
-                              {formatDate(timestamp)}
                             </Text>
                           ),
                         },
+                        // {
+                        //   title: "Thời điểm đo",
+                        //   dataIndex: "timestamp",
+                        //   key: "timestamp",
+                        //   width: 150,
+                        //   render: (timestamp) => (
+                        //     <Text type="secondary" style={{ fontSize: "12px" }}>
+                        //       {formatLocalDate(timestamp, {
+                        //         withTime: true,
+                        //         unixSeconds: isLikelyUnixSeconds(timestamp),
+                        //       })}
+                        //     </Text>
+                        //   ),
+                        // },
                       ]}
                     />
                   </div>

@@ -143,6 +143,9 @@ export const endpoints = {
     listPartner: "/policy/protected/api/v2/cancel_request/read-partner/own",
     review: (id) => `/policy/protected/api/v2/cancel_request/review/${id}`,
   },
+  dashboard: {
+    partnerOverview: "/policy/protected/api/v2/dashboard/partner/overview",
+  },
   noti: {
     subscribe: "/noti/protected/subscribe/web",
     unsubscribe: "/noti/protected/unsubscribe/web",

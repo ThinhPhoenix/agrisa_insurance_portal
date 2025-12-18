@@ -339,7 +339,11 @@ export default function ClaimModals({
 
           {/* Action Buttons */}
           <Form.Item className="mb-0" style={{ marginTop: 16 }}>
-            <Space className="w-full justify-end" size="middle">
+            <Space
+              className="w-full justify-end"
+              size="middle"
+              style={{ paddingRight: 16 }}
+            >
               <Button onClick={onRejectCancel} size="large">
                 Hủy
               </Button>

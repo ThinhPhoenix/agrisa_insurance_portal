@@ -511,7 +511,7 @@ const PolicyDetailPage = ({ params }) => {
 
       <Row align="middle" justify="space-between">
         <Col>
-          <Space direction="vertical" size={0}>
+          <Space direction="vertical" size={8}>
             <Title level={3} style={{ margin: 0 }}>
               {policyDetail.productName}
             </Title>

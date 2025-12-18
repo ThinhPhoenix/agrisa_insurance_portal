@@ -4,7 +4,7 @@ import {
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Form, Input, InputNumber, message, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import VisualMarkerOverlay from '../VisualMarkerOverlay'; // 🆕 BATCH MODE: Visual markers
+import VisualMarkerOverlay from './VisualMarkerOverlay'; // 🆕 BATCH MODE: Visual markers
 
 /**
  * Convert screen coordinates to PDF coordinates with accurate scaling

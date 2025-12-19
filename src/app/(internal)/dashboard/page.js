@@ -35,6 +35,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { useEffect, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
+import CustomTable from "@/components/custom-table";
 import "./dashboard.css";
 
 const { Title, Text } = Typography;
@@ -66,6 +67,8 @@ export default function DashboardPage() {
   // Chart view preferences
   const [lossRatioChartType, setLossRatioChartType] = useState("line"); // line or bar
   const [payoutChartType, setPayoutChartType] = useState("line"); // line or bar
+  const [momChartType, setMomChartType] = useState("bar"); // bar or line
+  const [yoyChartType, setYoyChartType] = useState("bar"); // bar or line
   const [expandedChart, setExpandedChart] = useState(null); // tracks which chart is expanded
 
   // Sync initial dateRange with hook filters
@@ -125,6 +128,47 @@ export default function DashboardPage() {
     dashboard.refetch();
   };
 
+  // Handle refresh with default filters (for error recovery)
+  const handleRefreshWithDefaults = () => {
+    dashboard.resetFiltersToDefault();
+    setActivePreset("30days");
+    const now = dayjs();
+    const thirtyDaysAgo = now.subtract(30, "day");
+    setDateRange([thirtyDaysAgo, now]);
+  };
+
+  // Translate error messages to Vietnamese
+  const translateError = (errorMessage) => {
+    if (!errorMessage) return "Đã xảy ra lỗi không xác định";
+
+    const errorMap = {
+      "Failed to fetch dashboard data": "Không thể tải dữ liệu dashboard",
+      "No data available": "Không có dữ liệu",
+      "Network Error": "Lỗi kết nối mạng",
+      "Request failed with status code 500":
+        "Lỗi máy chủ (500) - Vui lòng thử lại sau",
+      "Request failed with status code 404": "Không tìm thấy dữ liệu (404)",
+      "Request failed with status code 403": "Không có quyền truy cập (403)",
+      "Request failed with status code 401": "Phiên đăng nhập hết hạn (401)",
+      timeout: "Hết thời gian chờ - Vui lòng thử lại",
+    };
+
+    // Check for exact match
+    if (errorMap[errorMessage]) {
+      return errorMap[errorMessage];
+    }
+
+    // Check for partial matches
+    for (const [key, value] of Object.entries(errorMap)) {
+      if (errorMessage.includes(key)) {
+        return value;
+      }
+    }
+
+    // Return original message with prefix if no translation found
+    return `Lỗi: ${errorMessage}`;
+  };
+
   // Handle clear filters - reset to default 30 days
   const handleClearFilters = () => {
     dashboard.resetFiltersToDefault();
@@ -152,29 +196,47 @@ export default function DashboardPage() {
         <Card>
           <Empty
             description={
-              <Space direction="vertical" align="center" size="large">
-                <Text type="danger" strong style={{ fontSize: 16 }}>
+              <Space
+                direction="vertical"
+                align="center"
+                size="large"
+                style={{ padding: "40px 20px" }}
+              >
+                <Text type="danger" strong style={{ fontSize: 18 }}>
                   Không thể tải dữ liệu dashboard
                 </Text>
-                <Text type="secondary" style={{ fontSize: 14 }}>
-                  {dashboard.error}
+
+                {/* Translated error message */}
+                <Text type="danger" style={{ fontSize: 14 }}>
+                  {translateError(dashboard.error)}
                 </Text>
-                <Space>
+
+                {/* Action buttons */}
+                <Space size="middle">
                   <Button
                     type="primary"
                     icon={<ReloadOutlined />}
-                    onClick={handleRefresh}
+                    onClick={handleRefreshWithDefaults}
+                    size="large"
                   >
-                    Thử lại
+                    Làm mới với giá trị mặc định
                   </Button>
                   <Button
                     type="default"
-                    icon={<ClearOutlined />}
-                    onClick={handleClearFilters}
+                    icon={<ReloadOutlined />}
+                    onClick={handleRefresh}
                   >
-                    Đặt lại bộ lọc
+                    Thử lại với bộ lọc hiện tại
                   </Button>
                 </Space>
+
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, fontStyle: "italic" }}
+                >
+                  Lưu ý: Bấm "Làm mới với giá trị mặc định" để reset về khoảng
+                  30 ngày gần nhất
+                </Text>
               </Space>
             }
           />
@@ -577,6 +639,11 @@ export default function DashboardPage() {
                             format="DD/MM/YYYY"
                             placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                             style={{ width: "100%" }}
+                            disabledDate={(current) => {
+                              // Không cho chọn ngày tương lai
+                              return current && current > dayjs().endOf("day");
+                            }}
+                            allowClear={false}
                           />
                         </Space>
                       </Col>
@@ -1137,30 +1204,74 @@ export default function DashboardPage() {
                 </Space>
               }
               extra={
-                data?.premium_growth_mom &&
-                data.premium_growth_mom.length > 0 &&
-                data.premium_growth_mom[0].mom_growth_rate_percent !== null ? (
-                  <Tag
-                    color={
-                      data.premium_growth_mom[0].mom_growth_rate_percent >= 5
-                        ? "success"
-                        : data.premium_growth_mom[0].mom_growth_rate_percent >=
-                          0
-                        ? "processing"
-                        : "error"
-                    }
-                  >
-                    {data.premium_growth_mom[0].mom_growth_rate_percent >= 0
-                      ? "+"
-                      : ""}
-                    {data.premium_growth_mom[0].mom_growth_rate_percent.toFixed(
-                      2
+                <Space size="small">
+                  {premiumGrowthMoMChart &&
+                    data?.premium_growth_mom &&
+                    data.premium_growth_mom.length > 0 && (
+                      <Space size={0}>
+                        <Button
+                          size="small"
+                          type={momChartType === "bar" ? "primary" : "default"}
+                          icon={<BarChartOutlined />}
+                          onClick={() => setMomChartType("bar")}
+                          style={{
+                            borderTopRightRadius: 0,
+                            borderBottomRightRadius: 0,
+                          }}
+                        />
+                        <Button
+                          size="small"
+                          type={momChartType === "line" ? "primary" : "default"}
+                          icon={<LineChartOutlined />}
+                          onClick={() => setMomChartType("line")}
+                          style={{
+                            borderTopLeftRadius: 0,
+                            borderBottomLeftRadius: 0,
+                            marginLeft: -1,
+                          }}
+                        />
+                      </Space>
                     )}
-                    %
-                  </Tag>
-                ) : (
-                  <Tag color="default">Chưa đủ dữ liệu</Tag>
-                )
+                  <Button
+                    size="small"
+                    icon={
+                      expandedChart === "mom" ? (
+                        <CompressOutlined />
+                      ) : (
+                        <ExpandOutlined />
+                      )
+                    }
+                    onClick={() =>
+                      setExpandedChart(expandedChart === "mom" ? null : "mom")
+                    }
+                    type={expandedChart === "mom" ? "primary" : "default"}
+                  />
+                  {data?.premium_growth_mom &&
+                  data.premium_growth_mom.length > 0 &&
+                  data.premium_growth_mom[0].mom_growth_rate_percent !==
+                    null ? (
+                    <Tag
+                      color={
+                        data.premium_growth_mom[0].mom_growth_rate_percent >= 5
+                          ? "success"
+                          : data.premium_growth_mom[0]
+                              .mom_growth_rate_percent >= 0
+                          ? "processing"
+                          : "error"
+                      }
+                    >
+                      {data.premium_growth_mom[0].mom_growth_rate_percent >= 0
+                        ? "+"
+                        : ""}
+                      {data.premium_growth_mom[0].mom_growth_rate_percent.toFixed(
+                        2
+                      )}
+                      %
+                    </Tag>
+                  ) : (
+                    <Tag color="default">Chưa đủ dữ liệu</Tag>
+                  )}
+                </Space>
               }
             >
               {premiumGrowthMoMChart &&
@@ -1173,11 +1284,65 @@ export default function DashboardPage() {
                   >
                     So sánh phí bảo hiểm thu được giữa các tháng liên tiếp
                   </Text>
-                  <div style={{ height: 280 }}>
-                    <Bar
-                      data={premiumGrowthMoMChart}
-                      options={barChartOptions}
-                    />
+                  <div
+                    style={{
+                      height: expandedChart === "mom" ? 500 : 280,
+                      transition: "height 0.3s ease",
+                    }}
+                  >
+                    {momChartType === "bar" ? (
+                      <Bar
+                        data={premiumGrowthMoMChart}
+                        options={barChartOptions}
+                      />
+                    ) : (
+                      <Line
+                        data={{
+                          labels: premiumGrowthMoMChart.labels,
+                          datasets: premiumGrowthMoMChart.datasets.map(
+                            (dataset, index) => ({
+                              ...dataset,
+                              borderColor: index === 0 ? "#a5d7be" : "#91d5ff",
+                              backgroundColor:
+                                index === 0
+                                  ? "rgba(165, 215, 190, 0.2)"
+                                  : "rgba(145, 213, 255, 0.2)",
+                              fill: true,
+                              tension: 0.3,
+                              pointRadius: 4,
+                              pointHoverRadius: 6,
+                            })
+                          ),
+                        }}
+                        options={{
+                          ...lineChartOptions,
+                          plugins: {
+                            legend: {
+                              display: true,
+                              position: "top",
+                              labels: {
+                                usePointStyle: true,
+                                padding: 10,
+                                font: { size: 12 },
+                              },
+                            },
+                          },
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              grid: { color: "rgba(0, 0, 0, 0.05)" },
+                              ticks: {
+                                callback: (value) =>
+                                  dashboard.formatCompactNumber(value) + " ₫",
+                              },
+                            },
+                            x: {
+                              grid: { display: false },
+                            },
+                          },
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1206,30 +1371,77 @@ export default function DashboardPage() {
                 </Space>
               }
               extra={
-                data?.premium_growth_yoy &&
-                data.premium_growth_yoy.length > 0 &&
-                data.premium_growth_yoy[0].yoy_growth_rate_percent !== null ? (
-                  <Tag
-                    color={
-                      data.premium_growth_yoy[0].yoy_growth_rate_percent >= 15
-                        ? "success"
-                        : data.premium_growth_yoy[0].yoy_growth_rate_percent >=
-                          0
-                        ? "processing"
-                        : "error"
-                    }
-                  >
-                    {data.premium_growth_yoy[0].yoy_growth_rate_percent >= 0
-                      ? "+"
-                      : ""}
-                    {data.premium_growth_yoy[0].yoy_growth_rate_percent.toFixed(
-                      2
+                <Space size="small">
+                  {growthRateYoYChart &&
+                    data?.premium_growth_yoy &&
+                    data.premium_growth_yoy.length > 0 &&
+                    data.premium_growth_yoy.some(
+                      (item) => item.yoy_growth_rate_percent !== null
+                    ) && (
+                      <Space size={0}>
+                        <Button
+                          size="small"
+                          type={yoyChartType === "bar" ? "primary" : "default"}
+                          icon={<BarChartOutlined />}
+                          onClick={() => setYoyChartType("bar")}
+                          style={{
+                            borderTopRightRadius: 0,
+                            borderBottomRightRadius: 0,
+                          }}
+                        />
+                        <Button
+                          size="small"
+                          type={yoyChartType === "line" ? "primary" : "default"}
+                          icon={<LineChartOutlined />}
+                          onClick={() => setYoyChartType("line")}
+                          style={{
+                            borderTopLeftRadius: 0,
+                            borderBottomLeftRadius: 0,
+                            marginLeft: -1,
+                          }}
+                        />
+                      </Space>
                     )}
-                    %
-                  </Tag>
-                ) : (
-                  <Tag color="default">Chưa đủ dữ liệu</Tag>
-                )
+                  <Button
+                    size="small"
+                    icon={
+                      expandedChart === "yoy" ? (
+                        <CompressOutlined />
+                      ) : (
+                        <ExpandOutlined />
+                      )
+                    }
+                    onClick={() =>
+                      setExpandedChart(expandedChart === "yoy" ? null : "yoy")
+                    }
+                    type={expandedChart === "yoy" ? "primary" : "default"}
+                  />
+                  {data?.premium_growth_yoy &&
+                  data.premium_growth_yoy.length > 0 &&
+                  data.premium_growth_yoy[0].yoy_growth_rate_percent !==
+                    null ? (
+                    <Tag
+                      color={
+                        data.premium_growth_yoy[0].yoy_growth_rate_percent >= 15
+                          ? "success"
+                          : data.premium_growth_yoy[0]
+                              .yoy_growth_rate_percent >= 0
+                          ? "processing"
+                          : "error"
+                      }
+                    >
+                      {data.premium_growth_yoy[0].yoy_growth_rate_percent >= 0
+                        ? "+"
+                        : ""}
+                      {data.premium_growth_yoy[0].yoy_growth_rate_percent.toFixed(
+                        2
+                      )}
+                      %
+                    </Tag>
+                  ) : (
+                    <Tag color="default">Chưa đủ dữ liệu</Tag>
+                  )}
+                </Space>
               }
             >
               {growthRateYoYChart &&
@@ -1245,8 +1457,65 @@ export default function DashboardPage() {
                   >
                     So sánh với cùng kỳ năm trước, loại bỏ yếu tố mùa vụ
                   </Text>
-                  <div style={{ height: 280 }}>
-                    <Bar data={growthRateYoYChart} options={barChartOptions} />
+                  <div
+                    style={{
+                      height: expandedChart === "yoy" ? 500 : 280,
+                      transition: "height 0.3s ease",
+                    }}
+                  >
+                    {yoyChartType === "bar" ? (
+                      <Bar
+                        data={growthRateYoYChart}
+                        options={barChartOptions}
+                      />
+                    ) : (
+                      <Line
+                        data={{
+                          labels: growthRateYoYChart.labels,
+                          datasets: growthRateYoYChart.datasets.map(
+                            (dataset) => ({
+                              ...dataset,
+                              borderColor:
+                                dataset.backgroundColor.map((color) =>
+                                  color === "#95de64" ? "#52c41a" : "#ff4d4f"
+                                )[0] || "#52c41a",
+                              backgroundColor: "rgba(82, 196, 26, 0.2)",
+                              fill: true,
+                              tension: 0.3,
+                              pointRadius: 4,
+                              pointHoverRadius: 6,
+                              pointBackgroundColor: dataset.backgroundColor,
+                            })
+                          ),
+                        }}
+                        options={{
+                          ...lineChartOptions,
+                          plugins: {
+                            legend: {
+                              display: true,
+                              position: "top",
+                              labels: {
+                                usePointStyle: true,
+                                padding: 10,
+                                font: { size: 12 },
+                              },
+                            },
+                          },
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              grid: { color: "rgba(0, 0, 0, 0.05)" },
+                              ticks: {
+                                callback: (value) => `${value}%`,
+                              },
+                            },
+                            x: {
+                              grid: { display: false },
+                            },
+                          },
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1397,164 +1666,97 @@ export default function DashboardPage() {
         >
           {data?.monthly_loss_ratio_trend &&
           data.monthly_loss_ratio_trend.length > 0 ? (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
-                    <th
+            <CustomTable
+              dataSource={data.monthly_loss_ratio_trend.map((item, index) => {
+                const payoutData = data.monthly_payout_per_claim_trend?.find(
+                  (p) => p.month === item.month
+                );
+                return {
+                  key: index,
+                  month: item.month,
+                  monthly_premium: item.monthly_premium,
+                  monthly_payout: item.monthly_payout,
+                  loss_ratio_percent: item.loss_ratio_percent,
+                  total_paid_claims: payoutData?.total_paid_claims || 0,
+                  avg_payout_per_claim: payoutData?.avg_payout_per_claim || 0,
+                };
+              })}
+              columns={[
+                {
+                  title: "Tháng",
+                  dataIndex: "month",
+                  key: "month",
+                  render: (month) => formatMonth(month),
+                },
+                {
+                  title: "Phí thu",
+                  dataIndex: "monthly_premium",
+                  key: "monthly_premium",
+                  align: "right",
+                  render: (value) => (
+                    <span style={{ color: "#18573f", fontWeight: 500 }}>
+                      {dashboard.formatCurrency(value)}
+                    </span>
+                  ),
+                },
+                {
+                  title: "Chi trả",
+                  dataIndex: "monthly_payout",
+                  key: "monthly_payout",
+                  align: "right",
+                  render: (value) => (
+                    <span style={{ color: "#ff4d4f", fontWeight: 500 }}>
+                      {dashboard.formatCurrency(value)}
+                    </span>
+                  ),
+                },
+                {
+                  title: "Tỷ lệ tổn thất",
+                  dataIndex: "loss_ratio_percent",
+                  key: "loss_ratio_percent",
+                  align: "right",
+                  render: (value) => (
+                    <span
                       style={{
-                        padding: "12px",
-                        textAlign: "left",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#6b7280",
+                        color:
+                          value < 30
+                            ? "#52c41a"
+                            : value < 60
+                            ? "#faad14"
+                            : "#ff4d4f",
+                        fontWeight: 500,
                       }}
                     >
-                      Tháng
-                    </th>
-                    <th
-                      style={{
-                        padding: "12px",
-                        textAlign: "right",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#6b7280",
-                      }}
-                    >
-                      Phí thu
-                    </th>
-                    <th
-                      style={{
-                        padding: "12px",
-                        textAlign: "right",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#6b7280",
-                      }}
-                    >
-                      Chi trả
-                    </th>
-                    <th
-                      style={{
-                        padding: "12px",
-                        textAlign: "right",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#6b7280",
-                      }}
-                    >
-                      Tỷ lệ tổn thất
-                    </th>
-                    <th
-                      style={{
-                        padding: "12px",
-                        textAlign: "right",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#6b7280",
-                      }}
-                    >
-                      Số chi trả
-                    </th>
-                    <th
-                      style={{
-                        padding: "12px",
-                        textAlign: "right",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#6b7280",
-                      }}
-                    >
-                      TB/chi trả
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.monthly_loss_ratio_trend.map((item, index) => {
-                    const payoutData =
-                      data.monthly_payout_per_claim_trend?.find(
-                        (p) => p.month === item.month
-                      );
-                    return (
-                      <tr
-                        key={index}
-                        style={{ borderBottom: "1px solid #f1f1f1" }}
-                      >
-                        <td style={{ padding: "12px", fontSize: 13 }}>
-                          {formatMonth(item.month)}
-                        </td>
-                        <td
-                          style={{
-                            padding: "12px",
-                            textAlign: "right",
-                            fontSize: 13,
-                            color: "#18573f",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {dashboard.formatCurrency(item.monthly_premium)}
-                        </td>
-                        <td
-                          style={{
-                            padding: "12px",
-                            textAlign: "right",
-                            fontSize: 13,
-                            color: "#ff4d4f",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {dashboard.formatCurrency(item.monthly_payout)}
-                        </td>
-                        <td
-                          style={{
-                            padding: "12px",
-                            textAlign: "right",
-                            fontSize: 13,
-                          }}
-                        >
-                          <Tag
-                            color={
-                              item.loss_ratio_percent < 30
-                                ? "success"
-                                : item.loss_ratio_percent < 60
-                                ? "warning"
-                                : "error"
-                            }
-                          >
-                            {item.loss_ratio_percent.toFixed(2)}%
-                          </Tag>
-                        </td>
-                        <td
-                          style={{
-                            padding: "12px",
-                            textAlign: "right",
-                            fontSize: 13,
-                            fontWeight: 500,
-                          }}
-                        >
-                          {payoutData?.total_paid_claims || 0}
-                        </td>
-                        <td
-                          style={{
-                            padding: "12px",
-                            textAlign: "right",
-                            fontSize: 13,
-                            color: "#722ed1",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {payoutData
-                            ? dashboard.formatCurrency(
-                                payoutData.avg_payout_per_claim
-                              )
-                            : "-"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      {value.toFixed(2)}%
+                    </span>
+                  ),
+                },
+                {
+                  title: "Số chi trả",
+                  dataIndex: "total_paid_claims",
+                  key: "total_paid_claims",
+                  align: "right",
+                  render: (value) => (
+                    <span style={{ fontWeight: 500 }}>{value}</span>
+                  ),
+                },
+                {
+                  title: "TB/chi trả",
+                  dataIndex: "avg_payout_per_claim",
+                  key: "avg_payout_per_claim",
+                  align: "right",
+                  render: (value) =>
+                    value > 0 ? (
+                      <span style={{ color: "#722ed1", fontWeight: 500 }}>
+                        {dashboard.formatCurrency(value)}
+                      </span>
+                    ) : (
+                      "-"
+                    ),
+                },
+              ]}
+              pagination={false}
+            />
           ) : (
             <Empty
               description="Chưa có dữ liệu theo tháng"

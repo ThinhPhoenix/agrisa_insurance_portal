@@ -6,6 +6,8 @@ import { Menu, Modal, message } from "antd";
 import {
   ArrowLeftToLine,
   ArrowRightToLine,
+  BarChart,
+  BookOpen,
   CreditCard,
   FileText,
   History,
@@ -262,12 +264,16 @@ export default CustomSidebar;
 // Function to get icon based on key
 function getIconForKey(key) {
   const iconMap = {
+    dashboard: <BarChart size={16} />,
     applications: <FileText size={16} />,
     "transaction-history": <History size={16} />,
     payment: <CreditCard size={16} />,
+    payout: <CreditCard size={16} />,
     insurance: <Shield size={16} />,
     beneficiary: <Users size={16} />,
+    "base-policy": <BookOpen size={16} />,
     policy: <FileText size={16} />,
+    claim: <Shield size={16} />,
     configuration: <Settings size={16} />,
     "general-settings": <Settings size={16} />,
   };

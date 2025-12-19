@@ -127,9 +127,6 @@ export const usePartnerDashboard = () => {
     } catch (error) {
       console.error("❌ Partner Dashboard API Error:", error);
 
-      // Check for 500 error or other server errors
-      const isServerError = error.response?.status >= 500;
-
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
@@ -137,14 +134,6 @@ export const usePartnerDashboard = () => {
 
       setError(errorMessage);
       setData(null);
-
-      // Reset filters to default on server error to prevent repeated errors
-      if (isServerError) {
-        console.warn("⚠️ Server error detected, resetting filters to default");
-        setTimeout(() => {
-          resetFiltersToDefault();
-        }, 100);
-      }
     } finally {
       setLoading(false);
     }
@@ -162,27 +151,31 @@ export const usePartnerDashboard = () => {
   }, []);
 
   /**
-   * Format currency in Vietnamese format
+   * Format currency with comma thousands separator
    * @param {number} value - The value to format
-   * @returns {string} Formatted currency string
+   * @returns {string} Formatted currency string (e.g., 1,000,000 ₫)
    */
   const formatCurrency = useCallback((value) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value || 0);
+    const num = value || 0;
+    // Format with comma separator and ₫ symbol
+    return new Intl.NumberFormat("en-US").format(num) + " ₫";
   }, []);
 
   /**
    * Format large numbers with compact notation
    * @param {number} value - The value to format
-   * @returns {string} Formatted compact number string
+   * @returns {string} Formatted compact number string (e.g., 1.5M, 2.3K)
    */
   const formatCompactNumber = useCallback((value) => {
-    return new Intl.NumberFormat("vi-VN", {
-      notation: "compact",
-      compactDisplay: "short",
-    }).format(value || 0);
+    const num = value || 0;
+    if (num >= 1000000000) {
+      return (num / 1000000000).toFixed(1) + "B";
+    } else if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M";
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K";
+    }
+    return new Intl.NumberFormat("en-US").format(num);
   }, []);
 
   /**

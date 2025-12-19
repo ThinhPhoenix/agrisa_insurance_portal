@@ -1,12 +1,14 @@
 "use client";
 
-import { usePartnerDashboard } from "@/services/hooks/dashboard";
+import { usePartnerDashboard } from "@/services/hooks/dashboard/use-fetch-dashboard";
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
-  CalendarOutlined,
+  BarChartOutlined,
   ClearOutlined,
+  CompressOutlined,
   DollarOutlined,
+  ExpandOutlined,
   FilterOutlined,
   LineChartOutlined,
   PieChartOutlined,
@@ -25,16 +27,14 @@ import {
   Row,
   Space,
   Spin,
-  Statistic,
   Tag,
-  Tooltip,
   Typography,
 } from "antd";
 import { Chart as ChartJS, registerables } from "chart.js";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { useEffect, useState } from "react";
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import "./dashboard.css";
 
 const { Title, Text } = Typography;
@@ -60,6 +60,14 @@ export default function DashboardPage() {
     return [dayjs().subtract(30, "day"), dayjs()];
   });
 
+  // Quick date range presets
+  const [activePreset, setActivePreset] = useState("30days");
+
+  // Chart view preferences
+  const [lossRatioChartType, setLossRatioChartType] = useState("line"); // line or bar
+  const [payoutChartType, setPayoutChartType] = useState("line"); // line or bar
+  const [expandedChart, setExpandedChart] = useState(null); // tracks which chart is expanded
+
   // Sync initial dateRange with hook filters
   useEffect(() => {
     if (dashboard.filters.start_date && dashboard.filters.end_date) {
@@ -74,11 +82,42 @@ export default function DashboardPage() {
   const handleDateRangeChange = (dates) => {
     if (dates && dates[0] && dates[1]) {
       setDateRange(dates);
+      setActivePreset("custom");
       dashboard.updateFilters({
         start_date: dates[0].unix(),
         end_date: dates[1].unix(),
       });
     }
+  };
+
+  // Handle quick preset selection
+  const handlePresetChange = (preset) => {
+    setActivePreset(preset);
+    const now = dayjs();
+    let start;
+
+    switch (preset) {
+      case "7days":
+        start = now.subtract(7, "day");
+        break;
+      case "30days":
+        start = now.subtract(30, "day");
+        break;
+      case "90days":
+        start = now.subtract(90, "day");
+        break;
+      case "1year":
+        start = now.subtract(1, "year");
+        break;
+      default:
+        start = now.subtract(30, "day");
+    }
+
+    setDateRange([start, now]);
+    dashboard.updateFilters({
+      start_date: start.unix(),
+      end_date: now.unix(),
+    });
   };
 
   // Handle refresh
@@ -89,7 +128,7 @@ export default function DashboardPage() {
   // Handle clear filters - reset to default 30 days
   const handleClearFilters = () => {
     dashboard.resetFiltersToDefault();
-    // Update UI date range to match
+    setActivePreset("30days");
     const now = dayjs();
     const thirtyDaysAgo = now.subtract(30, "day");
     setDateRange([thirtyDaysAgo, now]);
@@ -441,7 +480,7 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        {/* Filter Section with Collapse */}
+        {/* Filter Section with Quick Presets */}
         <Card className="dashboard-filter-card">
           <Collapse
             defaultActiveKey={["1"]}
@@ -466,11 +505,71 @@ export default function DashboardPage() {
                 ),
                 children: (
                   <div className="dashboard-filter-form">
-                    <Row gutter={[16, 16]} align="middle">
-                      <Col xs={24} sm={12} md={8}>
-                        <Space direction="vertical" size="small" className="w-full">
-                          <Text type="secondary" className="text-xs">
-                            Khoảng thời gian
+                    <Row gutter={[16, 16]}>
+                      {/* Quick Presets */}
+                      <Col xs={24}>
+                        <Space
+                          direction="vertical"
+                          size="small"
+                          style={{ width: "100%" }}
+                        >
+                          <Text type="secondary" style={{ fontSize: 13 }}>
+                            Chọn nhanh
+                          </Text>
+                          <Space wrap>
+                            <Button
+                              type={
+                                activePreset === "7days" ? "primary" : "default"
+                              }
+                              onClick={() => handlePresetChange("7days")}
+                              size="small"
+                            >
+                              7 ngày
+                            </Button>
+                            <Button
+                              type={
+                                activePreset === "30days"
+                                  ? "primary"
+                                  : "default"
+                              }
+                              onClick={() => handlePresetChange("30days")}
+                              size="small"
+                            >
+                              30 ngày
+                            </Button>
+                            <Button
+                              type={
+                                activePreset === "90days"
+                                  ? "primary"
+                                  : "default"
+                              }
+                              onClick={() => handlePresetChange("90days")}
+                              size="small"
+                            >
+                              90 ngày
+                            </Button>
+                            <Button
+                              type={
+                                activePreset === "1year" ? "primary" : "default"
+                              }
+                              onClick={() => handlePresetChange("1year")}
+                              size="small"
+                            >
+                              1 năm
+                            </Button>
+                          </Space>
+                        </Space>
+                      </Col>
+
+                      {/* Custom Date Range */}
+                      <Col xs={24} sm={16} md={12} lg={8}>
+                        <Space
+                          direction="vertical"
+                          size="small"
+                          style={{ width: "100%" }}
+                        >
+                          <Text type="secondary" style={{ fontSize: 13 }}>
+                            Hoặc chọn tùy chỉnh
                           </Text>
                           <RangePicker
                             value={dateRange}
@@ -481,20 +580,20 @@ export default function DashboardPage() {
                           />
                         </Space>
                       </Col>
-                      <Col xs={24} sm={12} md={4}>
+
+                      <Col xs={24} sm={8} md={6} lg={4}>
                         <Space direction="vertical" size="small">
-                          <Text type="secondary" className="text-xs">
+                          <Text type="secondary" style={{ fontSize: 13 }}>
                             &nbsp;
                           </Text>
-                          <Space>
-                            <Button
-                              type="dashed"
-                              icon={<ClearOutlined />}
-                              onClick={handleClearFilters}
-                            >
-                              Đặt lại
-                            </Button>
-                          </Space>
+                          <Button
+                            type="dashed"
+                            icon={<ClearOutlined />}
+                            onClick={handleClearFilters}
+                            block
+                          >
+                            Đặt lại
+                          </Button>
                         </Space>
                       </Col>
                     </Row>
@@ -505,252 +604,528 @@ export default function DashboardPage() {
           />
         </Card>
 
-        {/* Summary Cards with Icons */}
-        <div className="dashboard-summary-row">
-          <Tooltip title="Tổng phí bảo hiểm thu được từ nông dân trong khoảng thời gian đã chọn">
-            <div className="dashboard-summary-card-compact">
-              <div className="dashboard-summary-icon total">
-                <WalletOutlined />
+        {/* Hero Section - Net Income & Profit Margin */}
+        <Card
+          className="dashboard-card"
+          style={{
+            marginBottom: 24,
+            background: isProfit
+              ? "linear-gradient(135deg, #e8f5f0 0%, #ffffff 100%)"
+              : "linear-gradient(135deg, #fff1f0 0%, #ffffff 100%)",
+          }}
+        >
+          <Row gutter={24} align="middle">
+            <Col xs={24} md={12}>
+              <Space direction="vertical" size="small">
+                <Text type="secondary" style={{ fontSize: 14 }}>
+                  Lợi nhuận ròng trong kỳ
+                </Text>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{
+                      fontSize: 40,
+                      fontWeight: 700,
+                      color: growthIndicator.color,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {dashboard.formatCurrency(netIncome)}
+                  </div>
+                  {isProfit ? (
+                    <ArrowUpOutlined
+                      style={{ fontSize: 32, color: "#52c41a" }}
+                    />
+                  ) : (
+                    <ArrowDownOutlined
+                      style={{ fontSize: 32, color: "#ff4d4f" }}
+                    />
+                  )}
+                </div>
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  = Tổng phí thu - Chi trả - Chi phí dữ liệu
+                </Text>
+              </Space>
+            </Col>
+            <Col xs={24} md={12}>
+              <div style={{ textAlign: "right" }}>
+                <Space direction="vertical" size="small" align="end">
+                  <Text type="secondary" style={{ fontSize: 14 }}>
+                    Tỷ suất lợi nhuận
+                  </Text>
+                  <div
+                    style={{
+                      fontSize: 48,
+                      fontWeight: 700,
+                      color: growthIndicator.color,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {profitMargin.toFixed(1)}%
+                  </div>
+                  <Tag
+                    color={
+                      profitMargin > 50
+                        ? "success"
+                        : profitMargin > 20
+                        ? "processing"
+                        : profitMargin > 0
+                        ? "warning"
+                        : "error"
+                    }
+                    style={{ fontSize: 13, padding: "4px 12px" }}
+                  >
+                    {profitMargin > 50
+                      ? "Xuất sắc"
+                      : profitMargin > 20
+                      ? "Tốt"
+                      : profitMargin > 0
+                      ? "Cần cải thiện"
+                      : "Lỗ"}
+                  </Tag>
+                </Space>
               </div>
-              <div className="dashboard-summary-content">
-                <div className="dashboard-summary-value-compact">
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Financial Flow - Visual Breakdown */}
+        <Card
+          className="dashboard-card"
+          title={
+            <Space>
+              <PieChartOutlined style={{ color: "#18573f" }} />
+              <span>Dòng tiền tài chính</span>
+            </Space>
+          }
+          style={{ marginBottom: 24 }}
+        >
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} sm={6}>
+              <div style={{ textAlign: "center", padding: "16px 0" }}>
+                <WalletOutlined
+                  style={{
+                    fontSize: 32,
+                    color: "#18573f",
+                    marginBottom: 8,
+                  }}
+                />
+                <div
+                  style={{ fontSize: 20, fontWeight: 600, color: "#18573f" }}
+                >
                   {dashboard.formatCurrency(totalPremium)}
                 </div>
-                <div className="dashboard-summary-label-compact">
-                  Tổng phí bảo hiểm
-                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Phí bảo hiểm thu
+                </Text>
               </div>
-            </div>
-          </Tooltip>
+            </Col>
 
-          <Tooltip title="Tổng tiền chi trả bồi thường cho nông dân khi có thiệt hại">
-            <div className="dashboard-summary-card-compact">
-              <div className="dashboard-summary-icon warning">
-                <DollarOutlined />
-              </div>
-              <div className="dashboard-summary-content">
-                <div className="dashboard-summary-value-compact">
+            <Col xs={24} sm={1} style={{ textAlign: "center" }}>
+              <Text type="secondary" style={{ fontSize: 20 }}>
+                −
+              </Text>
+            </Col>
+
+            <Col xs={24} sm={5}>
+              <div style={{ textAlign: "center", padding: "16px 0" }}>
+                <DollarOutlined
+                  style={{
+                    fontSize: 28,
+                    color: "#ff4d4f",
+                    marginBottom: 8,
+                  }}
+                />
+                <div
+                  style={{ fontSize: 18, fontWeight: 600, color: "#ff4d4f" }}
+                >
                   {dashboard.formatCurrency(totalPayout)}
                 </div>
-                <div className="dashboard-summary-label-compact">
-                  Tổng chi trả
-                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Chi trả bồi thường
+                </Text>
               </div>
-            </div>
-          </Tooltip>
+            </Col>
 
-          <Tooltip title="Chi phí sử dụng dữ liệu vệ tinh, thời tiết và phân tích">
-            <div className="dashboard-summary-card-compact">
-              <div className="dashboard-summary-icon pending">
-                <LineChartOutlined />
-              </div>
-              <div className="dashboard-summary-content">
-                <div className="dashboard-summary-value-compact">
+            <Col xs={24} sm={1} style={{ textAlign: "center" }}>
+              <Text type="secondary" style={{ fontSize: 20 }}>
+                −
+              </Text>
+            </Col>
+
+            <Col xs={24} sm={5}>
+              <div style={{ textAlign: "center", padding: "16px 0" }}>
+                <LineChartOutlined
+                  style={{
+                    fontSize: 28,
+                    color: "#722ed1",
+                    marginBottom: 8,
+                  }}
+                />
+                <div
+                  style={{ fontSize: 18, fontWeight: 600, color: "#722ed1" }}
+                >
                   {dashboard.formatCurrency(totalDataCost)}
                 </div>
-                <div className="dashboard-summary-label-compact">
+                <Text type="secondary" style={{ fontSize: 12 }}>
                   Chi phí dữ liệu
-                </div>
+                </Text>
               </div>
-            </div>
-          </Tooltip>
+            </Col>
 
-          <Tooltip
-            title={
-              isProfit
-                ? "Lợi nhuận ròng dương - kinh doanh hiệu quả"
-                : "Lợi nhuận ròng âm - cần xem xét lại chiến lược"
-            }
-          >
-            <div className="dashboard-summary-card-compact">
-              <div
-                className={`dashboard-summary-icon ${
-                  isProfit ? "active" : "warning"
-                }`}
-              >
-                {isProfit ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-              </div>
-              <div className="dashboard-summary-content">
+            <Col xs={24} sm={1} style={{ textAlign: "center" }}>
+              <Text type="secondary" style={{ fontSize: 20 }}>
+                =
+              </Text>
+            </Col>
+
+            <Col xs={24} sm={5}>
+              <div style={{ textAlign: "center", padding: "16px 0" }}>
+                {isProfit ? (
+                  <ArrowUpOutlined
+                    style={{
+                      fontSize: 28,
+                      color: "#52c41a",
+                      marginBottom: 8,
+                    }}
+                  />
+                ) : (
+                  <ArrowDownOutlined
+                    style={{
+                      fontSize: 28,
+                      color: "#ff4d4f",
+                      marginBottom: 8,
+                    }}
+                  />
+                )}
                 <div
-                  className="dashboard-summary-value-compact"
-                  style={{ color: growthIndicator.color }}
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: growthIndicator.color,
+                  }}
                 >
                   {dashboard.formatCurrency(netIncome)}
                 </div>
-                <div className="dashboard-summary-label-compact">
+                <Text type="secondary" style={{ fontSize: 12 }}>
                   Lợi nhuận ròng
-                </div>
+                </Text>
               </div>
-            </div>
-          </Tooltip>
-        </div>
+            </Col>
+          </Row>
+        </Card>
 
-        {/* KPI Cards */}
+        {/* Key Metrics Grid */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="dashboard-card">
-              <Statistic
-                title="Phí đã thu"
-                value={data?.total_premium_collected || 0}
-                valueStyle={{ color: "#18573f", fontSize: 20 }}
-                formatter={(value) => dashboard.formatCurrency(value)}
-              />
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Từ nông dân
-              </Text>
+          <Col xs={12} sm={8} lg={4}>
+            <Card className="dashboard-card" bodyStyle={{ padding: 16 }}>
+              <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Phí đã thu
+                </Text>
+                <div
+                  style={{ fontSize: 18, fontWeight: 600, color: "#18573f" }}
+                >
+                  {dashboard.formatCurrency(data?.total_premium_collected || 0)}
+                </div>
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  Từ nông dân
+                </Text>
+              </Space>
             </Card>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="dashboard-card">
-              <Statistic
-                title="Đã chi trả"
-                value={data?.total_payout_disbursed || 0}
-                valueStyle={{ color: "#ff4d4f", fontSize: 20 }}
-                formatter={(value) => dashboard.formatCurrency(value)}
-              />
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Cho nông dân
-              </Text>
+          <Col xs={12} sm={8} lg={4}>
+            <Card className="dashboard-card" bodyStyle={{ padding: 16 }}>
+              <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Đã chi trả
+                </Text>
+                <div
+                  style={{ fontSize: 18, fontWeight: 600, color: "#ff4d4f" }}
+                >
+                  {dashboard.formatCurrency(data?.total_payout_disbursed || 0)}
+                </div>
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  Bồi thường
+                </Text>
+              </Space>
             </Card>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="dashboard-card">
-              <Statistic
-                title="Phí TB mỗi đơn"
-                value={data?.average_premium_per_policy || 0}
-                valueStyle={{ fontSize: 20, color: "#18573f" }}
-                formatter={(value) => dashboard.formatCurrency(value)}
-              />
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Trung bình
-              </Text>
+          <Col xs={12} sm={8} lg={4}>
+            <Card className="dashboard-card" bodyStyle={{ padding: 16 }}>
+              <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  TB mỗi đơn
+                </Text>
+                <div
+                  style={{ fontSize: 18, fontWeight: 600, color: "#18573f" }}
+                >
+                  {dashboard.formatCurrency(
+                    data?.average_premium_per_policy || 0
+                  )}
+                </div>
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  Phí BH
+                </Text>
+              </Space>
             </Card>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="dashboard-card">
-              <Statistic
-                title="Tỷ suất lợi nhuận"
-                value={profitMargin}
-                precision={2}
-                valueStyle={{
-                  color: isProfit ? "#52c41a" : "#ff4d4f",
-                  fontSize: 20,
-                }}
-                suffix="%"
-                prefix={<RiseOutlined />}
-              />
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Profit Margin
-              </Text>
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Secondary Metrics */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={8}>
-            <Card className="dashboard-card">
-              <Statistic
-                title="Phí nợ"
-                value={data?.outstanding_premium || 0}
-                valueStyle={{ fontSize: 18, color: "#faad14" }}
-                formatter={(value) => dashboard.formatCurrency(value)}
-              />
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Chưa thanh toán
-              </Text>
+          <Col xs={12} sm={8} lg={4}>
+            <Card className="dashboard-card" bodyStyle={{ padding: 16 }}>
+              <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Phí nợ
+                </Text>
+                <div
+                  style={{ fontSize: 18, fontWeight: 600, color: "#faad14" }}
+                >
+                  {dashboard.formatCurrency(data?.outstanding_premium || 0)}
+                </div>
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  Chưa thu
+                </Text>
+              </Space>
             </Card>
           </Col>
 
-          <Col xs={24} sm={8}>
-            <Card className="dashboard-card">
-              <Statistic
-                title="Tỷ lệ tổn thất"
-                value={
-                  data?.monthly_loss_ratio_trend &&
+          <Col xs={12} sm={8} lg={4}>
+            <Card className="dashboard-card" bodyStyle={{ padding: 16 }}>
+              <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Tỷ lệ tổn thất
+                </Text>
+                <div
+                  style={{ fontSize: 18, fontWeight: 600, color: "#ff4d4f" }}
+                >
+                  {data?.monthly_loss_ratio_trend &&
                   data.monthly_loss_ratio_trend.length > 0
-                    ? data.monthly_loss_ratio_trend[0].loss_ratio_percent
-                    : 0
-                }
-                precision={2}
-                suffix="%"
-                valueStyle={{ fontSize: 18, color: "#ff4d4f" }}
-              />
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Hiện tại
-              </Text>
+                    ? `${data.monthly_loss_ratio_trend[0].loss_ratio_percent.toFixed(
+                        1
+                      )}%`
+                    : "0%"}
+                </div>
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  Loss Ratio
+                </Text>
+              </Space>
             </Card>
           </Col>
 
-          <Col xs={24} sm={8}>
-            <Card className="dashboard-card">
-              <Statistic
-                title="Số bồi thường"
-                value={
-                  data?.monthly_payout_per_claim_trend &&
+          <Col xs={12} sm={8} lg={4}>
+            <Card className="dashboard-card" bodyStyle={{ padding: 16 }}>
+              <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Số claim
+                </Text>
+                <div
+                  style={{ fontSize: 18, fontWeight: 600, color: "#722ed1" }}
+                >
+                  {data?.monthly_payout_per_claim_trend &&
                   data.monthly_payout_per_claim_trend.length > 0
                     ? data.monthly_payout_per_claim_trend[0].total_paid_claims
-                    : 0
+                    : 0}
+                </div>
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  Đã chi trả
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Charts Section - Organized by Category */}
+
+        {/* Loss Ratio Analysis */}
+        <Card
+          className="dashboard-card"
+          title={
+            <Space>
+              <LineChartOutlined style={{ color: "#18573f" }} />
+              <span>Phân tích tỷ lệ tổn thất</span>
+            </Space>
+          }
+          extra={
+            <Space size="small">
+              {lossRatioChart && (
+                <Space size={0}>
+                  <Button
+                    size="small"
+                    type={lossRatioChartType === "line" ? "primary" : "default"}
+                    icon={<LineChartOutlined />}
+                    onClick={() => setLossRatioChartType("line")}
+                    style={{
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                    }}
+                  />
+                  <Button
+                    size="small"
+                    type={lossRatioChartType === "bar" ? "primary" : "default"}
+                    icon={<BarChartOutlined />}
+                    onClick={() => setLossRatioChartType("bar")}
+                    style={{
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      marginLeft: -1,
+                    }}
+                  />
+                </Space>
+              )}
+              <Button
+                size="small"
+                icon={
+                  expandedChart === "lossRatio" ? (
+                    <CompressOutlined />
+                  ) : (
+                    <ExpandOutlined />
+                  )
                 }
-                valueStyle={{ fontSize: 18, color: "#722ed1" }}
+                onClick={() =>
+                  setExpandedChart(
+                    expandedChart === "lossRatio" ? null : "lossRatio"
+                  )
+                }
+                type={expandedChart === "lossRatio" ? "primary" : "default"}
               />
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Đã xử lý
+              <Tag
+                color={
+                  data?.monthly_loss_ratio_trend &&
+                  data.monthly_loss_ratio_trend.length > 0
+                    ? data.monthly_loss_ratio_trend[0].loss_ratio_percent < 30
+                      ? "success"
+                      : data.monthly_loss_ratio_trend[0].loss_ratio_percent < 60
+                      ? "warning"
+                      : "error"
+                    : "default"
+                }
+              >
+                {data?.monthly_loss_ratio_trend &&
+                data.monthly_loss_ratio_trend.length > 0
+                  ? data.monthly_loss_ratio_trend[0].loss_ratio_percent < 30
+                    ? "Tốt"
+                    : data.monthly_loss_ratio_trend[0].loss_ratio_percent < 60
+                    ? "Trung bình"
+                    : "Cần cải thiện"
+                  : "Chưa có dữ liệu"}
+              </Tag>
+            </Space>
+          }
+          style={{ marginBottom: 24 }}
+        >
+          {lossRatioChart ? (
+            <div>
+              <Text
+                type="secondary"
+                style={{ fontSize: 13, display: "block", marginBottom: 16 }}
+              >
+                Tỷ lệ chi trả trên tổng phí thu. Mức &lt; 30% là tốt, 30-60%
+                trung bình, &gt; 60% cần xem xét lại.
               </Text>
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Charts Row 1 */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} lg={12}>
-            <Card
-              className="dashboard-card"
-              title={
-                <Space>
-                  <PieChartOutlined style={{ color: "#18573f" }} />
-                  <span>Phân bổ tài chính</span>
-                </Space>
-              }
-            >
-              <div style={{ height: 280 }}>
-                <Doughnut
-                  data={financialSummaryChart}
-                  options={doughnutOptions}
-                />
+              <div
+                style={{
+                  height: expandedChart === "lossRatio" ? 500 : 300,
+                  transition: "height 0.3s ease",
+                }}
+              >
+                {lossRatioChartType === "line" ? (
+                  <Line
+                    data={lossRatioChart}
+                    options={{
+                      ...lineChartOptions,
+                      plugins: {
+                        legend: {
+                          display: true,
+                          position: "top",
+                          labels: {
+                            padding: 10,
+                            font: { size: 12 },
+                          },
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: (context) => {
+                              return `${
+                                context.dataset.label
+                              }: ${context.parsed.y.toFixed(2)}%`;
+                            },
+                          },
+                        },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: { color: "rgba(0, 0, 0, 0.05)" },
+                          ticks: {
+                            callback: (value) => `${value}%`,
+                          },
+                        },
+                        x: {
+                          grid: { display: false },
+                        },
+                      },
+                    }}
+                  />
+                ) : (
+                  <Bar
+                    data={{
+                      ...lossRatioChart,
+                      datasets: lossRatioChart.datasets.map((dataset) => ({
+                        ...dataset,
+                        backgroundColor: "rgba(255, 120, 117, 0.6)",
+                        borderColor: "#ff7875",
+                        borderWidth: 1,
+                        borderRadius: 4,
+                      })),
+                    }}
+                    options={{
+                      ...barChartOptions,
+                      plugins: {
+                        legend: {
+                          display: true,
+                          position: "top",
+                          labels: {
+                            padding: 10,
+                            font: { size: 12 },
+                          },
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: (context) => {
+                              return `${
+                                context.dataset.label
+                              }: ${context.parsed.y.toFixed(2)}%`;
+                            },
+                          },
+                        },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: { color: "rgba(0, 0, 0, 0.05)" },
+                          ticks: {
+                            callback: (value) => `${value}%`,
+                          },
+                        },
+                        x: {
+                          grid: { display: false },
+                        },
+                      },
+                    }}
+                  />
+                )}
               </div>
-            </Card>
-          </Col>
+            </div>
+          ) : (
+            <Empty
+              description="Chưa có dữ liệu tỷ lệ tổn thất"
+              style={{ padding: "60px 0" }}
+            />
+          )}
+        </Card>
 
-          <Col xs={24} lg={12}>
-            <Card
-              className="dashboard-card"
-              title={
-                <Space>
-                  <LineChartOutlined style={{ color: "#18573f" }} />
-                  <span>Xu hướng tỷ lệ tổn thất</span>
-                </Space>
-              }
-              extra={<Tag color="error">Tháng gần đây</Tag>}
-            >
-              {lossRatioChart ? (
-                <div style={{ height: 280 }}>
-                  <Line data={lossRatioChart} options={lineChartOptions} />
-                </div>
-              ) : (
-                <Empty
-                  description="Không có dữ liệu"
-                  style={{ padding: "40px 0" }}
-                />
-              )}
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Charts Row 2 */}
+        {/* Premium Growth Analysis */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} lg={12}>
             <Card
@@ -758,19 +1133,64 @@ export default function DashboardPage() {
               title={
                 <Space>
                   <RiseOutlined style={{ color: "#18573f" }} />
-                  <span>So sánh phí theo tháng</span>
+                  <span>Tăng trưởng tháng/tháng</span>
                 </Space>
               }
-              extra={<Tag color="processing">Tháng/Tháng</Tag>}
+              extra={
+                data?.premium_growth_mom &&
+                data.premium_growth_mom.length > 0 &&
+                data.premium_growth_mom[0].mom_growth_rate_percent !== null ? (
+                  <Tag
+                    color={
+                      data.premium_growth_mom[0].mom_growth_rate_percent >= 5
+                        ? "success"
+                        : data.premium_growth_mom[0].mom_growth_rate_percent >=
+                          0
+                        ? "processing"
+                        : "error"
+                    }
+                  >
+                    {data.premium_growth_mom[0].mom_growth_rate_percent >= 0
+                      ? "+"
+                      : ""}
+                    {data.premium_growth_mom[0].mom_growth_rate_percent.toFixed(
+                      2
+                    )}
+                    %
+                  </Tag>
+                ) : (
+                  <Tag color="default">Chưa đủ dữ liệu</Tag>
+                )
+              }
             >
-              {premiumGrowthMoMChart ? (
-                <div style={{ height: 280 }}>
-                  <Bar data={premiumGrowthMoMChart} options={barChartOptions} />
+              {premiumGrowthMoMChart &&
+              data?.premium_growth_mom &&
+              data.premium_growth_mom.length > 0 ? (
+                <div>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: 13, display: "block", marginBottom: 16 }}
+                  >
+                    So sánh phí bảo hiểm thu được giữa các tháng liên tiếp
+                  </Text>
+                  <div style={{ height: 280 }}>
+                    <Bar
+                      data={premiumGrowthMoMChart}
+                      options={barChartOptions}
+                    />
+                  </div>
                 </div>
               ) : (
                 <Empty
-                  description="Không có dữ liệu"
-                  style={{ padding: "40px 0" }}
+                  description={
+                    <Space direction="vertical" align="center">
+                      <Text type="secondary">Cần ít nhất 2 tháng dữ liệu</Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        để hiển thị tăng trưởng tháng/tháng
+                      </Text>
+                    </Space>
+                  }
+                  style={{ padding: "60px 0" }}
                 />
               )}
             </Card>
@@ -782,51 +1202,366 @@ export default function DashboardPage() {
               title={
                 <Space>
                   <RiseOutlined style={{ color: "#18573f" }} />
-                  <span>Tăng trưởng theo năm</span>
+                  <span>Tăng trưởng năm/năm</span>
                 </Space>
               }
-              extra={<Tag color="success">Năm/Năm</Tag>}
+              extra={
+                data?.premium_growth_yoy &&
+                data.premium_growth_yoy.length > 0 &&
+                data.premium_growth_yoy[0].yoy_growth_rate_percent !== null ? (
+                  <Tag
+                    color={
+                      data.premium_growth_yoy[0].yoy_growth_rate_percent >= 15
+                        ? "success"
+                        : data.premium_growth_yoy[0].yoy_growth_rate_percent >=
+                          0
+                        ? "processing"
+                        : "error"
+                    }
+                  >
+                    {data.premium_growth_yoy[0].yoy_growth_rate_percent >= 0
+                      ? "+"
+                      : ""}
+                    {data.premium_growth_yoy[0].yoy_growth_rate_percent.toFixed(
+                      2
+                    )}
+                    %
+                  </Tag>
+                ) : (
+                  <Tag color="default">Chưa đủ dữ liệu</Tag>
+                )
+              }
             >
-              {growthRateYoYChart ? (
-                <div style={{ height: 280 }}>
-                  <Bar data={growthRateYoYChart} options={barChartOptions} />
+              {growthRateYoYChart &&
+              data?.premium_growth_yoy &&
+              data.premium_growth_yoy.length > 0 &&
+              data.premium_growth_yoy.some(
+                (item) => item.yoy_growth_rate_percent !== null
+              ) ? (
+                <div>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: 13, display: "block", marginBottom: 16 }}
+                  >
+                    So sánh với cùng kỳ năm trước, loại bỏ yếu tố mùa vụ
+                  </Text>
+                  <div style={{ height: 280 }}>
+                    <Bar data={growthRateYoYChart} options={barChartOptions} />
+                  </div>
                 </div>
               ) : (
                 <Empty
-                  description="Không có dữ liệu"
-                  style={{ padding: "40px 0" }}
+                  description={
+                    <Space direction="vertical" align="center">
+                      <Text type="secondary">Cần dữ liệu năm trước</Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        để so sánh tăng trưởng năm/năm
+                      </Text>
+                    </Space>
+                  }
+                  style={{ padding: "60px 0" }}
                 />
               )}
             </Card>
           </Col>
         </Row>
 
-        {/* Charts Row 3 */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24}>
-            <Card
-              className="dashboard-card"
-              title={
-                <Space>
-                  <LineChartOutlined style={{ color: "#18573f" }} />
-                  <span>Xu hướng chi trả bồi thường</span>
+        {/* Payout Analysis */}
+        <Card
+          className="dashboard-card"
+          title={
+            <Space>
+              <LineChartOutlined style={{ color: "#18573f" }} />
+              <span>Phân tích chi trả bồi thường</span>
+            </Space>
+          }
+          extra={
+            <Space size="small">
+              {payoutPerClaimChart && (
+                <Space size={0}>
+                  <Button
+                    size="small"
+                    type={payoutChartType === "line" ? "primary" : "default"}
+                    icon={<LineChartOutlined />}
+                    onClick={() => setPayoutChartType("line")}
+                    style={{
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                    }}
+                  />
+                  <Button
+                    size="small"
+                    type={payoutChartType === "bar" ? "primary" : "default"}
+                    icon={<BarChartOutlined />}
+                    onClick={() => setPayoutChartType("bar")}
+                    style={{
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      marginLeft: -1,
+                    }}
+                  />
                 </Space>
-              }
-              extra={<Tag color="purple">Theo tháng</Tag>}
-            >
-              {payoutPerClaimChart ? (
-                <div style={{ height: 280 }}>
-                  <Line data={payoutPerClaimChart} options={dualAxisOptions} />
-                </div>
-              ) : (
-                <Empty
-                  description="Không có dữ liệu"
-                  style={{ padding: "40px 0" }}
-                />
               )}
-            </Card>
-          </Col>
-        </Row>
+              <Button
+                size="small"
+                icon={
+                  expandedChart === "payout" ? (
+                    <CompressOutlined />
+                  ) : (
+                    <ExpandOutlined />
+                  )
+                }
+                onClick={() =>
+                  setExpandedChart(expandedChart === "payout" ? null : "payout")
+                }
+                type={expandedChart === "payout" ? "primary" : "default"}
+              />
+              {data?.monthly_payout_per_claim_trend &&
+              data.monthly_payout_per_claim_trend.length > 0 ? (
+                <Tag color="purple">
+                  TB:{" "}
+                  {dashboard.formatCurrency(
+                    data.monthly_payout_per_claim_trend[0].avg_payout_per_claim
+                  )}
+                  /claim
+                </Tag>
+              ) : null}
+            </Space>
+          }
+          style={{ marginBottom: 24 }}
+        >
+          {payoutPerClaimChart ? (
+            <div>
+              <Text
+                type="secondary"
+                style={{ fontSize: 13, display: "block", marginBottom: 16 }}
+              >
+                Theo dõi giá trị trung bình mỗi claim và số lượng claim được xử
+                lý theo tháng
+              </Text>
+              <div
+                style={{
+                  height: expandedChart === "payout" ? 500 : 300,
+                  transition: "height 0.3s ease",
+                }}
+              >
+                {payoutChartType === "line" ? (
+                  <Line data={payoutPerClaimChart} options={dualAxisOptions} />
+                ) : (
+                  <Bar
+                    data={{
+                      labels: payoutPerClaimChart.labels,
+                      datasets: [
+                        {
+                          label: "Chi trả TB mỗi bồi thường",
+                          data: payoutPerClaimChart.datasets[0].data,
+                          backgroundColor: "rgba(24, 87, 63, 0.6)",
+                          borderColor: "#18573f",
+                          borderWidth: 1,
+                          borderRadius: 4,
+                          yAxisID: "y",
+                        },
+                        {
+                          label: "Số lượng bồi thường",
+                          data: payoutPerClaimChart.datasets[1].data,
+                          backgroundColor: "rgba(250, 173, 20, 0.6)",
+                          borderColor: "#faad14",
+                          borderWidth: 1,
+                          borderRadius: 4,
+                          yAxisID: "y1",
+                        },
+                      ],
+                    }}
+                    options={dualAxisOptions}
+                  />
+                )}
+              </div>
+            </div>
+          ) : (
+            <Empty
+              description="Chưa có dữ liệu chi trả bồi thường"
+              style={{ padding: "60px 0" }}
+            />
+          )}
+        </Card>
+
+        {/* Data Summary Table */}
+        <Card
+          className="dashboard-card"
+          title={
+            <Space>
+              <PieChartOutlined style={{ color: "#18573f" }} />
+              <span>Tóm tắt theo tháng</span>
+            </Space>
+          }
+        >
+          {data?.monthly_loss_ratio_trend &&
+          data.monthly_loss_ratio_trend.length > 0 ? (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
+                    <th
+                      style={{
+                        padding: "12px",
+                        textAlign: "left",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#6b7280",
+                      }}
+                    >
+                      Tháng
+                    </th>
+                    <th
+                      style={{
+                        padding: "12px",
+                        textAlign: "right",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#6b7280",
+                      }}
+                    >
+                      Phí thu
+                    </th>
+                    <th
+                      style={{
+                        padding: "12px",
+                        textAlign: "right",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#6b7280",
+                      }}
+                    >
+                      Chi trả
+                    </th>
+                    <th
+                      style={{
+                        padding: "12px",
+                        textAlign: "right",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#6b7280",
+                      }}
+                    >
+                      Tỷ lệ tổn thất
+                    </th>
+                    <th
+                      style={{
+                        padding: "12px",
+                        textAlign: "right",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#6b7280",
+                      }}
+                    >
+                      Số chi trả
+                    </th>
+                    <th
+                      style={{
+                        padding: "12px",
+                        textAlign: "right",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#6b7280",
+                      }}
+                    >
+                      TB/chi trả
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.monthly_loss_ratio_trend.map((item, index) => {
+                    const payoutData =
+                      data.monthly_payout_per_claim_trend?.find(
+                        (p) => p.month === item.month
+                      );
+                    return (
+                      <tr
+                        key={index}
+                        style={{ borderBottom: "1px solid #f1f1f1" }}
+                      >
+                        <td style={{ padding: "12px", fontSize: 13 }}>
+                          {formatMonth(item.month)}
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px",
+                            textAlign: "right",
+                            fontSize: 13,
+                            color: "#18573f",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {dashboard.formatCurrency(item.monthly_premium)}
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px",
+                            textAlign: "right",
+                            fontSize: 13,
+                            color: "#ff4d4f",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {dashboard.formatCurrency(item.monthly_payout)}
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px",
+                            textAlign: "right",
+                            fontSize: 13,
+                          }}
+                        >
+                          <Tag
+                            color={
+                              item.loss_ratio_percent < 30
+                                ? "success"
+                                : item.loss_ratio_percent < 60
+                                ? "warning"
+                                : "error"
+                            }
+                          >
+                            {item.loss_ratio_percent.toFixed(2)}%
+                          </Tag>
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px",
+                            textAlign: "right",
+                            fontSize: 13,
+                            fontWeight: 500,
+                          }}
+                        >
+                          {payoutData?.total_paid_claims || 0}
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px",
+                            textAlign: "right",
+                            fontSize: 13,
+                            color: "#722ed1",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {payoutData
+                            ? dashboard.formatCurrency(
+                                payoutData.avg_payout_per_claim
+                              )
+                            : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <Empty
+              description="Chưa có dữ liệu theo tháng"
+              style={{ padding: "40px 0" }}
+            />
+          )}
+        </Card>
       </div>
     </Layout.Content>
   );

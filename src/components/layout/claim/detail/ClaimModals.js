@@ -184,7 +184,12 @@ export default function ClaimModals({
         style={{ maxHeight: "80vh" }}
         bodyStyle={{ maxHeight: "calc(80vh - 110px)", overflowY: "auto" }}
       >
-        <Form form={rejectForm} layout="vertical" onFinish={onRejectSubmit} style={{ paddingLeft: 10, paddingRight: 10 }}>
+        <Form
+          form={rejectForm}
+          layout="vertical"
+          onFinish={onRejectSubmit}
+          style={{ paddingLeft: 10, paddingRight: 10 }}
+        >
           <Tabs defaultActiveKey="1">
             {/* Tab 1: Thông Tin Từ Chối (Bắt buộc) */}
             <Tabs.TabPane tab="Thông Tin Từ Chối (Bắt buộc)" key="1">

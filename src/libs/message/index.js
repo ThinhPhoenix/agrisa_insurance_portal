@@ -96,6 +96,15 @@ export {
     getTriggerValidation,
     POLICY_MESSAGES,
 } from "./policy-message.js";
+export {
+    DELETION_REQUEST_ERROR,
+    DELETION_REQUEST_SUCCESS,
+    DELETION_REQUEST_VALIDATION,
+    getDeletionRequestError,
+    getDeletionRequestSuccess,
+    getDeletionRequestValidation,
+    mapDeletionRequestError,
+} from "./profile-message.js";
 
 // Re-export with clearer names for easier usage
 export { AUTH_MESSAGES as SignInMessages } from "./auth-message.js";

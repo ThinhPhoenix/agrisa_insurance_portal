@@ -97,6 +97,13 @@ export const endpoints = {
     // Public: get user by public user id (own endpoint)
     get_public_user_by_id: (user_id) =>
       `/profile/public/api/v1/users/own/${user_id}`,
+    // Partner deletion requests
+    deletion_request: {
+      create: `/profile/protected/api/v1/insurance-partners/deletion-requests`,
+      get_by_admin: (partner_admin_id) =>
+        `/profile/protected/api/v1/insurance-partners/${partner_admin_id}/deletion-requests`,
+      revoke: `/profile/protected/api/v1/insurance-partners/deletion-requests/revoke`,
+    },
   },
   riskAnalysis: {
     by_policy: (policy_id) =>

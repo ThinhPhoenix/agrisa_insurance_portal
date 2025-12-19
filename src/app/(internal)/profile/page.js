@@ -1,4 +1,7 @@
 "use client";
+import DeletionRequestModal from "@/components/profile/DeletionRequestModal";
+import DeletionRequestStatus from "@/components/profile/DeletionRequestStatus";
+import { useGetDeletionRequests } from "@/services/hooks/profile/use-partner-deletion";
 import {
   useAccountProfile,
   useGetPartnerProfile,
@@ -8,6 +11,7 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   EditOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
@@ -445,15 +449,45 @@ function AccountInfoTab() {
 function CompanyInfoTab() {
   const { user } = useAuthStore();
   const { getPartnerProfile, isLoading, error, data } = useGetPartnerProfile();
+  const {
+    getDeletionRequests,
+    isLoading: deletionLoading,
+    data: deletionRequests,
+  } = useGetDeletionRequests();
+  const [deletionModalVisible, setDeletionModalVisible] = useState(false);
+  const [currentDeletionRequest, setCurrentDeletionRequest] = useState(null);
+
+  const fetchDeletionRequests = async (userId) => {
+    if (!userId) return;
+
+    try {
+      const result = await getDeletionRequests(userId);
+      if (result.success && result.data && result.data.length > 0) {
+        // Find the most recent pending request
+        const pendingRequest = result.data.find((r) => r.status === "pending");
+        if (pendingRequest) {
+          setCurrentDeletionRequest(pendingRequest);
+        } else {
+          // If no pending, show the most recent one
+          setCurrentDeletionRequest(result.data[0]);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch deletion requests:", e);
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
       let partnerId = null;
+      let userId = null;
+
       try {
         const meData = localStorage.getItem("me");
         if (meData) {
           const me = JSON.parse(meData);
           partnerId = me.partner_id;
+          userId = me.user_id;
         }
       } catch (e) {
         console.error("Failed to parse me data from localStorage:", e);
@@ -461,6 +495,10 @@ function CompanyInfoTab() {
 
       if (!partnerId) {
         partnerId = user?.user?.partner_id || user?.profile?.partner_id;
+      }
+
+      if (!userId) {
+        userId = user?.user_id || user?.user?.id || user?.profile?.user_id;
       }
 
       if (!partnerId) {
@@ -471,6 +509,11 @@ function CompanyInfoTab() {
       const result = await getPartnerProfile(partnerId);
       if (!result.success) {
         message.error(result.message || "Không thể tải thông tin đối tác");
+      }
+
+      // Fetch deletion requests
+      if (userId) {
+        await fetchDeletionRequests(userId);
       }
     };
 
@@ -496,8 +539,40 @@ function CompanyInfoTab() {
     return <Text type="danger">Không thể tải thông tin công ty</Text>;
   }
 
+  const handleDeletionSuccess = async () => {
+    // Refresh deletion requests
+    let userId = null;
+    try {
+      const meData = localStorage.getItem("me");
+      if (meData) {
+        const me = JSON.parse(meData);
+        userId = me.user_id;
+      }
+    } catch (e) {
+      console.error("Failed to parse me data:", e);
+    }
+
+    if (!userId) {
+      userId = user?.user_id || user?.user?.id || user?.profile?.user_id;
+    }
+
+    if (userId) {
+      await fetchDeletionRequests(userId);
+    }
+  };
+
+  const canRequestDeletion =
+    !currentDeletionRequest || currentDeletionRequest.status !== "pending";
+
   return (
     <>
+      {/* Deletion Request Status */}
+      {currentDeletionRequest && (
+        <DeletionRequestStatus
+          request={currentDeletionRequest}
+          onRefresh={handleDeletionSuccess}
+        />
+      )}
       {/* Cover Photo + Avatar Header */}
       <div
         style={{
@@ -1070,16 +1145,35 @@ function CompanyInfoTab() {
           </Col>
 
           <Col xs={24}>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => (window.location.href = "/profile/edit")}
-            >
-              Chỉnh sửa thông tin công ty
-            </Button>
+            <Space>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => (window.location.href = "/profile/edit")}
+              >
+                Chỉnh sửa thông tin công ty
+              </Button>
+
+              {canRequestDeletion && (
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => setDeletionModalVisible(true)}
+                >
+                  Yêu cầu hủy hồ sơ
+                </Button>
+              )}
+            </Space>
           </Col>
         </Row>
       </Card>
+
+      {/* Deletion Request Modal */}
+      <DeletionRequestModal
+        visible={deletionModalVisible}
+        onClose={() => setDeletionModalVisible(false)}
+        onSuccess={handleDeletionSuccess}
+      />
     </>
   );
 }

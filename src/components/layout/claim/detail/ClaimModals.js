@@ -1,6 +1,6 @@
 "use client";
 
-import { InfoCircleOutlined } from "@ant-design/icons";
+import { InboxOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import {
   Button,
   Card,
@@ -12,8 +12,12 @@ import {
   Row,
   Select,
   Space,
+  Tabs,
   Tooltip,
+  Upload,
+  message,
 } from "antd";
+import { useEffect, useState } from "react";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -68,6 +72,72 @@ export default function ClaimModals({
   onApproveCancel,
   onRejectCancel,
 }) {
+  const [fileList, setFileList] = useState([]);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
+  const [previewTitle, setPreviewTitle] = useState("");
+
+  useEffect(() => {
+    if (rejectForm) {
+      // keep form field in sync with selected files (store minimal metadata + any notes)
+      rejectForm.setFieldValue(
+        "evidence_documents",
+        fileList.map((f) => ({
+          uid: f.uid,
+          name: f.name,
+          type: f.type,
+          size: f.size,
+          note: f.note || "",
+        }))
+      );
+    }
+  }, [fileList, rejectForm]);
+
+  const getBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+
+  const handlePreview = async (file) => {
+    const fileObj = file.originFileObj || file;
+    if (!fileObj) return message.info("Không có file để xem trước");
+
+    if ((file.type || fileObj.type || "").startsWith("image")) {
+      const src = await getBase64(fileObj);
+      setPreviewImage(src);
+      setPreviewVisible(true);
+      setPreviewTitle(file.name || file.uid);
+    } else {
+      // open other file types in new tab if possible
+      const url = URL.createObjectURL(fileObj);
+      window.open(url, "_blank");
+    }
+  };
+
+  const handleRemove = (file) => {
+    setFileList((prev) => prev.filter((f) => f.uid !== file.uid));
+  };
+
+  const handleBeforeUpload = (file) => {
+    // add custom metadata holder for notes
+    const wrapped = Object.assign(file, {
+      uid: file.uid || file.name + Date.now(),
+      note: "",
+    });
+    setFileList((prev) => [...prev, wrapped]);
+    // prevent auto upload
+    return false;
+  };
+
+  const handleNoteChange = (uid, value) => {
+    setFileList((prev) =>
+      prev.map((f) => (f.uid === uid ? { ...f, note: value } : f))
+    );
+  };
+
   return (
     <>
       {/* Approve Modal */}
@@ -110,232 +180,292 @@ export default function ClaimModals({
         open={rejectModalVisible}
         onCancel={onRejectCancel}
         footer={null}
-        width={900}
-        style={{ maxHeight: "90vh" }}
-        bodyStyle={{ maxHeight: "calc(90vh - 110px)", overflowY: "auto" }}
+        width={800}
+        style={{ maxHeight: "80vh" }}
+        bodyStyle={{ maxHeight: "calc(80vh - 110px)", overflowY: "auto" }}
       >
-        <Form form={rejectForm} layout="vertical" onFinish={onRejectSubmit}>
-          {/* Section 1: Thông tin cơ bản từ chối */}
-          <Card
-            type="inner"
-            title={
-              <span style={{ fontSize: "14px", fontWeight: "600" }}>
-                Thông Tin Từ Chối
-              </span>
-            }
-            size="small"
-            style={{ marginBottom: 16 }}
-          >
-            <Form.Item
-              name="claim_rejection_type"
-              label={
-                <span>
-                  Loại Từ Chối{" "}
-                  <Tooltip title="Chọn loại từ chối phù hợp nhất. Hover vào từng lựa chọn để xem mô tả chi tiết.">
-                    <InfoCircleOutlined
-                      style={{ color: "#1890ff", cursor: "help" }}
+        <Form form={rejectForm} layout="vertical" onFinish={onRejectSubmit} style={{ paddingLeft: 10, paddingRight: 10 }}>
+          <Tabs defaultActiveKey="1">
+            {/* Tab 1: Thông Tin Từ Chối (Bắt buộc) */}
+            <Tabs.TabPane tab="Thông Tin Từ Chối (Bắt buộc)" key="1">
+              <Form.Item
+                name="claim_rejection_type"
+                label={
+                  <span>
+                    Loại Từ Chối{" "}
+                    <Tooltip title="Chọn loại từ chối phù hợp nhất. Hover vào từng lựa chọn để xem mô tả chi tiết.">
+                      <InfoCircleOutlined
+                        style={{ color: "#1890ff", cursor: "help" }}
+                      />
+                    </Tooltip>
+                  </span>
+                }
+                rules={[
+                  { required: true, message: "Vui lòng chọn loại từ chối" },
+                ]}
+                style={{ marginBottom: 12 }}
+                tooltip="Chỉ được chọn 1 trong 7 loại enum được định nghĩa bởi API"
+              >
+                <Select placeholder="Chọn loại từ chối..." size="large">
+                  {rejectionTypes.map((type) => (
+                    <Option
+                      key={type.value}
+                      value={type.value}
+                      title={type.desc}
+                    >
+                      <span>{type.label}</span>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="reason"
+                label="Lý Do Từ Chối"
+                rules={[
+                  { required: true, message: "Vui lòng nhập lý do từ chối" },
+                  { max: 500, message: "Tối đa 500 ký tự" },
+                ]}
+                style={{ marginBottom: 12 }}
+              >
+                <TextArea
+                  rows={3}
+                  placeholder="Ví dụ: Dữ liệu lượng mưa báo cáo không khớp với dữ liệu vệ tinh..."
+                  maxLength={500}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="validated_by"
+                label="Người Đánh Giá"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập tên người đánh giá",
+                  },
+                  { max: 200, message: "Tối đa 200 ký tự" },
+                ]}
+                style={{ marginBottom: 12 }}
+              >
+                <Input
+                  placeholder="Ví dụ: Nguyễn Văn A - Chuyên viên thẩm định"
+                  size="large"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="validation_notes"
+                label="Ghi Chú Chi Tiết"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập ghi chú chi tiết",
+                  },
+                  { max: 1000, message: "Tối đa 1000 ký tự" },
+                ]}
+                style={{ marginBottom: 0 }}
+                extra={
+                  <span style={{ fontSize: "11px" }}>
+                    Giải thích chi tiết lý do từ chối, bằng chứng đã xem xét
+                  </span>
+                }
+              >
+                <TextArea
+                  rows={3}
+                  placeholder="Sau khi xem xét kỹ lưỡng hình ảnh vệ tinh..."
+                  maxLength={1000}
+                />
+              </Form.Item>
+            </Tabs.TabPane>
+
+            {/* Tab 2: Bằng Chứng Chi Tiết (Tùy chọn) */}
+            <Tabs.TabPane tab="Bằng Chứng Chi Tiết (Tùy chọn)" key="2">
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="event_date"
+                    label={
+                      <span>
+                        Ngày Sự Kiện{" "}
+                        <Tooltip title="Ngày xảy ra sự kiện. Sẽ được chuyển sang format YYYY-MM-DD khi gửi API">
+                          <InfoCircleOutlined
+                            style={{ color: "#1890ff", fontSize: "12px" }}
+                          />
+                        </Tooltip>
+                      </span>
+                    }
+                    style={{ marginBottom: 12 }}
+                  >
+                    <DatePicker
+                      placeholder="Chọn ngày sự kiện"
+                      size="large"
+                      format="DD/MM/YYYY"
+                      style={{ width: "100%" }}
                     />
-                  </Tooltip>
-                </span>
-              }
-              rules={[
-                { required: true, message: "Vui lòng chọn loại từ chối" },
-              ]}
-              style={{ marginBottom: 12 }}
-              tooltip="Chỉ được chọn 1 trong 7 loại enum được định nghĩa bởi API"
-            >
-              <Select placeholder="Chọn loại từ chối..." size="large">
-                {rejectionTypes.map((type) => (
-                  <Option key={type.value} value={type.value} title={type.desc}>
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{type.label}</div>
-                      <div style={{ fontSize: "11px", color: "#8c8c8c" }}>
-                        {type.desc}
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="policy_clause"
+                    label="Điều Khoản Chính Sách Không Hợp Lệ"
+                    style={{ marginBottom: 12 }}
+                  >
+                    <Input
+                      placeholder="VD: Điều 2 - Mục 5: Bảo hiểm không áp dụng cho thiệt hại do lũ lụt"
+                      size="large"
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col span={12}>
+                  <Form.Item
+                    name="blackout_period_start"
+                    label={
+                      <span>
+                        Khoảng Thời Gian Không Bảo Hiểm (Từ){" "}
+                        <Tooltip title="Ngày bắt đầu của khoảng thời gian không được bảo hiểm. Sẽ được chuyển sang YYYY-MM-DD">
+                          <InfoCircleOutlined
+                            style={{ color: "#1890ff", fontSize: "12px" }}
+                          />
+                        </Tooltip>
+                      </span>
+                    }
+                    style={{ marginBottom: 12 }}
+                  >
+                    <DatePicker
+                      placeholder="Chọn ngày bắt đầu"
+                      size="large"
+                      format="DD/MM/YYYY"
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="blackout_period_end"
+                    label={
+                      <span>
+                        Khoảng Thời Gian Không Bảo Hiểm (Đến){" "}
+                        <Tooltip title="Ngày kết thúc của khoảng thời gian không được bảo hiểm. Sẽ được chuyển sang YYYY-MM-DD">
+                          <InfoCircleOutlined
+                            style={{ color: "#1890ff", fontSize: "12px" }}
+                          />
+                        </Tooltip>
+                      </span>
+                    }
+                    style={{ marginBottom: 12 }}
+                  >
+                    <DatePicker
+                      placeholder="Chọn ngày kết thúc"
+                      size="large"
+                      format="DD/MM/YYYY"
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col span={24}>
+                  <Form.Item
+                    name="evidence_documents"
+                    label={
+                      <span>
+                        Tên Tài Liệu Bằng Chứng{" "}
+                        <Tooltip title="Tải lên ảnh hoặc tài liệu (pdf, docx, xlsx, csv...).">
+                          <InfoCircleOutlined
+                            style={{ color: "#1890ff", fontSize: "12px" }}
+                          />
+                        </Tooltip>
+                      </span>
+                    }
+                    extra="Tải lên các file cần làm bằng chứng. Bạn có thể xem trước (ảnh), chỉnh sửa ghi chú và xóa file trước khi gửi."
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Upload.Dragger
+                      multiple
+                      accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+                      beforeUpload={handleBeforeUpload}
+                      onRemove={handleRemove}
+                      fileList={fileList}
+                      showUploadList={false}
+                      style={{ width: "100%" }}
+                    >
+                      <p className="ant-upload-drag-icon">
+                        <InboxOutlined />
+                      </p>
+                      <p className="ant-upload-text">
+                        Kéo thả file vào đây hoặc nhấn để chọn
+                      </p>
+                      <p className="ant-upload-hint">
+                        Hỗ trợ nhiều định dạng: ảnh, pdf, docx, xlsx, csv...
+                      </p>
+                    </Upload.Dragger>
+
+                    {fileList.length > 0 && (
+                      <div style={{ marginTop: 12 }}>
+                        {fileList.map((f) => (
+                          <Card
+                            key={f.uid}
+                            size="small"
+                            style={{ marginBottom: 8 }}
+                            bodyStyle={{ padding: 8 }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div style={{ fontWeight: 600 }}>{f.name}</div>
+                                <div style={{ fontSize: 12, color: "#8c8c8c" }}>
+                                  {(f.size / 1024).toFixed(1)} KB •{" "}
+                                  {f.type || "-"}
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <Button
+                                  size="small"
+                                  onClick={() => handlePreview(f)}
+                                >
+                                  Xem
+                                </Button>
+                                <Button
+                                  size="small"
+                                  danger
+                                  onClick={() => handleRemove(f)}
+                                >
+                                  Xóa
+                                </Button>
+                              </div>
+                            </div>
+                            <div style={{ marginTop: 8 }}>
+                              <Input.TextArea
+                                value={f.note}
+                                onChange={(e) =>
+                                  handleNoteChange(f.uid, e.target.value)
+                                }
+                                placeholder="Ghi chú (ví dụ: trang chứa bằng chứng, mô tả ngắn)"
+                                autoSize={{ minRows: 1, maxRows: 4 }}
+                              />
+                            </div>
+                          </Card>
+                        ))}
                       </div>
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+                    )}
 
-            <Form.Item
-              name="reason"
-              label="Lý Do Từ Chối"
-              rules={[
-                { required: true, message: "Vui lòng nhập lý do từ chối" },
-                { max: 500, message: "Tối đa 500 ký tự" },
-              ]}
-              style={{ marginBottom: 12 }}
-            >
-              <TextArea
-                rows={3}
-                placeholder="Ví dụ: Dữ liệu lượng mưa báo cáo không khớp với dữ liệu vệ tinh..."
-                maxLength={500}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="validated_by"
-              label="Người Đánh Giá"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng nhập tên người đánh giá",
-                },
-                { max: 200, message: "Tối đa 200 ký tự" },
-              ]}
-              style={{ marginBottom: 12 }}
-            >
-              <Input
-                placeholder="Ví dụ: Nguyễn Văn A - Chuyên viên thẩm định"
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="validation_notes"
-              label="Ghi Chú Chi Tiết"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng nhập ghi chú chi tiết",
-                },
-                { max: 1000, message: "Tối đa 1000 ký tự" },
-              ]}
-              style={{ marginBottom: 0 }}
-              extra={
-                <span style={{ fontSize: "11px" }}>
-                  Giải thích chi tiết lý do từ chối, bằng chứng đã xem xét
-                </span>
-              }
-            >
-              <TextArea
-                rows={3}
-                placeholder="Sau khi xem xét kỹ lưỡng hình ảnh vệ tinh..."
-                maxLength={1000}
-              />
-            </Form.Item>
-          </Card>
-
-          {/* Section 2: Bằng chứng chi tiết */}
-          <Card
-            type="inner"
-            title={
-              <span style={{ fontSize: "14px", fontWeight: "600" }}>
-                Bằng Chứng Chi Tiết (Tùy Chọn)
-              </span>
-            }
-            size="small"
-            style={{ marginBottom: 16 }}
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="event_date"
-                  label={
-                    <span>
-                      Ngày Sự Kiện{" "}
-                      <Tooltip title="Ngày xảy ra sự kiện. Sẽ được chuyển sang format YYYY-MM-DD khi gửi API">
-                        <InfoCircleOutlined
-                          style={{ color: "#1890ff", fontSize: "12px" }}
-                        />
-                      </Tooltip>
-                    </span>
-                  }
-                  style={{ marginBottom: 12 }}
-                >
-                  <DatePicker
-                    placeholder="Chọn ngày sự kiện"
-                    size="large"
-                    format="DD/MM/YYYY"
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="policy_clause"
-                  label="Điều Khoản Chính Sách Không Hợp Lệ"
-                  style={{ marginBottom: 12 }}
-                >
-                  <Input
-                    placeholder="VD: Điều 2 - Mục 5: Bảo hiểm không áp dụng cho thiệt hại do lũ lụt"
-                    size="large"
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col span={12}>
-                <Form.Item
-                  name="blackout_period_start"
-                  label={
-                    <span>
-                      Khoảng Thời Gian Không Bảo Hiểm (Từ){" "}
-                      <Tooltip title="Ngày bắt đầu của khoảng thời gian không được bảo hiểm. Sẽ được chuyển sang YYYY-MM-DD">
-                        <InfoCircleOutlined
-                          style={{ color: "#1890ff", fontSize: "12px" }}
-                        />
-                      </Tooltip>
-                    </span>
-                  }
-                  style={{ marginBottom: 12 }}
-                >
-                  <DatePicker
-                    placeholder="Chọn ngày bắt đầu"
-                    size="large"
-                    format="DD/MM/YYYY"
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="blackout_period_end"
-                  label={
-                    <span>
-                      Khoảng Thời Gian Không Bảo Hiểm (Đến){" "}
-                      <Tooltip title="Ngày kết thúc của khoảng thời gian không được bảo hiểm. Sẽ được chuyển sang YYYY-MM-DD">
-                        <InfoCircleOutlined
-                          style={{ color: "#1890ff", fontSize: "12px" }}
-                        />
-                      </Tooltip>
-                    </span>
-                  }
-                  style={{ marginBottom: 12 }}
-                >
-                  <DatePicker
-                    placeholder="Chọn ngày kết thúc"
-                    size="large"
-                    format="DD/MM/YYYY"
-                    style={{ width: "100%" }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col span={24}>
-                <Form.Item
-                  name="evidence_documents"
-                  label={
-                    <span>
-                      Tên Tài Liệu Bằng Chứng{" "}
-                      <Tooltip title="Nhập đường dẫn các file, cách nhau bởi dấu phẩy.">
-                        <InfoCircleOutlined
-                          style={{ color: "#1890ff", fontSize: "12px" }}
-                        />
-                      </Tooltip>
-                    </span>
-                  }
-                  extra="Nhập đường dẫn các file, cách nhau bởi dấu phẩy (ví dụ: file1.pdf, file2.pdf)"
-                  style={{ marginBottom: 0 }}
-                >
-                  <Input
-                    placeholder="VD: hopdong_v1.2.pdf, baocaoluongmua_2025.pdf"
-                    size="large"
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Card>
+                    <Modal
+                      open={previewVisible}
+                      title={previewTitle}
+                      footer={null}
+                      onCancel={() => setPreviewVisible(false)}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        alt="preview"
+                        style={{ width: "100%" }}
+                        src={previewImage}
+                      />
+                    </Modal>
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Tabs.TabPane>
+          </Tabs>
 
           {/* Action Buttons */}
           <Form.Item className="mb-0" style={{ marginTop: 16 }}>
@@ -344,7 +474,7 @@ export default function ClaimModals({
               size="middle"
               style={{ paddingRight: 16 }}
             >
-              <Button onClick={onRejectCancel} size="large">
+              <Button onClick={onRejectCancel} type="dashed" size="large">
                 Hủy
               </Button>
               <Button

@@ -337,9 +337,9 @@ export default function CancelRequestDetailPage() {
     setSubmitting(true);
     try {
       const result = await reviewCancelRequest(
+        requestId, // id
         true, // approved = true
-        values.review_notes || "Chấp thuận hủy hợp đồng",
-        values.compensate_amount || 0
+        values.review_notes || "Chấp thuận hủy hợp đồng"
       );
 
       if (result.success) {
@@ -366,6 +366,7 @@ export default function CancelRequestDetailPage() {
     setSubmitting(true);
     try {
       const result = await reviewCancelRequest(
+        requestId, // id
         false, // approved = false
         values.review_notes
       );
@@ -402,7 +403,11 @@ export default function CancelRequestDetailPage() {
     setSubmitting(true);
     try {
       const approved = resolveAction === "approve";
-      const result = await resolveDispute(approved, values.resolution_notes);
+      const result = await resolveDispute(
+        requestId, // id
+        approved,
+        values.resolution_notes
+      );
 
       if (result.success) {
         setResolveModalVisible(false);

@@ -3,6 +3,12 @@ export {
     AUTH_MESSAGES,
     getAuthMessageIcon,
     getAuthMessageType,
+    // Employee helpers
+    getEmployeeError,
+    getEmployeeInfo,
+    getEmployeeMessage,
+    getEmployeeSuccess,
+    getEmployeeValidation,
     getRegisterError,
     getRegisterInfo,
     getRegisterMessage,

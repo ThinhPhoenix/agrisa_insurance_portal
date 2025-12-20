@@ -7,6 +7,8 @@ export const endpoints = {
     auth_me: `/profile/protected/api/v1/me`,
     sign_out: `${prefix}/auth/sign-out`,
     sign_up: `${prefix}/auth/sign-up`,
+    // Register with role
+    register: (role_name) => `/auth/public/register?role_name=${role_name}`,
   },
   user: {
     find: `${prefix}/users`,
@@ -97,6 +99,9 @@ export const endpoints = {
     // Public: get user by public user id (own endpoint)
     get_public_user_by_id: (user_id) =>
       `/profile/public/api/v1/users/own/${user_id}`,
+    // Admin update user (assign partner_id to employee)
+    admin_update_user: (user_id) =>
+      `/profile/protected/api/v1/users/admin/${user_id}`,
     // Partner deletion requests
     deletion_request: {
       create: `/profile/protected/api/v1/insurance-partners/deletion-requests`,

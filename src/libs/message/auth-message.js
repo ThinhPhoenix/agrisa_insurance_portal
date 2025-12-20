@@ -4,6 +4,60 @@
  */
 
 export const AUTH_MESSAGES = {
+  // EMPLOYEE CREATION MESSAGES
+  EMPLOYEE: {
+    SUCCESS: {
+      CREATE_SUCCESS: "Tạo tài khoản nhân viên thành công!",
+      ACCOUNT_CREATED: "Tài khoản nhân viên đã được tạo và gán vào công ty!",
+    },
+
+    ERROR: {
+      // Permission errors
+      NOT_ADMIN: "Bạn không có quyền tạo tài khoản nhân viên. Chỉ quản trị viên công ty mới có quyền này.",
+      NO_PARTNER_ID: "Không tìm thấy thông tin công ty. Vui lòng đăng nhập lại.",
+
+      // Registration errors
+      REGISTRATION_FAILED: "Không thể tạo tài khoản nhân viên. Vui lòng thử lại.",
+      USER_ALREADY_EXISTS: "Email hoặc số điện thoại này đã được đăng ký.",
+      EMAIL_ALREADY_EXISTS: "Email này đã được sử dụng. Vui lòng chọn email khác.",
+      PHONE_ALREADY_EXISTS: "Số điện thoại này đã được sử dụng. Vui lòng chọn số khác.",
+      NATIONAL_ID_ALREADY_EXISTS: "Số CCCD/CMND này đã được sử dụng. Vui lòng kiểm tra lại.",
+
+      // Validation errors from Register API
+      INVALID_REQUEST_FORMAT: "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.",
+      VALIDATION_ERROR: "Thông tin không hợp lệ. Vui lòng kiểm tra lại.",
+      INVALID_EMAIL: "Định dạng email không hợp lệ. Email phải có ít nhất 5 ký tự và chứa ký tự @.",
+      INVALID_PHONE: "Định dạng số điện thoại không hợp lệ. Số điện thoại phải có ít nhất 10 ký tự.",
+      INVALID_PASSWORD_FORMAT: "Định dạng mật khẩu không hợp lệ. Mật khẩu phải có ít nhất 8 ký tự.",
+      INVALID_NATIONAL_ID: "Số CCCD/CMND không hợp lệ. Vui lòng nhập 9 chữ số (CMND cũ) hoặc 12 chữ số (CCCD mới).",
+
+      // Partner assignment errors
+      ASSIGN_PARTNER_FAILED: "Tạo tài khoản thành công nhưng không thể gán vào công ty. Vui lòng liên hệ quản trị viên.",
+      UPDATE_USER_FAILED: "Không thể cập nhật thông tin nhân viên. Vui lòng thử lại.",
+
+      // General errors
+      INTERNAL_ERROR: "Lỗi hệ thống. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
+      SERVER_ERROR: "Lỗi hệ thống. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
+      NETWORK_ERROR: "Không có kết nối internet. Vui lòng kiểm tra và thử lại.",
+      UNKNOWN_ERROR: "Có lỗi xảy ra. Vui lòng thử lại sau.",
+    },
+
+    VALIDATION: {
+      FULL_NAME_REQUIRED: "Vui lòng nhập họ và tên nhân viên!",
+      EMAIL_REQUIRED: "Vui lòng nhập email!",
+      PHONE_REQUIRED: "Vui lòng nhập số điện thoại!",
+      PASSWORD_REQUIRED: "Vui lòng nhập mật khẩu!",
+      EMAIL_INVALID: "Email không hợp lệ!",
+      PHONE_INVALID: "Số điện thoại không hợp lệ! (VD: 0987654321 hoặc +84987654321)",
+      PASSWORD_TOO_SHORT: "Mật khẩu phải có ít nhất 8 ký tự!",
+    },
+
+    INFO: {
+      CREATING_ACCOUNT: "Đang tạo tài khoản nhân viên...",
+      ASSIGNING_TO_COMPANY: "Đang gán nhân viên vào công ty...",
+    },
+  },
+
   // REGISTER MESSAGES
   REGISTER: {
     SUCCESS: {
@@ -232,6 +286,32 @@ export const getRegisterInfo = (key, params = {}) =>
   getRegisterMessage("INFO", key, params);
 export const getRegisterWarning = (key, params = {}) =>
   getRegisterMessage("WARNING", key, params);
+
+// EMPLOYEE helpers
+export const getEmployeeMessage = (type, key, params = {}) => {
+  const category = AUTH_MESSAGES.EMPLOYEE[type];
+  if (!category || !category[key]) {
+    return `Employee message not found: EMPLOYEE.${type}.${key}`;
+  }
+
+  let message = category[key];
+
+  // Replace parameters
+  Object.keys(params).forEach((param) => {
+    message = message.replace(new RegExp(`{${param}}`, "g"), params[param]);
+  });
+
+  return message;
+};
+
+export const getEmployeeSuccess = (key, params = {}) =>
+  getEmployeeMessage("SUCCESS", key, params);
+export const getEmployeeError = (key, params = {}) =>
+  getEmployeeMessage("ERROR", key, params);
+export const getEmployeeValidation = (key, params = {}) =>
+  getEmployeeMessage("VALIDATION", key, params);
+export const getEmployeeInfo = (key, params = {}) =>
+  getEmployeeMessage("INFO", key, params);
 
 // SIGNIN helpers
 export const getSignInMessage = (type, key, params = {}) => {

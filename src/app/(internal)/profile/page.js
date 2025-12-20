@@ -1,6 +1,7 @@
 "use client";
-import DeletionRequestModal from "@/components/profile/DeletionRequestModal";
-import DeletionRequestStatus from "@/components/profile/DeletionRequestStatus";
+import CreateEmployeeModal from "@/components/layout/profile/CreateEmployeeModal";
+import DeletionRequestModal from "@/components/layout/profile/DeletionRequestModal";
+import DeletionRequestStatus from "@/components/layout/profile/DeletionRequestStatus";
 import { useGetDeletionRequests } from "@/services/hooks/profile/use-partner-deletion";
 import {
   useAccountProfile,
@@ -20,6 +21,7 @@ import {
   PhoneOutlined,
   StarOutlined,
   TeamOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -226,12 +228,27 @@ function AccountEditModal({ visible, onClose, data, onSave, loading }) {
 // Account Info Tab Content
 function AccountInfoTab() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [employeeModalVisible, setEmployeeModalVisible] = useState(false);
   const {
     getAccountProfile,
     updateAccountProfile,
     isLoading: accountLoading,
     data: accountData,
   } = useAccountProfile();
+
+  // Check if user is admin_partner
+  const isAdminPartner = () => {
+    try {
+      const meRaw = localStorage.getItem("me");
+      if (meRaw) {
+        const me = JSON.parse(meRaw);
+        return me.role_id === "admin_partner";
+      }
+    } catch (e) {
+      console.error("Failed to parse me data:", e);
+    }
+    return false;
+  };
 
   useEffect(() => {
     getAccountProfile();
@@ -422,13 +439,25 @@ function AccountInfoTab() {
           </Col>
 
           <Col xs={24}>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => setModalVisible(true)}
-            >
-              Chỉnh sửa
-            </Button>
+            <Space>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => setModalVisible(true)}
+              >
+                Chỉnh sửa
+              </Button>
+
+              {isAdminPartner() && (
+                <Button
+                  type="default"
+                  icon={<UserAddOutlined />}
+                  onClick={() => setEmployeeModalVisible(true)}
+                >
+                  Tạo tài khoản nhân viên
+                </Button>
+              )}
+            </Space>
           </Col>
         </Row>
       </Card>
@@ -439,6 +468,14 @@ function AccountInfoTab() {
         data={accountData}
         onSave={updateAccountProfile}
         loading={accountLoading}
+      />
+
+      <CreateEmployeeModal
+        visible={employeeModalVisible}
+        onClose={() => setEmployeeModalVisible(false)}
+        onSuccess={() => {
+          message.success("Tài khoản nhân viên đã được tạo thành công!");
+        }}
       />
     </>
   );

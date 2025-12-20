@@ -103,7 +103,7 @@ export function useCancelPolicy(requestId = null) {
 
   // Review cancel request (approve/deny)
   const reviewCancelRequest = useCallback(
-    async (id, approved, reviewNotes, compensateAmount = 0) => {
+    async (id, approved, reviewNotes) => {
       const targetId = id || requestId;
       if (!targetId) return { success: false };
 
@@ -113,7 +113,6 @@ export function useCancelPolicy(requestId = null) {
           {
             approved,
             review_notes: reviewNotes,
-            compensate_amount: compensateAmount,
           }
         );
 

@@ -136,7 +136,7 @@ export function useCancelPolicy(requestId = null) {
     [requestId, fetchCancelRequests]
   );
 
-  // Resolve dispute - giải quyết tranh chấp
+  // Resolve dispute - giải quyết tranh chấp (old method - keep for backward compatibility)
   const resolveDispute = useCallback(
     async (id, approved, resolutionNotes) => {
       const targetId = id || requestId;
@@ -170,6 +170,40 @@ export function useCancelPolicy(requestId = null) {
     [requestId, fetchCancelRequests]
   );
 
+  // Resolve dispute - Partner company resolves dispute (new API endpoint)
+  const resolveDisputePartner = useCallback(
+    async (id, finalDecision, reviewNotes) => {
+      const targetId = id || requestId;
+      if (!targetId) return { success: false };
+
+      try {
+        const response = await axiosInstance.put(
+          endpoints.cancelRequest.resolveDispute(targetId),
+          {
+            final_decision: finalDecision, // 'approved' or 'denied'
+            review_notes: reviewNotes,
+          }
+        );
+
+        if (response.data.success) {
+          await fetchCancelRequests(); // Refresh data
+          return { success: true };
+        } else {
+          throw new Error(response.data.message || "Failed to resolve dispute");
+        }
+      } catch (error) {
+        console.error("Error resolving dispute (partner):", error);
+        // Map BE error thành thông báo tiếng Việt
+        const errorCode = error.response?.data?.error?.code;
+        const errorMessage =
+          error.response?.data?.error?.message || error.message;
+        const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+        return { success: false, error: userMessage };
+      }
+    },
+    [requestId, fetchCancelRequests]
+  );
+
   return {
     // List operations
     paginatedData,
@@ -192,5 +226,6 @@ export function useCancelPolicy(requestId = null) {
     createCancelRequest,
     reviewCancelRequest,
     resolveDispute,
+    resolveDisputePartner,
   };
 }

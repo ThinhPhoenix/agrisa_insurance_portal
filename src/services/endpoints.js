@@ -154,6 +154,8 @@ export const endpoints = {
     create: `/policy/protected/api/v2/cancel_request/`,
     listPartner: "/policy/protected/api/v2/cancel_request/read-partner/own",
     review: (id) => `/policy/protected/api/v2/cancel_request/review/${id}`,
+    resolveDispute: (id) =>
+      `/policy/protected/api/v2/cancel_request/resolve-dispute/${id}`,
   },
   dashboard: {
     partnerOverview: "/policy/protected/api/v2/dashboard/partner/overview",

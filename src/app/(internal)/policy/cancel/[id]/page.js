@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomForm } from "@/components/custom-form";
 import axiosInstance from "@/libs/axios-instance";
 import { formatUtcDate } from "@/libs/date-utils";
 import { endpoints } from "@/services/endpoints";
@@ -34,7 +35,7 @@ import {
   Typography,
 } from "antd";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../../policy.css";
 
 const { Title, Text } = Typography;
@@ -50,6 +51,7 @@ export default function CancelRequestDetailPage() {
     loading,
     reviewCancelRequest,
     resolveDispute,
+    resolveDisputePartner,
     getCancelRequestById,
   } = useCancelPolicy();
 
@@ -59,6 +61,7 @@ export default function CancelRequestDetailPage() {
   const [approveForm] = Form.useForm();
   const [denyForm] = Form.useForm();
   const [resolveForm] = Form.useForm();
+  const resolveDisputePartnerFormRef = useRef();
 
   // Related data
   const [policy, setPolicy] = useState(null);
@@ -68,6 +71,10 @@ export default function CancelRequestDetailPage() {
   const [approveModalVisible, setApproveModalVisible] = useState(false);
   const [denyModalVisible, setDenyModalVisible] = useState(false);
   const [resolveModalVisible, setResolveModalVisible] = useState(false);
+  const [
+    resolveDisputePartnerModalVisible,
+    setResolveDisputePartnerModalVisible,
+  ] = useState(false);
   const [resolveAction, setResolveAction] = useState(null); // 'approve' or 'keep_active'
   const [submitting, setSubmitting] = useState(false);
 
@@ -415,6 +422,33 @@ export default function CancelRequestDetailPage() {
     }
   };
 
+  // Handle resolve dispute partner - Xử lý tranh chấp từ phía công ty yêu cầu
+  const onResolveDisputePartnerSubmit = async (values) => {
+    setSubmitting(true);
+    try {
+      const result = await resolveDisputePartner(
+        requestId,
+        values.final_decision, // 'approved' or 'denied'
+        values.review_notes
+      );
+
+      if (result.success) {
+        setResolveDisputePartnerModalVisible(false);
+        resolveDisputePartnerFormRef.current?.resetFields();
+        message.success("Xử lý tranh chấp thành công");
+        router.push("/policy/cancel");
+      } else {
+        // result.error đã được map sang tiếng Việt từ mapBackendErrorToMessage()
+        message.error(result.error);
+      }
+    } catch (error) {
+      console.error("Error resolving dispute (partner):", error);
+      message.error("Xử lý tranh chấp thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading || policyLoading) {
     return (
       <Layout.Content className="insurance-content">
@@ -494,6 +528,17 @@ export default function CancelRequestDetailPage() {
                       Giải quyết - Giữ hợp đồng
                     </Button>
                   </>
+                )}
+              {isMyRequest &&
+                cancelRequest.status === "litigation" &&
+                cancelRequest.requested_by !== currentPartnerId && (
+                  <Button
+                    type="primary"
+                    icon={<ExclamationCircleOutlined />}
+                    onClick={() => setResolveDisputePartnerModalVisible(true)}
+                  >
+                    Xử lý Tranh chấp
+                  </Button>
                 )}
             </Space>
           </div>
@@ -997,6 +1042,95 @@ export default function CancelRequestDetailPage() {
               </Space>
             </Form.Item>
           </Form>
+        </Modal>
+
+        {/* Resolve Dispute Partner Modal - Công ty yêu cầu xử lý tranh chấp */}
+        <Modal
+          title="Xử lý Tranh chấp"
+          open={resolveDisputePartnerModalVisible}
+          onCancel={() => {
+            setResolveDisputePartnerModalVisible(false);
+            resolveDisputePartnerFormRef.current?.resetFields();
+          }}
+          footer={null}
+          width={600}
+          destroyOnClose
+        >
+          <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded">
+            <Space direction="vertical" className="w-full">
+              <Space>
+                <ExclamationCircleOutlined style={{ color: "#ff7a45" }} />
+                <Text strong>
+                  Vui lòng xác định quyết định cuối cùng cho tranh chấp này
+                </Text>
+              </Space>
+              <Text type="secondary" className="text-sm">
+                Ghi chú xem xét sẽ được gửi đến đối tác để thông báo quyết định.
+              </Text>
+            </Space>
+          </div>
+
+          <CustomForm
+            ref={resolveDisputePartnerFormRef}
+            fields={[
+              {
+                name: "review_notes",
+                label: "Ghi chú xem xét",
+                type: "textarea",
+                required: true,
+                rules: [
+                  {
+                    required: true,
+                    message: "Vui lòng nhập ghi chú xem xét",
+                  },
+                ],
+              },
+              {
+                name: "final_decision",
+                label: "Quyết định cuối cùng",
+                type: "select",
+                required: true,
+                rules: [
+                  {
+                    required: true,
+                    message: "Vui lòng chọn quyết định",
+                  },
+                ],
+                options: [
+                  {
+                    label: "Chấp thuận - Hủy hợp đồng",
+                    value: "approved",
+                  },
+                  {
+                    label: "Từ chối - Giữ hợp đồng",
+                    value: "denied",
+                  },
+                ],
+              },
+            ]}
+            onSubmit={onResolveDisputePartnerSubmit}
+            gridColumns="1fr"
+            gap="16px"
+          />
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button
+              onClick={() => {
+                setResolveDisputePartnerModalVisible(false);
+                resolveDisputePartnerFormRef.current?.resetFields();
+              }}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="primary"
+              loading={submitting}
+              onClick={() => resolveDisputePartnerFormRef.current?.submit()}
+              icon={<CheckCircleOutlined />}
+            >
+              Xác nhận quyết định
+            </Button>
+          </div>
         </Modal>
       </div>
     </Layout.Content>

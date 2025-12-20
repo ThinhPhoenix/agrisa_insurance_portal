@@ -216,7 +216,7 @@ export default function CancelRequestDetailPage() {
       case "dispute":
         return "Tranh chấp";
       case "litigation":
-        return "Tranh chấp pháp lý";
+        return "Tranh chấp";
       default:
         return status;
     }
@@ -281,134 +281,32 @@ export default function CancelRequestDetailPage() {
     }).format(amount);
   };
 
-  // Parse evidence object into array of { description, images }
+  // Parse evidence object - handles BE format: { description, images: [{ url, comment }] }
   const parseEvidenceToPairs = (evidence) => {
     if (!evidence) return [];
 
-    // If evidence is already an array, try to normalize each entry
-    if (Array.isArray(evidence)) {
-      return evidence.map((item) => {
-        if (!item) return { description: "", images: [] };
-        if (typeof item === "string") {
-          // string might be url or text
-          if (item.startsWith("http") || item.startsWith("/"))
-            return { description: "", images: [item] };
-          try {
-            const parsed = JSON.parse(item);
-            if (Array.isArray(parsed))
-              return { description: "", images: parsed };
-            if (typeof parsed === "object" && parsed !== null) {
+    // BE format: { description: string, images: [{ url: string, comment: string }] }
+    if (typeof evidence === "object" && !Array.isArray(evidence)) {
+      const description = evidence.description || "";
+      const images = evidence.images || [];
+
+      // Ensure images is an array and each item has url property
+      const normalizedImages = Array.isArray(images)
+        ? images.map((img) => {
+            if (typeof img === "string") {
+              return { url: img, comment: "" };
+            }
+            if (typeof img === "object" && img !== null) {
               return {
-                description: parsed.description || parsed.desc || "",
-                images:
-                  parsed.images ||
-                  parsed.urls ||
-                  (parsed.url ? [parsed.url] : []),
+                url: img.url || "",
+                comment: img.comment || "",
               };
             }
-          } catch (e) {
-            return { description: item, images: [] };
-          }
-        }
-        if (typeof item === "object") {
-          return {
-            description: item.description || item.desc || "",
-            images: item.images || item.urls || (item.url ? [item.url] : []),
-          };
-        }
-        return { description: String(item), images: [] };
-      });
-    }
+            return { url: "", comment: "" };
+          })
+        : [];
 
-    // If evidence is an object, try to group keys into indexed pairs
-    if (typeof evidence === "object") {
-      // collect indexed groups: key may be like description_0, images-0, etc.
-      const groups = {};
-      const plain = { description: null, images: [] };
-
-      Object.entries(evidence).forEach(([k, v]) => {
-        // detect index suffix
-        const m = k.match(/^(.*?)(?:[_-]?(\d+))?$/);
-        if (!m) return;
-        const base = m[1];
-        const idx = m[2] ?? "0";
-
-        if (!m[2]) {
-          // no index - treat as plain fields (description or images)
-          if (/desc|description|note|value/i.test(base)) {
-            plain.description = typeof v === "string" ? v : JSON.stringify(v);
-          } else if (/image|img|photo|photos|images|url|urls/i.test(base)) {
-            if (Array.isArray(v)) plain.images = plain.images.concat(v);
-            else if (typeof v === "string") plain.images.push(v);
-            else if (typeof v === "object" && v !== null) {
-              if (v.url) plain.images.push(v.url);
-              else if (Array.isArray(v.urls))
-                plain.images = plain.images.concat(v.urls);
-            }
-          } else {
-            // unknown key without index - ignore or append to description
-            if (!plain.description)
-              plain.description = typeof v === "string" ? v : JSON.stringify(v);
-          }
-          return;
-        }
-
-        if (!groups[idx]) groups[idx] = { description: "", images: [] };
-        if (/desc|description|note|value/i.test(base)) {
-          groups[idx].description =
-            typeof v === "string" ? v : JSON.stringify(v);
-        } else if (/image|img|photo|photos|images|url|urls/i.test(base)) {
-          if (Array.isArray(v))
-            groups[idx].images = groups[idx].images.concat(v);
-          else if (typeof v === "string") groups[idx].images.push(v);
-          else if (typeof v === "object" && v !== null) {
-            if (v.url) groups[idx].images.push(v.url);
-            else if (Array.isArray(v.urls))
-              groups[idx].images = groups[idx].images.concat(v.urls);
-          }
-        } else {
-          // fallback: append to description
-          if (!groups[idx].description)
-            groups[idx].description =
-              typeof v === "string" ? v : JSON.stringify(v);
-        }
-      });
-
-      // build result array
-      const result = Object.keys(groups)
-        .sort((a, b) => Number(a) - Number(b))
-        .map((k) => ({
-          description: groups[k].description || "",
-          images: groups[k].images || [],
-        }));
-
-      // if plain has content, prepend it
-      if (
-        (plain.description && plain.description.length) ||
-        (plain.images && plain.images.length)
-      ) {
-        result.unshift({
-          description: plain.description || "",
-          images: plain.images || [],
-        });
-      }
-
-      // If no groups found, try to interpret top-level object as single pair
-      if (result.length === 0) {
-        // possible shape: { description: 'Bip', images: ['url'] }
-        const desc =
-          evidence.description || evidence.desc || evidence.note || null;
-        const imgs =
-          evidence.images ||
-          evidence.urls ||
-          (evidence.url ? [evidence.url] : []);
-        if (desc || (imgs && imgs.length))
-          return [{ description: desc || "", images: imgs || [] }];
-        // fallback: stringify
-        return [{ description: JSON.stringify(evidence), images: [] }];
-      }
-
-      return result;
+      return [{ description, images: normalizedImages }];
     }
 
     return [];
@@ -635,14 +533,20 @@ export default function CancelRequestDetailPage() {
                 <Descriptions.Item
                   label={
                     <span
-                      style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
                     >
                       <UserOutlined /> Người yêu cầu
                     </span>
                   }
                   span={1}
                 >
-                  <Text strong>{requestedByName || cancelRequest.requested_by}</Text>
+                  <Text strong>
+                    {requestedByName || cancelRequest.requested_by}
+                  </Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày yêu cầu" span={1}>
                   {formatUtcDate(cancelRequest.requested_at, {
@@ -667,29 +571,62 @@ export default function CancelRequestDetailPage() {
                     <div className="grid grid-cols-1 gap-4">
                       {parseEvidenceToPairs(cancelRequest.evidence).map(
                         (pair, idx) => (
-                          <Card key={idx} className="p-3">
-                            <div className="mb-2">
-                              <strong>Mô tả</strong>
-                            </div>
-                            <div className="mb-3 text-sm text-gray-700">
-                              {pair.description || "-"}
-                            </div>
+                          <Card key={idx} className="p-4">
+                            {pair.description && (
+                              <>
+                                <div className="mb-3">
+                                  <strong>Mô tả:</strong>
+                                </div>
+                                <div className="mb-4 text-sm text-gray-700 whitespace-pre-wrap">
+                                  {pair.description}
+                                </div>
+                              </>
+                            )}
 
                             {pair.images && pair.images.length > 0 && (
-                              <Image.PreviewGroup>
-                                <div className="flex flex-wrap gap-3">
-                                  {pair.images.map((src, i) => (
-                                    <Image
-                                      key={i}
-                                      src={src}
-                                      alt={`evidence-${idx}-${i}`}
-                                      width={200}
-                                      height={150}
-                                      style={{ objectFit: "cover" }}
-                                    />
-                                  ))}
+                              <div>
+                                <div className="mb-3">
+                                  <strong>
+                                    Hình ảnh ({pair.images.length})
+                                  </strong>
                                 </div>
-                              </Image.PreviewGroup>
+                                <Image.PreviewGroup>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {pair.images.map((imgObj, i) => {
+                                      const imgUrl =
+                                        typeof imgObj === "string"
+                                          ? imgObj
+                                          : imgObj.url;
+                                      const imgComment =
+                                        typeof imgObj === "object"
+                                          ? imgObj.comment
+                                          : "";
+                                      return (
+                                        <div key={i} className="flex flex-col">
+                                          <Image
+                                            src={imgUrl}
+                                            alt={`evidence-${idx}-${i}`}
+                                            width="100%"
+                                            height={200}
+                                            style={{
+                                              objectFit: "cover",
+                                              borderRadius: "4px",
+                                            }}
+                                            preview={{
+                                              mask: "Xem",
+                                            }}
+                                          />
+                                          {imgComment && (
+                                            <div className="mt-2 text-xs text-gray-600 italic">
+                                              {imgComment}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </Image.PreviewGroup>
+                              </div>
                             )}
                           </Card>
                         )

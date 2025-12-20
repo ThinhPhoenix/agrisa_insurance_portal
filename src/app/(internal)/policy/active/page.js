@@ -141,7 +141,6 @@ export default function ActivePoliciesPage() {
             const result = await createCancelRequest(selectedPolicy.id, {
               cancel_request_type: mainFormValues.cancel_request_type,
               reason: mainFormValues.reason,
-              compensate_amount: mainFormValues.compensate_amount || 0,
               evidence: evidence,
             });
 
@@ -403,13 +402,6 @@ export default function ActivePoliciesPage() {
         label: "Lý do hủy",
         placeholder: "Nhập lý do chi tiết yêu cầu hủy hợp đồng...",
         required: true,
-      },
-      {
-        name: "compensate_amount",
-        type: "number",
-        label: "Số tiền bồi thường đề nghị (VND)",
-        placeholder: "0",
-        min: 0,
       },
       {
         name: "evidence_description",

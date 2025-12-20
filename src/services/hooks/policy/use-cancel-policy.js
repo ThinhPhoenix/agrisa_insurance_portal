@@ -80,7 +80,6 @@ export function useCancelPolicy(requestId = null) {
         {
           cancel_request_type: cancelData.cancel_request_type,
           reason: cancelData.reason,
-          compensate_amount: cancelData.compensate_amount,
           evidence: cancelData.evidence || {},
         }
       );

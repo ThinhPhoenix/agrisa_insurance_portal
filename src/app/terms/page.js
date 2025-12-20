@@ -29,7 +29,7 @@ const sections = [
 
 **AGRISA PLATFORM**
 
-**Agrisa không phải là công ty bảo hiểm** và **không chịu trách nhiệm về các quyết định bảo hiểm, bồi thường hay tranh chấp pháp lý**. Tất cả các gói bảo hiểm được cung cấp bởi các đối tác bảo hiểm độc lập, và mọi nghĩa vụ thanh toán, bồi thường đều thuộc trách nhiệm của đối tác bảo hiểm tương ứng.
+**Agrisa không phải là công ty bảo hiểm** và **không chịu trách nhiệm về các quyết định bảo hiểm, bồi thường hay Tranh chấp**. Tất cả các gói bảo hiểm được cung cấp bởi các đối tác bảo hiểm độc lập, và mọi nghĩa vụ thanh toán, bồi thường đều thuộc trách nhiệm của đối tác bảo hiểm tương ứng.
 
 **Cam kết của chúng tôi là mang lại sự minh bạch, tin cậy và hiệu quả trong việc kết nối nông dân với các giải pháp bảo hiểm phù hợp nhất.**`,
   },

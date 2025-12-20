@@ -98,7 +98,7 @@ export default function CancelRequestsPage() {
       case "dispute":
         return "Tranh chấp";
       case "litigation":
-        return "Tranh chấp pháp lý";
+        return "Tranh chấp";
       default:
         return status;
     }

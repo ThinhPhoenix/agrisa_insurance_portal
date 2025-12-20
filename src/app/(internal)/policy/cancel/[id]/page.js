@@ -4,12 +4,14 @@ import axiosInstance from "@/libs/axios-instance";
 import { formatUtcDate } from "@/libs/date-utils";
 import { endpoints } from "@/services/endpoints";
 import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
+import { useGetPublicUser } from "@/services/hooks/profile/use-profile";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
   FilePdfOutlined,
   FileTextOutlined,
+  UserOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
 import {
@@ -52,6 +54,7 @@ export default function CancelRequestDetailPage() {
   } = useCancelPolicy();
 
   const cancelRequest = getCancelRequestById(requestId);
+  const { getPublicUser } = useGetPublicUser();
 
   const [approveForm] = Form.useForm();
   const [denyForm] = Form.useForm();
@@ -67,6 +70,98 @@ export default function CancelRequestDetailPage() {
   const [resolveModalVisible, setResolveModalVisible] = useState(false);
   const [resolveAction, setResolveAction] = useState(null); // 'approve' or 'keep_active'
   const [submitting, setSubmitting] = useState(false);
+
+  // User display names
+  const [requestedByName, setRequestedByName] = useState("");
+  const [reviewedByName, setReviewedByName] = useState("");
+
+  // Check if current user is the requester
+  const [isMyRequest, setIsMyRequest] = useState(false);
+  const [currentPartnerId, setCurrentPartnerId] = useState(null);
+
+  // Get current user's partner_id from localStorage
+  useEffect(() => {
+    try {
+      const meData = localStorage.getItem("me");
+      if (meData) {
+        const me = JSON.parse(meData);
+        setCurrentPartnerId(me.partner_id);
+      }
+    } catch (error) {
+      console.error("Error parsing me data:", error);
+    }
+  }, []);
+
+  // Check if this is the current user's request
+  useEffect(() => {
+    if (currentPartnerId && cancelRequest?.requested_by) {
+      setIsMyRequest(currentPartnerId === cancelRequest.requested_by);
+    }
+  }, [currentPartnerId, cancelRequest?.requested_by]);
+
+  // Fetch requester display name
+  useEffect(() => {
+    let mounted = true;
+    const id = cancelRequest?.requested_by;
+    if (!id) return;
+
+    // Check if requested_by is the current user's partner (company side)
+    if (currentPartnerId && id === currentPartnerId) {
+      setRequestedByName("Phía công ty");
+      return;
+    }
+
+    // Otherwise, fetch user display name from API
+    getPublicUser(id)
+      .then((res) => {
+        if (!mounted) return;
+        if (res.success && res.data?.display_name) {
+          setRequestedByName(res.data.display_name);
+        } else {
+          setRequestedByName(`Người yêu cầu ${id}`);
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setRequestedByName(`Người yêu cầu ${id}`);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [cancelRequest?.requested_by, currentPartnerId, getPublicUser]);
+
+  // Fetch reviewer display name
+  useEffect(() => {
+    let mounted = true;
+    const id = cancelRequest?.reviewed_by;
+    if (!id) return;
+
+    // Check if reviewed_by is the current user's partner (company side)
+    if (currentPartnerId && id === currentPartnerId) {
+      setReviewedByName("Phía công ty");
+      return;
+    }
+
+    // Otherwise, fetch user display name from API
+    getPublicUser(id)
+      .then((res) => {
+        if (!mounted) return;
+        if (res.success && res.data?.display_name) {
+          setReviewedByName(res.data.display_name);
+        } else {
+          setReviewedByName(`Người xem xét ${id}`);
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setReviewedByName(`Người xem xét ${id}`);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [cancelRequest?.reviewed_by, currentPartnerId, getPublicUser]);
 
   // Fetch policy detail when cancelRequest is loaded
   useEffect(() => {
@@ -451,14 +546,21 @@ export default function CancelRequestDetailPage() {
             <Title level={2} className="insurance-title">
               Chi Tiết Yêu Cầu Hủy Hợp Đồng
             </Title>
-            <Text className="insurance-subtitle">
-              Mã yêu cầu: {cancelRequest.id}
-            </Text>
+            <Space>
+              <Text className="insurance-subtitle">
+                Mã yêu cầu: {cancelRequest.id}
+              </Text>
+              {isMyRequest && (
+                <Tag icon={<UserOutlined />} color="blue">
+                  Yêu cầu của tôi
+                </Tag>
+              )}
+            </Space>
           </div>
           <div>
             <Space>
               <Button onClick={() => router.back()}>Quay lại</Button>
-              {cancelRequest.status === "pending_review" && (
+              {!isMyRequest && cancelRequest.status === "pending_review" && (
                 <>
                   <Button
                     type="primary"
@@ -476,24 +578,25 @@ export default function CancelRequestDetailPage() {
                   </Button>
                 </>
               )}
-              {(cancelRequest.status === "denied" ||
-                cancelRequest.status === "dispute") && (
-                <>
-                  <Button
-                    type="primary"
-                    icon={<CheckCircleOutlined />}
-                    onClick={() => handleResolveDispute("approve")}
-                  >
-                    Giải quyết - Hủy hợp đồng
-                  </Button>
-                  <Button
-                    icon={<ExclamationCircleOutlined />}
-                    onClick={() => handleResolveDispute("keep_active")}
-                  >
-                    Giải quyết - Giữ hợp đồng
-                  </Button>
-                </>
-              )}
+              {!isMyRequest &&
+                (cancelRequest.status === "denied" ||
+                  cancelRequest.status === "dispute") && (
+                  <>
+                    <Button
+                      type="primary"
+                      icon={<CheckCircleOutlined />}
+                      onClick={() => handleResolveDispute("approve")}
+                    >
+                      Giải quyết - Hủy hợp đồng
+                    </Button>
+                    <Button
+                      icon={<ExclamationCircleOutlined />}
+                      onClick={() => handleResolveDispute("keep_active")}
+                    >
+                      Giải quyết - Giữ hợp đồng
+                    </Button>
+                  </>
+                )}
             </Space>
           </div>
         </div>
@@ -529,8 +632,17 @@ export default function CancelRequestDetailPage() {
                 <Descriptions.Item label="Lý do hủy" span={2}>
                   {cancelRequest.reason}
                 </Descriptions.Item>
-                <Descriptions.Item label="Mã nông dân yêu cầu" span={1}>
-                  {cancelRequest.requested_by}
+                <Descriptions.Item
+                  label={
+                    <span
+                      style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                    >
+                      <UserOutlined /> Người yêu cầu
+                    </span>
+                  }
+                  span={1}
+                >
+                  <Text strong>{requestedByName || cancelRequest.requested_by}</Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày yêu cầu" span={1}>
                   {formatUtcDate(cancelRequest.requested_at, {
@@ -600,8 +712,23 @@ export default function CancelRequestDetailPage() {
                 }
               >
                 <Descriptions bordered column={2}>
-                  <Descriptions.Item label="Người xem xét" span={1}>
-                    {cancelRequest.reviewed_by}
+                  <Descriptions.Item
+                    label={
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <UserOutlined /> Người xem xét
+                      </span>
+                    }
+                    span={1}
+                  >
+                    <Text strong>
+                      {reviewedByName || cancelRequest.reviewed_by}
+                    </Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="Thời gian xem xét" span={1}>
                     {formatUtcDate(cancelRequest.reviewed_at, {

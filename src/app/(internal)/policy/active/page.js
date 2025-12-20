@@ -26,6 +26,7 @@ import {
   Modal,
   Space,
   Spin,
+  Tabs,
   Tag,
   Typography,
 } from "antd";
@@ -59,14 +60,10 @@ export default function ActivePoliciesPage() {
 
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
-  const [cancelReason, setCancelReason] = useState("");
-  const [cancelRequestType, setCancelRequestType] = useState(
-    "policyholder_request"
-  );
-  const [compensateAmount, setCompensateAmount] = useState(0);
-  const [evidenceFields, setEvidenceFields] = useState([]);
   const [submittingCancel, setSubmittingCancel] = useState(false);
-  const formRef = useRef(null);
+  const [imageFieldCount, setImageFieldCount] = useState(1);
+  const cancelFormRef = useRef(null);
+  const imageFormRef = useRef(null);
 
   // Calculate summary stats using allPolicies (unpaginated)
   const summaryStats = {
@@ -96,66 +93,80 @@ export default function ActivePoliciesPage() {
   const handleCancelRequest = (policy) => {
     setSelectedPolicy(policy);
     setCancelModalVisible(true);
-    setCancelReason("");
-    setCancelRequestType("policyholder_request");
-    setCompensateAmount(0);
-    setEvidenceFields([]);
   };
 
-  const handleSubmitCancelRequest = () => {
-    if (!cancelReason.trim()) {
-      message.error("Vui lòng nhập lý do hủy");
+  const handleSubmitCancelRequest = async () => {
+    try {
+      // Validate main form (Tab 1)
+      const mainFormValues = await cancelFormRef.current.validateFields();
+
+      // Validate image form (Tab 2)
+      const imageFormValues = await imageFormRef.current.validateFields();
+
+      Modal.confirm({
+        title: "Xác nhận gửi yêu cầu hủy",
+        icon: <ExclamationCircleOutlined />,
+        content: (
+          <div>
+            <p>Bạn có chắc chắn muốn gửi yêu cầu hủy hợp đồng này không?</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Hợp đồng sẽ chuyển sang trạng thái "Chờ hủy" và chờ bên bảo hiểm
+              xem xét.
+            </p>
+          </div>
+        ),
+        okText: "Xác nhận gửi",
+        cancelText: "Hủy",
+        onOk: async () => {
+          setSubmittingCancel(true);
+          try {
+            // Build images array from image form values
+            const images = [];
+            for (let i = 0; i < imageFieldCount; i++) {
+              const url = imageFormValues[`image_${i}_url`];
+              const comment = imageFormValues[`image_${i}_comment`];
+              if (url && url.trim()) {
+                images.push({
+                  url: url.trim(),
+                  comment: comment ? comment.trim() : "",
+                });
+              }
+            }
+
+            const evidence = {
+              description: mainFormValues.evidence_description || "",
+              images: images,
+            };
+
+            const result = await createCancelRequest(selectedPolicy.id, {
+              cancel_request_type: mainFormValues.cancel_request_type,
+              reason: mainFormValues.reason,
+              compensate_amount: mainFormValues.compensate_amount || 0,
+              evidence: evidence,
+            });
+
+            if (result.success) {
+              message.success("Gửi yêu cầu hủy thành công");
+              setCancelModalVisible(false);
+              // Reset image field count
+              setImageFieldCount(1);
+              // Refresh the list
+              window.location.reload();
+            } else {
+              message.error(result.error || "Gửi yêu cầu thất bại");
+            }
+          } catch (error) {
+            console.error("Error submitting cancel request:", error);
+            message.error(error.message || "Gửi yêu cầu thất bại");
+          } finally {
+            setSubmittingCancel(false);
+          }
+        },
+      });
+    } catch (error) {
+      // Form validation failed - errors are shown by Form component
       return;
     }
-
-    Modal.confirm({
-      title: "Xác nhận gửi yêu cầu hủy",
-      icon: <ExclamationCircleOutlined />,
-      content: (
-        <div>
-          <p>Bạn có chắc chắn muốn gửi yêu cầu hủy hợp đồng này không?</p>
-          <p className="mt-2 text-sm text-gray-500">
-            Hợp đồng sẽ chuyển sang trạng thái "Chờ hủy" và chờ bên bảo hiểm xem
-            xét.
-          </p>
-        </div>
-      ),
-      okText: "Xác nhận gửi",
-      cancelText: "Hủy",
-      onOk: async () => {
-        setSubmittingCancel(true);
-        try {
-          // Transform evidenceFields array into evidence object
-          const evidence = {};
-          evidenceFields.forEach((field) => {
-            if (field.key && field.value) {
-              evidence[field.key] = field.value;
-            }
-          });
-
-          const result = await createCancelRequest(selectedPolicy.id, {
-            cancel_request_type: cancelRequestType,
-            reason: cancelReason,
-            compensate_amount: compensateAmount,
-            evidence: evidence,
-          });
-
-          if (result.success) {
-            message.success("Gửi yêu cầu hủy thành công");
-            setCancelModalVisible(false);
-            // Refresh the list
-            window.location.reload();
-          } else {
-            throw new Error(result.error || "Gửi yêu cầu thất bại");
-          }
-        } catch (error) {
-          console.error("Error submitting cancel request:", error);
-          message.error(error.message || "Gửi yêu cầu thất bại");
-        } finally {
-          setSubmittingCancel(false);
-        }
-      },
-    });
   };
 
   // Get status color for policy status
@@ -372,38 +383,62 @@ export default function ActivePoliciesPage() {
     },
   ];
 
-  // Generate evidence fields for CustomForm
-  const generateEvidenceFields = (evidenceArray) => {
+  // Generate cancel form fields
+  const generateCancelFormFields = () => {
+    return [
+      {
+        name: "cancel_request_type",
+        type: "select",
+        label: "Loại yêu cầu",
+        required: true,
+        options: [
+          { label: "Yêu cầu từ đối tác", value: "policyholder_request" },
+          { label: "Vi phạm hợp đồng", value: "contract_violation" },
+          { label: "Khác", value: "other" },
+        ],
+      },
+      {
+        name: "reason",
+        type: "textarea",
+        label: "Lý do hủy",
+        placeholder: "Nhập lý do chi tiết yêu cầu hủy hợp đồng...",
+        required: true,
+      },
+      {
+        name: "compensate_amount",
+        type: "number",
+        label: "Số tiền bồi thường đề nghị (VND)",
+        placeholder: "0",
+        min: 0,
+      },
+      {
+        name: "evidence_description",
+        type: "textarea",
+        label: "Mô tả bằng chứng",
+        placeholder: "Mô tả chi tiết các bằng chứng đính kèm (tùy chọn)",
+      },
+    ];
+  };
+
+  // Generate image evidence fields for tab 2
+  const generateImageEvidenceFields = () => {
     const fields = [];
-
-    evidenceArray.forEach((evidence, idx) => {
-      fields.push(
-        {
-          name: `evidence_${idx}_key`,
-          type: "input",
-          label: `Tên bằng chứng ${idx + 1}`,
-          placeholder: "e.g., photo_url, description, invoice, etc.",
-          initialValue: evidence.key || "",
-          required: false,
-        },
-        {
-          name: `evidence_${idx}_value`,
-          type: "textarea",
-          label: `Giá trị bằng chứng ${idx + 1}`,
-          placeholder: "Nhập giá trị hoặc nội dung liên quan",
-          initialValue: evidence.value || "",
-          required: false,
-        },
-        {
-          name: `evidence_${idx}_images`,
-          type: "image",
-          label: `Hình ảnh bằng chứng ${idx + 1}`,
-          maxCount: 5,
-          required: false,
-        }
-      );
-    });
-
+    for (let i = 0; i < imageFieldCount; i++) {
+      fields.push({
+        name: `image_${i}_url`,
+        type: "input",
+        label: `URL Hình ảnh ${i + 1}`,
+        placeholder: "https://example.com/image.jpg",
+        required: false,
+      });
+      fields.push({
+        name: `image_${i}_comment`,
+        type: "input",
+        label: `Ghi chú hình ảnh ${i + 1}`,
+        placeholder: "Nhập ghi chú cho hình ảnh này",
+        required: false,
+      });
+    }
     return fields;
   };
 
@@ -582,117 +617,84 @@ export default function ActivePoliciesPage() {
           title="Yêu cầu hủy hợp đồng bảo hiểm"
           open={cancelModalVisible}
           onOk={handleSubmitCancelRequest}
-          onCancel={() => setCancelModalVisible(false)}
+          onCancel={() => {
+            setCancelModalVisible(false);
+            setImageFieldCount(1);
+          }}
           confirmLoading={submittingCancel}
           okText="Gửi yêu cầu"
           cancelText="Hủy"
-          width={700}
+          width={800}
         >
           {selectedPolicy && (
             <div className="space-y-4">
-              <div className="bg-blue-50 p-3 rounded border border-blue-200">
+              {/* <div className="bg-blue-50 p-3 rounded border border-blue-200">
                 <p>
                   <strong>Số hợp đồng:</strong> {selectedPolicy.policy_number}
                 </p>
                 <p>
                   <strong>Mã nông dân:</strong> {selectedPolicy.farmer_id}
                 </p>
-              </div>
+              </div> */}
 
-              <div>
-                <label className="block mb-2 font-medium">
-                  Loại yêu cầu <span className="text-red-500">*</span>
-                </label>
-                <select
-                  className="w-full p-2 border rounded"
-                  value={cancelRequestType}
-                  onChange={(e) => setCancelRequestType(e.target.value)}
-                >
-                  <option value="policyholder_request">
-                    Yêu cầu từ nông dân
-                  </option>
-                  <option value="contract_violation">Vi phạm hợp đồng</option>
-                  <option value="other">Khác</option>
-                </select>
-              </div>
+              <Tabs
+                items={[
+                  {
+                    key: "1",
+                    label: "Thông tin chung",
+                    children: (
+                      <CustomForm
+                        ref={cancelFormRef}
+                        fields={generateCancelFormFields()}
+                        gridColumns="1fr"
+                        gap="16px"
+                      />
+                    ),
+                  },
+                  {
+                    key: "2",
+                    label: "Bằng chứng hình ảnh",
+                    children: (
+                      <div className="space-y-4">
+                        <CustomForm
+                          ref={imageFormRef}
+                          fields={generateImageEvidenceFields()}
+                          gridColumns="1fr"
+                          gap="16px"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            type="dashed"
+                            onClick={() =>
+                              setImageFieldCount(imageFieldCount + 1)
+                            }
+                          >
+                            + Thêm hình ảnh
+                          </Button>
+                          {imageFieldCount > 1 && (
+                            <Button
+                              danger
+                              type="dashed"
+                              onClick={() =>
+                                setImageFieldCount(imageFieldCount - 1)
+                              }
+                            >
+                              - Xóa hình ảnh cuối
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          Nhập URL trực tiếp của hình ảnh (không tải file). Có
+                          thể thêm nhiều hình ảnh minh họa cho yêu cầu.
+                        </p>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
 
-              <div>
-                <label className="block mb-2 font-medium">
-                  Lý do hủy <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  className="w-full p-2 border rounded"
-                  rows={4}
-                  placeholder="Nhập lý do yêu cầu hủy hợp đồng..."
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium">
-                  Số tiền bồi thường (nếu có)
-                </label>
-                <input
-                  type="number"
-                  className="w-full p-2 border rounded"
-                  min="0"
-                  value={compensateAmount}
-                  onChange={(e) =>
-                    setCompensateAmount(parseInt(e.target.value) || 0)
-                  }
-                  placeholder="0"
-                />
-                <p className="text-sm text-gray-500 mt-1">VND</p>
-              </div>
-
-              <div>
-                <label className="block mb-2 font-medium">
-                  Bằng chứng đính kèm (Tùy chọn)
-                </label>
-                <CustomForm
-                  ref={formRef}
-                  fields={generateEvidenceFields(evidenceFields)}
-                  onValuesChange={(changedValues, allValues) => {
-                    // Transform form values into evidenceFields array
-                    const newEvidenceFields = [];
-                    const keys = Object.keys(allValues).filter((k) =>
-                      k.startsWith("evidence_")
-                    );
-                    const evidenceIndices = new Set();
-
-                    keys.forEach((k) => {
-                      const match = k.match(/^evidence_(\d+)_/);
-                      if (match) evidenceIndices.add(parseInt(match[1]));
-                    });
-
-                    evidenceIndices.forEach((idx) => {
-                      const key = allValues[`evidence_${idx}_key`];
-                      const value = allValues[`evidence_${idx}_value`];
-                      if (key) {
-                        newEvidenceFields[idx] = { key, value, images: [] };
-                      }
-                    });
-
-                    setEvidenceFields(newEvidenceFields.filter((f) => f));
-                  }}
-                />
-                <Button
-                  type="dashed"
-                  className="mt-3"
-                  onClick={() => {
-                    setEvidenceFields([
-                      ...evidenceFields,
-                      { key: "", value: "", images: [] },
-                    ]);
-                  }}
-                >
-                  + Thêm bằng chứng
-                </Button>
-              </div>
-
-              <p className="text-sm text-gray-500">
-                ⚠️ Sau khi gửi yêu cầu, hợp đồng sẽ chuyển sang trạng thái "Chờ
+              <p className="text-sm text-gray-500 mt-4">
+                Sau khi gửi yêu cầu, hợp đồng sẽ chuyển sang trạng thái "Chờ
                 hủy" và bên bảo hiểm sẽ xem xét trong vòng 24-48 giờ.
               </p>
             </div>

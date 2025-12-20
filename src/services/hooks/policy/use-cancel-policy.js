@@ -1,9 +1,9 @@
 "use client";
 
 import axiosInstance from "@/libs/axios-instance";
+import { mapBackendErrorToMessage } from "@/libs/message/cancel-request-message";
 import { endpoints } from "@/services/endpoints";
 import { useTableData } from "@/services/hooks/common/use-table-data";
-import { message } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
 // Hook for cancel requests - list, detail, create, review, and dispute operations
@@ -42,7 +42,6 @@ export function useCancelPolicy(requestId = null) {
       const errorMessage =
         error.response?.data?.message || "Failed to fetch cancel requests";
       setError(errorMessage);
-      message.error("Không thể tải danh sách yêu cầu hủy");
       setCancelRequests([]);
     } finally {
       setLoading(false);
@@ -93,11 +92,12 @@ export function useCancelPolicy(requestId = null) {
       }
     } catch (error) {
       console.error("Error creating cancel request:", error);
+      // Map BE error thành thông báo tiếng Việt
+      const errorCode = error.response?.data?.error?.code;
       const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Gửi yêu cầu thất bại";
-      return { success: false, error: errorMessage };
+        error.response?.data?.error?.message || error.message;
+      const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+      return { success: false, error: userMessage };
     }
   }, []);
 
@@ -117,7 +117,6 @@ export function useCancelPolicy(requestId = null) {
         );
 
         if (response.data.success) {
-          message.success("Xem xét yêu cầu hủy thành công");
           await fetchCancelRequests(); // Refresh data
           return { success: true };
         } else {
@@ -127,10 +126,12 @@ export function useCancelPolicy(requestId = null) {
         }
       } catch (error) {
         console.error("Error reviewing cancel request:", error);
+        // Map BE error thành thông báo tiếng Việt
+        const errorCode = error.response?.data?.error?.code;
         const errorMessage =
-          error.response?.data?.message || "Failed to review cancel request";
-        message.error(errorMessage);
-        return { success: false, error: errorMessage };
+          error.response?.data?.error?.message || error.message;
+        const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+        return { success: false, error: userMessage };
       }
     },
     [requestId, fetchCancelRequests]
@@ -152,11 +153,6 @@ export function useCancelPolicy(requestId = null) {
         );
 
         if (response.data.success) {
-          message.success(
-            approved
-              ? "Đã giải quyết tranh chấp và hủy hợp đồng"
-              : "Đã giải quyết tranh chấp và giữ hợp đồng"
-          );
           await fetchCancelRequests(); // Refresh data
           return { success: true };
         } else {
@@ -164,10 +160,12 @@ export function useCancelPolicy(requestId = null) {
         }
       } catch (error) {
         console.error("Error resolving dispute:", error);
+        // Map BE error thành thông báo tiếng Việt
+        const errorCode = error.response?.data?.error?.code;
         const errorMessage =
-          error.response?.data?.message || "Failed to resolve dispute";
-        message.error(errorMessage);
-        return { success: false, error: errorMessage };
+          error.response?.data?.error?.message || error.message;
+        const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+        return { success: false, error: userMessage };
       }
     },
     [requestId, fetchCancelRequests]

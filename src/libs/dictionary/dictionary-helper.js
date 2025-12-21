@@ -207,9 +207,9 @@ export const UI_LABELS = {
   filterSearchLabel: "Bộ lọc tìm kiếm",
 
   // Create Policy Page
-  createBasePolicyTitle: "Tạo Hợp đồng mẫu Bảo hiểm Nông nghiệp Mới",
+  createBasePolicyTitle: "Tạo gói bảo hiểm Bảo hiểm Nông nghiệp Mới",
   createBasePolicySubtitle:
-    "Tạo hợp đồng mẫu bảo hiểm tham số được hỗ trợ bởi vệ tinh",
+    "Tạo gói bảo hiểm bảo hiểm tham số được hỗ trợ bởi vệ tinh",
 
   // Tab labels
   tabFAQ: "FAQ/Hướng dẫn",
@@ -248,7 +248,7 @@ export const UI_LABELS = {
   // Messages
   msgCreatingAllFields: "Đang tạo tất cả thẻ tài liệu...",
   msgBatchCreateSuccess: "Đã tạo thành công {count} thẻ tài liệu!",
-  msgBatchCreateError: "Lỗi khi tạo trường: {error}",
+  msgBatchCreateError: "Lỗi khi tạo thẻ: {error}",
   msgDuplicateFieldNames: "Tên trường trùng lặp: {names}",
   msgFieldAlreadyExists: "Tên trường đã tồn tại: {names}",
   msgIncompleteFields: "Có {count} trường chưa điền đầy đủ thông tin",
@@ -259,7 +259,7 @@ export const UI_LABELS = {
 
   // Archive toggle
   isArchive: "Lưu trữ",
-  isArchiveTooltip: "Đánh dấu hợp đồng mẫu này là đã lưu trữ",
+  isArchiveTooltip: "Đánh dấu gói bảo hiểm này là đã lưu trữ",
 
   // BasicTab sections
   sectionBasicInfo: "Thông tin Cơ bản",

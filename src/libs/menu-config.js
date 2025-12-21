@@ -86,5 +86,5 @@ export const labelTranslations = {
   Create: "Tạo mới",
   Edit: "Chỉnh sửa",
   Profile: "Hồ sơ",
-  BasePolicy: "Hợp đồng mẫu",
+  BasePolicy: "Gói bảo hiểm",
 };

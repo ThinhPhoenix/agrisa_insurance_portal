@@ -53,7 +53,7 @@
     },
     "over_threshold_multiplier": {
       "tieng_viet": "Hệ số vượt ngưỡng",
-      "ghi_chu": "Nhân lên khi vượt ngưỡng"
+      "ghi_chu": "Phải lớn hơn 0 (hợp lệ trong khoảng (0, 1)). Giá trị ≤ 0 hoặc ≥ 1 sẽ làm số tiền chi trả không hợp lệ."
     },
     "payout_base_rate": {
       "tieng_viet": "Tỷ lệ bồi thường cơ bản",

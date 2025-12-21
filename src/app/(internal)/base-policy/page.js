@@ -203,8 +203,11 @@ export default function PolicyPage() {
     ],
     policyStatuses: [
       { label: "Tất cả", value: "all" },
-      { label: dict.getEnumLabel('BasePolicyStatus', 'draft'), value: "draft" },
-      { label: dict.getEnumLabel('BasePolicyStatus', 'active'), value: "active" },
+      { label: dict.getEnumLabel("BasePolicyStatus", "draft"), value: "draft" },
+      {
+        label: dict.getEnumLabel("BasePolicyStatus", "active"),
+        value: "active",
+      },
     ],
   };
 
@@ -265,19 +268,19 @@ export default function PolicyPage() {
         const statusConfig = {
           draft: {
             color: "processing",
-            text: dict.getEnumLabel('BasePolicyStatus', 'draft'),
+            text: dict.getEnumLabel("BasePolicyStatus", "draft"),
           },
           active: {
             color: "success",
-            text: dict.getEnumLabel('BasePolicyStatus', 'active'),
+            text: dict.getEnumLabel("BasePolicyStatus", "active"),
           },
           closed: {
             color: "error",
-            text: dict.getEnumLabel('BasePolicyStatus', 'closed'),
+            text: dict.getEnumLabel("BasePolicyStatus", "closed"),
           },
           archived: {
             color: "default",
-            text: dict.getEnumLabel('BasePolicyStatus', 'archived'),
+            text: dict.getEnumLabel("BasePolicyStatus", "archived"),
           },
         };
         const config = statusConfig[status] || statusConfig.draft;
@@ -504,7 +507,7 @@ export default function PolicyPage() {
               pagination={{
                 ...paginationConfig,
                 showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} của ${total} hợp đồng mẫu`,
+                  `${range[0]}-${range[1]} của ${total} gói bảo hiểm`,
               }}
             />
           </div>

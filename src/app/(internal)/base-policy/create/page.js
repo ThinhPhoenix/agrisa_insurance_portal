@@ -193,7 +193,7 @@ const CreatePolicyPage = () => {
     );
   }, []);
 
-  // Xử lý tạo trường từ chế độ quét và áp dụng AcroForm ngay lập tức
+  // Xử lý tạo thẻ từ chế độ quét và áp dụng AcroForm ngay lập tức
   const handleCreateAndApplyField = useCallback(
     async (placeholder, fieldData) => {
       try {
@@ -312,7 +312,12 @@ const CreatePolicyPage = () => {
         const duplicates = newKeys.filter((k, i) => newKeys.indexOf(k) !== i);
         if (duplicates.length > 0) {
           message.destroy("batch-create");
-          message.error(dict.ui.msgDuplicateFieldNames.replace('{names}', duplicates.join(", ")));
+          message.error(
+            dict.ui.msgDuplicateFieldNames.replace(
+              "{names}",
+              duplicates.join(", ")
+            )
+          );
           return false;
         }
 
@@ -320,7 +325,12 @@ const CreatePolicyPage = () => {
         const conflicts = newKeys.filter((k) => existingKeys.includes(k));
         if (conflicts.length > 0) {
           message.destroy("batch-create");
-          message.error(dict.ui.msgFieldAlreadyExists.replace('{names}', conflicts.join(", ")));
+          message.error(
+            dict.ui.msgFieldAlreadyExists.replace(
+              "{names}",
+              conflicts.join(", ")
+            )
+          );
           return false;
         }
 
@@ -328,7 +338,12 @@ const CreatePolicyPage = () => {
         const empty = stagedFields.filter((f) => !f.key || !f.dataType);
         if (empty.length > 0) {
           message.destroy("batch-create");
-          message.error(dict.ui.msgIncompleteFields.replace('{count}', empty.length.toString()));
+          message.error(
+            dict.ui.msgIncompleteFields.replace(
+              "{count}",
+              empty.length.toString()
+            )
+          );
           return false;
         }
 
@@ -432,12 +447,17 @@ const CreatePolicyPage = () => {
 
         message.destroy("batch-create");
         message.success(
-          dict.ui.msgBatchCreateSuccess.replace('{count}', stagedFields.length.toString())
+          dict.ui.msgBatchCreateSuccess.replace(
+            "{count}",
+            stagedFields.length.toString()
+          )
         );
         return true;
       } catch (error) {
         message.destroy("batch-create");
-        message.error(dict.ui.msgBatchCreateError.replace('{error}', error.message));
+        message.error(
+          dict.ui.msgBatchCreateError.replace("{error}", error.message)
+        );
         console.error("❌ Batch create error:", error);
         return false;
       }
@@ -687,9 +707,7 @@ const CreatePolicyPage = () => {
         <Title level={3} style={{ margin: 0 }}>
           {dict.ui.createBasePolicyTitle}
         </Title>
-        <Text type="secondary">
-          {dict.ui.createBasePolicySubtitle}
-        </Text>
+        <Text type="secondary">{dict.ui.createBasePolicySubtitle}</Text>
       </div>
 
       {/* Validation Alert */}

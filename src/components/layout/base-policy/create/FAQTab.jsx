@@ -29,66 +29,69 @@ const { Panel } = Collapse;
  * Mục đích: Giải thích các khái niệm, công thức, và quy trình tạo policy
  * bằng tiếng Việt dễ hiểu, có chú thích tiếng Anh cho thuật ngữ chuyên sâu
  */
+import useDictionary from '@/services/hooks/common/use-dictionary';
+
 const FAQTab = () => {
+    const dict = useDictionary();
     // Bảng giải thích các trường cơ bản
     const basicFieldsData = [
         {
             key: '1',
-            field: 'Tên Sản phẩm',
+            field: dict.getFieldLabel('BasePolicy', 'product_name') || 'Tên sản phẩm',
             englishTerm: 'Product Name',
-            description: 'Tên hiển thị của gói bảo hiểm, giúp người dùng dễ nhận biết',
-            example: 'Bảo hiểm lúa mùa đông 2025',
-            required: 'Có'
+            description: 'Tên hiển thị để người mua nhận diện gói bảo hiểm.',
+            example: dict.getFieldNote('BasePolicy', 'product_name') || 'Bảo hiểm lúa mùa đông 2025',
+            required: 'Bắt buộc'
         },
         {
             key: '2',
-            field: 'Mã Sản phẩm',
+            field: dict.getFieldLabel('BasePolicy', 'product_code') || 'Mã sản phẩm',
             englishTerm: 'Product Code',
-            description: 'Mã định danh duy nhất trong hệ thống, chỉ chứa chữ, số và dấu gạch dưới',
+            description: 'Mã ngắn gọn, chỉ gồm chữ, số và dấu gạch dưới.',
             example: 'RICE_WINTER_2025',
-            required: 'Có'
+            required: 'Bắt buộc'
         },
         {
             key: '3',
-            field: 'Loại Cây trồng',
+            field: dict.getFieldLabel('BasePolicy', 'crop_type') || 'Loại cây trồng',
             englishTerm: 'Crop Type',
-            description: 'Loại cây trồng được áp dụng bảo hiểm',
+            description: 'Loại cây trồng áp dụng cho gói bảo hiểm.',
             example: 'Lúa, Ngô, Cà phê',
-            required: 'Có'
+            required: 'Bắt buộc'
         },
         {
             key: '4',
-            field: 'Thời hạn bảo hiểm',
+            field: dict.getFieldLabel('BasePolicy', 'coverage_duration_days') || 'Thời hạn bảo hiểm',
             englishTerm: 'Coverage Duration',
-            description: 'Số ngày mà hợp đồng bảo hiểm có hiệu lực',
+            description: 'Số ngày hợp đồng có hiệu lực (ví dụ: 120 ngày).',
             example: '120 ngày',
-            required: 'Có'
+            required: 'Bắt buộc'
         },
     ];
 
     const premiumFieldsData = [
         {
             key: '1',
-            field: 'Phí bảo hiểm cố định',
+            field: dict.getFieldLabel('BasePolicy', 'fix_premium_amount') || 'Phí bảo hiểm cố định',
             englishTerm: 'Fixed Premium Amount',
-            description: 'Số tiền phí cố định mà người mua phải trả, không thay đổi theo diện tích hay điều kiện',
+            description: 'Số tiền cố định người mua phải trả (nếu sử dụng).',
             example: '1,000,000 ₫',
-            required: 'Có (nếu không dùng tỷ lệ phí)'
+            required: 'Tùy chọn'
         },
         {
             key: '2',
-            field: 'Tỷ lệ phí cơ bản',
+            field: dict.getFieldLabel('BasePolicy', 'premium_base_rate') || 'Tỷ lệ phí cơ bản',
             englishTerm: 'Premium Base Rate',
-            description: 'Hệ số nhân để tính phí theo diện tích hoặc giá trị cây trồng. PHẢI LỚN HƠN 0 nếu không có phí cố định',
-            example: '1.5 (tức 150%)',
-            required: 'Có (nếu không có phí cố định)'
+            description: 'Tỷ lệ dùng để tính phí theo diện tích hoặc giá trị.',
+            example: '0.05 = 5%',
+            required: 'Tùy chọn'
         },
         {
             key: '3',
-            field: 'Tỷ lệ hoàn phí khi hủy',
+            field: dict.getFieldLabel('BasePolicy', 'cancel_premium_rate') || 'Tỷ lệ hoàn phí khi hủy',
             englishTerm: 'Cancel Premium Rate',
-            description: 'Tỷ lệ hoàn lại phí khi người dùng hủy hợp đồng trước hạn',
-            example: '0.8 = hoàn 80% phí',
+            description: 'Tỷ lệ phí được hoàn lại khi hợp đồng bị hủy.',
+            example: '0.8 = hoàn 80%',
             required: 'Không'
         },
     ];
@@ -96,105 +99,105 @@ const FAQTab = () => {
     const payoutFieldsData = [
         {
             key: '1',
-            field: 'Số tiền chi trả cố định',
+            field: dict.getFieldLabel('BasePolicy', 'fix_payout_amount') || 'Số tiền chi trả cố định',
             englishTerm: 'Fixed Payout Amount',
-            description: 'Số tiền chi trả cố định khi xảy ra sự kiện kích hoạt bảo hiểm',
+            description: 'Số tiền cố định trả khi sự kiện bảo hiểm xảy ra.',
             example: '5,000,000 ₫',
-            required: 'Có (nếu không dùng tỷ lệ chi trả)'
+            required: 'Tùy chọn'
         },
         {
             key: '2',
-            field: 'Tỷ lệ chi trả cơ bản',
+            field: dict.getFieldLabel('BasePolicy', 'payout_base_rate') || 'Tỷ lệ chi trả cơ bản',
             englishTerm: 'Payout Base Rate',
-            description: 'Tỷ lệ phần trăm giá trị thiệt hại được chi trả. PHẢI LỚN HƠN 0',
-            example: '0.75 = chi trả 75% thiệt hại',
-            required: 'Có'
+            description: 'Phần trăm thiệt hại được chi trả (ví dụ: 0.75 = 75%).',
+            example: '0.75',
+            required: 'Bắt buộc'
         },
         {
             key: '3',
-            field: 'Trần chi trả',
+            field: dict.getFieldLabel('BasePolicy', 'payout_cap') || 'Trần chi trả',
             englishTerm: 'Payout Cap',
-            description: 'Số tiền tối đa được chi trả cho một hợp đồng, dù thiệt hại có cao hơn',
+            description: 'Giới hạn tối đa số tiền được chi trả cho hợp đồng.',
             example: '10,000,000 ₫',
             required: 'Không'
         },
         {
             key: '4',
-            field: 'Hệ số vượt ngưỡng',
+            field: dict.getFieldLabel('BasePolicy', 'over_threshold_multiplier') || 'Hệ số vượt ngưỡng',
             englishTerm: 'Over Threshold Multiplier',
-            description: 'Hệ số nhân bổ sung khi mức độ thiệt hại vượt xa ngưỡng. PHẢI LỚN HƠN 0',
+            description: 'Hệ số nhân thêm khi mức vượt ngưỡng rất lớn.',
             example: '1.5 = tăng 50% chi trả',
-            required: 'Không (mặc định: 1.0)'
+            required: 'Không'
         },
     ];
 
     const triggerFieldsData = [
         {
             key: '1',
-            field: 'Toán tử Logic',
+            field: dict.getFieldLabel('BasePolicyTrigger', 'logical_operator') || 'Toán tử logic',
             englishTerm: 'Logical Operator',
-            description: 'Cách kết hợp nhiều điều kiện',
-            options: 'AND (tất cả đúng) hoặc OR (một trong các điều kiện đúng)',
-            required: 'Có'
+            description: 'Cách kết hợp nhiều điều kiện (AND = tất cả, OR = bất kỳ).',
+            options: 'AND / OR',
+            required: 'Bắt buộc'
         },
         {
             key: '2',
-            field: 'Tần suất giám sát',
+            field: dict.getFieldLabel('BasePolicyTrigger', 'monitor_interval') || 'Tần suất giám sát',
             englishTerm: 'Monitor Interval',
-            description: 'Số lần kiểm tra dữ liệu trong một khoảng thời gian',
-            example: '1 ngày = kiểm tra mỗi ngày',
-            required: 'Có'
+            description: 'Tần suất kiểm tra dữ liệu (kèm đơn vị: giờ/ngày/tuần).',
+            example: '1 ngày',
+            required: 'Bắt buộc'
         },
         {
             key: '3',
-            field: 'Nguồn dữ liệu',
+            field: dict.getFieldLabel('BasePolicyTriggerCondition', 'data_source_id') || 'Nguồn dữ liệu',
             englishTerm: 'Data Source',
-            description: 'Nguồn dữ liệu vệ tinh hoặc cảm biến để theo dõi (mỗi nguồn chỉ được chọn 1 lần)',
-            example: 'NASA Rainfall, Temperature Sensor',
-            required: 'Có (ít nhất 1)'
+            description: 'Nguồn dữ liệu theo dõi (ví dụ: lượng mưa, cảm biến). Mỗi nguồn chọn tối đa 1 lần.',
+            example: 'Rainfall',
+            required: 'Ít nhất 1'
         },
     ];
 
     const conditionFieldsData = [
         {
             key: '1',
-            field: 'Toán tử ngưỡng',
+            field: dict.getFieldLabel('BasePolicyTriggerCondition', 'threshold_operator') || 'Toán tử ngưỡng',
             englishTerm: 'Threshold Operator',
-            description: 'Phép so sánh với giá trị ngưỡng',
-            options: '< (nhỏ hơn), > (lớn hơn), <= (nhỏ hơn hoặc bằng), >= (lớn hơn hoặc bằng), == (bằng), != (khác)',
-            required: 'Có'
+            description: 'Phép so sánh dùng để so với ngưỡng (>, <, >=, <=, ==, !=).',
+            options: '<, >, <=, >=, ==, !=',
+            required: 'Bắt buộc'
         },
         {
             key: '2',
-            field: 'Giá trị ngưỡng',
+            field: dict.getFieldLabel('BasePolicyTriggerCondition', 'threshold_value') || 'Giá trị ngưỡng',
             englishTerm: 'Threshold Value',
-            description: 'Giá trị để so sánh với dữ liệu thực tế',
-            example: '50 (mm mưa), 35 (độ C)',
-            required: 'Có'
+            description: 'Giá trị tham chiếu để so sánh (ví dụ: mm mưa hoặc °C).',
+            example: '50 (mm mưa)',
+            required: 'Bắt buộc'
         },
         {
             key: '3',
-            field: 'Hàm tổng hợp',
+            field: dict.getFieldLabel('BasePolicyTriggerCondition', 'aggregation_function') || 'Hàm tổng hợp',
             englishTerm: 'Aggregation Function',
-            description: 'Cách tính toán dữ liệu trong một khoảng thời gian',
-            options: 'sum (tổng), avg (trung bình), min (nhỏ nhất), max (lớn nhất)',
-            required: 'Có'
+            description: 'Cách tính trên khoảng dữ liệu (avg, sum, min, max).',
+            options: 'avg, sum, min, max, change',
+            required: 'Bắt buộc'
         },
         {
             key: '4',
-            field: 'Cửa sổ tổng hợp',
+            field: dict.getFieldLabel('BasePolicyTriggerCondition', 'aggregation_window_days') || 'Cửa sổ tổng hợp',
             englishTerm: 'Aggregation Window',
-            description: 'Số ngày dữ liệu được tính toán',
-            example: '7 ngày = tính trung bình 7 ngày',
-            required: 'Có'
+            description: 'Số ngày dùng để tính hàm tổng hợp (ví dụ: 7 ngày).',
+            example: '7 ngày',
+            required: 'Bắt buộc'
         },
         {
             key: '5',
-            field: 'Chất lượng dữ liệu',
+            field: dict.ui?.dataQuality || 'Chất lượng dữ liệu',
             englishTerm: 'Data Quality',
-            description: 'Mức độ tin cậy và chính xác của nguồn dữ liệu',
-            options: 'good (tốt), acceptable (chấp nhận được), poor (kém)',
-            required: 'Không (mặc định: good)'
+            description: 'Đánh giá độ tin cậy của nguồn dữ liệu (good/acceptable/poor).',
+            options: 'good, acceptable, poor',
+            required: 'Tùy chọn'
         },
     ];
 
@@ -313,14 +316,14 @@ const FAQTab = () => {
                             header={
                                 <Space>
                                     <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                                    <Text strong>Hợp đồng mẫu là gì?</Text>
+                                    <Text strong>Gói bảo hiểm là gì?</Text>
                                 </Space>
                             }
                             key="1"
                         >
                             <Paragraph>
-                                <Text strong>Hợp đồng mẫu</Text> (Base Policy) là một bản hợp đồng điện tử
-                                quy định các điều khoản bảo hiểm cho cây trồng. Mỗi hợp đồng mẫu bao gồm:
+                                <Text strong>Gói bảo hiểm</Text>là một bản hợp đồng điện tử
+                                quy định các điều khoản bảo hiểm cho cây trồng. Mỗi gói bảo hiểm bao gồm:
                             </Paragraph>
                             <ul>
                                 <li>
@@ -348,13 +351,13 @@ const FAQTab = () => {
                             header={
                                 <Space>
                                     <FileTextOutlined style={{ color: '#52c41a' }} />
-                                    <Text strong>Quy trình tạo hợp đồng mẫu bao gồm những bước nào?</Text>
+                                    <Text strong>Quy trình tạo gói bảo hiểm bao gồm những bước nào?</Text>
                                 </Space>
                             }
                             key="2"
                         >
                             <Paragraph>
-                                Quy trình tạo hợp đồng mẫu được chia thành <Text strong>4 bước chính</Text>:
+                                Quy trình tạo gói bảo hiểm được chia thành <Text strong>4 bước chính</Text>:
                             </Paragraph>
                             <ol>
                                 <li>
@@ -364,10 +367,10 @@ const FAQTab = () => {
                                     <Text strong>Cấu hình nâng cao:</Text> Thiết lập điều kiện kích hoạt (trigger) và các điều kiện giám sát
                                 </li>
                                 <li>
-                                    <Text strong>Hợp đồng và thẻ tài liệu:</Text> Upload mẫu hợp đồng PDF và map các trường dữ liệu
+                                    <Text strong>Hợp đồng và thẻ tài liệu:</Text> Upload mẫu hợp đồng PDF và thêm các thẻ tài liệu
                                 </li>
                                 <li>
-                                    <Text strong>Xem lại & Tạo:</Text> Kiểm tra toàn bộ thông tin và gửi tạo hợp đồng mẫu
+                                    <Text strong>Xem lại & Tạo:</Text> Kiểm tra toàn bộ thông tin và gửi tạo gói bảo hiểm
                                 </li>
                             </ol>
                         </Panel>
@@ -492,7 +495,7 @@ const FAQTab = () => {
                             key="5"
                         >
                             <Paragraph>
-                                <Text strong>Trigger (Điều kiện kích hoạt)</Text> là bộ quy tắc xác định khi nào hợp đồng mẫu sẽ chi trả bảo hiểm.
+                                <Text strong>Trigger (Điều kiện kích hoạt)</Text> là bộ quy tắc xác định khi nào gói bảo hiểm sẽ chi trả bảo hiểm.
                                 Trigger bao gồm:
                             </Paragraph>
 
@@ -534,7 +537,7 @@ const FAQTab = () => {
                                 <li>
                                     <Text strong>Điều kiện 1:</Text> Lượng mưa trung bình 7 ngày {'<'} 10mm
                                     <ul>
-                                        <li>Nguồn dữ liệu: NASA Rainfall Satellite</li>
+                                        <li>Nguồn dữ liệu: Rainfall</li>
                                         <li>Hàm tổng hợp: avg (trung bình)</li>
                                         <li>Cửa sổ tổng hợp: 7 ngày</li>
                                         <li>Toán tử ngưỡng: {'<'} (nhỏ hơn)</li>
@@ -554,7 +557,7 @@ const FAQTab = () => {
                             </ul>
                             <Paragraph>
                                 → Kết quả: Nếu lượng mưa 7 ngày {'<'} 10mm <Text strong>HOẶC</Text> nhiệt độ 3 ngày {'>'} 38°C
-                                → Hợp đồng mẫu sẽ kích hoạt và chi trả bảo hiểm.
+                                → Gói bảo hiểm sẽ kích hoạt và chi trả bảo hiểm.
                             </Paragraph>
                         </Panel>
 
@@ -582,14 +585,14 @@ const FAQTab = () => {
 
                             <ul>
                                 <li>
-                                    <Text strong>Base Cost:</Text> Chi phí cơ sở của nguồn dữ liệu (VD: 50 ₫/tháng)
+                                    <Text strong>Giá cơ bản (Base Cost):</Text> Chi phí cơ sở của nguồn dữ liệu (VD: 200,000 ₫/tháng)
                                 </li>
                                 <li>
-                                    <Text strong>Category Multiplier (Hệ số nhóm):</Text> Hệ số theo loại dữ liệu (VD: Weather = 1.0, Soil = 1.2).
+                                    <Text strong>Hệ số danh mục (Category Multiplier):</Text> Hệ số theo loại dữ liệu (VD: Weather = 1.0, Soil = 1.2).
                                     <Text type="danger"> PHẢI LỚN HƠN 0</Text>
                                 </li>
                                 <li>
-                                    <Text strong>Tier Multiplier (Hệ số gói):</Text> Hệ số theo gói dịch vụ (VD: Basic = 1.0, Premium = 1.5).
+                                    <Text strong>Hệ số cấp độ (Tier Multiplier):</Text> Hệ số theo gói dịch vụ (VD: Basic = 1.0, Premium = 1.5).
                                     <Text type="danger"> PHẢI LỚN HƠN 0</Text>
                                 </li>
                             </ul>
@@ -601,16 +604,16 @@ const FAQTab = () => {
                                 <Text strong>Ví dụ:</Text> Chọn nguồn dữ liệu NASA Rainfall
                             </Paragraph>
                             <ul>
-                                <li>Base Cost: 50 ₫/tháng</li>
+                                <li>Base Cost: 200,000 ₫/tháng</li>
                                 <li>Category (Weather): 1.0</li>
                                 <li>Tier (Premium): 1.5</li>
-                                <li>→ Chi phí = 50 × 1.0 × 1.5 = <Text mark>75 ₫/tháng</Text></li>
+                                <li>→ Chi phí = 200,000 × 1.0 × 1.5 = <Text mark>300,000 ₫/tháng</Text></li>
                             </ul>
 
                             <Paragraph>
                                 <Text type="secondary">
                                     Lưu ý: Chi phí ước tính hiển thị trên giao diện chỉ mang tính tham khảo, chi phí thực tế sẽ được
-                                    tính khi hợp đồng mẫu được kích hoạt.
+                                    tính khi gói bảo hiểm được kích hoạt.
                                 </Text>
                             </Paragraph>
                         </Panel>
@@ -756,7 +759,7 @@ const FAQTab = () => {
                                 <Text strong>Ngày 05/01/2025 (Trong giai đoạn gieo hạt):</Text>
                             </Paragraph>
                             <ul>
-                                <li>✅ Lượng mưa {'<'} 50mm (Điều kiện trigger thỏa mãn)</li>
+                                <li>✅ Lượng mưa {'<'} 50mm (Điều kiện kích hoạt thỏa mãn)</li>
                                 <li>❌ Ngày nằm trong blackout period (01/01 đến 07/01)</li>
                                 <li>→ <Text strong type="danger">KẾT QUẢ: Không kích hoạt chi trả</Text> (Blackout có độ ưu tiên cao hơn)</li>
                             </ul>
@@ -765,7 +768,7 @@ const FAQTab = () => {
                                 <Text strong>Ngày 15/02/2025 (Giai đoạn sinh trưởng chính):</Text>
                             </Paragraph>
                             <ul>
-                                <li>✅ Lượng mưa {'<'} 50mm (Điều kiện trigger thỏa mãn)</li>
+                                <li>✅ Lượng mưa {'<'} 50mm (Điều kiện kích hoạt thỏa mãn)</li>
                                 <li>✅ Ngày KHÔNG nằm trong blackout period</li>
                                 <li>→ <Text strong type="success">KẾT QUẢ: Kích hoạt chi trả</Text></li>
                             </ul>
@@ -1038,7 +1041,7 @@ const FAQTab = () => {
 
                             <Divider />
 
-                            <Title level={5}><BulbOutlined /> Cách sử dụng</Title>
+                            {/* <Title level={5}><BulbOutlined /> Cách sử dụng</Title>
                             <Paragraph>
                                 Khi thêm điều kiện trigger, chọn Data Quality phù hợp với nguồn dữ liệu:
                             </Paragraph>
@@ -1052,7 +1055,7 @@ const FAQTab = () => {
                                 <li>
                                     <Tag color="red">poor</Tag> - Nếu dùng dữ liệu thử nghiệm, không chính thức
                                 </li>
-                            </ul>
+                            </ul> */}
 
                             <Divider />
 
@@ -1060,7 +1063,7 @@ const FAQTab = () => {
                             <ul>
                                 <li>Mặc định, Data Quality được set là <Tag color="green">good</Tag> nếu không chọn</li>
                                 <li>Nên chọn chất lượng phù hợp với thực tế để tránh tranh chấp sau này</li>
-                                <li>Hợp đồng mẫu với nhiều điều kiện <Tag color="red">poor</Tag> có thể bị từ chối phê duyệt</li>
+                                <li>Gói bảo hiểm với nhiều điều kiện <Tag color="red">poor</Tag> có thể bị từ chối phê duyệt</li>
                                 <li>Data Quality hiển thị trong bảng điều kiện để dễ theo dõi</li>
                             </ul>
                         </Panel>
@@ -1070,7 +1073,7 @@ const FAQTab = () => {
                             header={
                                 <Space>
                                     <InfoCircleOutlined style={{ color: '#f5222d' }} />
-                                    <Text strong>Những lưu ý quan trọng khi tạo hợp đồng mẫu?</Text>
+                                    <Text strong>Những lưu ý quan trọng khi tạo gói bảo hiểm?</Text>
                                 </Space>
                             }
                             key="7"
@@ -1081,7 +1084,7 @@ const FAQTab = () => {
                             <ul>
                                 <li>
                                     <Text strong>Tỷ lệ phí cơ bản (Premium Base Rate):</Text> PHẢI {'>'} 0 nếu không có phí cố định.
-                                    Vì nếu = 0 thì nhân với giá trị nào cũng = 0, không hợp lý về nghiệp vụ.
+                                    Vì nếu = 0 thì nhân với giá trị nào cũng = 0, không thế tính chi phí dịch vụ mua bảo hiểm của nông dân.
                                 </li>
                                 <li>
                                     <Text strong>Tỷ lệ chi trả cơ bản (Payout Base Rate):</Text> PHẢI {'>'} 0.
@@ -1096,7 +1099,7 @@ const FAQTab = () => {
                                     Đây là các hệ số nhân nên phải dương.
                                 </li>
                                 <li>
-                                    <Text strong>Nguồn dữ liệu:</Text> Mỗi nguồn chỉ được chọn 1 lần trong cùng một hợp đồng mẫu.
+                                    <Text strong>Nguồn dữ liệu:</Text> Mỗi nguồn chỉ được chọn 1 lần trong cùng một gói bảo hiểm.
                                     Hệ thống sẽ tự động loại bỏ các nguồn đã chọn khỏi danh sách.
                                 </li>
                             </ul>
@@ -1119,8 +1122,8 @@ const FAQTab = () => {
                             </Paragraph>
                             <ul>
                                 <li>Nên nhập đầy đủ mô tả sản phẩm để người dùng dễ hiểu</li>
-                                <li>Kiểm tra kỹ các công thức tính toán trước khi tạo hợp đồng mẫu</li>
-                                <li>Kiểm tra hợp đồng mẫu với nhiều kịch bản khác nhau để đảm bảo hoạt động đúng</li>
+                                <li>Kiểm tra kỹ các công thức tính toán trước khi tạo gói bảo hiểm</li>
+                                <li>Kiểm tra gói bảo hiểm với nhiều kịch bản khác nhau để đảm bảo hoạt động đúng</li>
                                 <li>Sử dụng mã sản phẩm dễ nhớ và có ý nghĩa (VD: RICE_WINTER_2025)</li>
                             </ul>
                         </Panel>
@@ -1153,13 +1156,13 @@ const FAQTab = () => {
                                 <div>
                                     <Title level={5}><EditOutlined /> Bước 2: Mở chế độ tạo thẻ tài liệu</Title>
                                     <Paragraph>
-                                        Sau khi tải PDF lên, click nút <Tag color="purple">tạo thẻ tài liệu</Tag> để mở giao diện tạo trường.
+                                        Sau khi tải PDF lên, click nút <Tag color="purple">tạo thẻ tài liệu</Tag> để mở giao diện tạo thẻ.
                                     </Paragraph>
                                     <Paragraph>
                                         <Text strong>Giao diện gồm 2 phần:</Text>
                                     </Paragraph>
                                     <ul>
-                                        <li><strong>Bên trái:</strong> Hiển thị PDF để bạn click chọn vùng cần tạo trường</li>
+                                        <li><strong>Bên trái:</strong> Hiển thị PDF để bạn click chọn vùng cần tạo thẻ</li>
                                         <li><strong>Bên phải:</strong> Bảng danh sách các trường đã tạo, cho phép chỉnh sửa và xóa</li>
                                     </ul>
                                 </div>
@@ -1167,7 +1170,7 @@ const FAQTab = () => {
                                 <Divider />
 
                                 <div>
-                                    <Title level={5}><EnvironmentOutlined /> Bước 3: Click vào PDF để chọn vùng tạo trường</Title>
+                                    <Title level={5}><EnvironmentOutlined /> Bước 3: Click vào PDF để chọn vùng tạo thẻ</Title>
                                     <Paragraph>
                                         <Text strong>Cách thao tác:</Text>
                                     </Paragraph>
@@ -1243,7 +1246,7 @@ const FAQTab = () => {
                                 <div>
                                     <Title level={5}><BarChartOutlined /> Các loại dữ liệu (Data Types)</Title>
                                     <Paragraph>
-                                        Khi tạo trường, bạn cần chọn loại dữ liệu phù hợp với thông tin cần điền:
+                                        Khi tạo thẻ, bạn cần chọn loại dữ liệu phù hợp với thông tin cần điền:
                                     </Paragraph>
                                     <Table
                                         dataSource={[
@@ -1270,7 +1273,7 @@ const FAQTab = () => {
                                 <Divider />
 
                                 <div>
-                                    <Title level={5}><BulbOutlined /> Lời khuyên khi tạo trường</Title>
+                                    <Title level={5}><BulbOutlined /> Lời khuyên khi tạo thẻ</Title>
                                     <Paragraph>
                                         <Text strong type="success">✅ NÊN:</Text>
                                     </Paragraph>
@@ -1302,7 +1305,7 @@ const FAQTab = () => {
                                             {
                                                 key: '1',
                                                 error: 'Vị trí đã tồn tại',
-                                                reason: 'Bạn đã tạo trường với số vị trí này rồi',
+                                                reason: 'Bạn đã tạo thẻ với số vị trí này rồi',
                                                 solution: 'Dùng số vị trí khác (hệ thống tự động gợi ý)'
                                             },
                                             {

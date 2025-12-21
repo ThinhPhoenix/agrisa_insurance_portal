@@ -556,7 +556,7 @@ const PDFViewerWithSelection = ({
                     onCreatePlaceholder(newPlaceholder);
                 }
 
-                message.success(`Đã tạo trường (${position}) - ${key}`);
+                message.success(`Đã tạo thẻ (${position}) - ${key}`);
 
                 // Reset state
                 setFieldFormVisible(false);

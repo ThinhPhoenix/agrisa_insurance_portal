@@ -641,7 +641,7 @@ export default function PolicyDetailPage() {
       label: (
         <span className="flex items-center gap-2">
           <SafetyOutlined />
-          <span className="hidden sm:inline">Hợp đồng mẫu</span>
+          <span className="hidden sm:inline">Gói bảo hiểm</span>
         </span>
       ),
       children: (

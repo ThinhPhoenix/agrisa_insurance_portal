@@ -189,7 +189,7 @@ export const createAcroFormFields = async (
             });
           }
 
-          // Bước 2: Tạo trường biểu mẫu dựa trên loại
+          // Bước 2: tạo thẻ biểu mẫu dựa trên loại
           let formField;
 
           switch (fieldType.toLowerCase()) {
@@ -495,10 +495,7 @@ Q`;
               }
           }
         } catch (fieldError) {
-          console.error(
-            `❌ Lỗi khi tạo trường ${field.fieldName}:`,
-            fieldError
-          );
+          console.error(`❌ Lỗi khi tạo thẻ ${field.fieldName}:`, fieldError);
           warnings.push({
             fieldName: field.fieldName,
             warning: `Failed to create field: ${fieldError.message}`,
@@ -515,7 +512,7 @@ Q`;
 
     return { pdfBytes: modifiedPdfBytes, warnings };
   } catch (error) {
-    console.error("❌ Lỗi khi tạo trường AcroForm:", error);
+    console.error("❌ Lỗi khi tạo thẻ AcroForm:", error);
     console.error("❌ Stack:", error.stack);
     throw new Error("Không thể tạo fillable PDF: " + error.message);
   }

@@ -199,12 +199,12 @@ const ReviewTabComponent = ({
 
     return (
         <div className="review-tab">
-            <Title level={4}>Xem lại & Tạo Hợp đồng mẫu</Title>
+            <Title level={4}>Xem lại & Tạo Gói bảo hiểm</Title>
 
             {/* Validation Summary */}
             {validationIssues.length > 0 ? (
                 <Alert
-                    message="Hợp đồng mẫu chưa sẵn sàng để tạo"
+                    message="Gói bảo hiểm chưa sẵn sàng để tạo"
                     description={
                         <ul>
                             {validationIssues.map((issue, index) => (
@@ -219,8 +219,8 @@ const ReviewTabComponent = ({
                 />
             ) : (
                 <Alert
-                    message="Hợp đồng mẫu đã sẵn sàng để tạo"
-                    description="Tất cả thông tin bắt buộc đã được hoàn thành. Bạn có thể tiến hành tạo hợp đồng mẫu."
+                    message="Gói bảo hiểm đã sẵn sàng để tạo"
+                    description="Tất cả thông tin bắt buộc đã được hoàn thành. Bạn có thể tiến hành tạo gói bảo hiểm."
                     type="success"
                     icon={<CheckCircleOutlined />}
                     showIcon

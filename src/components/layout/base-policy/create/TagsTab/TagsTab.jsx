@@ -175,7 +175,7 @@ const TagsTabComponent = ({
         });
     };
 
-    // Xử lý tạo trường từ chế độ quét và áp dụng AcroForm ngay
+    // Xử lý tạo thẻ từ chế độ quét và áp dụng AcroForm ngay
     const handleCreateAndApplyField = async (placeholder, fieldData) => {
         try {
             // 1. Tạo tag tạm thời cho trường này

@@ -147,7 +147,7 @@ export async function addFormFieldsToPdf(pdfBytes, fields) {
 
           switch (type.toLowerCase()) {
             case "text":
-              // Tạo trường text
+              // tạo thẻ text
               formField = form.createTextField(name);
               formField.setText(defaultValue);
               formField.setFontSize(fontSize);

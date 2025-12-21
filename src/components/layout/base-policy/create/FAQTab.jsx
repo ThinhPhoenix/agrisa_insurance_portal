@@ -364,7 +364,7 @@ const FAQTab = () => {
                                     <Text strong>Cấu hình nâng cao:</Text> Thiết lập điều kiện kích hoạt (trigger) và các điều kiện giám sát
                                 </li>
                                 <li>
-                                    <Text strong>Tài liệu & Trường thông tin:</Text> Upload mẫu hợp đồng PDF và map các trường dữ liệu
+                                    <Text strong>Hợp đồng và thẻ tài liệu:</Text> Upload mẫu hợp đồng PDF và map các trường dữ liệu
                                 </li>
                                 <li>
                                     <Text strong>Xem lại & Tạo:</Text> Kiểm tra toàn bộ thông tin và gửi tạo hợp đồng mẫu
@@ -372,7 +372,7 @@ const FAQTab = () => {
                             </ol>
                         </Panel>
 
-                        {/* Giải thích các trường Thông tin cơ bản */}
+                        {/* Giải thích các thẻ tài liệu cơ bản */}
                         <Panel
                             header={
                                 <Space>
@@ -1130,7 +1130,7 @@ const FAQTab = () => {
                             header={
                                 <Space>
                                     <FileTextOutlined style={{ color: '#fa8c16' }} />
-                                    <Text strong>Hướng dẫn tạo trường thông tin trên PDF</Text>
+                                    <Text strong>Hướng dẫn tạo thẻ tài liệu trên PDF</Text>
                                 </Space>
                             }
                             key="8"
@@ -1139,7 +1139,7 @@ const FAQTab = () => {
                                 <div>
                                     <Title level={5}><FileTextOutlined /> Bước 1: Tải lên file PDF mẫu hợp đồng</Title>
                                     <Paragraph>
-                                        Tải lên file PDF mẫu hợp đồng bảo hiểm mà bạn muốn thêm các trường thông tin.
+                                        Tải lên file PDF mẫu hợp đồng bảo hiểm mà bạn muốn thêm các thẻ tài liệu.
                                     </Paragraph>
                                     <ul>
                                         <li><strong>Định dạng:</strong> Chỉ chấp nhận file PDF</li>
@@ -1151,9 +1151,9 @@ const FAQTab = () => {
                                 <Divider />
 
                                 <div>
-                                    <Title level={5}><EditOutlined /> Bước 2: Mở chế độ tạo trường thông tin</Title>
+                                    <Title level={5}><EditOutlined /> Bước 2: Mở chế độ tạo thẻ tài liệu</Title>
                                     <Paragraph>
-                                        Sau khi tải PDF lên, click nút <Tag color="purple">tạo trường thông tin</Tag> để mở giao diện tạo trường.
+                                        Sau khi tải PDF lên, click nút <Tag color="purple">tạo thẻ tài liệu</Tag> để mở giao diện tạo trường.
                                     </Paragraph>
                                     <Paragraph>
                                         <Text strong>Giao diện gồm 2 phần:</Text>
@@ -1173,7 +1173,7 @@ const FAQTab = () => {
                                     </Paragraph>
                                     <ol style={{ lineHeight: '2' }}>
                                         <li>
-                                            <strong>Click vào vị trí trên PDF</strong> mà bạn muốn tạo trường thông tin (ví dụ: vị trí họ tên, CMND...)
+                                            <strong>Click vào vị trí trên PDF</strong> mà bạn muốn tạo thẻ tài liệu (ví dụ: vị trí họ tên, CMND...)
                                         </li>
                                         <li>
                                             <strong>Popup hiện ra</strong> yêu cầu bạn nhập 3 thông tin:

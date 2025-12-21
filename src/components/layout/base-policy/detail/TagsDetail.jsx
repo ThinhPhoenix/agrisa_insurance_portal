@@ -84,7 +84,7 @@ const TagsDetail = ({ policyData, mockData }) => {
                 <div>
                     <Title level={4} style={{ marginBottom: 4, color: 'var(--color-primary-700)' }}>
                         <TagOutlined style={{ marginRight: 8 }} />
-                        Tài liệu & Trường thông tin
+                        Hợp đồng và thẻ tài liệu
                     </Title>
                     <Text type="secondary" style={{ fontSize: '13px' }}>Trường dữ liệu và tài liệu hợp đồng PDF</Text>
                 </div>
@@ -204,7 +204,7 @@ const TagsDetail = ({ policyData, mockData }) => {
                     </div>
 
                     {tags.length === 0 ? (
-                        <Empty description="Không có trường thông tin nào" style={{ marginTop: 16 }} />
+                        <Empty description="Không có thẻ tài liệu nào" style={{ marginTop: 16 }} />
                     ) : (
                         <CustomTable
                             columns={tagColumns}

@@ -1,4 +1,5 @@
 import { getBasePolicyError, getBasePolicyValidation } from "@/libs/message";
+import useDictionary from "@/services/hooks/common/use-dictionary";
 import { useAuthStore } from "@/stores/auth-store";
 import {
     DeleteOutlined,
@@ -51,6 +52,7 @@ const BasicTabComponent = ({
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedTier, setSelectedTier] = useState("");
     const { user } = useAuthStore();
+    const dict = useDictionary();
 
     useEffect(() => {
         // Auto-fill default values and insurance provider ID
@@ -211,7 +213,7 @@ const BasicTabComponent = ({
                 );
 
                 if (exists) {
-                    message.warning("Nguồn dữ liệu này đã được thêm");
+                    message.warning(dict.ui.msgDataSourceAlreadyAdded);
                     return;
                 }
 
@@ -255,7 +257,7 @@ const BasicTabComponent = ({
     // Data source table columns
     const dataSourceColumns = [
         {
-            title: "Tên nguồn dữ liệu",
+            title: dict.ui.dataSourceName,
             dataIndex: "label",
             key: "label",
             render: (text, record) => (
@@ -269,31 +271,31 @@ const BasicTabComponent = ({
             ),
         },
         {
-            title: "Danh mục",
+            title: dict.ui.category,
             dataIndex: "categoryLabel",
             key: "categoryLabel",
         },
         {
-            title: "Gói",
+            title: dict.ui.tier,
             dataIndex: "tierLabel",
             key: "tierLabel",
         },
         {
-            title: "Chi phí cơ sở",
+            title: dict.ui.baseCost,
             dataIndex: "baseCost",
             key: "baseCost",
             render: (cost) => `${cost.toLocaleString()} ₫/tháng`,
         },
         {
-            title: "Hành động",
+            title: dict.ui.actions,
             key: "action",
             render: (_, record) => (
                 <Popconfirm
-                    title="Xóa nguồn dữ liệu"
-                    description="Bạn có chắc chắn muốn xóa nguồn dữ liệu này?"
+                    title={dict.ui.msgDeleteDataSource}
+                    description={dict.ui.msgConfirmDeleteDataSource}
                     onConfirm={() => onRemoveDataSource(record.id)}
-                    okText="Xóa"
-                    cancelText="Hủy"
+                    okText={dict.ui.delete}
+                    cancelText={dict.ui.cancel}
                 >
                     <Button type="text" danger icon={<DeleteOutlined />} />
                 </Popconfirm>
@@ -306,7 +308,7 @@ const BasicTabComponent = ({
 
     return (
         <div className="basic-tab">
-            <Title level={4}>Thông tin Cơ bản</Title>
+            <Title level={4}>{dict.ui.sectionBasicInfo}</Title>
 
             <Form
                 form={form}
@@ -319,8 +321,8 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="productName"
-                            label="Tên Sản phẩm"
-                            tooltip="Tên hiển thị (VD: Bảo hiểm lúa mùa đông 2025)"
+                            label={dict.getFieldLabel('BasePolicy', 'product_name')}
+                            tooltip={dict.getFieldNote('BasePolicy', 'product_name') || 'Tên hiển thị (VD: Bảo hiểm lúa mùa đông 2025)'}
                             rules={[
                                 {
                                     required: true,
@@ -337,7 +339,7 @@ const BasicTabComponent = ({
                             ]}
                         >
                             <Input
-                                placeholder="Nhập tên sản phẩm bảo hiểm"
+                                placeholder={dict.getFieldNote('BasePolicy', 'product_name') || 'Nhập tên sản phẩm bảo hiểm'}
                                 size="large"
                             />
                         </Form.Item>
@@ -345,8 +347,8 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="productCode"
-                            label="Mã Sản phẩm"
-                            tooltip="Mã duy nhất (chữ, số, _ - tự động viết hoa)"
+                            label={dict.getFieldLabel('BasePolicy', 'product_code')}
+                            tooltip={dict.getFieldNote('BasePolicy', 'product_code') || 'Mã duy nhất (chữ, số, _ - tự động viết hoa)'}
                             rules={[
                                 {
                                     required: true,
@@ -377,7 +379,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="productDescription"
-                            label="Mô tả sản phẩm"
+                            label={dict.getFieldLabel('BasePolicy', 'product_description')}
                             tooltip="Mô tả ngắn gọn về sản phẩm (không bắt buộc)"
                         >
                             <Input.TextArea
@@ -390,7 +392,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="cropType"
-                            label="Loại Cây trồng"
+                            label={dict.getFieldLabel('BasePolicy', 'crop_type')}
                             tooltip="Chọn loại cây trồng được bảo hiểm"
                             rules={[
                                 {
@@ -431,7 +433,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="coverageDurationDays"
-                            label="Thời hạn bảo hiểm (ngày)"
+                            label={dict.getFieldLabel('BasePolicy', 'coverage_duration_days')}
                             tooltip="Số ngày hợp đồng có hiệu lực (VD: 120 ngày)"
                             rules={[
                                 {
@@ -463,7 +465,7 @@ const BasicTabComponent = ({
                     <Col span={8}>
                         <Form.Item
                             name="premiumBaseRate"
-                            label="Tỷ lệ phí cơ bản"
+                            label={dict.getFieldLabel('BasePolicy', 'premium_base_rate')}
                             tooltip="Hệ số tính phí (phải > 0 nếu không dùng phí cố định)"
                             rules={[
                                 {
@@ -495,10 +497,10 @@ const BasicTabComponent = ({
                                         return ok
                                             ? Promise.resolve()
                                             : Promise.reject(
-                                                  getBasePolicyError(
-                                                      "PREMIUM_BASE_RATE_INVALID"
-                                                  )
-                                              );
+                                                getBasePolicyError(
+                                                    "PREMIUM_BASE_RATE_INVALID"
+                                                )
+                                            );
                                     },
                                 },
                             ]}
@@ -517,7 +519,7 @@ const BasicTabComponent = ({
                     <Col span={8}>
                         <Form.Item
                             name="fixPremiumAmount"
-                            label="Phí bảo hiểm cố định"
+                            label={dict.getFieldLabel('BasePolicy', 'fix_premium_amount')}
                             tooltip="Số tiền phí cố định cho hợp đồng (không tính toán)"
                             rules={[
                                 {
@@ -556,7 +558,7 @@ const BasicTabComponent = ({
                     <Col span={8}>
                         <Form.Item
                             name="maxPremiumPaymentProlong"
-                            label="Gia hạn thanh toán (ngày)"
+                            label={dict.getFieldLabel('BasePolicy', 'max_premium_payment_prolong')}
                             tooltip="Số ngày tối đa cho phép trả chậm phí"
                             rules={[
                                 {
@@ -580,7 +582,7 @@ const BasicTabComponent = ({
                     <Col span={24}>
                         <Form.Item
                             name="cancelPremiumRate"
-                            label="Tỷ lệ phí khi hủy hợp đồng"
+                            label={dict.getFieldLabel('BasePolicy', 'cancel_premium_rate')}
                             tooltip="Tỷ lệ hoàn phí khi hủy sớm (0-1, VD: 0.8 = hoàn 80%)"
                             rules={[
                                 {
@@ -605,13 +607,13 @@ const BasicTabComponent = ({
                     </Col>
                 </Row>
 
-                <Divider orientation="left">Cấu hình Chi trả (Payout)</Divider>
+                <Divider orientation="left">{dict.ui.sectionPayoutSettings}</Divider>
 
                 <Row gutter={24}>
                     <Col span={12}>
                         <Form.Item
                             name="payoutBaseRate"
-                            label="Tỷ lệ chi trả cơ bản"
+                            label={dict.getFieldLabel('BasePolicy', 'payout_base_rate')}
                             tooltip="Hệ số tính chi trả (phải > 0, VD: 0.75 = 75%)"
                             rules={[
                                 {
@@ -643,10 +645,10 @@ const BasicTabComponent = ({
                                         return ok
                                             ? Promise.resolve()
                                             : Promise.reject(
-                                                  getBasePolicyError(
-                                                      "PAYOUT_BASE_RATE_INVALID"
-                                                  )
-                                              );
+                                                getBasePolicyError(
+                                                    "PAYOUT_BASE_RATE_INVALID"
+                                                )
+                                            );
                                     },
                                 },
                             ]}
@@ -665,7 +667,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="fixPayoutAmount"
-                            label="Số tiền chi trả cố định"
+                            label={dict.getFieldLabel('BasePolicy', 'fix_payout_amount')}
                             tooltip="Số tiền chi trả cố định khi xảy ra sự cố"
                             rules={[
                                 {
@@ -707,7 +709,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="payoutCap"
-                            label="Trần chi trả"
+                            label={dict.getFieldLabel('BasePolicy', 'payout_cap')}
                             tooltip="Số tiền chi trả tối đa cho một hợp đồng"
                             rules={[
                                 {
@@ -740,7 +742,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="overThresholdMultiplier"
-                            label="Hệ số vượt ngưỡng"
+                            label={dict.getFieldLabel('BasePolicy', 'over_threshold_multiplier')}
                             tooltip="Hệ số nhân khi vượt ngưỡng (phải > 0, mặc định: 1.0)"
                             rules={[
                                 {
@@ -766,10 +768,10 @@ const BasicTabComponent = ({
                                         return ok
                                             ? Promise.resolve()
                                             : Promise.reject(
-                                                  getBasePolicyError(
-                                                      "OVER_THRESHOLD_MULTIPLIER_INVALID"
-                                                  )
-                                              );
+                                                getBasePolicyError(
+                                                    "OVER_THRESHOLD_MULTIPLIER_INVALID"
+                                                )
+                                            );
                                     },
                                 },
                             ]}
@@ -788,14 +790,14 @@ const BasicTabComponent = ({
                 </Row>
 
                 <Divider orientation="left">
-                    Thời gian đăng ký & Hiệu lực
+                    {dict.ui.sectionEnrollmentPeriod}
                 </Divider>
 
                 <Row gutter={24}>
                     <Col span={12}>
                         <Form.Item
                             name="enrollmentStartDay"
-                            label="Ngày bắt đầu đăng ký"
+                            label={dict.getFieldLabel('BasePolicy', 'enrollment_start_day')}
                             tooltip="Ngày mở đăng ký (trước ngày hiệu lực)"
                         >
                             <DatePicker
@@ -816,7 +818,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="enrollmentEndDay"
-                            label="Ngày kết thúc đăng ký"
+                            label={dict.getFieldLabel('BasePolicy', 'enrollment_end_day')}
                             tooltip="Ngày đóng đăng ký (trước/bằng ngày hiệu lực)"
                             rules={[
                                 ({ getFieldValue }) => ({
@@ -922,7 +924,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="insuranceValidFrom"
-                            label="Bảo hiểm có hiệu lực từ"
+                            label={dict.getFieldLabel('BasePolicy', 'insurance_valid_from_day')}
                             tooltip="Ngày bắt đầu bảo hiểm (bắt buộc)"
                             rules={[
                                 {
@@ -1002,7 +1004,7 @@ const BasicTabComponent = ({
                     <Col span={12}>
                         <Form.Item
                             name="insuranceValidTo"
-                            label="Bảo hiểm có hiệu lực đến"
+                            label={dict.getFieldLabel('BasePolicy', 'insurance_valid_to_day')}
                             tooltip="Ngày kết thúc bảo hiểm (tự động tính = ngày bắt đầu + thời hạn bảo hiểm)"
                             rules={[
                                 {
@@ -1079,14 +1081,14 @@ const BasicTabComponent = ({
                 </Row>
 
                 <Divider orientation="left">
-                    Cài đặt gia hạn & Trạng thái
+                    {dict.ui.sectionRenewalSettings}
                 </Divider>
 
                 <Row gutter={24}>
                     <Col span={8}>
                         <Form.Item
                             name="autoRenewal"
-                            label="Tự động gia hạn"
+                            label={dict.getFieldLabel('BasePolicy', 'auto_renewal')}
                             valuePropName="checked"
                             tooltip="Tự động gia hạn hợp đồng khi hết hạn"
                         >
@@ -1099,7 +1101,7 @@ const BasicTabComponent = ({
                     <Col span={8}>
                         <Form.Item
                             name="renewalDiscountRate"
-                            label="Giảm giá khi gia hạn (%)"
+                            label={dict.getFieldLabel('BasePolicy', 'renewal_discount_rate')}
                             tooltip="Phần trăm giảm giá áp dụng cho phí khi gia hạn tự động (ví dụ: 1.25 = 1.25%). Theo schema max 9.99"
                             rules={[
                                 {
@@ -1124,17 +1126,30 @@ const BasicTabComponent = ({
                             />
                         </Form.Item>
                     </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="isArchive"
+                            label={dict.ui.isArchive}
+                            valuePropName="checked"
+                            tooltip={dict.ui.isArchiveTooltip}
+                        >
+                            <Switch
+                                checkedChildren="Có"
+                                unCheckedChildren="Không"
+                            />
+                        </Form.Item>
+                    </Col>
                 </Row>
 
                 <Divider orientation="left">
-                    Tài liệu & Thông tin bổ sung
+                    {dict.ui.sectionDocumentInfo}
                 </Divider>
 
                 <Row gutter={24}>
                     <Col span={24}>
                         <Form.Item
                             name="templateDocumentUrl"
-                            label="URL tài liệu mẫu"
+                            label={dict.getFieldLabel('BasePolicy', 'template_document_url')}
                             tooltip="Đường dẫn tới tài liệu mẫu hợp đồng bảo hiểm (policy template) nếu có"
                         >
                             <Input
@@ -1149,7 +1164,7 @@ const BasicTabComponent = ({
                     <Col span={24}>
                         <Form.Item
                             name="importantAdditionalInformation"
-                            label="Thông tin bổ sung quan trọng"
+                            label={dict.getFieldLabel('BasePolicy', 'important_additional_information')}
                             tooltip="Ghi chú, điều khoản đặc biệt hoặc thông tin quan trọng khác"
                         >
                             <Input.TextArea
@@ -1192,7 +1207,7 @@ const BasicTabComponent = ({
                 >
                     <Row gutter={16} align="middle">
                         <Col span={6}>
-                            <Form.Item name="category" label="Mục dữ liệu">
+                            <Form.Item name="category" label={dict.ui.category || 'Mục dữ liệu'}>
                                 <Select
                                     placeholder="Chọn danh mục"
                                     onChange={handleCategoryChange}
@@ -1258,7 +1273,7 @@ const BasicTabComponent = ({
                             </Form.Item>
                         </Col>
                         <Col span={6}>
-                            <Form.Item name="tier" label="Gói dịch vụ">
+                            <Form.Item name="tier" label={dict.ui.tier || 'Gói dịch vụ'}>
                                 <Select
                                     placeholder="Chọn gói"
                                     disabled={!selectedCategory}
@@ -1330,7 +1345,7 @@ const BasicTabComponent = ({
                             </Form.Item>
                         </Col>
                         <Col span={8}>
-                            <Form.Item name="dataSource" label="Nguồn dữ liệu">
+                            <Form.Item name="dataSource" label={dict.ui.dataSourceName || 'Nguồn dữ liệu'}>
                                 <Select
                                     placeholder="Chọn nguồn dữ liệu"
                                     disabled={!selectedTier}

@@ -30,7 +30,7 @@ import PlaceholderMappingPanel from './PlaceholderMappingPanel';
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-// Component TagsTab - Quản lý tài liệu và trường thông tin
+// Component TagsTab - Quản lý tài liệu và thẻ tài liệu
 const TagsTabComponent = ({
     tagsData,
     mockData,
@@ -767,7 +767,7 @@ const TagsTabComponent = ({
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                     <Title level={4} style={{ margin: 0 }}>
-                        <TagOutlined /> Tài liệu & Trường thông tin
+                        <TagOutlined /> Hợp đồng và thẻ tài liệu
                     </Title>
                     <Space wrap>
                         <Button
@@ -781,10 +781,10 @@ const TagsTabComponent = ({
                 </div>
                 {/* 
                 <Alert
-                    message="Tạo trường thông tin qua chế độ quét PDF"
+                    message="Tạo thẻ tài liệu qua chế độ quét PDF"
                     description={
                         <div>
-                            <p style={{ marginBottom: 8 }}>Sử dụng chế độ quét để tạo trường thông tin trực tiếp trên PDF:</p>
+                            <p style={{ marginBottom: 8 }}>Sử dụng chế độ quét để tạo thẻ tài liệu trực tiếp trên PDF:</p>
                             <ol style={{ marginBottom: 0, paddingLeft: 20 }}>
                                 <li>Bấm nút "Chế độ quét" trên khung xem PDF (bên trái)</li>
                                 <li>Kéo chuột để chọn vùng trường trên PDF (zoom sẽ tự động về 100%)</li>
@@ -801,14 +801,14 @@ const TagsTabComponent = ({
 
                 {/* BATCH MODE: New batch creation option */}
                 <Alert
-                    message="Tạo trường thông tin "
+                    message="Tạo thẻ tài liệu "
                     description={
                         <div>
                             <p style={{ marginBottom: 8 }}>
-                                Tạo trường thông tin nhanh chóng bằng cách quét nhiều vùng trên PDF và áp dụng tất cả cùng lúc:
+                                Tạo thẻ tài liệu nhanh chóng bằng cách quét nhiều vùng trên PDF và áp dụng tất cả cùng lúc:
                             </p>
                             <ol style={{ marginBottom: 12, paddingLeft: 20 }}>
-                                <li>Bấm nút "Tạo trường thông tin" bên dưới</li>
+                                <li>Bấm nút "Tạo thẻ tài liệu" bên dưới</li>
                                 <li>Quét nhiều vùng trên PDF liên tiếp</li>
                                 <li>Xem danh sách trường đã thêm, có thể chỉnh sửa hoặc xóa</li>
                                 <li>Bấm "Thêm" để áp dụng TẤT CẢ trường vào tệp PDF</li>
@@ -819,7 +819,7 @@ const TagsTabComponent = ({
                                 onClick={handleOpenBatchModal}
                                 size="large"
                             >
-                                Tạo trường thông tin
+                                Tạo thẻ tài liệu
                             </Button>
                         </div>
                     }
@@ -897,15 +897,15 @@ const TagsTabComponent = ({
                     />
                 ) : (
                     <Alert
-                        message="Chưa có trường thông tin nào"
-                        description="Tải PDF và sử dụng chế độ quét để tạo trường thông tin"
+                        message="Chưa có thẻ tài liệu nào"
+                        description="Tải PDF và sử dụng chế độ quét để tạo thẻ tài liệu"
                         type="info"
                         showIcon
                     />
                 )}
 
                 <div style={{ marginTop: 12 }}>
-                    <Text type="secondary">Tổng số trường đã tạo: <Text strong>{placeholders?.length || 0}</Text></Text>
+                    <Text type="secondary">Tổng số thẻ đã tạo: <Text strong>{placeholders?.length || 0}</Text></Text>
                 </div>
 
                 {/* 🆕 BATCH MODE: Batch Field Creation Modal */}

@@ -41,11 +41,13 @@ import TagsTab from "@/components/layout/base-policy/create/TagsTab/TagsTab";
 // Hook
 import { createFillablePDFFromMappings } from "@/libs/pdf/pdfAcroFormEditor";
 import useCreatePolicy from "@/services/hooks/base-policy/use-create-policy";
+import useDictionary from "@/services/hooks/common/use-dictionary";
 
 const { Title, Text } = Typography;
 
 const CreatePolicyPage = () => {
   const router = useRouter();
+  const dict = useDictionary();
   const [contractPreviewVisible, setContractPreviewVisible] =
     React.useState(true);
   const [uploadedFile, setUploadedFile] = React.useState(null);
@@ -224,7 +226,7 @@ const CreatePolicyPage = () => {
 
         // 6. Gọi createFillablePDFFromMappings để thêm AcroForm
         if (!uploadedFile) {
-          throw new Error("Không tìm thấy file PDF");
+          throw new Error(dict.ui.msgPDFNotFound);
         }
 
         // Chuyển File sang ArrayBuffer
@@ -297,7 +299,7 @@ const CreatePolicyPage = () => {
     async (stagedFields) => {
       try {
         message.loading({
-          content: "Đang tạo tất cả trường thông tin...",
+          content: dict.ui.msgCreatingAllFields,
           key: "batch-create",
           duration: 0,
         });
@@ -310,7 +312,7 @@ const CreatePolicyPage = () => {
         const duplicates = newKeys.filter((k, i) => newKeys.indexOf(k) !== i);
         if (duplicates.length > 0) {
           message.destroy("batch-create");
-          message.error(`Tên trường trùng lặp: ${duplicates.join(", ")}`);
+          message.error(dict.ui.msgDuplicateFieldNames.replace('{names}', duplicates.join(", ")));
           return false;
         }
 
@@ -318,7 +320,7 @@ const CreatePolicyPage = () => {
         const conflicts = newKeys.filter((k) => existingKeys.includes(k));
         if (conflicts.length > 0) {
           message.destroy("batch-create");
-          message.error(`Tên trường đã tồn tại: ${conflicts.join(", ")}`);
+          message.error(dict.ui.msgFieldAlreadyExists.replace('{names}', conflicts.join(", ")));
           return false;
         }
 
@@ -326,7 +328,7 @@ const CreatePolicyPage = () => {
         const empty = stagedFields.filter((f) => !f.key || !f.dataType);
         if (empty.length > 0) {
           message.destroy("batch-create");
-          message.error(`Có ${empty.length} trường chưa điền đầy đủ thông tin`);
+          message.error(dict.ui.msgIncompleteFields.replace('{count}', empty.length.toString()));
           return false;
         }
 
@@ -372,7 +374,7 @@ const CreatePolicyPage = () => {
 
         // 3. Call createFillablePDFFromMappings ONCE with ALL fields
         if (!uploadedFile) {
-          throw new Error("Không tìm thấy file PDF");
+          throw new Error(dict.ui.msgPDFNotFound);
         }
 
         const arrayBuffer = await uploadedFile.arrayBuffer();
@@ -430,12 +432,12 @@ const CreatePolicyPage = () => {
 
         message.destroy("batch-create");
         message.success(
-          `Đã tạo thành công ${stagedFields.length} trường thông tin!`
+          dict.ui.msgBatchCreateSuccess.replace('{count}', stagedFields.length.toString())
         );
         return true;
       } catch (error) {
         message.destroy("batch-create");
-        message.error(`Lỗi khi tạo trường: ${error.message}`);
+        message.error(dict.ui.msgBatchCreateError.replace('{error}', error.message));
         console.error("❌ Batch create error:", error);
         return false;
       }
@@ -481,33 +483,32 @@ const CreatePolicyPage = () => {
     switch (currentTab) {
       case TABS.BASIC:
         if (!validationStatus.basic) {
-          message =
-            "Vui lòng hoàn thành thông tin cơ bản và thêm ít nhất một nguồn dữ liệu";
+          message = dict.ui.validationBasicIncomplete;
           type = "warning";
         } else {
-          message = "Thông tin cơ bản đã hoàn thành";
+          message = dict.ui.validationBasicComplete;
           type = "success";
         }
         break;
       case TABS.CONFIGURATION:
         if (!validationStatus.configuration) {
-          message = "Vui lòng thêm ít nhất một điều kiện kích hoạt";
+          message = dict.ui.validationConfigurationIncomplete;
           type = "warning";
         } else {
-          message = "Cấu hình điều kiện đã hoàn thành";
+          message = dict.ui.validationConfigurationComplete;
           type = "success";
         }
         break;
       case TABS.TAGS:
-        message = "Tags là tùy chọn, bạn có thể bỏ qua hoặc thêm metadata";
+        message = dict.ui.validationTagsInfo;
         type = "info";
         break;
       case TABS.REVIEW:
         if (!validationStatus.review) {
-          message = "Vui lòng hoàn thành các tab trước để có thể tạo policy";
+          message = dict.ui.validationReviewIncomplete;
           type = "error";
         } else {
-          message = "Policy đã sẵn sàng để tạo";
+          message = dict.ui.validationReviewComplete;
           type = "success";
         }
         break;
@@ -522,10 +523,10 @@ const CreatePolicyPage = () => {
       key: TABS.FAQ,
       label: (
         <Space>
-          <Tooltip title="FAQ/Hướng dẫn" placement="bottom">
+          <Tooltip title={dict.ui.tooltipFAQ} placement="bottom">
             <QuestionCircleOutlined />
           </Tooltip>
-          <span>FAQ/Hướng dẫn</span>
+          <span>{dict.ui.tabFAQ}</span>
         </Space>
       ),
       children: <FAQTab />,
@@ -534,10 +535,10 @@ const CreatePolicyPage = () => {
       key: TABS.BASIC,
       label: (
         <Space>
-          <Tooltip title="Thông tin Cơ bản" placement="bottom">
+          <Tooltip title={dict.ui.tooltipBasicInfo} placement="bottom">
             <InfoCircleOutlined />
           </Tooltip>
-          <span>Thông tin Cơ bản</span>
+          <span>{dict.ui.tabBasicInfo}</span>
           {isTabCompleted(TABS.BASIC) ? (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
           ) : (
@@ -570,10 +571,10 @@ const CreatePolicyPage = () => {
       key: TABS.CONFIGURATION,
       label: (
         <Space>
-          <Tooltip title="Cấu hình nâng cao" placement="bottom">
+          <Tooltip title={dict.ui.tooltipConfiguration} placement="bottom">
             <SettingOutlined />
           </Tooltip>
-          <span>Cấu hình nâng cao</span>
+          <span>{dict.ui.tabConfiguration}</span>
           {isTabCompleted(TABS.CONFIGURATION) ? (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
           ) : (
@@ -603,10 +604,10 @@ const CreatePolicyPage = () => {
       key: TABS.TAGS,
       label: (
         <Space>
-          <Tooltip title="Tài liệu & Trường thông tin" placement="bottom">
+          <Tooltip title={dict.ui.tooltipDocumentTags} placement="bottom">
             <TagOutlined />
           </Tooltip>
-          <span>Tài liệu & Trường thông tin</span>
+          <span>{dict.ui.tabDocumentTags}</span>
           {isTabCompleted(TABS.TAGS) && (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
           )}
@@ -648,10 +649,10 @@ const CreatePolicyPage = () => {
       key: TABS.REVIEW,
       label: (
         <Space>
-          <Tooltip title="Xem lại & Tạo" placement="bottom">
+          <Tooltip title={dict.ui.tooltipReview} placement="bottom">
             <FileTextOutlined />
           </Tooltip>
-          <span>Xem lại & Tạo</span>
+          <span>{dict.ui.tabReview}</span>
           {isTabCompleted(TABS.REVIEW) ? (
             <CheckCircleOutlined style={{ color: "#52c41a" }} />
           ) : (
@@ -684,10 +685,10 @@ const CreatePolicyPage = () => {
       {/* Header */}
       <div>
         <Title level={3} style={{ margin: 0 }}>
-          Tạo Hợp đồng mẫu Bảo hiểm Nông nghiệp Mới
+          {dict.ui.createBasePolicyTitle}
         </Title>
         <Text type="secondary">
-          Tạo hợp đồng mẫu bảo hiểm tham số được hỗ trợ bởi vệ tinh
+          {dict.ui.createBasePolicySubtitle}
         </Text>
       </div>
 
@@ -718,7 +719,7 @@ const CreatePolicyPage = () => {
               }}
               moreIcon={
                 <Space style={{ marginLeft: "auto", flexShrink: 0 }}>
-                  <span>Thêm</span>
+                  <span>{dict.ui.moreInfo}</span>
                   <InfoCircleOutlined />
                 </Space>
               }
@@ -770,10 +771,10 @@ const CreatePolicyPage = () => {
           <Col>
             <Space>
               <Button onClick={handleCancel} icon={<CloseOutlined />}>
-                Hủy bỏ
+                {dict.ui.btnCancel}
               </Button>
               <Button onClick={handleReset} type="dashed">
-                Đặt lại
+                {dict.ui.btnReset}
               </Button>
             </Space>
           </Col>
@@ -785,7 +786,7 @@ const CreatePolicyPage = () => {
                 disabled={getCurrentStepIndex() === 0}
                 icon={<ArrowLeftOutlined />}
               >
-                Quay lại
+                {dict.ui.btnPrevious}
               </Button>
 
               {currentTab === TABS.REVIEW ? (
@@ -795,7 +796,7 @@ const CreatePolicyPage = () => {
                   loading={loading}
                   disabled={!validationStatus.review}
                 >
-                  {loading ? "Đang tạo..." : "Tạo Policy"}
+                  {loading ? dict.ui.btnCreating : dict.ui.btnCreatePolicy}
                 </Button>
               ) : (
                 <Button
@@ -803,7 +804,7 @@ const CreatePolicyPage = () => {
                   onClick={handleNext}
                   icon={<ArrowRightOutlined />}
                 >
-                  Tiếp theo
+                  {dict.ui.btnNext}
                 </Button>
               )}
             </Space>

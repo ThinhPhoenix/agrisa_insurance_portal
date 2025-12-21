@@ -113,7 +113,7 @@ export const POLICY_MESSAGES = {
       CREATING: "Đang tạo chính sách...",
       VALIDATING: "Đang kiểm tra dữ liệu...",
       SAVING: "Đang lưu...",
-      AUTO_FILLED: "Một số trường đã được tự động điền!",
+      AUTO_FILLED: "Một số thẻ đã được tự động điền!",
       CANCELLING: "Đang huỷ chính sách...",
     },
 
@@ -288,11 +288,11 @@ export const POLICY_MESSAGES = {
   // TAGS & PLACEHOLDERS MESSAGES
   TAGS: {
     SUCCESS: {
-      ADDED: "Thêm trường thông tin thành công!",
-      UPDATED: "Cập nhật trường thông tin thành công!",
-      REMOVED: "Xóa trường thông tin thành công!",
-      MAPPED: "Map trường thông tin thành công!",
-      BATCH_CREATED: "Tạo {count} trường thông tin thành công!",
+      ADDED: "Thêm thẻ tài liệu thành công!",
+      UPDATED: "Cập nhật thẻ tài liệu thành công!",
+      REMOVED: "Xóa thẻ tài liệu thành công!",
+      MAPPED: "Map thẻ tài liệu thành công!",
+      BATCH_CREATED: "Tạo {count} thẻ tài liệu thành công!",
       APPLIED: "Áp dụng {count} trường thành công!",
     },
 
@@ -304,8 +304,8 @@ export const POLICY_MESSAGES = {
       DATA_TYPE_REQUIRED: "Vui lòng chọn loại dữ liệu!",
       VALUE_INVALID: "Giá trị không hợp lệ cho loại dữ liệu này!",
       SELECT_OPTIONS_REQUIRED: "Phải có ít nhất 2 tùy chọn cho loại select!",
-      TAG_NOT_FOUND: "Không tìm thấy trường thông tin!",
-      CREATION_FAILED: "Tạo trường thông tin thất bại!",
+      TAG_NOT_FOUND: "Không tìm thấy thẻ tài liệu!",
+      CREATION_FAILED: "Tạo thẻ tài liệu thất bại!",
     },
 
     VALIDATION: {
@@ -319,14 +319,14 @@ export const POLICY_MESSAGES = {
     },
 
     INFO: {
-      ADDING: "Đang thêm trường thông tin...",
+      ADDING: "Đang thêm thẻ tài liệu...",
       UPDATING: "Đang cập nhật...",
       MAPPING: "Đang map với vị trí PDF...",
-      TOTAL_TAGS: "Tổng số trường: {count}",
+      TOTAL_TAGS: "Tổng số thẻ: {count}",
     },
 
     WARNING: {
-      NO_TAGS: "Chưa có trường thông tin nào được tạo!",
+      NO_TAGS: "Chưa có thẻ tài liệu nào được tạo!",
       NO_MAPPING: "Chưa có mapping nào để áp dụng!",
       UNMAPPED_PLACEHOLDERS: "Còn {count} vị trí chưa được map!",
     },

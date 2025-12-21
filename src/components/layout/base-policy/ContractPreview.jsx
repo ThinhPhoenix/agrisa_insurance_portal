@@ -605,7 +605,7 @@ const ContractPreview = ({ tagsData, isFullscreen = false }) => {
                                 borderRadius: '8px'
                             }}>
                                 <InfoCircleOutlined style={{ fontSize: '36px', marginBottom: '12px', color: '#d9d9d9' }} />
-                                <div style={{ fontSize: '12px', fontWeight: '500' }}>Chưa có trường thông tin</div>
+                                <div style={{ fontSize: '12px', fontWeight: '500' }}>Chưa có thẻ tài liệu</div>
                                 <div style={{ fontSize: '10px', marginTop: '6px', color: '#bbb' }}>
                                     Thêm các trường từ bên trái để xem trước hợp đồng
                                 </div>

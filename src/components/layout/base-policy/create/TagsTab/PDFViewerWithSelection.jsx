@@ -771,7 +771,7 @@ const PDFViewerWithSelection = ({
 
             {/* Field Creation Form Modal */}
             <Modal
-                title="Tạo trường thông tin"
+                title="Tạo thẻ tài liệu"
                 open={fieldFormVisible}
                 onOk={handleFieldFormSubmit}
                 onCancel={handleCancelPosition}

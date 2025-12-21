@@ -470,7 +470,7 @@ const FileUploadPreview = forwardRef(({
                     <Text type="secondary" style={{ fontSize: '12px' }}>
                         • Hỗ trợ: PDF<br />
                         • Dung lượng tối đa: 10MB<br />
-                        • File sẽ được xử lý để phát hiện các trường thông tin tự động
+                        • File sẽ được xử lý để phát hiện các thẻ tài liệu tự động
                     </Text>
                 </div>
             </Dragger>
@@ -525,7 +525,7 @@ const FileUploadPreview = forwardRef(({
 
                     <div style={{ marginLeft: 'auto' }}>
                         <Space>
-                            {/* <Tooltip title="Tạo nhiều trường thông tin cùng lúc (Batch mode - nhanh hơn 10x)">
+                            {/* <Tooltip title="Tạo nhiều thẻ tài liệu cùng lúc (Batch mode - nhanh hơn 10x)">
                                 <Button
                                     type="primary"
                                     icon={<AimOutlined />}

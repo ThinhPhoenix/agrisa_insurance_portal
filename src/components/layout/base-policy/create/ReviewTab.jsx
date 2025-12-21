@@ -1,3 +1,4 @@
+import useDictionary from '@/services/hooks/common/use-dictionary';
 import {
     CheckCircleOutlined,
     DollarOutlined,
@@ -32,7 +33,7 @@ const formatDate = (timestamp) => {
     return date.toLocaleDateString('vi-VN');
 };
 
-// ✅ OPTIMIZATION: Memoize ReviewTab to prevent unnecessary re-renders
+//  OPTIMIZATION: Memoize ReviewTab to prevent unnecessary re-renders
 const ReviewTabComponent = ({
     basicData,
     configurationData,
@@ -42,6 +43,7 @@ const ReviewTabComponent = ({
     loading,
     onCreatePolicy
 }) => {
+    const dict = useDictionary();
 
     // Data sources summary table columns
     const dataSourceColumns = [
@@ -283,46 +285,46 @@ const ReviewTabComponent = ({
                 {/* Basic Information */}
                 <Card title="Thông tin Cơ bản" className="review-section">
                     <Descriptions column={2} bordered size="small">
-                        <Descriptions.Item label="Tên sản phẩm" span={2}>
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'product_name')} span={2}>
                             <Text strong>{basicData.productName || 'Chưa nhập'}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Mã sản phẩm">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'product_code')}>
                             <Text code>{basicData.productCode || 'Chưa nhập'}</Text>
                         </Descriptions.Item>
                         {/* <Descriptions.Item label="Đối tác bảo hiểm">
                             {basicData.insuranceProviderId || 'Chưa nhập'}
                         </Descriptions.Item> */}
-                        <Descriptions.Item label="Loại cây trồng">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'crop_type')}>
                             {basicData.cropType ? (
                                 <Tag color="green">
                                     {basicData.cropType === 'rice' ? 'Cây Lúa (Rice)' : 'Cây Cà phê (Coffee)'}
                                 </Tag>
                             ) : 'Chưa chọn'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Đơn vị tiền tệ">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'coverage_currency')}>
                             {basicData.coverageCurrency || 'VND'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Thời hạn bảo hiểm">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'coverage_duration_days')}>
                             {basicData.coverageDurationDays ? `${basicData.coverageDurationDays} ngày` : 'Chưa nhập'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Tính theo diện tích">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'is_per_hectare')}>
                             <Tag color={basicData.isPerHectare ? 'green' : 'default'}>
-                                {basicData.isPerHectare ? 'Có (per hectare)' : 'Không'}
+                                {basicData.isPerHectare ? 'Có' : 'Không'}
                             </Tag>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Phí BH cố định">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'fix_premium_amount')}>
                             {basicData.fixPremiumAmount ? `${basicData.fixPremiumAmount.toLocaleString()} VND` : 'Không có'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Tỷ lệ phí BH cơ sở">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'premium_base_rate')}>
                             {basicData.premiumBaseRate ? `${(basicData.premiumBaseRate * 100).toFixed(2)}%` : 'Chưa nhập'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Gia hạn thanh toán">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'max_premium_payment_prolong')}>
                             {basicData.maxPremiumPaymentProlong ? `${basicData.maxPremiumPaymentProlong} ngày` : 'Không cho phép'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Tỷ lệ hủy phí">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'cancel_premium_rate')}>
                             {basicData.cancelPremiumRate ? `${(basicData.cancelPremiumRate * 100).toFixed(2)}%` : 'Không có'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian đăng ký" span={2}>
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'enrollment_start_day') + ' / ' + dict.getFieldLabel('BasePolicy', 'enrollment_end_day')} span={2}>
                             {basicData.enrollmentStartDay && basicData.enrollmentEndDay ? (
                                 <Space>
                                     <Text>{formatDate(basicData.enrollmentStartDay)}</Text>
@@ -331,7 +333,7 @@ const ReviewTabComponent = ({
                                 </Space>
                             ) : 'Chưa thiết lập'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Thời gian hiệu lực" span={2}>
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'insurance_valid_from_day') + ' / ' + dict.getFieldLabel('BasePolicy', 'insurance_valid_to_day')} span={2}>
                             {basicData.insuranceValidFrom && basicData.insuranceValidTo ? (
                                 <Space>
                                     <Text strong>{formatDate(basicData.insuranceValidFrom)}</Text>
@@ -340,27 +342,27 @@ const ReviewTabComponent = ({
                                 </Space>
                             ) : 'Chưa thiết lập'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Tự động gia hạn">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'auto_renewal')}>
                             <Tag color={basicData.autoRenewal ? 'green' : 'default'}>
                                 {basicData.autoRenewal ? 'Có' : 'Không'}
                             </Tag>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Giảm giá gia hạn">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'renewal_discount_rate')}>
                             {basicData.renewalDiscountRate ? `${(basicData.renewalDiscountRate * 100).toFixed(2)}%` : '0%'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Trạng thái">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'status')}>
                             <Tag color={basicData.status === 'active' ? 'green' : 'orange'}>
                                 {basicData.status === 'draft' ? 'Nháp' : basicData.status === 'active' ? 'Đang hoạt động' : 'Đã lưu trữ'}
                             </Tag>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Trạng thái xác thực tài liệu">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'document_validation_status')}>
                             <Tag color={basicData.documentValidationStatus === 'passed' ? 'green' : 'orange'}>
                                 {basicData.documentValidationStatus === 'pending' ? 'Đang chờ' :
                                     basicData.documentValidationStatus === 'passed' ? 'Đã xác thực' : 'Cảnh báo'}
                             </Tag>
                         </Descriptions.Item>
                         {basicData.importantAdditionalInformation && (
-                            <Descriptions.Item label="Thông tin bổ sung" span={2}>
+                            <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'important_additional_information')} span={2}>
                                 <Text>{basicData.importantAdditionalInformation}</Text>
                             </Descriptions.Item>
                         )}
@@ -369,7 +371,7 @@ const ReviewTabComponent = ({
 
                 {/* Data Sources */}
                 <Card
-                    title={`Nguồn dữ liệu (${basicData.selectedDataSources.length})`}
+                    title={`${dict.ui.dataSourceName || 'Nguồn dữ liệu'} (${basicData.selectedDataSources.length})`}
                     className="review-section"
                 >
                     {basicData.selectedDataSources.length === 0 ? (
@@ -391,37 +393,37 @@ const ReviewTabComponent = ({
 
                 {/* Configuration */}
                 <Card
-                    title="Cấu hình Điều kiện Kích hoạt"
+                    title={dict.ui.sectionTriggerConfig || 'Cấu hình Điều kiện Kích hoạt'}
                     className="review-section"
                 >
                     <Descriptions size="small" column={2} bordered style={{ marginBottom: 16 }}>
-                        <Descriptions.Item label="Toán tử logic">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicyTrigger', 'logical_operator') || 'Toán tử logic'}>
                             <Tag color={configurationData.logicalOperator === 'AND' ? 'blue' : 'orange'}>
                                 {configurationData.logicalOperator === 'AND' ? 'VÀ (AND)' : 'HOẶC (OR)'}
                             </Tag>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Giai đoạn sinh trưởng">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicyTrigger', 'growth_stage') || 'Giai đoạn sinh trưởng'}>
                             {configurationData.growthStage || 'Chưa thiết lập'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Khoảng giám sát">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicyTrigger', 'monitor_interval') + ' / ' + dict.getFieldLabel('BasePolicyTrigger', 'monitor_frequency_unit') || 'Khoảng giám sát'}>
                             {configurationData.monitorInterval} {configurationData.monitorFrequencyUnit === 'day' ? 'ngày' :
                                 configurationData.monitorFrequencyUnit === 'hour' ? 'giờ' : 'tháng'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Thanh toán theo ha">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'is_payout_per_hectare') || 'Thanh toán theo ha'}>
                             <Tag color={configurationData.isPayoutPerHectare ? 'green' : 'default'}>
                                 {configurationData.isPayoutPerHectare ? 'Có' : 'Không'}
                             </Tag>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Tỷ lệ thanh toán cơ sở">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'payout_base_rate') || 'Tỷ lệ thanh toán cơ sở'}>
                             <Text strong>{(configurationData.payoutBaseRate * 100).toFixed(2)}%</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Số tiền thanh toán cố định">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'fix_payout_amount') || 'Số tiền thanh toán cố định'}>
                             {configurationData.fixPayoutAmount ? `${configurationData.fixPayoutAmount.toLocaleString()} VND` : 'Không có'}
                         </Descriptions.Item>
-                        <Descriptions.Item label="Hệ số vượt ngưỡng">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'over_threshold_multiplier') || 'Hệ số vượt ngưỡng'}>
                             {configurationData.overThresholdMultiplier}x
                         </Descriptions.Item>
-                        <Descriptions.Item label="Giới hạn thanh toán">
+                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'payout_cap') || 'Giới hạn thanh toán'}>
                             {configurationData.payoutCap ? `${configurationData.payoutCap.toLocaleString()} VND` : 'Không giới hạn'}
                         </Descriptions.Item>
                     </Descriptions>
@@ -461,15 +463,15 @@ const ReviewTabComponent = ({
                 {/* Document Tags (for BE submission) */}
                 {tagsData.documentTagsObject && Object.keys(tagsData.documentTagsObject).length > 0 && (
                     <Card
-                        title={`Trường thông tin tài liệu (${Object.keys(tagsData.documentTagsObject).length})`}
+                        title={`${dict.ui.tabDocumentTags || 'Thẻ tài liệu'} (${Object.keys(tagsData.documentTagsObject).length})`}
                         className="review-section"
                     >
-                        <Alert
+                        {/* <Alert
                             message="Các trường này sẽ được ánh xạ vào tài liệu policy"
                             type="info"
                             showIcon
                             style={{ marginBottom: 12 }}
-                        />
+                        /> */}
                         <Descriptions column={2} bordered size="small">
                             {Object.entries(tagsData.documentTagsObject).map(([key, value]) => {
                                 // Handle both old format (string) and new format (tag object)
@@ -493,29 +495,29 @@ const ReviewTabComponent = ({
                 {/* Policy Document */}
                 {(tagsData.uploadedFile || tagsData.modifiedPdfBytes) && (
                     <Card
-                        title="Tài liệu Policy"
+                        title={dict.ui.policyDocument || 'Tài liệu Policy'}
                         className="review-section"
                     >
                         <Descriptions column={2} bordered size="small">
-                            <Descriptions.Item label="Tên file">
+                            <Descriptions.Item label={dict.getFieldLabel('Common', 'file_name') || 'Tên file'}>
                                 <Text strong>{tagsData.uploadedFile?.name || 'policy_document.pdf'}</Text>
                             </Descriptions.Item>
-                            <Descriptions.Item label="Kích thước">
+                            <Descriptions.Item label={dict.getFieldLabel('Common', 'file_size') || 'Kích thước'}>
                                 {tagsData.uploadedFile?.size
                                     ? `${(tagsData.uploadedFile.size / 1024 / 1024).toFixed(2)} MB`
                                     : 'N/A'}
                             </Descriptions.Item>
-                            <Descriptions.Item label="Loại file">
+                            <Descriptions.Item label={dict.getFieldLabel('Common', 'file_type') || 'Loại file'}>
                                 <Tag color="red">PDF</Tag>
                             </Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái">
+                            <Descriptions.Item label='Trạng thái'>
                                 <Tag color={tagsData.modifiedPdfBytes ? 'green' : 'blue'}>
-                                    {tagsData.modifiedPdfBytes ? 'Đã áp dụng mappings' : 'File gốc'}
+                                    {tagsData.modifiedPdfBytes ? 'Đã áp dụng' : 'File gốc'}
                                 </Tag>
                             </Descriptions.Item>
                             {tagsData.documentTagsObject && Object.keys(tagsData.documentTagsObject).length > 0 && (
-                                <Descriptions.Item label="Số trường đã map" span={2}>
-                                    <Text strong>{Object.keys(tagsData.documentTagsObject).length} trường</Text>
+                                <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'document_tags') ? dict.getFieldLabel('BasePolicy', 'document_tags') + ' đã áp dụng' : 'Số thẻ đã áp dụng'} span={2}>
+                                    <Text strong>{Object.keys(tagsData.documentTagsObject).length}</Text>
                                 </Descriptions.Item>
                             )}
                         </Descriptions>
@@ -527,7 +529,7 @@ const ReviewTabComponent = ({
     );
 };
 
-// ✅ OPTIMIZATION: Wrap with memo and add display name
+// OPTIMIZATION: Wrap with memo and add display name
 const ReviewTab = memo(ReviewTabComponent);
 ReviewTab.displayName = 'ReviewTab';
 

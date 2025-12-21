@@ -430,28 +430,28 @@ const PolicyDetailPage = ({ params }) => {
         color: "var(--color-secondary-800)",
         border: "1px solid rgba(252, 242, 205, 0.8)",
         icon: <ClockCircleOutlined />,
-        text: dict.getEnumLabel('BasePolicyStatus', 'draft'),
+        text: dict.getEnumLabel("BasePolicyStatus", "draft"),
       },
       active: {
         background: "rgba(165, 215, 190, 0.6)",
         color: "var(--color-primary-800)",
         border: "1px solid rgba(165, 215, 190, 0.8)",
         icon: <CheckCircleOutlined />,
-        text: dict.getEnumLabel('BasePolicyStatus', 'active'),
+        text: dict.getEnumLabel("BasePolicyStatus", "active"),
       },
       closed: {
         background: "rgba(255, 240, 240, 0.6)",
         color: "#d32f2f",
         border: "1px solid rgba(255, 200, 200, 0.8)",
         icon: <ClockCircleOutlined />,
-        text: dict.getEnumLabel('BasePolicyStatus', 'closed'),
+        text: dict.getEnumLabel("BasePolicyStatus", "closed"),
       },
       archived: {
         background: "rgba(245, 245, 245, 0.6)",
         color: "#666",
         border: "1px solid rgba(220, 220, 220, 0.8)",
         icon: <FileTextOutlined />,
-        text: dict.getEnumLabel('BasePolicyStatus', 'archived'),
+        text: dict.getEnumLabel("BasePolicyStatus", "archived"),
       },
     };
     const config = statusConfig[status] || statusConfig.draft;
@@ -503,7 +503,7 @@ const PolicyDetailPage = ({ params }) => {
       label: (
         <Space>
           <TagOutlined />
-          <span>Tài liệu & Trường thông tin</span>
+          <span>Hợp đồng và thẻ tài liệu</span>
         </Space>
       ),
       children: <TagsDetail policyData={policyDetail} mockData={mockData} />,

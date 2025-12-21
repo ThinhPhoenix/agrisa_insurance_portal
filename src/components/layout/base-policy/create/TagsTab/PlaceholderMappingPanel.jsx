@@ -1026,7 +1026,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             title={
                 <Space>
                     <LinkOutlined />
-                    <span>Liên kết Vị trí với Trường thông tin</span>
+                    <span>Liên kết Vị trí với Thẻ tài liệu</span>
                     <Badge
                         count={`${stats.mapped}/${stats.total}`}
                         style={{
@@ -1038,7 +1038,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
             extra={
                 placeholders.length > 0 && (
                     <Popconfirm
-                        title="Xóa hết trường thông tin?"
+                        title="Xóa hết thẻ tài liệu?"
                         description="Thao tác này sẽ xóa tất cả các trường đã tạo và khôi phục PDF về trạng thái gốc. Bạn có chắc chắn?"
                         onConfirm={handleClearAll}
                         okText="Xóa hết"
@@ -1065,7 +1065,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                             <InfoCircleOutlined /> Bảng danh sách trường đã tạo
                         </Text>
                         <div style={{ marginTop: 8 }}>
-                            Bảng này hiển thị các trường thông tin đã được tạo qua chế độ quét.
+                            Bảng này hiển thị các thẻ tài liệu đã được tạo qua chế độ quét.
                             Sử dụng nút <strong>"Chế độ quét"</strong> bên trái để thêm trường mới.
                         </div>
                     </div>
@@ -1081,7 +1081,7 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 message={
                     <Space>
                         <Text strong>Thống kê:</Text>
-                        <Tag color="blue">Tổng số trường: {stats.total}</Tag>
+                        <Tag color="blue">Tổng số thẻ: {stats.total}</Tag>
                         <Tag color="success">Đã áp dụng vào PDF: {appliedToPDF.size}</Tag>
                         <Text type="secondary">
                             Tiến độ: {stats.total > 0 ? Math.round((appliedToPDF.size / stats.total) * 100) : 0}%

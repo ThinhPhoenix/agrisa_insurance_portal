@@ -92,7 +92,7 @@ const BatchFieldCreationModal = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <PlusOutlined style={{ fontSize: 20, color: '#1890ff' }} />
             <Title level={4} style={{ margin: 0 }}>
-              Tạo trường thông tin (Chế độ batch)
+              Tạo thẻ tài liệu
             </Title>
           </div>
           <Text type="secondary" style={{ fontSize: 14 }}>

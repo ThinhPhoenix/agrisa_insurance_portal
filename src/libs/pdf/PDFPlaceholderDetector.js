@@ -763,7 +763,7 @@ export const analyzePDFForPlaceholders = async (file) => {
     const pdfDocument = await loadingTask.promise;
 
     message.info(
-      `PDF đã sẵn sàng (${pdfDocument.numPages} trang). Sử dụng chế độ quét để tạo trường thông tin.`,
+      `PDF đã sẵn sàng (${pdfDocument.numPages} trang). Sử dụng chế độ quét để tạo thẻ tài liệu.`,
       3
     );
 

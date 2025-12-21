@@ -5,6 +5,7 @@ import {
     getConditionValidation,
     getTriggerValidation
 } from '@/libs/message';
+import useDictionary from '@/services/hooks/common/use-dictionary';
 import { calculateConditionCost } from '@/stores/policy-store';
 import {
     AlertOutlined,
@@ -108,6 +109,7 @@ const ConfigurationTabComponent = ({
     const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
     const [blackoutPeriodForm] = Form.useForm(); // ✅ NEW: Form for blackout periods
+    const dict = useDictionary();
     const [selectedThresholdOperator, setSelectedThresholdOperator] = useState(null); // ✅ NEW: Track threshold operator
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
@@ -387,7 +389,7 @@ const ConfigurationTabComponent = ({
             ),
         },
         {
-            title: 'Điều kiện',
+            title: dict.ui.condition,
             key: 'condition',
             render: (_, record) => (
                 <div>
@@ -468,7 +470,7 @@ const ConfigurationTabComponent = ({
                     header={
                         <Space>
                             <AlertOutlined />
-                            <span>Giám sát & Cảnh báo</span>
+                            <span>{dict.ui.sectionMonitoringAlerts}</span>
                         </Space>
                     }
                     key="monitoring"
@@ -488,13 +490,13 @@ const ConfigurationTabComponent = ({
                     header={
                         <Space>
                             <SettingOutlined />
-                            <span>Cấu hình kích hoạt</span>
+                            <span>{dict.ui.sectionTriggerConfig}</span>
                         </Space>
                     }
                     key="trigger-config"
                 >
                     <div style={{ marginBottom: 16 }}>
-                        <Title level={5} style={{ marginBottom: 8 }}>Cấu hình Trigger & Giai đoạn sinh trưởng</Title>
+                        <Title level={5} style={{ marginBottom: 8 }}>{dict.ui.titleTriggerGrowthStage}</Title>
                         <TypographyText type="secondary">
                             Chọn toán tử logic để kết hợp các điều kiện, mô tả giai đoạn sinh trưởng.
                         </TypographyText>
@@ -509,7 +511,7 @@ const ConfigurationTabComponent = ({
                             <Col span={12}>
                                 <Form.Item
                                     name="logicalOperator"
-                                    label="Toán tử Logic"
+                                    label={dict.getFieldLabel('BasePolicyTrigger', 'logical_operator')}
                                     tooltip="AND = tất cả điều kiện phải đúng | OR = 1 điều kiện đúng là đủ"
                                     rules={[{ required: true, message: getTriggerValidation('LOGICAL_OPERATOR_REQUIRED') }]}
                                 >
@@ -526,7 +528,7 @@ const ConfigurationTabComponent = ({
                             <Col span={12}>
                                 <Form.Item
                                     name="growthStage"
-                                    label="Giai đoạn sinh trưởng"
+                                    label={dict.getFieldLabel('BasePolicyTrigger', 'growth_stage')}
                                     tooltip="Mô tả giai đoạn sinh trưởng (không bắt buộc, tối đa 50 ký tự)"
                                     rules={[{ type: 'string', max: 50, message: 'Giai đoạn sinh trưởng tối đa 50 ký tự' }]}
                                 >
@@ -667,7 +669,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={10}>
                                             <Form.Item
                                                 name="start"
-                                                label="Ngày bắt đầu"
+                                                label={dict.getFieldLabel('BasePolicyTrigger', 'blackout_periods') || 'Ngày bắt đầu'}
                                                 tooltip="Ngày bắt đầu giai đoạn không kích hoạt (chỉ chọn được trong khoảng thời gian bảo hiểm có hiệu lực)"
                                                 rules={[
                                                     { required: true, message: 'Vui lòng chọn ngày bắt đầu!' }
@@ -726,7 +728,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={10}>
                                             <Form.Item
                                                 name="end"
-                                                label="Ngày kết thúc"
+                                                label={dict.getFieldLabel('BasePolicyTrigger', 'blackout_periods') || 'Ngày kết thúc'}
                                                 tooltip="Ngày kết thúc giai đoạn không kích hoạt (phải sau ngày bắt đầu và trong khoảng thời gian bảo hiểm có hiệu lực)"
                                                 rules={[
                                                     { required: true, message: 'Vui lòng chọn ngày kết thúc!' }
@@ -875,7 +877,7 @@ const ConfigurationTabComponent = ({
                     header={
                         <Space>
                             <ClockCircleOutlined />
-                            <span>Điều kiện Kích hoạt</span>
+                            <span>{dict.ui.sectionTriggerConditions}</span>
                             <Tag color={configurationData.conditions?.length > 0 ? 'green' : 'orange'}>
                                 {configurationData.conditions?.length || 0} điều kiện
                             </Tag>
@@ -886,7 +888,7 @@ const ConfigurationTabComponent = ({
                     {/* Add/Edit Condition Form */}
                     <Card className="condition-form-card" style={{ marginBottom: 16 }}>
                         <Title level={5}>
-                            {editingCondition ? 'Chỉnh sửa Điều kiện' : 'Thêm Điều kiện Mới'}
+                            {editingCondition ? dict.ui.editCondition : dict.ui.addNewCondition}
                         </Title>
 
                         {availableDataSources.length === 0 ? (
@@ -913,7 +915,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="dataSourceId"
-                                                label="Nguồn dữ liệu"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'data_source_id')}
                                                 tooltip="Nguồn dữ liệu để tính điều kiện (trạm khí tượng, vệ tinh, v.v.). Mỗi nguồn chỉ được sử dụng một lần"
                                                 rules={[{ required: true, message: getConditionValidation('DATA_SOURCE_ID_REQUIRED') }]}
                                             >
@@ -973,7 +975,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="aggregationFunction"
-                                                label="Phương pháp tổng hợp"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'aggregation_function')}
                                                 tooltip="Phương pháp tổng hợp (Aggregation Function): Cách thức tính toán một giá trị duy nhất từ dữ liệu thu thập trong một chu kỳ. Ví dụ: SUM để tính tổng lượng mưa, AVG để tính nhiệt độ trung bình"
                                                 rules={[{ required: true, message: getConditionValidation('AGGREGATION_FUNCTION_REQUIRED') }]}
                                             >
@@ -1020,7 +1022,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="aggregationWindowDays"
-                                                label="Chu kỳ tổng hợp (ngày)"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'aggregation_window_days')}
                                                 tooltip="Chu kỳ tổng hợp (Aggregation Window): Khoảng thời gian (tính bằng ngày) mà dữ liệu được gom lại để tính toán. Ví dụ: 30 ngày nghĩa là sẽ tính tổng/trung bình dữ liệu của 30 ngày gần nhất"
                                                 rules={[
                                                     { required: true, message: getConditionValidation('AGGREGATION_WINDOW_DAYS_REQUIRED') },
@@ -1038,7 +1040,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="thresholdOperator"
-                                                label="Toán tử so sánh ngưỡng"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'threshold_operator')}
                                                 tooltip="Toán tử so sánh ngưỡng (Threshold Operator): Phép toán logic (ví dụ: >, <, =) dùng để so sánh giá trị dữ liệu thực tế với giá trị ngưỡng đã định"
                                                 rules={[{ required: true, message: getConditionValidation('THRESHOLD_OPERATOR_REQUIRED') }]}
                                             >
@@ -1095,7 +1097,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="thresholdValue"
-                                                label="Giá trị ngưỡng"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'threshold_value')}
                                                 tooltip="Giá trị ngưỡng (Threshold Value): Mốc giá trị cụ thể để xác định một sự kiện bảo hiểm. Đơn vị của ngưỡng phụ thuộc vào nguồn dữ liệu"
                                                 rules={[
                                                     { required: true, message: getConditionValidation('THRESHOLD_VALUE_REQUIRED') },
@@ -1125,7 +1127,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="earlyWarningThreshold"
-                                                label="Ngưỡng cảnh báo sớm"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'early_warning_threshold')}
                                                 tooltip="Ngưỡng cảnh báo sớm (Early Warning Threshold): Một mốc phụ, khi bị vi phạm sẽ gửi cảnh báo cho người dùng biết rủi ro sắp xảy ra, trước khi đạt đến ngưỡng kích hoạt chi trả chính"
                                                 rules={[{ type: 'number', min: 0, message: getConditionValidation('EARLY_WARNING_THRESHOLD_MIN') }]}
                                             >
@@ -1140,7 +1142,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="consecutiveRequired"
-                                                label="Yêu cầu điều kiện liên tục"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'consecutive_required')}
                                                 tooltip="Yêu cầu điều kiện liên tục (Consecutive Required): Nếu bật, sự kiện bảo hiểm chỉ xảy ra khi điều kiện được thỏa mãn trong nhiều chu kỳ giám sát liên tiếp nhau. Ví dụ: Hạn hán xảy ra nếu không có mưa trong 3 chu kỳ liên tiếp"
                                                 valuePropName="checked"
                                             >
@@ -1157,7 +1159,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="includeComponent"
-                                                label="Bao gồm thành phần con"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'include_component')}
                                                 tooltip="Bao gồm thành phần con (Include Component): Cho phép tính toán dựa trên các thành phần con của một loại dữ liệu, nếu có. Ví dụ: Dữ liệu thời tiết có thể bao gồm các thành phần như 'lượng mưa' và 'độ ẩm'"
                                             >
                                                 <Select
@@ -1173,7 +1175,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="validationWindowDays"
-                                                label="Chu kỳ xác thực dữ liệu (ngày)"
+                                                label={dict.getFieldLabel('BasePolicyTriggerCondition', 'validation_window_days')}
                                                 tooltip="Chu kỳ xác thực (Validation Window): Số ngày tối thiểu mà dữ liệu từ một nguồn phải có sẵn và hợp lệ trước khi hệ thống sử dụng nó để tính toán, nhằm đảm bảo tính chính xác"
                                                 rules={[{ type: 'number', min: 1, message: getConditionValidation('VALIDATION_WINDOW_DAYS_MIN') }]}
                                             >
@@ -1188,7 +1190,7 @@ const ConfigurationTabComponent = ({
                                         <Col span={8}>
                                             <Form.Item
                                                 name="dataQuality"
-                                                label="Chất lượng dữ liệu"
+                                                label={dict.getFieldLabel('DataQuality', 'poor') || 'Chất lượng dữ liệu'}
                                                 tooltip="Chất lượng dữ liệu (Data Quality): Mức độ tin cậy và chính xác của nguồn dữ liệu được sử dụng. Tốt (good): dữ liệu chất lượng cao, Chấp nhận được (acceptable): dữ liệu đủ dùng, Kém (poor): dữ liệu chất lượng thấp"
                                                 initialValue="good"
                                             >
@@ -1214,7 +1216,7 @@ const ConfigurationTabComponent = ({
                                                     <Col span={8}>
                                                         <Form.Item
                                                             name="baselineWindowDays"
-                                                            label="Chu kỳ tham chiếu (ngày)"
+                                                            label={dict.getFieldLabel('BasePolicyTriggerCondition', 'baseline_window_days')}
                                                             tooltip="Chu kỳ tham chiếu (Baseline Window): Khoảng thời gian trong quá khứ (tính bằng ngày) được dùng để tạo ra một giá trị 'nền' hoặc 'bình thường'. BẮT BUỘC khi sử dụng toán tử thay đổi (change_gt/change_lt). Ví dụ: 365 ngày để tính giá trị trung bình hàng năm làm mốc so sánh."
                                                             rules={[
                                                                 { required: true, message: 'Chu kỳ tham chiếu là bắt buộc khi sử dụng toán tử thay đổi!' },
@@ -1232,7 +1234,7 @@ const ConfigurationTabComponent = ({
                                                     <Col span={8}>
                                                         <Form.Item
                                                             name="baselineFunction"
-                                                            label="Hàm tính tham chiếu"
+                                                            label={dict.getFieldLabel('BasePolicyTriggerCondition', 'baseline_function')}
                                                             tooltip="Hàm tính tham chiếu (Baseline Function): Phương pháp tính toán giá trị 'nền' từ dữ liệu lịch sử. BẮT BUỘC khi sử dụng toán tử thay đổi (change_gt/change_lt). Ví dụ: AVG để tính giá trị trung bình trong chu kỳ tham chiếu làm mốc so sánh với giá trị hiện tại."
                                                             rules={[
                                                                 { required: true, message: 'Hàm tính tham chiếu là bắt buộc khi sử dụng toán tử thay đổi!' }
@@ -1262,7 +1264,7 @@ const ConfigurationTabComponent = ({
                                             onClick={handleSaveCondition}
                                             size="large"
                                         >
-                                            {editingCondition ? 'Cập nhật Điều kiện' : 'Thêm Điều kiện'}
+                                            {editingCondition ? dict.ui.updateCondition : dict.ui.addCondition}
                                         </Button>
                                         {editingCondition && (
                                             <Button onClick={handleCancelEdit} size="large">

@@ -9,6 +9,7 @@ export const CANCEL_REQUEST_MESSAGES = {
     REVIEWED: "Xem xét yêu cầu hủy thành công!",
     APPROVED: "Chấp thuận hủy hợp đồng thành công!",
     DENIED: "Từ chối yêu cầu hủy thành công!",
+    REVOKED: "Đã rút yêu cầu hủy thành công!",
   },
 
   ERROR: {
@@ -91,6 +92,8 @@ export const CANCEL_REQUEST_MESSAGES = {
     CONFIRM_DENY: "Bạn có chắc chắn muốn từ chối yêu cầu hủy?",
     CANCEL_PENDING:
       "Hợp đồng này đang chờ xem xét yêu cầu hủy. Hành động này sẽ tạo một yêu cầu mới.",
+    CONFIRM_REVOKE:
+      "Bạn có chắc chắn muốn rút yêu cầu hủy này? Hành động sẽ dừng quá trình hủy.",
   },
 };
 

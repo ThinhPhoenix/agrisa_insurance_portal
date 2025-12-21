@@ -3,6 +3,11 @@
 import { CustomForm } from "@/components/custom-form";
 import axiosInstance from "@/libs/axios-instance";
 import { formatUtcDate } from "@/libs/date-utils";
+import {
+  getCancelRequestError,
+  getCancelRequestSuccess,
+  getCancelRequestWarning,
+} from "@/libs/message/cancel-request-message";
 import { endpoints } from "@/services/endpoints";
 import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
 import { useGetPublicUser } from "@/services/hooks/profile/use-profile";
@@ -53,6 +58,8 @@ export default function CancelRequestDetailPage() {
     resolveDispute,
     resolveDisputePartner,
     getCancelRequestById,
+    refetch,
+    revokeCancelRequest,
   } = useCancelPolicy();
 
   const cancelRequest = getCancelRequestById(requestId);
@@ -332,6 +339,37 @@ export default function CancelRequestDetailPage() {
     setDenyModalVisible(true);
   };
 
+  // Handle revoke (requester/partner can revoke during notice period)
+  const handleRevoke = () => {
+    Modal.confirm({
+      title: "Xác nhận rút yêu cầu",
+      content: getCancelRequestWarning("CONFIRM_REVOKE"),
+      okText: "Xác nhận",
+      cancelText: "Hủy",
+      onOk: async () => {
+        setSubmitting(true);
+        try {
+          const result = await revokeCancelRequest(requestId);
+          if (result.success) {
+            message.success(getCancelRequestSuccess("REVOKED"));
+            // refresh list and navigate back to list
+            if (refetch) await refetch();
+            router.push("/policy/cancel");
+          } else {
+            message.error(
+              result.error || getCancelRequestError("REVOKE_FAILED")
+            );
+          }
+        } catch (err) {
+          console.error("Error revoking request:", err);
+          message.error(getCancelRequestError("REVOKE_FAILED"));
+        } finally {
+          setSubmitting(false);
+        }
+      },
+    });
+  };
+
   // Submit approve
   const onApproveSubmit = async (values) => {
     setSubmitting(true);
@@ -492,6 +530,11 @@ export default function CancelRequestDetailPage() {
           <div>
             <Space>
               <Button onClick={() => router.back()}>Quay lại</Button>
+              {isMyRequest && cancelRequest?.during_notice_period && (
+                <Button danger onClick={handleRevoke} loading={submitting}>
+                  Rút yêu cầu hủy
+                </Button>
+              )}
               {!isMyRequest && cancelRequest.status === "pending_review" && (
                 <>
                   <Button
@@ -601,10 +644,67 @@ export default function CancelRequestDetailPage() {
                 <Descriptions.Item label="Số tiền bồi thường" span={1}>
                   {formatCurrency(cancelRequest.compensate_amount)}
                 </Descriptions.Item>
+                <Descriptions.Item label="Mã hợp đồng đăng ký" span={1}>
+                  {policy ? (
+                    <a
+                      href="#registered-policy"
+                      className="text-blue-600 hover:underline"
+                    >
+                      <Text strong>{policy.policy_number || policy.id}</Text>
+                    </a>
+                  ) : (
+                    <Text strong>
+                      {cancelRequest.registered_policy_id || "-"}
+                    </Text>
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Trong chu kỳ thông báo" span={1}>
+                  <Text
+                    strong
+                    style={{
+                      color: cancelRequest.during_notice_period
+                        ? "#389e0d"
+                        : "#8c8c8c",
+                    }}
+                  >
+                    {cancelRequest.during_notice_period ? "Có" : "Không"}
+                  </Text>
+                </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái" span={1}>
                   <Tag color={getCancelStatusColor(cancelRequest.status)}>
                     {getCancelStatusText(cancelRequest.status)}
                   </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Đã thanh toán" span={1}>
+                  <Text
+                    strong
+                    style={{
+                      color: cancelRequest.paid ? "#389e0d" : "#cf1322",
+                    }}
+                  >
+                    {cancelRequest.paid ? "Đã thanh toán" : "Chưa thanh toán"}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Thời điểm thanh toán" span={1}>
+                  <Text>
+                    {cancelRequest.paid_at
+                      ? formatUtcDate(cancelRequest.paid_at, { withTime: true })
+                      : "-"}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tạo" span={1}>
+                  <Text>
+                    {formatUtcDate(cancelRequest.created_at, {
+                      withTime: true,
+                    })}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày cập nhật" span={1}>
+                  <Text>
+                    {formatUtcDate(cancelRequest.updated_at, {
+                      withTime: true,
+                    })}
+                  </Text>
                 </Descriptions.Item>
               </Descriptions>
 
@@ -748,10 +848,11 @@ export default function CancelRequestDetailPage() {
           {policy && (
             <Col span={24}>
               <Card
+                id="registered-policy"
                 title={
                   <Space>
                     <FileTextOutlined />
-                    <span>Thông tin hợp đồng</span>
+                    <span>Hợp đồng đăng ký</span>
                   </Space>
                 }
                 extra={
@@ -766,9 +867,6 @@ export default function CancelRequestDetailPage() {
                 <Descriptions bordered column={2}>
                   <Descriptions.Item label="Số hợp đồng" span={1}>
                     {policy.policy_number}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Mã nông dân" span={1}>
-                    {policy.farmer_id}
                   </Descriptions.Item>
                   <Descriptions.Item label="Số tiền bảo hiểm" span={1}>
                     {formatCurrency(policy.coverage_amount)}

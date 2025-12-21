@@ -133,15 +133,15 @@ export default function CancelRequestsPage() {
         <div className="insurance-package-id break-all">{text}</div>
       ),
     },
-    {
-      title: "Mã hợp đồng",
-      dataIndex: "registered_policy_id",
-      key: "registered_policy_id",
-      width: 300,
-      render: (text) => (
-        <div className="insurance-package-name break-all">{text}</div>
-      ),
-    },
+    // {
+    //   title: "Mã hợp đồng",
+    //   dataIndex: "registered_policy_id",
+    //   key: "registered_policy_id",
+    //   width: 300,
+    //   render: (text) => (
+    //     <div className="insurance-package-name break-all">{text}</div>
+    //   ),
+    // },
     {
       title: "Loại yêu cầu",
       dataIndex: "cancel_request_type",

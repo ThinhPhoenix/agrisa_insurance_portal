@@ -204,6 +204,35 @@ export function useCancelPolicy(requestId = null) {
     [requestId, fetchCancelRequests]
   );
 
+  // Revoke cancel request (partner or requester can revoke)
+  const revokeCancelRequest = useCallback(
+    async (id) => {
+      const targetId = id || requestId;
+      if (!targetId) return { success: false };
+
+      try {
+        const response = await axiosInstance.post(
+          endpoints.cancelRequest.revoke(targetId)
+        );
+
+        if (response.data.success) {
+          await fetchCancelRequests(); // Refresh data
+          return { success: true };
+        } else {
+          throw new Error(response.data.message || "Failed to revoke request");
+        }
+      } catch (error) {
+        console.error("Error revoking cancel request:", error);
+        const errorCode = error.response?.data?.error?.code;
+        const errorMessage =
+          error.response?.data?.error?.message || error.message;
+        const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+        return { success: false, error: userMessage };
+      }
+    },
+    [requestId, fetchCancelRequests]
+  );
+
   return {
     // List operations
     paginatedData,
@@ -227,5 +256,6 @@ export function useCancelPolicy(requestId = null) {
     reviewCancelRequest,
     resolveDispute,
     resolveDisputePartner,
+    revokeCancelRequest,
   };
 }

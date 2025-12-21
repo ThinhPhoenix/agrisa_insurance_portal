@@ -6,7 +6,6 @@ import { formatUtcDate } from "@/libs/date-utils";
 import {
   getCancelRequestError,
   getCancelRequestSuccess,
-  getCancelRequestWarning,
 } from "@/libs/message/cancel-request-message";
 import { endpoints } from "@/services/endpoints";
 import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
@@ -341,8 +340,20 @@ export default function CancelRequestDetailPage() {
   // Handle revoke (requester/partner can revoke during notice period)
   const handleRevoke = () => {
     Modal.confirm({
-      title: "Xác nhận rút yêu cầu",
-      content: getCancelRequestWarning("CONFIRM_REVOKE"),
+      title: "Xác nhận hủy yêu cầu hủy hợp đồng",
+      content: (
+        <div>
+          <p>Bạn có chắc chắn muốn hủy yêu cầu hủy hợp đồng này?</p>
+          <p>
+            <strong>Lưu ý:</strong> Sau khi hủy yêu cầu, mọi tranh chấp, mâu
+            thuẫn hoặc hệ quả phát sinh giữa hai bên sẽ phải tự giải quyết.
+          </p>
+          <p>
+            Nền tảng sẽ không chịu trách nhiệm về bất kỳ hành vi, thiệt hại hoặc
+            nghĩa vụ nào phát sinh từ quyết định này.
+          </p>
+        </div>
+      ),
       okText: "Xác nhận",
       cancelText: "Hủy",
       onOk: async () => {
@@ -531,7 +542,7 @@ export default function CancelRequestDetailPage() {
               <Button onClick={() => router.back()}>Quay lại</Button>
               {isMyRequest && cancelRequest?.during_notice_period && (
                 <Button danger onClick={handleRevoke} loading={submitting}>
-                  Rút yêu cầu hủy
+                  Hủy yêu cầu hủy hợp đồng
                 </Button>
               )}
               {!isMyRequest && cancelRequest.status === "pending_review" && (

@@ -9,7 +9,7 @@ export const CANCEL_REQUEST_MESSAGES = {
     REVIEWED: "Xem xét yêu cầu hủy thành công!",
     APPROVED: "Chấp thuận hủy hợp đồng thành công!",
     DENIED: "Từ chối yêu cầu hủy thành công!",
-    REVOKED: "Đã rút yêu cầu hủy thành công!",
+    REVOKED: "Đã hủy yêu cầu hủy hợp đồng thành công!",
   },
 
   ERROR: {
@@ -93,7 +93,7 @@ export const CANCEL_REQUEST_MESSAGES = {
     CANCEL_PENDING:
       "Hợp đồng này đang chờ xem xét yêu cầu hủy. Hành động này sẽ tạo một yêu cầu mới.",
     CONFIRM_REVOKE:
-      "Bạn có chắc chắn muốn rút yêu cầu hủy này? Hành động sẽ dừng quá trình hủy.",
+      "Bạn có chắc chắn muốn hủy yêu cầu hủy hợp đồng này?\n\nLưu ý: Sau khi hủy yêu cầu, mọi tranh chấp, mâu thuẫn hoặc hệ quả phát sinh giữa hai bên sẽ phải tự giải quyết.\nNền tảng sẽ không chịu trách nhiệm về bất kỳ hành vi, thiệt hại hoặc nghĩa vụ nào phát sinh từ quyết định này.",
   },
 };
 

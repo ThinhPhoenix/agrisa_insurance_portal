@@ -255,10 +255,10 @@ export default function CancelDetailModals({
         width={600}
         destroyOnClose
       >
-        <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded">
+        <div className="mb-2">
           <Space direction="vertical" className="w-full">
             <Space>
-              <ExclamationCircleOutlined style={{ color: "#ff7a45" }} />
+              <ExclamationCircleOutlined />
               <Text strong>
                 Vui lòng xác định quyết định cuối cùng cho tranh chấp này
               </Text>

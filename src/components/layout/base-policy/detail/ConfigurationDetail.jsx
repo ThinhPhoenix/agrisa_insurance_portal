@@ -1,4 +1,5 @@
 import CustomTable from '@/components/custom-table';
+import useDictionary from '@/services/hooks/common/use-dictionary';
 import {
     AlertOutlined,
     ClockCircleOutlined,
@@ -10,28 +11,25 @@ import { Card, Descriptions, Divider, Space, Tag, Typography } from 'antd';
 const { Title, Text } = Typography;
 
 const ConfigurationDetail = ({ policyData, mockData }) => {
+    // Use dictionary hook
+    const dict = useDictionary();
+    const { trigger: triggerLabels, condition: conditionLabels, operators } = dict;
+
     const getAggregationFunctionLabel = (value) => {
-        return mockData.aggregationFunctions.find(f => f.value === value)?.label || value;
+        return operators.getAggregationFunctionLabel(value);
     };
 
     const getThresholdOperatorLabel = (value) => {
-        return mockData.thresholdOperators.find(op => op.value === value)?.label || value;
+        return operators.getThresholdOperatorLabel(value);
     };
 
     const getMonitoringFrequencyLabel = (value) => {
         return mockData.monitoringFrequencies.find(m => m.value === value)?.label || value;
     };
 
-    // Map monitor frequency unit to Vietnamese
+    // Map monitor frequency unit to Vietnamese using dictionary
     const getMonitorFrequencyUnitText = (unit) => {
-        const mapping = {
-            'hour': 'giờ',
-            'day': 'ngày',
-            'week': 'tuần',
-            'month': 'tháng',
-            'year': 'năm'
-        };
-        return mapping[unit] || unit || 'ngày';
+        return operators.getMonitorFrequencyLabel(unit) || unit || 'ngày';
     };
 
     const getDataSourceLabel = (condition) => {
@@ -61,7 +59,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
         return mockData.dataSources.find(ds => ds.id === condition.dataSourceId)?.parameterName || '';
     };
 
-    // Trigger conditions table columns
+    // Trigger conditions table columns - using dictionary labels
     const triggerColumns = [
         {
             title: '#',
@@ -75,7 +73,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             ),
         },
         {
-            title: 'Nguồn dữ liệu',
+            title: dict.dataSource.displayNameVi,
             key: 'dataSource',
             render: (_, record) => (
                 <div>
@@ -90,7 +88,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
             ),
         },
         {
-            title: 'Hàm tổng hợp',
+            title: conditionLabels.aggregationFunction,
             key: 'aggregation',
             render: (_, record) => (
                 <div>
@@ -108,7 +106,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                         <>
                             <br />
                             <Text style={{ fontSize: 10, color: 'var(--color-secondary-700)' }}>
-                                Yêu cầu liên tục
+                                {conditionLabels.consecutiveRequired}
                             </Text>
                         </>
                     )}
@@ -128,7 +126,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                         <>
                             <br />
                             <Text type="secondary" style={{ fontSize: 11 }}>
-                                Cảnh báo sớm: {record.earlyWarningThreshold}
+                                {conditionLabels.earlyWarningThreshold}: {record.earlyWarningThreshold}
                             </Text>
                         </>
                     )}
@@ -170,19 +168,19 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                     </Text>
                     <Divider style={{ margin: '8px 0' }} />
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Tần suất giám sát">
+                        <Descriptions.Item label={triggerLabels.monitorInterval}>
                             <Space>
                                 <ClockCircleOutlined style={{ color: 'var(--color-primary-500)' }} />
                                 <Text strong>{policyData.configuration?.monitorInterval} {getMonitorFrequencyUnitText(policyData.configuration?.monitorFrequencyUnit)}</Text>
                             </Space>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Giai đoạn sinh trưởng">
+                        <Descriptions.Item label={triggerLabels.growthStage}>
                             <Text strong style={{ color: 'var(--color-primary-800)' }}>
                                 {policyData.configuration?.growthStage || 'N/A'}
                             </Text>
                         </Descriptions.Item>
                         {policyData.configuration?.blackoutPeriods?.periods?.length > 0 && (
-                            <Descriptions.Item label="Giai đoạn không kích hoạt" span={2}>
+                            <Descriptions.Item label={triggerLabels.blackoutPeriods} span={2}>
                                 <Space size="small" wrap>
                                     {policyData.configuration.blackoutPeriods.periods.map((period, index) => {
                                         const formatDate = (dateStr) => {
@@ -240,7 +238,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                             }}>
                                 <Space size="small">
                                     <AlertOutlined style={{ color: 'var(--color-primary-600)', fontSize: '14px' }} />
-                                    <Text style={{ fontSize: '13px' }}>Toán tử Logic:</Text>
+                                    <Text style={{ fontSize: '13px' }}>{triggerLabels.logicalOperator}:</Text>
                                     <Tag style={{
                                         backgroundColor: 'var(--color-primary-300)',
                                         color: 'var(--color-primary-800)',
@@ -248,7 +246,7 @@ const ConfigurationDetail = ({ policyData, mockData }) => {
                                         fontSize: '13px',
                                         fontWeight: '600',
                                     }}>
-                                        {policyData.configuration?.logicalOperator}
+                                        {operators.getLogicalOperatorLabel(policyData.configuration?.logicalOperator)}
                                     </Tag>
                                     <Text type="secondary" style={{ fontSize: '12px' }}>
                                         {mockData.logicalOperators.find(op => op.value === policyData.configuration?.logicalOperator)?.description || ''}

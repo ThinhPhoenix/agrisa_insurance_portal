@@ -1,4 +1,5 @@
 import CustomTable from '@/components/custom-table';
+import useDictionary from '@/services/hooks/common/use-dictionary';
 import {
     CalendarOutlined,
     DatabaseOutlined,
@@ -13,6 +14,10 @@ import { Card, Descriptions, Divider, Space, Tag, Typography } from 'antd';
 const { Title, Text } = Typography;
 
 const BasicInfoDetail = ({ policyData, mockData }) => {
+    // Use dictionary hook
+    const dict = useDictionary();
+    const { basePolicy: labels } = dict;
+
     const getCropTypeLabel = (value) => {
         return mockData.cropTypes.find(t => t.value === value)?.label || value;
     };
@@ -31,10 +36,10 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
     // Shared style for field values to keep visual balance
     const fieldValueStyle = { fontSize: 14 };
 
-    // Data source table columns
+    // Data source table columns - using dictionary labels
     const dataSourceColumns = [
         {
-            title: 'Tên nguồn dữ liệu',
+            title: dict.dataSource.displayNameVi,
             dataIndex: 'label',
             key: 'label',
             render: (text, record) => (
@@ -103,13 +108,13 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                     </Text>
                     <Divider style={{ margin: '8px 0' }} />
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Tên Sản phẩm" span={2}>
+                        <Descriptions.Item label={labels.productName} span={2}>
                             <Text strong style={fieldValueStyle}>{policyData.productName}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Mã Sản phẩm" span={2}>
+                        <Descriptions.Item label={labels.productCode} span={2}>
                             <Text code>{policyData.productCode}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Mô tả" span={2}>
+                        <Descriptions.Item label={labels.productDescription} span={2}>
                             <Text>{policyData.description || 'Không có mô tả'}</Text>
                         </Descriptions.Item>
                     </Descriptions>
@@ -123,7 +128,7 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                     </Text>
                     <Divider style={{ margin: '8px 0' }} />
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Loại Cây trồng" span={2}>
+                        <Descriptions.Item label={labels.cropType} span={2}>
                             <Space>
                                 <Text strong style={{ ...fieldValueStyle, color: getCropTypeColor(policyData.cropType) }}>
                                     {getCropTypeLabel(policyData.cropType)}
@@ -133,7 +138,7 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                                 </Text>
                             </Space>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Thời hạn Bảo hiểm">
+                        <Descriptions.Item label={labels.coverageDurationDays}>
                             <Text strong style={fieldValueStyle}>{policyData.coverageDurationDays} ngày</Text>
                         </Descriptions.Item>
                     </Descriptions>
@@ -147,12 +152,12 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                     </Text>
                     <Divider style={{ margin: '8px 0' }} />
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Tỷ lệ Phí BH Cơ sở">
+                        <Descriptions.Item label={labels.premiumBaseRate}>
                             <Text strong style={{ ...fieldValueStyle, color: 'var(--color-primary-600)' }}>
                                 {(policyData.premiumBaseRate * 100).toFixed(2)}%
                             </Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Phí cố định">
+                        <Descriptions.Item label={labels.fixPremiumAmount}>
                             <Space>
                                 <Text strong style={fieldValueStyle}>{policyData.fixPremiumAmount?.toLocaleString()} ₫</Text>
                                 {policyData.isPerHectare && (
@@ -163,12 +168,12 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                                 )}
                             </Space>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Tỷ lệ Chi trả Cơ sở">
+                        <Descriptions.Item label={labels.payoutBaseRate}>
                             <Text strong style={{ ...fieldValueStyle, color: 'var(--color-primary-600)' }}>
                                 {(policyData.payoutBaseRate * 100)?.toFixed(2)}%
                             </Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Số tiền Chi trả Cố định">
+                        <Descriptions.Item label={labels.fixPayoutAmount}>
                             <Space>
                                 <Text strong style={fieldValueStyle}>
                                     {policyData.fixPayoutAmount?.toLocaleString()} ₫
@@ -192,19 +197,19 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                     </Text>
                     <Divider style={{ margin: '8px 0' }} />
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Mở đăng ký">
+                        <Descriptions.Item label={labels.enrollmentStartDay}>
                             <Text strong>{policyData.enrollmentStartDay}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Đóng đăng ký">
+                        <Descriptions.Item label={labels.enrollmentEndDay}>
                             <Text strong>{policyData.enrollmentEndDay}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Bắt đầu hiệu lực">
+                        <Descriptions.Item label={labels.insuranceValidFromDay}>
                             <Text strong>{policyData.insuranceValidFromDay}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Kết thúc hiệu lực">
+                        <Descriptions.Item label={labels.insuranceValidToDay}>
                             <Text strong>{policyData.insuranceValidToDay}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Gia hạn thanh toán phí">
+                        <Descriptions.Item label={labels.maxPremiumPaymentProlong}>
                             <Text strong>{policyData.maxPremiumPaymentProlong} ngày</Text>
                         </Descriptions.Item>
                     </Descriptions>
@@ -218,7 +223,7 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                     </Text>
                     <Divider style={{ margin: '8px 0' }} />
                     <Descriptions bordered column={2} size="small">
-                        <Descriptions.Item label="Tự động gia hạn">
+                        <Descriptions.Item label={labels.autoRenewal}>
                             <Tag style={{
                                 backgroundColor: policyData.autoRenewal ? 'var(--color-primary-300)' : '#f5f5f5',
                                 color: policyData.autoRenewal ? 'var(--color-primary-800)' : '#8c8c8c',
@@ -227,16 +232,16 @@ const BasicInfoDetail = ({ policyData, mockData }) => {
                                 {policyData.autoRenewal ? 'Có' : 'Không'}
                             </Tag>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Giảm giá khi gia hạn">
+                        <Descriptions.Item label={labels.renewalDiscountRate}>
                             <Text strong>{(policyData.renewalDiscountRate * 100)?.toFixed(2)}%</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Hệ số vượt ngưỡng">
+                        <Descriptions.Item label={labels.overThresholdMultiplier}>
                             <Text strong>{policyData.overThresholdMultiplier}x</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Giới hạn chi trả">
+                        <Descriptions.Item label={labels.payoutCap}>
                             <Text strong>{policyData.payoutCap?.toLocaleString()} {policyData.coverageCurrency}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label="Tỉ lệ hoàn phí khi hủy">
+                        <Descriptions.Item label={labels.cancelPremiumRate}>
                             <Text strong>{(policyData.cancelPremiumRate * 100)?.toFixed(2)}%</Text>
                         </Descriptions.Item>
                     </Descriptions>

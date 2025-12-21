@@ -10,6 +10,7 @@ import useCancelPolicy from "@/services/hooks/base-policy/use-cancel-policy";
 import useDetailPolicy from "@/services/hooks/base-policy/use-detail-policy";
 import usePolicy from "@/services/hooks/base-policy/use-policy";
 import useDataSource from "@/services/hooks/common/use-data-source";
+import useDictionary from "@/services/hooks/common/use-dictionary";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -47,6 +48,10 @@ const PolicyDetailPage = ({ params }) => {
   const [cancelModalVisible, setCancelModalVisible] = React.useState(false);
   const [cancelOption, setCancelOption] = React.useState("keep"); // "keep" or "compensate"
   const hasFetchedRef = React.useRef(false); // Track if we've already fetched
+
+  // Use dictionary hook for labels
+  const dict = useDictionary();
+  const { basePolicy: labels } = dict;
 
   // Use policy list hook for checking policy status
   const { policies } = usePolicy();
@@ -425,28 +430,28 @@ const PolicyDetailPage = ({ params }) => {
         color: "var(--color-secondary-800)",
         border: "1px solid rgba(252, 242, 205, 0.8)",
         icon: <ClockCircleOutlined />,
-        text: "Chờ duyệt",
+        text: dict.getEnumLabel('BasePolicyStatus', 'draft'),
       },
       active: {
         background: "rgba(165, 215, 190, 0.6)",
         color: "var(--color-primary-800)",
         border: "1px solid rgba(165, 215, 190, 0.8)",
         icon: <CheckCircleOutlined />,
-        text: "Đang hoạt động",
+        text: dict.getEnumLabel('BasePolicyStatus', 'active'),
       },
       closed: {
         background: "rgba(255, 240, 240, 0.6)",
         color: "#d32f2f",
         border: "1px solid rgba(255, 200, 200, 0.8)",
         icon: <ClockCircleOutlined />,
-        text: "Đã đóng",
+        text: dict.getEnumLabel('BasePolicyStatus', 'closed'),
       },
       archived: {
         background: "rgba(245, 245, 245, 0.6)",
         color: "#666",
         border: "1px solid rgba(220, 220, 220, 0.8)",
         icon: <FileTextOutlined />,
-        text: "Đã lưu trữ",
+        text: dict.getEnumLabel('BasePolicyStatus', 'archived'),
       },
     };
     const config = statusConfig[status] || statusConfig.draft;

@@ -1,4 +1,5 @@
 import CustomTable from '@/components/custom-table';
+import useDictionary from '@/services/hooks/common/use-dictionary';
 import {
     EyeOutlined,
     FilePdfOutlined,
@@ -11,6 +12,10 @@ const { Title, Text } = Typography;
 
 const TagsDetail = ({ policyData, mockData }) => {
     const [previewFullscreen, setPreviewFullscreen] = React.useState(false);
+
+    // Use dictionary hook
+    const dict = useDictionary();
+    const { basePolicy: labels } = dict;
 
     const getDataTypeLabel = (value) => {
         return mockData.tagDataTypes.find(t => t.value === value)?.label || value;
@@ -37,7 +42,7 @@ const TagsDetail = ({ policyData, mockData }) => {
     // Convert document_tags object to array format
     const tags = policyData.tags || [];
 
-    // Columns for tags table
+    // Columns for tags table - using dictionary labels where applicable
     const tagColumns = [
         {
             title: '#',
@@ -125,7 +130,7 @@ const TagsDetail = ({ policyData, mockData }) => {
                                         </Text>
                                     </Col>
                                     <Col span={12}>
-                                        <Text type="secondary" style={{ fontSize: '12px' }}>Trạng thái:</Text>
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>{labels.status}:</Text>
                                         <br />
                                         <Tag style={{
                                             backgroundColor: policyData.documentValidationStatus === 'passed'
@@ -185,7 +190,7 @@ const TagsDetail = ({ policyData, mockData }) => {
                     }}>
                         <Text strong style={{ color: 'var(--color-primary-700)', fontSize: '14px' }}>
                             <TagOutlined style={{ marginRight: 6 }} />
-                            Trường thông tin
+                            {labels.documentTags}
                         </Text>
                         <Tag style={{
                             background: 'rgba(199, 230, 215, 0.6)',

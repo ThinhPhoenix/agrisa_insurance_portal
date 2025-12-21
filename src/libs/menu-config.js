@@ -5,7 +5,7 @@ export const sidebarMenuItems = [
   },
   {
     key: "base-policy",
-    label: "Quản lý hợp đồng mẫu",
+    label: "Quản lý gói bảo hiểm",
   },
   {
     key: "policy",

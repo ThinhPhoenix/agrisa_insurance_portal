@@ -474,14 +474,29 @@ const useCreatePolicy = () => {
     }));
   }, []);
 
-  const handleRemoveDataSource = useCallback((id) => {
-    setBasicData((prev) => ({
-      ...prev,
-      selectedDataSources: prev.selectedDataSources.filter(
-        (source) => source.id !== id
-      ),
-    }));
-  }, []);
+  const handleRemoveDataSource = useCallback(
+    (id) => {
+      // Check if this data source is used in any trigger conditions
+      const triggerUsingDataSource = configurationData.conditions.find(
+        (condition) => condition.dataSourceId === id
+      );
+
+      if (triggerUsingDataSource) {
+        message.warning(
+          "Đã có điều kiện kích hoạt cho gói dữ liệu này, vui lòng xóa điều kiện kích hoạt trước"
+        );
+        return;
+      }
+
+      setBasicData((prev) => ({
+        ...prev,
+        selectedDataSources: prev.selectedDataSources.filter(
+          (source) => source.id !== id
+        ),
+      }));
+    },
+    [configurationData.conditions]
+  );
 
   const handleConfigurationDataChange = useCallback((newData) => {
     setConfigurationData((prev) => ({ ...prev, ...newData }));

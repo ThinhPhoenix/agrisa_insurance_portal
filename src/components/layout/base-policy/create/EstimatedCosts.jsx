@@ -10,7 +10,8 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
         monthlyDataCost,
         dataComplexityScore,
         premiumBaseRate,
-        totalEstimatedCost
+        totalEstimatedCost,
+        monitorFrequencyCost
     } = estimatedCosts;
 
     // ✅ OPTIMIZATION: Memoize expensive calculations
@@ -21,6 +22,15 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
         ),
         [configurationData?.conditions]
     );
+
+    // Monitor frequency cost labels
+    const frequencyLabels = {
+        hour: "Giờ (2.0x)",
+        day: "Ngày (1.5x)",
+        week: "Tuần (1.0x)",
+        month: "Tháng (0.8x)",
+        year: "Năm (0.5x)",
+    };
 
     // Calculate complexity level
     const complexityInfo = useMemo(() => {
@@ -59,10 +69,34 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                 />
                 <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
                     {basicData.selectedDataSources.length} nguồn dữ liệu
+                    {configurationData?.monitorInterval && configurationData?.monitorFrequencyUnit && (
+                        <> • Giám sát × {monitorFrequencyCost.toFixed(2)}</>
+                    )}
                 </Text>
             </div>
 
             <Divider style={{ margin: '8px 0' }} />
+
+            {/* Monitor Frequency Multiplier */}
+            {configurationData?.monitorInterval && configurationData?.monitorFrequencyUnit && (
+                <>
+                    <div className="cost-section" style={{ marginBottom: '12px' }}>
+                        <Row justify="space-between" align="middle" style={{ marginBottom: '4px' }}>
+                            <Col>
+                                <Text strong style={{ fontSize: '11px' }}>Tần suất Giám sát</Text>
+                            </Col>
+                            <Col>
+                                <Tag color="cyan">{frequencyLabels[configurationData.monitorFrequencyUnit] || 'N/A'}</Tag>
+                            </Col>
+                        </Row>
+                        <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
+                            Khoảng: {configurationData.monitorInterval} • Hệ số: {monitorFrequencyCost.toFixed(2)}x
+                        </Text>
+                    </div>
+
+                    <Divider style={{ margin: '8px 0' }} />
+                </>
+            )}
 
             {/* Data Complexity Score */}
             <div className="cost-section" style={{ marginBottom: '12px' }}>
@@ -215,11 +249,17 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                     Cách tính Chi phí
                 </Text>
                 <Text type="secondary" style={{ fontSize: '9px', display: 'block', marginBottom: '4px' }}>
-                    Chi phí = Cơ sở × Danh mục × Gói
+                    Chi phí = (Cơ sở × Danh mục × Gói) × Giám sát
                 </Text>
-                <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2', marginBottom: '4px' }}>
                     • Thời tiết: 1.0x | Vệ tinh: 1.5x | Phân tích: 2.0x<br />
                     • Cơ bản: 1.0x | Cao cấp: 1.8x | Doanh nghiệp: 3.0x
+                </Text>
+                <Text strong style={{ fontSize: '9px', display: 'block', marginBottom: '2px' }}>
+                    Tần suất Giám sát:
+                </Text>
+                <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                    • Giờ: 2.0x | Ngày: 1.5x | Tuần: 1.0x | Tháng: 0.8x | Năm: 0.5x
                 </Text>
             </div>
         </Card>

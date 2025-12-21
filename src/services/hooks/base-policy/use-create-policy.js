@@ -114,6 +114,15 @@ const useCreatePolicy = () => {
   const [dataSourcesLoading, setDataSourcesLoading] = useState(false);
   const [dataSourcesError, setDataSourcesError] = useState(null);
 
+  // ✅ Monitor Frequency Cost Multipliers
+  const MONITOR_FREQUENCY_COST = {
+    hour: 2.0,
+    day: 1.5,
+    week: 1.0,
+    month: 0.8,
+    year: 0.5,
+  };
+
   // ✅ OPTIMIZATION: Memoize expensive cost calculations
   // Only recalculate when dependencies actually change
   const estimatedCosts = useMemo(() => {
@@ -130,6 +139,7 @@ const useCreatePolicy = () => {
         dataComplexityScore: 0,
         premiumBaseRate: basicData.premiumBaseRate || 0,
         totalEstimatedCost: "0.00",
+        monitorFrequencyCost: 0,
       };
     }
 
@@ -140,11 +150,20 @@ const useCreatePolicy = () => {
       const tier = tiers.find((t) => t.value === source.tier);
 
       if (category && tier) {
-        const cost =
+        const baseCost =
           source.baseCost *
           category.category_cost_multiplier *
           tier.data_tier_multiplier;
-        monthlyDataCost += cost;
+
+        // ✅ Apply monitor frequency multiplier
+        const monitorFrequencyMultiplier =
+          MONITOR_FREQUENCY_COST[configurationData.monitorFrequencyUnit] ||
+          MONITOR_FREQUENCY_COST.day;
+        const monitorIntervalCost =
+          (configurationData.monitorInterval || 1) * monitorFrequencyMultiplier;
+
+        const totalCost = baseCost * monitorIntervalCost;
+        monthlyDataCost += totalCost;
       }
     });
 
@@ -153,15 +172,24 @@ const useCreatePolicy = () => {
     );
     dataComplexityScore = uniqueDataSources.size;
 
+    const monitorFrequencyMultiplier =
+      MONITOR_FREQUENCY_COST[configurationData.monitorFrequencyUnit] ||
+      MONITOR_FREQUENCY_COST.day;
+    const monitorFrequencyCost =
+      (configurationData.monitorInterval || 1) * monitorFrequencyMultiplier;
+
     return {
       monthlyDataCost: monthlyDataCost.toFixed(2),
       dataComplexityScore,
       premiumBaseRate: basicData.premiumBaseRate,
       totalEstimatedCost: monthlyDataCost.toFixed(2),
+      monitorFrequencyCost,
     };
   }, [
     basicData.selectedDataSources,
     basicData.premiumBaseRate,
+    configurationData.monitorInterval,
+    configurationData.monitorFrequencyUnit,
     categories,
     tiers,
   ]);

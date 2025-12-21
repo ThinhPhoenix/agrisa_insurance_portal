@@ -1,3 +1,4 @@
+import CustomTable from '@/components/custom-table';
 import useDictionary from '@/services/hooks/common/use-dictionary';
 import {
     CheckCircleOutlined,
@@ -13,7 +14,6 @@ import {
     Row,
     Space,
     Statistic,
-    Table,
     Tag,
     Typography
 } from 'antd';
@@ -75,12 +75,22 @@ const ReviewTabComponent = ({
             title: 'Chi phí ước tính',
             key: 'cost',
             render: (_, record) => {
-                const cost = record.baseCost *
-                    (record.category === 'weather' ? 1.0 :
-                        record.category === 'satellite' ? 1.5 : 2.0) *
-                    (record.tier === 'basic' ? 1.0 :
-                        record.tier === 'premium' ? 1.8 : 3.0);
-                return `${cost.toLocaleString()} ₫/tháng`;
+                const categoryMultiplier = record.categoryMultiplier || (record.category === 'weather' ? 1.0 : record.category === 'satellite' ? 1.5 : 2.0);
+                const tierMultiplier = record.tierMultiplier || (record.tier === 'basic' ? 1.0 : record.tier === 'premium' ? 1.8 : 3.0);
+
+                const MONITOR_FREQUENCY_COST = {
+                    hour: 2.0,
+                    day: 1.5,
+                    week: 1.0,
+                    month: 0.8,
+                    year: 0.5,
+                };
+
+                const freqMultiplier = (configurationData?.monitorFrequencyUnit && MONITOR_FREQUENCY_COST[configurationData.monitorFrequencyUnit]) || 1.5;
+                const monitorInterval = configurationData?.monitorInterval || 1;
+
+                const cost = record.baseCost * categoryMultiplier * tierMultiplier * monitorInterval * freqMultiplier;
+                return `${Math.round(cost).toLocaleString()} ₫/tháng`;
             },
         },
     ];
@@ -381,7 +391,7 @@ const ReviewTabComponent = ({
                             showIcon
                         />
                     ) : (
-                        <Table
+                        <CustomTable
                             columns={dataSourceColumns}
                             dataSource={basicData.selectedDataSources}
                             rowKey="id"

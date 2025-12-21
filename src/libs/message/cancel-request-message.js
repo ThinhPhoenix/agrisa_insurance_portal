@@ -66,6 +66,11 @@ export const CANCEL_REQUEST_MESSAGES = {
     REVOKE_FAILED: "Hủy bỏ yêu cầu thất bại. Vui lòng thử lại!",
     INVALID_REQUEST_STATUS: "Trạng thái yêu cầu không cho phép hủy bỏ!",
 
+    // Image upload errors
+    IMAGE_UPLOAD_FAILED: "Không thể tải hình ảnh lên. Vui lòng thử lại!",
+    IMAGE_UPLOAD_TIMEOUT: "Tải hình ảnh bị quá thời gian. Vui lòng thử lại!",
+    INVALID_IMAGE_FORMAT: "Định dạng hình ảnh không hợp lệ!",
+
     // Generic server errors
     INTERNAL_SERVER_ERROR: "Lỗi máy chủ nội bộ. Vui lòng thử lại sau!",
     NETWORK_ERROR: "Lỗi kết nối. Vui lòng kiểm tra kết nối mạng!",
@@ -84,6 +89,7 @@ export const CANCEL_REQUEST_MESSAGES = {
     REVIEWING: "Đang xem xét yêu cầu hủy...",
     RESOLVING: "Đang giải quyết tranh chấp...",
     LOADING: "Đang tải danh sách yêu cầu hủy...",
+    UPLOADING_IMAGES: "Đang tải hình ảnh lên...",
   },
 
   WARNING: {

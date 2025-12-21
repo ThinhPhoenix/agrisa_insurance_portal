@@ -4,11 +4,14 @@ import SelectedColumn from "@/components/column-selector";
 import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import { getApprovalInfo } from "@/libs/message";
+import { CANCEL_REQUEST_MESSAGES } from "@/libs/message/cancel-request-message";
 import { useActivePolicies } from "@/services/hooks/policy/use-active-policies";
 import { useCancelPolicy } from "@/services/hooks/policy/use-cancel-policy";
+import { useImgBBUpload } from "@/services/hooks/common/use-imgbb-upload";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
+  CloseOutlined,
   DownloadOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
@@ -17,18 +20,24 @@ import {
   SafetyOutlined,
   SearchOutlined,
   StarOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import {
   Button,
   Collapse,
+  Form,
+  Image,
+  Input,
   Layout,
   message,
   Modal,
+  Radio,
   Space,
   Spin,
   Tabs,
   Tag,
   Typography,
+  Upload,
 } from "antd";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -48,6 +57,7 @@ export default function ActivePoliciesPage() {
   } = useActivePolicies();
 
   const { createCancelRequest } = useCancelPolicy();
+  const { uploadImageToImgBB } = useImgBBUpload();
 
   // Visible columns state
   const [visibleColumns, setVisibleColumns] = useState([
@@ -64,6 +74,11 @@ export default function ActivePoliciesPage() {
   const [imageFieldCount, setImageFieldCount] = useState(1);
   const cancelFormRef = useRef(null);
   const imageFormRef = useRef(null);
+
+  // File upload states
+  const [imageUploadMode, setImageUploadMode] = useState([]); // Array of 'file' or 'url' for each image field
+  const [selectedFiles, setSelectedFiles] = useState([]); // Array of File objects
+  const [filePreviewUrls, setFilePreviewUrls] = useState([]); // Array of blob URLs for preview
 
   // Calculate summary stats using allPolicies (unpaginated)
   const summaryStats = {
@@ -93,6 +108,51 @@ export default function ActivePoliciesPage() {
   const handleCancelRequest = (policy) => {
     setSelectedPolicy(policy);
     setCancelModalVisible(true);
+
+    // Initialize upload states - default to 'file' mode
+    setImageUploadMode(Array(imageFieldCount).fill('file'));
+    setSelectedFiles([]);
+    setFilePreviewUrls([]);
+  };
+
+  // Handle file selection for a specific image index
+  const handleFileSelect = (index, file) => {
+    if (!file) return;
+
+    // Update selected files
+    const newSelectedFiles = [...selectedFiles];
+    newSelectedFiles[index] = file;
+    setSelectedFiles(newSelectedFiles);
+
+    // Create and store preview URL
+    const newPreviewUrls = [...filePreviewUrls];
+    // Revoke old URL if exists to prevent memory leak
+    if (newPreviewUrls[index]) {
+      URL.revokeObjectURL(newPreviewUrls[index]);
+    }
+    newPreviewUrls[index] = URL.createObjectURL(file);
+    setFilePreviewUrls(newPreviewUrls);
+  };
+
+  // Handle mode change for a specific image index
+  const handleModeChange = (index, mode) => {
+    const newModes = [...imageUploadMode];
+    newModes[index] = mode;
+    setImageUploadMode(newModes);
+
+    // Clear file and preview if switching to URL mode
+    if (mode === 'url') {
+      const newSelectedFiles = [...selectedFiles];
+      newSelectedFiles[index] = null;
+      setSelectedFiles(newSelectedFiles);
+
+      const newPreviewUrls = [...filePreviewUrls];
+      if (newPreviewUrls[index]) {
+        URL.revokeObjectURL(newPreviewUrls[index]);
+        newPreviewUrls[index] = null;
+      }
+      setFilePreviewUrls(newPreviewUrls);
+    }
   };
 
   const handleSubmitCancelRequest = async () => {
@@ -120,18 +180,60 @@ export default function ActivePoliciesPage() {
         onOk: async () => {
           setSubmittingCancel(true);
           try {
-            // Build images array from image form values
+            // Step 1: Upload images to ImgBB (if any files are selected)
             const images = [];
+            const hasFilesToUpload = selectedFiles.some(file => file);
+
+            if (hasFilesToUpload) {
+              message.loading({
+                content: CANCEL_REQUEST_MESSAGES.INFO.UPLOADING_IMAGES,
+                key: 'uploading',
+                duration: 0,
+              });
+            }
+
             for (let i = 0; i < imageFieldCount; i++) {
-              const url = imageFormValues[`image_${i}_url`];
+              const mode = imageUploadMode[i] || 'file';
               const comment = imageFormValues[`image_${i}_comment`];
-              if (url && url.trim()) {
+              let finalUrl = null;
+
+              if (mode === 'file' && selectedFiles[i]) {
+                // Upload file to ImgBB
+                const uploadResult = await uploadImageToImgBB(selectedFiles[i]);
+
+                if (!uploadResult.success) {
+                  message.destroy('uploading');
+                  message.error(
+                    uploadResult.error || CANCEL_REQUEST_MESSAGES.ERROR.IMAGE_UPLOAD_FAILED
+                  );
+                  setSubmittingCancel(false);
+                  return; // Stop if upload fails
+                }
+
+                finalUrl = uploadResult.url;
+              } else if (mode === 'url') {
+                // Use URL from form input
+                finalUrl = imageFormValues[`image_${i}_url`];
+              }
+
+              // Add to images array if we have a URL
+              if (finalUrl && finalUrl.trim()) {
                 images.push({
-                  url: url.trim(),
+                  url: finalUrl.trim(),
                   comment: comment ? comment.trim() : "",
                 });
               }
             }
+
+            // Destroy uploading message
+            message.destroy('uploading');
+
+            // Step 2: Create cancel request with image URLs
+            message.loading({
+              content: CANCEL_REQUEST_MESSAGES.INFO.CREATING,
+              key: 'creating',
+              duration: 0,
+            });
 
             const evidence = {
               description: mainFormValues.evidence_description || "",
@@ -144,19 +246,30 @@ export default function ActivePoliciesPage() {
               evidence: evidence,
             });
 
+            message.destroy('creating');
+
             if (result.success) {
-              message.success("Gửi yêu cầu hủy thành công");
+              message.success(CANCEL_REQUEST_MESSAGES.SUCCESS.CREATED);
               setCancelModalVisible(false);
-              // Reset image field count
+              // Reset states
               setImageFieldCount(1);
+              setImageUploadMode([]);
+              setSelectedFiles([]);
+              // Revoke all preview URLs
+              filePreviewUrls.forEach(url => {
+                if (url) URL.revokeObjectURL(url);
+              });
+              setFilePreviewUrls([]);
               // Refresh the list
               window.location.reload();
             } else {
-              message.error(result.error || "Gửi yêu cầu thất bại");
+              message.error(result.error || CANCEL_REQUEST_MESSAGES.ERROR.CREATE_FAILED);
             }
           } catch (error) {
             console.error("Error submitting cancel request:", error);
-            message.error(error.message || "Gửi yêu cầu thất bại");
+            message.destroy('uploading');
+            message.destroy('creating');
+            message.error(error.message || CANCEL_REQUEST_MESSAGES.ERROR.UNKNOWN_ERROR);
           } finally {
             setSubmittingCancel(false);
           }
@@ -412,26 +525,135 @@ export default function ActivePoliciesPage() {
     ];
   };
 
-  // Generate image evidence fields for tab 2
-  const generateImageEvidenceFields = () => {
-    const fields = [];
-    for (let i = 0; i < imageFieldCount; i++) {
-      fields.push({
-        name: `image_${i}_url`,
-        type: "input",
-        label: `URL Hình ảnh ${i + 1}`,
-        placeholder: "https://example.com/image.jpg",
-        required: false,
-      });
-      fields.push({
-        name: `image_${i}_comment`,
-        type: "input",
-        label: `Ghi chú hình ảnh ${i + 1}`,
-        placeholder: "Nhập ghi chú cho hình ảnh này",
-        required: false,
-      });
-    }
-    return fields;
+  // Render single image field with URL/File toggle
+  const renderImageField = (index) => {
+    const mode = imageUploadMode[index] || 'file';
+    const previewUrl = filePreviewUrls[index];
+
+    return (
+      <div key={index} className="space-y-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+        <div className="flex items-center justify-between">
+          <label className="font-medium">Hình ảnh {index + 1}</label>
+          <Radio.Group
+            value={mode}
+            onChange={(e) => handleModeChange(index, e.target.value)}
+            size="small"
+          >
+            <Radio.Button value="file">Tải file</Radio.Button>
+            <Radio.Button value="url">Nhập URL</Radio.Button>
+          </Radio.Group>
+        </div>
+
+        {mode === 'file' ? (
+          <div className="space-y-2">
+            {!previewUrl ? (
+              <Upload
+                accept="image/*"
+                maxCount={1}
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  handleFileSelect(index, file);
+                  return false; // Prevent auto-upload
+                }}
+              >
+                <Button icon={<UploadOutlined />} block>
+                  Chọn hình ảnh
+                </Button>
+              </Upload>
+            ) : (
+              <div className="space-y-2">
+                {/* Preview với Image component của Ant Design (có zoom) */}
+                <div className="relative border border-gray-300 rounded-lg p-2 bg-white">
+                  {/* Nút xóa ở góc trên phải */}
+                  <Button
+                    danger
+                    type="text"
+                    size="small"
+                    icon={<CloseOutlined />}
+                    onClick={() => {
+                      // Xóa ảnh đã chọn
+                      const newSelectedFiles = [...selectedFiles];
+                      newSelectedFiles[index] = null;
+                      setSelectedFiles(newSelectedFiles);
+
+                      // Revoke và xóa preview URL
+                      if (filePreviewUrls[index]) {
+                        URL.revokeObjectURL(filePreviewUrls[index]);
+                      }
+                      const newPreviewUrls = [...filePreviewUrls];
+                      newPreviewUrls[index] = null;
+                      setFilePreviewUrls(newPreviewUrls);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '4px',
+                      right: '4px',
+                      zIndex: 10,
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    }}
+                  />
+                  <Image
+                    src={previewUrl}
+                    alt={`Preview ${index + 1}`}
+                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
+                    preview={{
+                      mask: 'Xem ảnh',
+                    }}
+                  />
+                  {selectedFiles[index] && (
+                    <p className="text-xs text-gray-500 mt-1 truncate">
+                      {selectedFiles[index].name}
+                    </p>
+                  )}
+                </div>
+                {/* Nút thay đổi ảnh */}
+                <Upload
+                  accept="image/*"
+                  maxCount={1}
+                  showUploadList={false}
+                  beforeUpload={(file) => {
+                    handleFileSelect(index, file);
+                    return false;
+                  }}
+                >
+                  <Button icon={<UploadOutlined />} size="small" block type="dashed">
+                    Thay đổi ảnh
+                  </Button>
+                </Upload>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Input
+            placeholder="https://example.com/image.jpg"
+            onChange={(e) => {
+              // Update form value for URL mode
+              if (imageFormRef.current) {
+                imageFormRef.current.setFieldsValue({
+                  [`image_${index}_url`]: e.target.value,
+                });
+              }
+            }}
+          />
+        )}
+
+        <div className="space-y-1">
+          <label className="text-sm text-gray-600">Ghi chú</label>
+          <Input
+            placeholder="Ví dụ: Hình hôm 20/12/2025 thửa ruộng bị xới"
+            onChange={(e) => {
+              // Update form value for comment
+              if (imageFormRef.current) {
+                imageFormRef.current.setFieldsValue({
+                  [`image_${index}_comment`]: e.target.value,
+                });
+              }
+            }}
+          />
+        </div>
+      </div>
+    );
   };
 
   // Search fields - no status filter needed as we already filter active policies
@@ -610,8 +832,16 @@ export default function ActivePoliciesPage() {
           open={cancelModalVisible}
           onOk={handleSubmitCancelRequest}
           onCancel={() => {
+            // Revoke all blob URLs to prevent memory leaks
+            filePreviewUrls.forEach(url => {
+              if (url) URL.revokeObjectURL(url);
+            });
+            // Reset all states
             setCancelModalVisible(false);
             setImageFieldCount(1);
+            setImageUploadMode([]);
+            setSelectedFiles([]);
+            setFilePreviewUrls([]);
           }}
           confirmLoading={submittingCancel}
           okText="Gửi yêu cầu"
@@ -648,18 +878,20 @@ export default function ActivePoliciesPage() {
                     label: "Bằng chứng hình ảnh",
                     children: (
                       <div className="space-y-4">
-                        <CustomForm
-                          ref={imageFormRef}
-                          fields={generateImageEvidenceFields()}
-                          gridColumns="1fr"
-                          gap="16px"
-                        />
+                        <Form ref={imageFormRef}>
+                          {Array.from({ length: imageFieldCount }).map((_, i) =>
+                            renderImageField(i)
+                          )}
+                        </Form>
                         <div className="flex gap-2">
                           <Button
                             type="dashed"
-                            onClick={() =>
-                              setImageFieldCount(imageFieldCount + 1)
-                            }
+                            onClick={() => {
+                              const newCount = imageFieldCount + 1;
+                              setImageFieldCount(newCount);
+                              // Extend upload mode array with default 'file'
+                              setImageUploadMode([...imageUploadMode, 'file']);
+                            }}
                           >
                             + Thêm hình ảnh
                           </Button>
@@ -667,17 +899,27 @@ export default function ActivePoliciesPage() {
                             <Button
                               danger
                               type="dashed"
-                              onClick={() =>
-                                setImageFieldCount(imageFieldCount - 1)
-                              }
+                              onClick={() => {
+                                const newCount = imageFieldCount - 1;
+                                setImageFieldCount(newCount);
+                                // Remove last item from arrays
+                                setImageUploadMode(imageUploadMode.slice(0, newCount));
+                                const newFiles = selectedFiles.slice(0, newCount);
+                                setSelectedFiles(newFiles);
+                                // Revoke last preview URL
+                                if (filePreviewUrls[imageFieldCount - 1]) {
+                                  URL.revokeObjectURL(filePreviewUrls[imageFieldCount - 1]);
+                                }
+                                setFilePreviewUrls(filePreviewUrls.slice(0, newCount));
+                              }}
                             >
                               - Xóa hình ảnh cuối
                             </Button>
                           )}
                         </div>
                         <p className="text-sm text-gray-500">
-                          Nhập URL trực tiếp của hình ảnh (không tải file). Có
-                          thể thêm nhiều hình ảnh minh họa cho yêu cầu.
+                          Bạn có thể tải file hình ảnh lên hoặc nhập URL trực tiếp.
+                          Có thể thêm nhiều hình ảnh minh họa cho yêu cầu.
                         </p>
                       </div>
                     ),

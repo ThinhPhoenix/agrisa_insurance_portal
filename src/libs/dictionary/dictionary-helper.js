@@ -176,9 +176,12 @@ export const UI_LABELS = {
   filter: "Lọc",
   export: "Xuất",
   import: "Nhập",
+  create: "Tạo mới",
+  clearFilters: "Xóa bộ lọc",
 
   // Common messages
   loading: "Đang tải...",
+  loadingData: "Đang tải dữ liệu...",
   saving: "Đang lưu...",
   noData: "Không có dữ liệu",
   error: "Có lỗi xảy ra",
@@ -188,7 +191,16 @@ export const UI_LABELS = {
   status: "Trạng thái",
   createdAt: "Ngày tạo",
   updatedAt: "Ngày cập nhật",
-  actions: "Thao tác",
+  actions: "Hành động",
+
+  // Page specific - Base Policy
+  totalPolicies: "Tổng số gói bảo hiểm",
+  activePoliciesCount: "Đang hoạt động",
+  draftPolicies: "Chờ duyệt",
+  avgPremiumRate: "Phí bảo hiểm trung bình",
+  manageBasePolicies: "Quản lý gói bảo hiểm",
+  managePoliciesDescription: "Quản lý các gói bảo hiểm nông nghiệp",
+  filterSearchLabel: "Bộ lọc tìm kiếm",
 };
 
 export default {

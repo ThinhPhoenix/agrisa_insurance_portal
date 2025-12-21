@@ -5,6 +5,7 @@ import { CustomForm } from "@/components/custom-form";
 import CustomTable from "@/components/custom-table";
 import usePolicy from "@/services/hooks/base-policy/use-policy";
 import { useFilterableList } from "@/services/hooks/common";
+import useDictionary from "@/services/hooks/common/use-dictionary";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -24,6 +25,10 @@ import "./policy.css";
 const { Title, Text } = Typography;
 
 export default function PolicyPage() {
+  // Use dictionary hook
+  const dict = useDictionary();
+  const { basePolicy: labels } = dict;
+
   // Use policy hook
   const {
     policies,
@@ -175,7 +180,7 @@ export default function PolicyPage() {
         : "0.0",
   };
 
-  // Filter options
+  // Filter options - using dictionary for status labels
   const filterOptions = {
     providers: [
       { label: "PARTNER_001", value: "PARTNER_001" },
@@ -198,8 +203,8 @@ export default function PolicyPage() {
     ],
     policyStatuses: [
       { label: "Tất cả", value: "all" },
-      { label: "Chờ duyệt", value: "draft" },
-      { label: "Đang hoạt động", value: "active" },
+      { label: dict.getEnumLabel('BasePolicyStatus', 'draft'), value: "draft" },
+      { label: dict.getEnumLabel('BasePolicyStatus', 'active'), value: "active" },
     ],
   };
 
@@ -213,17 +218,17 @@ export default function PolicyPage() {
     return cropType ? cropType.label : cropTypeValue;
   };
 
-  // Table columns
+  // Table columns - using dictionary labels
   const columns = [
     {
-      title: "Tên Sản phẩm",
+      title: labels.productName,
       dataIndex: "productName",
       key: "productName",
       width: 250,
       render: (text) => <Text strong>{text}</Text>,
     },
     {
-      title: "Mã Sản phẩm",
+      title: labels.productCode,
       dataIndex: "productCode",
       key: "productCode",
       width: 200,
@@ -231,28 +236,28 @@ export default function PolicyPage() {
     },
 
     {
-      title: "Loại Cây trồng",
+      title: labels.cropType,
       dataIndex: "cropType",
       key: "cropType",
       width: 180,
       render: (text) => <Tag color="green">{getCropTypeLabel(text)}</Tag>,
     },
     {
-      title: "Tỷ lệ Phí BH Cơ sở (%)",
+      title: labels.premiumBaseRate,
       dataIndex: "premiumBaseRate",
       key: "premiumBaseRate",
       width: 200,
       render: (rate) => <Text>{(rate * 100).toFixed(2)}%</Text>,
     },
     {
-      title: "Thời hạn Bảo hiểm (Ngày)",
+      title: labels.coverageDurationDays,
       dataIndex: "coverageDurationDays",
       key: "coverageDurationDays",
       width: 200,
       render: (days) => <Text>{days} ngày</Text>,
     },
     {
-      title: "Trạng thái",
+      title: labels.status,
       dataIndex: "status",
       key: "status",
       width: 150,
@@ -260,19 +265,19 @@ export default function PolicyPage() {
         const statusConfig = {
           draft: {
             color: "processing",
-            text: "Chờ duyệt",
+            text: dict.getEnumLabel('BasePolicyStatus', 'draft'),
           },
           active: {
             color: "success",
-            text: "Đang hoạt động",
+            text: dict.getEnumLabel('BasePolicyStatus', 'active'),
           },
           closed: {
             color: "error",
-            text: "Đã đóng",
+            text: dict.getEnumLabel('BasePolicyStatus', 'closed'),
           },
           archived: {
             color: "default",
-            text: "Đã lưu trữ",
+            text: dict.getEnumLabel('BasePolicyStatus', 'archived'),
           },
         };
         const config = statusConfig[status] || statusConfig.draft;
@@ -300,31 +305,31 @@ export default function PolicyPage() {
     },
   ];
 
-  // Search fields - organized in 2 rows with 4 fields each
+  // Search fields - using dictionary labels
   const searchFields = [
     // First row - Main search fields (4 fields)
     {
       name: "productName",
-      label: "Tên sản phẩm",
+      label: labels.productName,
       type: "input",
       placeholder: "Tìm kiếm theo tên sản phẩm...",
     },
     {
       name: "productCode",
-      label: "Mã sản phẩm",
+      label: labels.productCode,
       type: "input",
       placeholder: "Tìm kiếm theo mã sản phẩm...",
     },
     {
       name: "cropType",
-      label: "Loại cây trồng",
+      label: labels.cropType,
       type: "combobox",
       placeholder: "Chọn loại cây trồng",
       options: filterOptions.cropTypes,
     },
     {
       name: "policyStatus",
-      label: "Trạng thái",
+      label: labels.status,
       type: "combobox",
       placeholder: "Chọn trạng thái",
       options: filterOptions.policyStatuses,
@@ -332,14 +337,14 @@ export default function PolicyPage() {
 
     {
       name: "premiumRange",
-      label: "Tỷ lệ phí BH",
+      label: labels.premiumBaseRate,
       type: "combobox",
       placeholder: "Chọn khoảng tỷ lệ phí",
       options: filterOptions.premiumRanges,
     },
     {
       name: "durationRange",
-      label: "Thời hạn bảo hiểm",
+      label: labels.coverageDurationDays,
       type: "combobox",
       placeholder: "Chọn khoảng thời hạn",
       options: filterOptions.durationRanges,
@@ -349,7 +354,7 @@ export default function PolicyPage() {
       label: " ",
       type: "button",
       variant: "primary",
-      buttonText: "Tìm kiếm",
+      buttonText: dict.ui.search,
       startContent: <SearchOutlined size={14} />,
       isSubmit: true,
     },
@@ -358,7 +363,7 @@ export default function PolicyPage() {
       label: " ",
       type: "button",
       variant: "dashed",
-      buttonText: "Xóa bộ lọc",
+      buttonText: dict.ui.clearFilters,
       startContent: <FilterOutlined size={14} />,
       onClick: handleClearFilters,
     },
@@ -368,7 +373,7 @@ export default function PolicyPage() {
     <Layout.Content className="policy-content">
       <Spin
         spinning={policiesLoading || policyCountsLoading}
-        tip="Đang tải dữ liệu..."
+        tip={dict.ui.loadingData}
       >
         <div className="policy-space">
           {/* Header */}
@@ -376,10 +381,10 @@ export default function PolicyPage() {
             <div>
               <Title level={2} className="policy-title">
                 <SafetyOutlined className="policy-icon" />
-                Quản lý hợp đồng mẫu
+                {dict.ui.manageBasePolicies}
               </Title>
               <Text type="secondary" className="policy-subtitle">
-                Quản lý các hợp đồng mẫu bảo hiểm nông nghiệp
+                {dict.ui.managePoliciesDescription}
               </Text>
             </div>
           </div>
@@ -395,7 +400,7 @@ export default function PolicyPage() {
                   {summaryStats.totalPolicies}
                 </div>
                 <div className="policy-summary-label-compact">
-                  Tổng số hợp đồng mẫu
+                  {dict.ui.totalPolicies}
                 </div>
               </div>
             </div>
@@ -409,7 +414,7 @@ export default function PolicyPage() {
                   {summaryStats.activePoliciesCount}
                 </div>
                 <div className="policy-summary-label-compact">
-                  Đang hoạt động
+                  {dict.ui.activePoliciesCount}
                 </div>
               </div>
             </div>
@@ -425,7 +430,9 @@ export default function PolicyPage() {
                 <div className="policy-summary-value-compact">
                   {summaryStats.draftPolicies}
                 </div>
-                <div className="policy-summary-label-compact">Chờ duyệt</div>
+                <div className="policy-summary-label-compact">
+                  {dict.ui.draftPolicies}
+                </div>
               </div>
             </div>
 
@@ -437,7 +444,9 @@ export default function PolicyPage() {
                 <div className="policy-summary-value-compact">
                   {summaryStats.avgPremiumRate}%
                 </div>
-                <div className="policy-summary-label-compact">Phí BH TB</div>
+                <div className="policy-summary-label-compact">
+                  {dict.ui.avgPremiumRate}
+                </div>
               </div>
             </div>
           </div>
@@ -451,7 +460,7 @@ export default function PolicyPage() {
                   label: (
                     <Space>
                       <FilterOutlined />
-                      Bộ lọc tìm kiếm
+                      {dict.ui.filterSearchLabel}
                     </Space>
                   ),
                   children: (
@@ -474,7 +483,7 @@ export default function PolicyPage() {
             <div className="flex justify-start items-center gap-2 mb-2">
               <Link href="/base-policy/create">
                 <Button type="primary" icon={<SafetyOutlined />}>
-                  Tạo mới
+                  {dict.ui.create}
                 </Button>
               </Link>
               {/* <Button icon={<DownloadOutlined />}>Nhập excel</Button>

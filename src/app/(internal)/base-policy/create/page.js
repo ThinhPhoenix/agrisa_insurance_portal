@@ -34,6 +34,7 @@ import BasicTab from "@/components/layout/base-policy/create/BasicTab";
 import ConfigurationTab from "@/components/layout/base-policy/create/ConfigurationTab";
 import EstimatedCosts from "@/components/layout/base-policy/create/EstimatedCosts";
 import FAQTab from "@/components/layout/base-policy/create/FAQTab";
+import PolicyTemplateSelector from "@/components/layout/base-policy/create/PolicyTemplateSelector";
 import ReviewTab from "@/components/layout/base-policy/create/ReviewTab";
 import FileUploadPreview from "@/components/layout/base-policy/create/TagsTab/FileUploadPreview";
 import TagsTab from "@/components/layout/base-policy/create/TagsTab/TagsTab";
@@ -120,6 +121,49 @@ const CreatePolicyPage = () => {
   const handleCancel = () => {
     router.push("/base-policy");
   };
+
+  // Xử lý chọn template
+  const handleSelectTemplate = useCallback(
+    ({
+      basicData: templateBasicData,
+      configurationData: templateConfigData,
+      templateInfo,
+    }) => {
+      try {
+        // 1. Apply basic data
+        handleBasicDataChange(templateBasicData);
+
+        // 2. Apply configuration data
+        handleConfigurationDataChange(templateConfigData);
+
+        // 3. Navigate to basic tab to show filled data
+        handleTabChange(TABS.BASIC);
+
+        message.success(
+          `Đã áp dụng template "${templateInfo.name}"! Vui lòng kiểm tra và điều chỉnh thông tin nếu cần.`,
+          5
+        );
+
+        console.log("✅ Template applied successfully:", {
+          templateId: templateInfo.id,
+          templateName: templateInfo.name,
+          basicDataKeys: Object.keys(templateBasicData),
+          configDataKeys: Object.keys(templateConfigData),
+          dataSourcesCount: templateBasicData.selectedDataSources?.length || 0,
+          conditionsCount: templateConfigData.conditions?.length || 0,
+        });
+      } catch (error) {
+        console.error("❌ Error applying template:", error);
+        message.error("Có lỗi xảy ra khi áp dụng template. Vui lòng thử lại.");
+      }
+    },
+    [
+      handleBasicDataChange,
+      handleConfigurationDataChange,
+      handleTabChange,
+      TABS.BASIC,
+    ]
+  );
 
   // Xử lý upload file
   const handleFileUpload = useCallback(
@@ -717,6 +761,21 @@ const CreatePolicyPage = () => {
         showIcon
         closable={false}
       />
+
+      {/* Policy Template Selector */}
+      {(currentTab === TABS.FAQ || currentTab === TABS.BASIC) && (
+        <Card>
+          <PolicyTemplateSelector
+            onSelectTemplate={handleSelectTemplate}
+            categories={categories}
+            tiers={tiers}
+            dataSources={dataSources}
+            fetchCategories={fetchCategories}
+            fetchTiersByCategory={fetchTiersByCategory}
+            fetchDataSourcesByTier={fetchDataSourcesByTier}
+          />
+        </Card>
+      )}
 
       {/* Main Content */}
       <Row gutter={24} style={{ position: "relative" }}>

@@ -264,6 +264,29 @@ export const usePolicyStore = create((set, get) => ({
     const { basicData, configurationData, tagsData } = get();
     const warnings = []; // Collect warnings to show user
 
+    // ✅ Monitor Frequency Cost Multipliers
+    const MONITOR_FREQUENCY_COST = {
+      hour: 2.0,
+      day: 1.5,
+      week: 1.0,
+      month: 0.8,
+      year: 0.5,
+    };
+
+    // Calculate monitor frequency cost multiplier
+    const monitorFrequencyMultiplier =
+      MONITOR_FREQUENCY_COST[configurationData.monitorFrequencyUnit] ||
+      MONITOR_FREQUENCY_COST.day;
+    const monitorFrequencyCost =
+      (configurationData.monitorInterval || 1) * monitorFrequencyMultiplier;
+
+    console.log("📊 Monitor Frequency Cost:", {
+      monitorInterval: configurationData.monitorInterval,
+      monitorFrequencyUnit: configurationData.monitorFrequencyUnit,
+      monitorFrequencyMultiplier,
+      monitorFrequencyCost,
+    });
+
     // Build document_tags object (will be included in base_policy)
     // ✅ CRITICAL: Validate and sanitize documentTagsObject to ensure only "key": "dataType" format
     const rawDocumentTags = tagsData.documentTagsObject || {};
@@ -368,14 +391,30 @@ export const usePolicyStore = create((set, get) => ({
 
     // Build conditions array
     const conditions = configurationData.conditions.map((condition) => {
-      // Ensure calculated_cost is computed
-      const calculatedCost =
+      // Compute base calculated cost: base_cost × tier_multiplier × category_multiplier
+      const baseCalculatedCost =
         condition.calculatedCost ||
         calculateConditionCost(
           condition.baseCost,
           condition.categoryMultiplier,
           condition.tierMultiplier
         );
+
+      // ✅ Backend formula: calculated_cost = (base × tier × category) + (interval × frequency)
+      // This matches backend validation at base_policy_service.go:360-392
+      const monitorFrequencyCostAddition =
+        configurationData.monitorInterval * monitorFrequencyMultiplier;
+      const calculatedCost = Math.round(
+        baseCalculatedCost + monitorFrequencyCostAddition
+      );
+
+      console.log("💰 Condition cost calculation:", {
+        basePart: baseCalculatedCost,
+        monitorInterval: configurationData.monitorInterval,
+        monitorFrequencyMultiplier,
+        frequencyPart: monitorFrequencyCostAddition,
+        calculatedCost,
+      });
 
       //  Build condition object, include REQUIRED and OPTIONAL fields with defaults
       const mappedCondition = {

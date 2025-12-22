@@ -14,6 +14,7 @@ import {
     Row,
     Space,
     Statistic,
+    Table,
     Tag,
     Typography
 } from 'antd';
@@ -256,6 +257,10 @@ const ReviewTabComponent = ({
                             value={estimatedCosts.monthlyDataCost}
                             suffix="VND"
                             precision={0}
+                            formatter={(value) => {
+                                const num = typeof value === 'number' ? value : parseInt(value);
+                                return isNaN(num) ? '0' : num.toLocaleString('vi-VN');
+                            }}
                         />
                     </Col>
                     <Col xs={24} sm={12} md={6}>
@@ -284,6 +289,10 @@ const ReviewTabComponent = ({
                                 color: '#52c41a',
                                 fontSize: '20px',
                                 fontWeight: 'bold'
+                            }}
+                            formatter={(value) => {
+                                const num = typeof value === 'number' ? value : parseInt(value);
+                                return isNaN(num) ? '0' : num.toLocaleString('vi-VN');
                             }}
                         />
                     </Col>

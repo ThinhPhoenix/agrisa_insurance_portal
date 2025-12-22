@@ -30,7 +30,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 const { Option } = Select;
 const { Title, Text } = Typography;
 
-// ✅ OPTIMIZATION: Memoize BasicTab to prevent unnecessary re-renders
+//  OPTIMIZATION: Memoize BasicTab to prevent unnecessary re-renders
 const BasicTabComponent = ({
     basicData,
     mockData,
@@ -125,7 +125,7 @@ const BasicTabComponent = ({
         form,
     ]);
 
-    // ✅ OPTIMIZATION: Debounce form changes to prevent input lag with Vietnamese typing
+    //  OPTIMIZATION: Debounce form changes to prevent input lag with Vietnamese typing
     const timeoutRef = useRef(null);
     const handleValuesChange = useCallback(
         (changedValues, allValues) => {
@@ -151,6 +151,30 @@ const BasicTabComponent = ({
             }
         };
     }, []);
+
+    //  Sync form with basicData when it changes (e.g., when template is applied)
+    const basicDataRef = useRef(basicData);
+    useEffect(() => {
+        // Only sync if basicData actually changed (not initial mount)
+        const hasChanged = basicDataRef.current !== basicData;
+
+        if (hasChanged) {
+            // Update form fields with current basicData
+            // This ensures the form displays the latest data when a template is applied
+            form.setFieldsValue(basicData);
+
+            //  IMPORTANT: Manually trigger onDataChange to recalculate estimated costs
+            // setFieldsValue doesn't trigger onValuesChange, so we need to manually notify parent
+            onDataChange(basicData);
+
+            console.log(' BasicTab synced with template data:', {
+                dataSourcesCount: basicData.selectedDataSources?.length || 0,
+                productName: basicData.productName
+            });
+        }
+
+        basicDataRef.current = basicData;
+    }, [basicData, form, onDataChange]);
 
     // Handle category change
     const handleCategoryChange = useCallback(
@@ -1192,7 +1216,7 @@ const BasicTabComponent = ({
                     }}
                 >
                     (Chi phí ước tính:{" "}
-                    {estimatedCosts.monthlyDataCost.toLocaleString()} ₫/tháng)
+                    {estimatedCosts.monthlyDataCost.toLocaleString('vi-VN')} ₫/tháng)
                 </Text>
             </Title>
 
@@ -1488,7 +1512,7 @@ const BasicTabComponent = ({
     );
 };
 
-// ✅ OPTIMIZATION: Wrap with memo and add display name
+//  OPTIMIZATION: Wrap with memo and add display name
 const BasicTab = memo(BasicTabComponent);
 BasicTab.displayName = "BasicTab";
 

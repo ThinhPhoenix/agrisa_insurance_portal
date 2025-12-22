@@ -66,6 +66,10 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                     suffix="VND"
                     precision={0}
                     valueStyle={{ color: '#1890ff', fontSize: '14px' }}
+                    formatter={(value) => {
+                        const num = typeof value === 'number' ? value : parseInt(value);
+                        return isNaN(num) ? '0' : num.toLocaleString('vi-VN');
+                    }}
                 />
                 <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
                     {basicData.selectedDataSources.length} nguồn dữ liệu
@@ -144,9 +148,13 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                     suffix="VND"
                     precision={0}
                     valueStyle={{
-                        color: '#52c41a',
-                        fontSize: '16px',
+                        color: '#ff4d4f',
+                        fontSize: '18px',
                         fontWeight: 'bold'
+                    }}
+                    formatter={(value) => {
+                        const num = typeof value === 'number' ? value : parseInt(value);
+                        return isNaN(num) ? '0' : num.toLocaleString('vi-VN');
                     }}
                 />
                 <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
@@ -160,7 +168,7 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                     <Divider style={{ margin: '8px 0' }} />
                     <div className="cost-section" style={{ marginBottom: '12px' }}>
                         <Statistic
-                            title="Tổng Chi phí Điều kiện"
+                            title="Tổng Chi phí Điều kiện (gửi BE)"
                             value={totalConditionCost}
                             suffix="VND"
                             precision={0}
@@ -169,9 +177,13 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                                 fontSize: '14px',
                                 fontWeight: 'bold'
                             }}
+                            formatter={(value) => {
+                                const num = typeof value === 'number' ? value : parseInt(value);
+                                return isNaN(num) ? '0' : num.toLocaleString('vi-VN');
+                            }}
                         />
                         <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
-                            {configurationData.conditions.length} điều kiện được cấu hình
+                            {configurationData.conditions.length} điều kiện • Đã tính tần suất
                         </Text>
                     </div>
                 </>
@@ -217,10 +229,10 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                                         </Col>
                                         <Col span={10} style={{ textAlign: 'right' }}>
                                             <Text style={{ fontSize: '10px' }}>
-                                                {(source.baseCost *
+                                                {(source.calculatedCost || (source.baseCost *
                                                     (source.categoryMultiplier || 1) *
                                                     (source.tierMultiplier || 1)
-                                                ).toLocaleString()} ₫
+                                                )).toLocaleString('vi-VN')} ₫
                                             </Text>
                                             {sourceConditionCost > 0 && (
                                                 <>
@@ -246,20 +258,19 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
             <Divider style={{ margin: '8px 0' }} />
             <div style={{ background: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
                 <Text strong style={{ fontSize: '10px', display: 'block', marginBottom: '4px' }}>
-                    Cách tính Chi phí
+                    Cách tính Chi phí Điều kiện
                 </Text>
                 <Text type="secondary" style={{ fontSize: '9px', display: 'block', marginBottom: '4px' }}>
-                    Chi phí = (Cơ sở × Danh mục × Gói) × Giám sát
+                    Chi phí = (Cơ sở × Danh mục × Gói) + (Tần suất × Hệ số)
                 </Text>
                 <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2', marginBottom: '4px' }}>
-                    • Thời tiết: 1.0x | Vệ tinh: 1.5x | Phân tích: 2.0x<br />
-                    • Cơ bản: 1.0x | Cao cấp: 1.8x | Doanh nghiệp: 3.0x
+                    Ví dụ: (200.000 × 1.5 × 1.5) + (2 × 1.0) = 450.000 + 2 = 450.002 VND
                 </Text>
                 <Text strong style={{ fontSize: '9px', display: 'block', marginBottom: '2px' }}>
-                    Tần suất Giám sát:
+                    Hệ số Tần suất:
                 </Text>
                 <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2' }}>
-                    • Giờ: 2.0x | Ngày: 1.5x | Tuần: 1.0x | Tháng: 0.8x | Năm: 0.5x
+                    • Giờ: 2.0 | Ngày: 1.5 | Tuần: 1.0 | Tháng: 0.8 | Năm: 0.5
                 </Text>
             </div>
         </Card>

@@ -139,32 +139,52 @@ const useCreatePolicy = () => {
         dataComplexityScore: 0,
         premiumBaseRate: basicData.premiumBaseRate || 0,
         totalEstimatedCost: "0.00",
-        monitorFrequencyCost: 0,
+        monitorFrequencyCost: 1,
       };
     }
 
+    // ✅ FIXED: Data sources already have calculatedCost from template mapping
     basicData.selectedDataSources.forEach((source) => {
-      const category = categories.find(
-        (cat) => cat.category_name === source.category
-      );
-      const tier = tiers.find((t) => t.value === source.tier);
+      let sourceMonthlyBaseCost = 0;
 
-      if (category && tier) {
-        const baseCost =
-          source.baseCost *
-          category.category_cost_multiplier *
-          tier.data_tier_multiplier;
-
-        // ✅ Apply monitor frequency multiplier
-        const monitorFrequencyMultiplier =
-          MONITOR_FREQUENCY_COST[configurationData.monitorFrequencyUnit] ||
-          MONITOR_FREQUENCY_COST.day;
-        const monitorIntervalCost =
-          (configurationData.monitorInterval || 1) * monitorFrequencyMultiplier;
-
-        const totalCost = baseCost * monitorIntervalCost;
-        monthlyDataCost += totalCost;
+      // Method 1: If source has calculatedCost (from template mapping)
+      if (source.calculatedCost) {
+        sourceMonthlyBaseCost = source.calculatedCost;
       }
+      // Method 2: If source has baseCost + multipliers
+      else if (
+        source.baseCost &&
+        source.categoryMultiplier &&
+        source.tierMultiplier
+      ) {
+        sourceMonthlyBaseCost = Math.round(
+          source.baseCost * source.categoryMultiplier * source.tierMultiplier
+        );
+      }
+      // Method 3: Fallback to searching in categories/tiers
+      else {
+        const category = categories.find(
+          (cat) =>
+            cat.category_name === source.category ||
+            cat.category_name === source.categoryLabel
+        );
+        const tier = tiers.find(
+          (t) =>
+            t.tier_name === source.tier ||
+            t.tier_name === source.tierLabel ||
+            t.data_tier_id === source.data_tier_id
+        );
+
+        if (category && tier) {
+          sourceMonthlyBaseCost = Math.round(
+            source.baseCost *
+              category.category_cost_multiplier *
+              tier.data_tier_multiplier
+          );
+        }
+      }
+
+      monthlyDataCost += sourceMonthlyBaseCost;
     });
 
     const uniqueDataSources = new Set(
@@ -178,11 +198,25 @@ const useCreatePolicy = () => {
     const monitorFrequencyCost =
       (configurationData.monitorInterval || 1) * monitorFrequencyMultiplier;
 
+    // ✅ Total cost = Data Cost + Monitor Frequency Addition (matching backend formula)
+    const totalEstimatedCost = monthlyDataCost + monitorFrequencyCost;
+
+    console.log("[estimatedCosts] Final calculation:", {
+      monthlyDataCost,
+      monitorFrequencyUnit: configurationData.monitorFrequencyUnit,
+      monitorFrequencyMultiplier,
+      monitorInterval: configurationData.monitorInterval,
+      monitorFrequencyCost,
+      totalEstimatedCost,
+      totalEstimatedCostRounded: Math.round(totalEstimatedCost),
+      dataSourcCount: basicData.selectedDataSources?.length,
+    });
+
     return {
-      monthlyDataCost: monthlyDataCost.toFixed(2),
+      monthlyDataCost: Math.round(monthlyDataCost),
       dataComplexityScore,
       premiumBaseRate: basicData.premiumBaseRate,
-      totalEstimatedCost: monthlyDataCost.toFixed(2),
+      totalEstimatedCost: Math.round(totalEstimatedCost),
       monitorFrequencyCost,
     };
   }, [

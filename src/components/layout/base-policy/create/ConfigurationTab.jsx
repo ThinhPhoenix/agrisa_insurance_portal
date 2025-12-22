@@ -44,7 +44,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
 
-// ✅ Debounced Input Component for Vietnamese IME fix
+//  Debounced Input Component for Vietnamese IME fix
 const DebouncedTextArea = memo(({ value: initialValue, onChange, ...props }) => {
     const [localValue, setLocalValue] = useState(initialValue || '');
     const timeoutRef = useRef(null);
@@ -90,16 +90,16 @@ const DebouncedTextArea = memo(({ value: initialValue, onChange, ...props }) => 
 
 DebouncedTextArea.displayName = 'DebouncedTextArea';
 
-// ✅ OPTIMIZATION: Memoize ConfigurationTab to prevent unnecessary re-renders
+//  OPTIMIZATION: Memoize ConfigurationTab to prevent unnecessary re-renders
 const ConfigurationTabComponent = ({
     configurationData,
     mockData,
-    basicData, // ✅ NEW: Add basicData for valid date range
+    basicData, //  NEW: Add basicData for valid date range
     onDataChange,
     onAddTriggerCondition,
     onRemoveTriggerCondition,
     onUpdateTriggerCondition,
-    onAddBlackoutPeriod, // ✅ NEW: Blackout period handlers
+    onAddBlackoutPeriod, //  NEW: Blackout period handlers
     onRemoveBlackoutPeriod,
     onUpdateBlackoutPeriod,
     getAvailableDataSourcesForTrigger
@@ -108,13 +108,35 @@ const ConfigurationTabComponent = ({
     const [conditionForm] = Form.useForm();
     const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
-    const [blackoutPeriodForm] = Form.useForm(); // ✅ NEW: Form for blackout periods
+    const [blackoutPeriodForm] = Form.useForm(); //  NEW: Form for blackout periods
     const dict = useDictionary();
-    const [selectedThresholdOperator, setSelectedThresholdOperator] = useState(null); // ✅ NEW: Track threshold operator
+    const [selectedThresholdOperator, setSelectedThresholdOperator] = useState(null); //  NEW: Track threshold operator
+
+    //  Sync form with configurationData when it changes (e.g., when template is applied)
+    const configDataRef = useRef(configurationData);
+    useEffect(() => {
+        const hasChanged = configDataRef.current !== configurationData;
+
+        if (hasChanged && formRef.current) {
+            // Update form fields with current configurationData
+            formRef.current.setFieldsValue(configurationData);
+
+            // Manually trigger onDataChange to ensure parent component updates
+            onDataChange(configurationData);
+
+            console.log(' ConfigurationTab synced with template data:', {
+                conditionsCount: configurationData.conditions?.length || 0,
+                logicalOperator: configurationData.logicalOperator,
+                blackoutPeriodsCount: configurationData.blackoutPeriods?.periods?.length || 0
+            });
+        }
+
+        configDataRef.current = configurationData;
+    }, [configurationData, onDataChange]);
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
 
-    // ✅ Filter out data sources that are already used in conditions
+    //  Filter out data sources that are already used in conditions
     const unusedDataSources = availableDataSources.filter(dataSource => {
         // Check if this data source is already used in any condition
         const isUsed = configurationData.conditions?.some(
@@ -148,7 +170,7 @@ const ConfigurationTabComponent = ({
             // Calculate condition cost
             const calculatedCost = calculateConditionCost(baseCost, categoryMultiplier, tierMultiplier);
 
-            // ✅ AUTO-SET conditionOrder: Set theo thứ tự thêm của user
+            //  AUTO-SET conditionOrder: Set theo thứ tự thêm của user
             // Nếu đang edit, giữ nguyên order cũ
             // Nếu thêm mới, set order = số lượng conditions hiện tại + 1
             let conditionOrder;
@@ -159,7 +181,7 @@ const ConfigurationTabComponent = ({
             }
 
             const condition = {
-                // ✅ Core condition fields (from form)
+                //  Core condition fields (from form)
                 dataSourceId: values.dataSourceId, // REQUIRED - UUID from API
                 thresholdOperator: values.thresholdOperator, // REQUIRED
                 thresholdValue: values.thresholdValue, // REQUIRED
@@ -168,7 +190,7 @@ const ConfigurationTabComponent = ({
                 aggregationWindowDays: values.aggregationWindowDays, // REQUIRED
                 consecutiveRequired: values.consecutiveRequired ?? false,
                 includeComponent: values.includeComponent ?? false,
-                // ✅ Baseline CHỈ set khi dùng change_gt hoặc change_lt, các operator khác về null
+                //  Baseline CHỈ set khi dùng change_gt hoặc change_lt, các operator khác về null
                 baselineWindowDays: (values.thresholdOperator === 'change_gt' || values.thresholdOperator === 'change_lt')
                     ? (values.baselineWindowDays || null)
                     : null,
@@ -176,10 +198,10 @@ const ConfigurationTabComponent = ({
                     ? (values.baselineFunction || null)
                     : null,
                 validationWindowDays: values.validationWindowDays || null,
-                dataQuality: values.dataQuality || 'good', // ✅ Data Quality: good | acceptable | poor
-                conditionOrder, // ✅ AUTO-SET theo thứ tự thêm
+                dataQuality: values.dataQuality || 'good', //  Data Quality: good | acceptable | poor
+                conditionOrder, //  AUTO-SET theo thứ tự thêm
 
-                // ✅ Display labels (for UI table)
+                //  Display labels (for UI table)
                 id: editingCondition?.id || Date.now().toString(),
                 dataSourceLabel: selectedDataSource?.label || '',
                 parameterName: selectedDataSource?.parameterName || '',
@@ -188,7 +210,7 @@ const ConfigurationTabComponent = ({
                 thresholdOperatorLabel: mockData.thresholdOperators.find(to => to.value === values.thresholdOperator)?.label || '',
                 dataQualityLabel: values.dataQuality === 'good' ? 'Tốt' : values.dataQuality === 'acceptable' ? 'Chấp nhận được' : 'Kém',
 
-                // ✅ Cost calculation fields (for payload)
+                //  Cost calculation fields (for payload)
                 baseCost,
                 categoryMultiplier,
                 tierMultiplier,
@@ -204,7 +226,7 @@ const ConfigurationTabComponent = ({
                 onAddTriggerCondition(condition);
             }
 
-            setSelectedThresholdOperator(null); // ✅ Clear selected operator
+            setSelectedThresholdOperator(null); //  Clear selected operator
             conditionFormRef.current?.resetFields();
         });
     };
@@ -212,18 +234,18 @@ const ConfigurationTabComponent = ({
     // Handle edit condition
     const handleEditCondition = (condition) => {
         setEditingCondition(condition);
-        setSelectedThresholdOperator(condition.thresholdOperator); // ✅ Set selected operator for conditional rendering
+        setSelectedThresholdOperator(condition.thresholdOperator); //  Set selected operator for conditional rendering
         conditionForm.setFieldsValue(condition);
     };
 
     // Handle cancel edit
     const handleCancelEdit = () => {
         setEditingCondition(null);
-        setSelectedThresholdOperator(null); // ✅ Clear selected operator
+        setSelectedThresholdOperator(null); //  Clear selected operator
         conditionForm.resetFields();
     };
 
-    // ✅ Handle drag end - Reorder conditions and update conditionOrder
+    //  Handle drag end - Reorder conditions and update conditionOrder
     const handleDragEnd = (result) => {
         if (!result.destination) {
             return;
@@ -335,7 +357,7 @@ const ConfigurationTabComponent = ({
 
 
 
-    // ✅ Note: getTriggerFields removed - now using direct Form rendering with DebouncedTextArea
+    //  Note: getTriggerFields removed - now using direct Form rendering with DebouncedTextArea
     // This fixes Vietnamese IME re-render issues for growthStage field
 
     // Trigger conditions table columns
@@ -829,8 +851,11 @@ const ConfigurationTabComponent = ({
                                             dataIndex: 'start',
                                             key: 'start',
                                             render: (text) => {
+                                                if (!text) return <Text type="secondary">-</Text>;
                                                 // Convert MM-DD to DD/MM for display
-                                                const [month, day] = text.split('-');
+                                                const parts = text.split('-');
+                                                if (parts.length < 2) return <Text strong>{text}</Text>;
+                                                const [month, day] = parts;
                                                 return <Text strong>{day}/{month}</Text>;
                                             }
                                         },
@@ -839,8 +864,11 @@ const ConfigurationTabComponent = ({
                                             dataIndex: 'end',
                                             key: 'end',
                                             render: (text) => {
+                                                if (!text) return <Text type="secondary">-</Text>;
                                                 // Convert MM-DD to DD/MM for display
-                                                const [month, day] = text.split('-');
+                                                const parts = text.split('-');
+                                                if (parts.length < 2) return <Text strong>{text}</Text>;
+                                                const [month, day] = parts;
                                                 return <Text strong>{day}/{month}</Text>;
                                             }
                                         },
@@ -926,7 +954,7 @@ const ConfigurationTabComponent = ({
                                                     popupMatchSelectWidth={300}
                                                     disabled={!editingCondition && unusedDataSources.length === 0}
                                                 >
-                                                    {/* ✅ Show only unused data sources when adding new, or include current when editing */}
+                                                    {/*  Show only unused data sources when adding new, or include current when editing */}
                                                     {(editingCondition
                                                         ? availableDataSources
                                                         : unusedDataSources
@@ -1051,7 +1079,7 @@ const ConfigurationTabComponent = ({
                                                     popupMatchSelectWidth={300}
                                                     onChange={(value) => {
                                                         setSelectedThresholdOperator(value);
-                                                        // ✅ Clear baseline fields if operator is not change_gt or change_lt
+                                                        //  Clear baseline fields if operator is not change_gt or change_lt
                                                         if (value !== 'change_gt' && value !== 'change_lt') {
                                                             conditionForm.setFieldsValue({
                                                                 baselineWindowDays: null,
@@ -1205,9 +1233,9 @@ const ConfigurationTabComponent = ({
                                                 />
                                             </Form.Item>
                                         </Col>
-                                        {/* ✅ REMOVED: conditionOrder manual input - Auto-set theo thứ tự thêm của user */}
+                                        {/*  REMOVED: conditionOrder manual input - Auto-set theo thứ tự thêm của user */}
 
-                                        {/* ✅ CONDITIONAL: Baseline fields CHỈ hiện khi chọn change_gt hoặc change_lt */}
+                                        {/*  CONDITIONAL: Baseline fields CHỈ hiện khi chọn change_gt hoặc change_lt */}
                                         {(() => {
                                             const currentOperator = conditionForm.getFieldValue('thresholdOperator') || selectedThresholdOperator || editingCondition?.thresholdOperator;
                                             return (currentOperator === 'change_gt' || currentOperator === 'change_lt');

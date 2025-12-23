@@ -3,7 +3,7 @@ import useDictionary from '@/services/hooks/common/use-dictionary';
 import { calculateConditionCost } from '@/stores/policy-store';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Alert, Button, Col, Form, InputNumber, Row, Select, Space, Tooltip, Typography, message } from 'antd';
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 const { Title, Text: TypographyText } = Typography;
 
@@ -19,6 +19,12 @@ const ConditionForm = memo(({
     onOperatorChange
 }) => {
     const dict = useDictionary();
+    const [selectedAggregation, setSelectedAggregation] = useState(() => conditionForm.getFieldValue('aggregationFunction') || editingCondition?.aggregationFunction || null);
+
+    useEffect(() => {
+        // Keep local selectedAggregation in sync when editingCondition changes
+        setSelectedAggregation(conditionForm.getFieldValue('aggregationFunction') || editingCondition?.aggregationFunction || null);
+    }, [editingCondition, conditionForm]);
 
     // Helper function to render select option with tooltip
     const renderOptionWithTooltip = (option, tooltipContent) => {
@@ -251,6 +257,16 @@ const ConditionForm = memo(({
                                         size="large"
                                         optionLabelProp="label"
                                         popupMatchSelectWidth={300}
+                                        onChange={(value) => {
+                                            // Update local aggregation state and clear operator/baseline fields
+                                            setSelectedAggregation(value);
+                                            conditionForm.setFieldsValue({
+                                                thresholdOperator: null,
+                                                baselineWindowDays: null,
+                                                baselineFunction: null
+                                            });
+                                            onOperatorChange(null);
+                                        }}
                                     >
                                         {mockData.aggregationFunctions?.map(func => (
                                             <Select.Option
@@ -306,16 +322,26 @@ const ConditionForm = memo(({
                                             }
                                         }}
                                     >
-                                        {(mockData.thresholdOperators || []).map(operator => (
-                                            <Select.Option
-                                                key={operator.value}
-                                                value={operator.value}
-                                                label={operator.label}
-                                                description={operator.description}
-                                            >
-                                                {renderOptionWithTooltip(operator, <div><div><strong>{operator.label}</strong></div><div style={{ marginTop: '4px' }}>{operator.description}</div></div>)}
-                                            </Select.Option>
-                                        ))}
+                                        {(() => {
+                                            const currentAggregation = selectedAggregation || conditionForm.getFieldValue('aggregationFunction') || editingCondition?.aggregationFunction;
+                                            const operatorList = (mockData.thresholdOperators || []).filter(operator => {
+                                                if (currentAggregation === 'change') {
+                                                    return operator.value === 'change_gt' || operator.value === 'change_lt';
+                                                }
+                                                return operator.value !== 'change_gt' && operator.value !== 'change_lt';
+                                            });
+
+                                            return operatorList.map(operator => (
+                                                <Select.Option
+                                                    key={operator.value}
+                                                    value={operator.value}
+                                                    label={operator.label}
+                                                    description={operator.description}
+                                                >
+                                                    {renderOptionWithTooltip(operator, <div><div><strong>{operator.label}</strong></div><div style={{ marginTop: '4px' }}>{operator.description}</div></div>)}
+                                                </Select.Option>
+                                            ));
+                                        })()}
                                     </Select>
                                 </Form.Item>
                             </Col>

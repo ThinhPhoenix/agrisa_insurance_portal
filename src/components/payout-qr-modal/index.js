@@ -26,13 +26,19 @@ export default function PayoutQRModal({
   selectedPayout,
   claimNumber,
   formatCurrency,
+  paymentType = "policy_payout_payment", // Default to payout payment
 }) {
+  // Determine modal title and description based on payment type
+  const isCompensation = paymentType === "policy_compensation_payment";
+  const modalTitle = isCompensation ? "Thanh toán Hoàn tiền" : "Thanh toán Chi trả";
+  const descriptionPrefix = isCompensation ? "Hoàn tiền bảo hiểm" : "Chi trả bảo hiểm";
+
   return (
     <Modal
       title={
         <Space>
           <WalletOutlined style={{ color: "#52c41a" }} />
-          <span>Thanh toán Chi trả</span>
+          <span>{modalTitle}</span>
         </Space>
       }
       open={visible}
@@ -61,7 +67,7 @@ export default function PayoutQRModal({
                 </Text>
               </Descriptions.Item>
               <Descriptions.Item label="Mô tả">
-                <Text type="secondary">Chi trả bảo hiểm {claimNumber}</Text>
+                <Text type="secondary">{descriptionPrefix} {claimNumber}</Text>
               </Descriptions.Item>
             </Descriptions>
           </Card>

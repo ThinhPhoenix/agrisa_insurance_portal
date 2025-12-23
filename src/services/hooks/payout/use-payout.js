@@ -1,4 +1,5 @@
 import axiosInstance from "@/libs/axios-instance";
+import { mapBackendErrorToMessage } from "@/libs/message/cancel-request-message";
 import { endpoints } from "@/services/endpoints";
 import { useCallback, useState } from "react";
 
@@ -9,6 +10,7 @@ import { useCallback, useState } from "react";
  * - Fetching payout detail by ID
  * - Fetching payouts by policy ID
  * - Fetching payouts by farm ID
+ * - Creating payout payment (QR code generation)
  */
 const usePayout = () => {
   // State for payout list
@@ -200,6 +202,81 @@ const usePayout = () => {
     }
   }, []);
 
+  /**
+   * Create payout payment (generate QR code for payment)
+   * @param {Object} payoutData - Payout data containing amount and policy info
+   * @param {string} policyNumber - Policy number for display
+   * @param {string} farmerUserId - Farmer user ID
+   * @returns {Promise<{success: boolean, data?: Object, error?: string}>}
+   */
+  const createPayoutPayment = useCallback(
+    async (payoutData, policyNumber, farmerUserId) => {
+      try {
+        // Fetch bank info for the farmer
+        const bankInfoResponse = await axiosInstance.post(
+          endpoints.profile.bank_info,
+          {
+            user_ids: [farmerUserId],
+          }
+        );
+
+        let bankCode = "970423"; // Default bank code
+        let accountNumber = "09073016692"; // Default account number
+
+        // Extract bank info from response
+        if (
+          bankInfoResponse.data?.success &&
+          bankInfoResponse.data?.data?.length > 0
+        ) {
+          const userBankInfo = bankInfoResponse.data.data[0];
+          bankCode = userBankInfo.bank_code || bankCode;
+          accountNumber = userBankInfo.account_number || accountNumber;
+        }
+
+        // Build payment request with payout payment type
+        const paymentRequest = {
+          amount: payoutData.payout_amount,
+          bank_code: bankCode,
+          account_number: accountNumber,
+          user_id: farmerUserId,
+          description: "Chi trả bảo hiểm",
+          type: "policy_payout_payment",
+          items: [
+            {
+              item_id: payoutData.registered_policy_id,
+              name: `Chi trả ${policyNumber || payoutData.id || ""}`,
+              price: payoutData.payout_amount,
+            },
+          ],
+        };
+
+        const response = await axiosInstance.post(
+          endpoints.payment.createPayout,
+          paymentRequest
+        );
+
+        if (response.data.success) {
+          const payoutQrData = response.data.data?.data || response.data.data;
+          return { success: true, data: payoutQrData };
+        } else {
+          const errorCode = response.data?.error?.code;
+          const errorMessage =
+            response.data?.error?.message || response.data?.message;
+          const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+          return { success: false, error: userMessage };
+        }
+      } catch (error) {
+        console.error("Error creating payout payment:", error);
+        const errorCode = error.response?.data?.error?.code;
+        const errorMessage =
+          error.response?.data?.error?.message || error.message;
+        const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+        return { success: false, error: userMessage };
+      }
+    },
+    []
+  );
+
   return {
     // Payout list
     payouts,
@@ -224,6 +301,9 @@ const usePayout = () => {
     payoutsByFarmLoading,
     payoutsByFarmError,
     fetchPayoutsByFarm,
+
+    // Payment operations
+    createPayoutPayment,
   };
 };
 

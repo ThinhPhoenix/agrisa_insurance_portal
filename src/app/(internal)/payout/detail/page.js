@@ -44,6 +44,7 @@ export default function PayoutDetailPage() {
     payoutDetailLoading,
     payoutDetailError,
     fetchPayoutDetail,
+    createPayoutPayment,
   } = usePayout();
 
   // States for related data
@@ -233,65 +234,33 @@ export default function PayoutDetailPage() {
 
   // Handle payment initiation
   const handlePayment = async () => {
+    if (!payoutDetail) {
+      message.error("Không tìm thấy thông tin chi trả");
+      return;
+    }
+
     setPaymentLoading(true);
     setPaymentModalVisible(true);
 
     try {
-      const userId = payoutDetail.farmer_id || "test_id";
+      const farmerUserId = payoutDetail.farmer_id || "test_id";
+      const policyNumber = policy?.policy_number;
 
-      // Fetch bank info for the user
-      const bankInfoResponse = await axiosInstance.post(
-        endpoints.profile.bank_info,
-        {
-          user_ids: [userId],
-        }
+      const result = await createPayoutPayment(
+        payoutDetail,
+        policyNumber,
+        farmerUserId
       );
 
-      let bankCode = "970423"; // Default bank code
-      let accountNumber = "09073016692"; // Default account number
-
-      // Extract bank info from response
-      if (
-        bankInfoResponse.data?.success &&
-        bankInfoResponse.data?.data?.length > 0
-      ) {
-        const userBankInfo = bankInfoResponse.data.data[0];
-        bankCode = userBankInfo.bank_code || bankCode;
-        accountNumber = userBankInfo.account_number || accountNumber;
-      }
-
-      // Build payment request with new structure
-      const paymentRequest = {
-        amount: payoutDetail.payout_amount,
-        bank_code: bankCode,
-        account_number: accountNumber,
-        user_id: userId,
-        description: "Chi trả bảo hiểm",
-        type: "policy_payout_payment",
-        items: [
-          {
-            item_id: payoutDetail.registered_policy_id,
-            name: `Chi tra ${policy?.policy_number || payoutDetail.id}`,
-            price: payoutDetail.payout_amount,
-          },
-        ],
-      };
-
-      const response = await axiosInstance.post(
-        endpoints.payment.createPayout,
-        paymentRequest
-      );
-
-      if (response.data.success) {
-        const payoutData = response.data.data?.data || response.data.data;
-        setQrData(payoutData);
+      if (result.success) {
+        setQrData(result.data);
       } else {
-        message.error("Không thể tạo mã QR thanh toán");
+        message.error(result.error || "Tạo thanh toán thất bại");
         setPaymentModalVisible(false);
       }
     } catch (error) {
-      console.error("Error creating payout:", error);
-      message.error("Có lỗi xảy ra khi tạo thanh toán");
+      console.error("Error creating payout payment:", error);
+      message.error("Tạo thanh toán thất bại");
       setPaymentModalVisible(false);
     } finally {
       setPaymentLoading(false);

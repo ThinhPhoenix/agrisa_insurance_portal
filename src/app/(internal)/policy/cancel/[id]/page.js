@@ -1126,6 +1126,7 @@ export default function CancelRequestDetailPage() {
           }}
           claimNumber={`Hoàn tiền hợp đồng ${policy?.policy_number || cancelRequest?.id || ""}`}
           formatCurrency={formatCurrency}
+          paymentType="policy_compensation_payment"
         />
 
         <CancelDetailModals

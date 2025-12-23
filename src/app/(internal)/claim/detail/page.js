@@ -37,8 +37,12 @@ export default function ClaimDetailPage() {
     fetchRejectionByClaim,
   } = useClaim();
 
-  const { payoutsByPolicy, payoutsByPolicyLoading, fetchPayoutsByPolicy } =
-    usePayout();
+  const {
+    payoutsByPolicy,
+    payoutsByPolicyLoading,
+    fetchPayoutsByPolicy,
+    createPayoutPayment,
+  } = usePayout();
 
   // States for related data
   const [policy, setPolicy] = useState(null);
@@ -307,70 +311,34 @@ export default function ClaimDetailPage() {
 
   // Handle payment initiation
   const handlePayment = async (payout) => {
+    if (!payout) {
+      message.error("Không tìm thấy thông tin chi trả");
+      return;
+    }
+
     setSelectedPayout(payout);
     setPaymentLoading(true);
     setPaymentModalVisible(true);
 
     try {
-      const userId = payout.farmer_id || "test_id";
+      const farmerUserId = payout.farmer_id || "test_id";
+      const policyNumber = policy?.policy_number || claimDetail?.claim_number;
 
-      // Fetch bank info for the user
-      const bankInfoResponse = await axiosInstance.post(
-        endpoints.profile.bank_info,
-        {
-          user_ids: [userId],
-        }
+      const result = await createPayoutPayment(
+        payout,
+        policyNumber,
+        farmerUserId
       );
 
-      let bankCode = "970423"; // Default bank code
-      let accountNumber = "09073016692"; // Default account number
-
-      // Extract bank info from response
-      if (
-        bankInfoResponse.data?.success &&
-        bankInfoResponse.data?.data?.length > 0
-      ) {
-        const userBankInfo = bankInfoResponse.data.data[0];
-        bankCode = userBankInfo.bank_code || bankCode;
-        accountNumber = userBankInfo.account_number || accountNumber;
-      }
-
-      // Build payment request with new structure
-      const paymentRequest = {
-        amount: payout.payout_amount,
-        bank_code: bankCode,
-        account_number: accountNumber,
-        user_id: userId,
-        description: "Chi trả bảo hiểm",
-        type: "policy_payout_payment",
-        items: [
-          {
-            item_id: payout.registered_policy_id,
-            name: `chi tra ${
-              policy?.policy_number || claimDetail?.claim_number || ""
-            }`,
-            price: payout.payout_amount,
-          },
-        ],
-      };
-
-      const response = await axiosInstance.post(
-        endpoints.payment.createPayout,
-        paymentRequest
-      );
-
-      if (response.data.success) {
-        const payoutData = response.data.data?.data || response.data.data;
-        setQrData(payoutData);
+      if (result.success) {
+        setQrData(result.data);
       } else {
-        const errorMsg = getClaimErrorMessage(response);
-        message.error(errorMsg);
+        message.error(result.error || "Tạo thanh toán thất bại");
         setPaymentModalVisible(false);
       }
     } catch (error) {
-      console.error("Error creating payout:", error);
-      const errorMsg = getClaimErrorMessage(error);
-      message.error(errorMsg);
+      console.error("Error creating payout payment:", error);
+      message.error("Tạo thanh toán thất bại");
       setPaymentModalVisible(false);
     } finally {
       setPaymentLoading(false);

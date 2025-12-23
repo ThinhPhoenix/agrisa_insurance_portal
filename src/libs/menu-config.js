@@ -11,6 +11,7 @@ export const sidebarMenuItems = [
     key: "policy",
     label: "Quản lý hợp đồng",
     children: [
+      { key: "policy/general", label: "Tất cả hợp đồng" },
       { key: "policy/pending", label: "Duyệt hợp đồng đăng ký" },
       { key: "policy/active", label: "Hợp đồng đang hoạt động" },
       { key: "policy/cancel", label: "Yêu cầu hủy" },

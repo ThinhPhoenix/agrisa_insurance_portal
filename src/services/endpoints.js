@@ -149,6 +149,7 @@ export const endpoints = {
     createPayout: "/payment/protected/payout",
     verifyPayout: "/payment/public/payout/verify",
     listPayout: "/payment/protected/payout",
+    bulkVerifyPayout: "/payment/public/payout/verify/bulk",
   },
   cancelRequest: {
     create: `/policy/protected/api/v2/cancel_request/`,

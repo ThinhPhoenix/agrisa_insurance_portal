@@ -20,7 +20,7 @@ export function useImgBBUpload() {
       if (!file) {
         return {
           success: false,
-          error: "Không có file nào được chọn."
+          error: "Không có file nào được chọn.",
         };
       }
 
@@ -33,7 +33,13 @@ export function useImgBBUpload() {
       }
 
       // Check file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      const validTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
       if (!validTypes.includes(file.type)) {
         return {
           success: false,
@@ -46,7 +52,11 @@ export function useImgBBUpload() {
       if (file.size > maxSize) {
         return {
           success: false,
-          error: `Kích thước file quá lớn. Vui lòng chọn ảnh nhỏ hơn 32MB. (File hiện tại: ${(file.size / 1024 / 1024).toFixed(2)}MB)`,
+          error: `Kích thước file quá lớn. Vui lòng chọn ảnh nhỏ hơn 32MB. (File hiện tại: ${(
+            file.size /
+            1024 /
+            1024
+          ).toFixed(2)}MB)`,
         };
       }
 
@@ -78,13 +88,12 @@ export function useImgBBUpload() {
     } catch (error) {
       console.error("Error uploading image to ImgBB:", error);
 
-      // Handle specific error cases with Vietnamese messages
-
       // Timeout error
       if (error.code === "ECONNABORTED") {
         return {
           success: false,
-          error: "Tải ảnh lên bị quá thời gian. Vui lòng kiểm tra kết nối mạng và thử lại.",
+          error:
+            "Tải ảnh lên bị quá thời gian. Vui lòng kiểm tra kết nối mạng và thử lại.",
         };
       }
 
@@ -92,7 +101,8 @@ export function useImgBBUpload() {
       if (error.code === "ERR_NETWORK" || !error.response) {
         return {
           success: false,
-          error: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.",
+          error:
+            "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.",
         };
       }
 
@@ -134,7 +144,8 @@ export function useImgBBUpload() {
           case 429:
             return {
               success: false,
-              error: "Đã vượt quá giới hạn số lần tải ảnh. Vui lòng thử lại sau ít phút.",
+              error:
+                "Đã vượt quá giới hạn số lần tải ảnh. Vui lòng thử lại sau ít phút.",
             };
 
           case 500:
@@ -153,10 +164,11 @@ export function useImgBBUpload() {
         }
       }
 
-      // Generic error fallback
+      // Fallback generic message when none of the above match
       return {
         success: false,
-        error: "Không thể tải ảnh lên. Vui lòng thử lại sau.",
+        error:
+          "Dịch vụ xử lý hình ảnh đang gặp lỗi. Vui lòng chèn đường dẫn ảnh hoặc thử lại sau.",
       };
     }
   };

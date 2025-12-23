@@ -584,34 +584,6 @@ export default function CancelRequestDetailPage() {
             </Space>
           </div>
           <div>
-            {/* Informational banner about 1-hour server hold: show countdown while holding, then show "sent" notice after hold expires */}
-            {cancelRequest?.status === "pending_review" &&
-              !cancelRequest?.during_notice_period && (
-                <div className="mb-3">
-                  {holdRemainingMs > 0 ? (
-                    <Alert
-                      type="info"
-                      showIcon
-                      message={
-                        isMyRequest
-                          ? `Yêu cầu của bạn đang được giữ trên hệ thống trong ${formatRemaining(
-                              holdRemainingMs
-                            )}. Bạn có thể Hủy yêu cầu trong thời gian này.`
-                          : `Yêu cầu vừa tạo đang ở giai đoạn giữ ${formatRemaining(
-                              holdRemainingMs
-                            )} trước khi gửi cho người nhận.`
-                      }
-                    />
-                  ) : holdRemainingMs === 0 ? (
-                    <Alert
-                      type="info"
-                      showIcon
-                      message={"Yêu cầu đã được hệ thống gửi đến người nhận"}
-                    />
-                  ) : null}
-                </div>
-              )}
-
             <Space>
               <Button onClick={() => router.back()}>Quay lại</Button>
               {isMyRequest &&
@@ -672,6 +644,34 @@ export default function CancelRequestDetailPage() {
             </Space>
           </div>
         </div>
+
+        {/* Countdown / informational banner moved out of header so buttons don't shift */}
+        {cancelRequest?.status === "pending_review" &&
+          !cancelRequest?.during_notice_period && (
+            <div className="mb-4">
+              {holdRemainingMs > 0 ? (
+                <Alert
+                  type="info"
+                  showIcon
+                  message={
+                    isMyRequest
+                      ? `Yêu cầu của bạn đang được giữ trên hệ thống trong ${formatRemaining(
+                          holdRemainingMs
+                        )}. Bạn có thể Hủy yêu cầu trong thời gian này.`
+                      : `Yêu cầu vừa tạo đang ở giai đoạn giữ ${formatRemaining(
+                          holdRemainingMs
+                        )} trước khi gửi cho người nhận.`
+                  }
+                />
+              ) : holdRemainingMs === 0 ? (
+                <Alert
+                  type="info"
+                  showIcon
+                  message={"Yêu cầu đã được hệ thống gửi đến người nhận"}
+                />
+              ) : null}
+            </div>
+          )}
 
         <Row gutter={[16, 16]}>
           {/* Cancel Request Info */}

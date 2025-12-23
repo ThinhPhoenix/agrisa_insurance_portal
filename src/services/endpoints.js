@@ -161,6 +161,10 @@ export const endpoints = {
   dashboard: {
     partnerOverview: "/policy/protected/api/v2/dashboard/partner/overview",
   },
+  imgbb: {
+    // Template for ImgBB upload URL. Provide API key when using.
+    upload: (apiKey) => `https://api.imgbb.com/1/upload?key=${apiKey}`,
+  },
   noti: {
     subscribe: "/noti/protected/subscribe/web",
     unsubscribe: "/noti/protected/unsubscribe/web",

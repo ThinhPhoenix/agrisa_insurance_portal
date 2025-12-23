@@ -211,7 +211,7 @@ export default function CancelRequestsPage() {
       ),
     },
     {
-      title: "Số tiền bồi thường",
+      title: "Số tiền hoàn trả",
       dataIndex: "compensate_amount",
       key: "compensate_amount",
       width: 150,

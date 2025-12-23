@@ -233,6 +233,75 @@ export function useCancelPolicy(requestId = null) {
     [requestId, fetchCancelRequests]
   );
 
+  // Create compensation payment for approved cancel request
+  const createCompensationPayment = useCallback(
+    async (cancelRequestData, policyNumber, farmerUserId) => {
+      try {
+        // Fetch bank info for the farmer
+        const bankInfoResponse = await axiosInstance.post(
+          endpoints.profile.bank_info,
+          {
+            user_ids: [farmerUserId],
+          }
+        );
+
+        let bankCode = "970423"; // Default bank code
+        let accountNumber = "09073016692"; // Default account number
+
+        // Extract bank info from response
+        if (
+          bankInfoResponse.data?.success &&
+          bankInfoResponse.data?.data?.length > 0
+        ) {
+          const userBankInfo = bankInfoResponse.data.data[0];
+          bankCode = userBankInfo.bank_code || bankCode;
+          accountNumber = userBankInfo.account_number || accountNumber;
+        }
+
+        // Build payment request with compensation payment type
+        const paymentRequest = {
+          amount: cancelRequestData.compensate_amount,
+          bank_code: bankCode,
+          account_number: accountNumber,
+          user_id: farmerUserId,
+          description: "Hoàn tiền bảo hiểm",
+          type: "policy_compensation_payment",
+          items: [
+            {
+              item_id: cancelRequestData.registered_policy_id,
+              name: `Hoàn tiền hợp đồng ${policyNumber || cancelRequestData.id}`,
+              price: cancelRequestData.compensate_amount,
+            },
+          ],
+        };
+
+        const response = await axiosInstance.post(
+          endpoints.payment.createPayout,
+          paymentRequest
+        );
+
+        if (response.data.success) {
+          const payoutData = response.data.data?.data || response.data.data;
+          return { success: true, data: payoutData };
+        } else {
+          const errorCode = response.data?.error?.code;
+          const errorMessage =
+            response.data?.error?.message || response.data?.message;
+          const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+          return { success: false, error: userMessage };
+        }
+      } catch (error) {
+        console.error("Error creating compensation payment:", error);
+        const errorCode = error.response?.data?.error?.code;
+        const errorMessage =
+          error.response?.data?.error?.message || error.message;
+        const userMessage = mapBackendErrorToMessage(errorCode, errorMessage);
+        return { success: false, error: userMessage };
+      }
+    },
+    []
+  );
+
   return {
     // List operations
     paginatedData,
@@ -257,5 +326,6 @@ export function useCancelPolicy(requestId = null) {
     resolveDispute,
     resolveDisputePartner,
     revokeCancelRequest,
+    createCompensationPayment,
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import CancelDetailModals from "@/components/layout/policy/cancel/CancelDetailModals";
+import PayoutQRModal from "@/components/payout-qr-modal";
 import axiosInstance from "@/libs/axios-instance";
 import { formatUtcDate } from "@/libs/date-utils";
 import {
@@ -59,6 +60,7 @@ export default function CancelRequestDetailPage() {
     getCancelRequestById,
     refetch,
     revokeCancelRequest,
+    createCompensationPayment,
   } = useCancelPolicy();
 
   const cancelRequest = getCancelRequestById(requestId);
@@ -83,6 +85,11 @@ export default function CancelRequestDetailPage() {
   ] = useState(false);
   const [resolveAction, setResolveAction] = useState(null); // 'approve' or 'keep_active'
   const [submitting, setSubmitting] = useState(false);
+
+  // Payment modal states
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [qrData, setQrData] = useState(null);
 
   // Server holds newly created cancel requests for 1 hour before notifying the holder.
   // During this hold the requester may revoke the request. We track remaining hold time.
@@ -543,6 +550,83 @@ export default function CancelRequestDetailPage() {
     }
   };
 
+  // Handle payment initiation - Tạo thanh toán hoàn tiền
+  const handlePayment = async () => {
+    if (!cancelRequest || !policy) {
+      message.error("Không tìm thấy thông tin yêu cầu hủy hoặc hợp đồng");
+      return;
+    }
+
+    setPaymentLoading(true);
+    setPaymentModalVisible(true);
+
+    try {
+      // Get farmer user ID from policy
+      const farmerUserId = policy.farmer_id || "test_id";
+
+      const result = await createCompensationPayment(
+        cancelRequest,
+        policy.policy_number,
+        farmerUserId
+      );
+
+      if (result.success) {
+        setQrData(result.data);
+      } else {
+        message.error(result.error || "Tạo thanh toán thất bại");
+        setPaymentModalVisible(false);
+      }
+    } catch (error) {
+      console.error("Error creating compensation payment:", error);
+      message.error("Tạo thanh toán thất bại");
+      setPaymentModalVisible(false);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // Handle payment verification
+  const handleVerifyPayment = async () => {
+    if (!qrData || !qrData.verify_hook) {
+      message.error("Không tìm thấy thông tin xác thực");
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      const response = await axiosInstance.get(qrData.verify_hook);
+
+      if (response.data.success) {
+        message.success("Xác nhận thanh toán hoàn tiền thành công!");
+        setPaymentModalVisible(false);
+        setQrData(null);
+        // Refresh cancel request data
+        if (refetch) await refetch();
+      } else {
+        message.error(
+          response.data?.error?.message ||
+            response.data?.message ||
+            "Xác nhận thanh toán thất bại"
+        );
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      message.error(
+        error.response?.data?.error?.message ||
+          error.response?.data?.message ||
+          "Xác nhận thanh toán thất bại"
+      );
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // Handle close payment modal
+  const handleClosePaymentModal = () => {
+    setPaymentModalVisible(false);
+    setQrData(null);
+  };
+
   if (loading || policyLoading) {
     return (
       <Layout.Content className="insurance-content">
@@ -641,6 +725,17 @@ export default function CancelRequestDetailPage() {
                     Xử lý Tranh chấp
                   </Button>
                 )}
+              {cancelRequest.status === "approved" &&
+                !cancelRequest.paid &&
+                cancelRequest.compensate_amount > 0 && (
+                  <Button
+                    type="primary"
+                    onClick={handlePayment}
+                    loading={paymentLoading}
+                  >
+                    Thanh toán hoàn tiền
+                  </Button>
+                )}
             </Space>
           </div>
         </div>
@@ -727,7 +822,7 @@ export default function CancelRequestDetailPage() {
                     withTime: true,
                   })}
                 </Descriptions.Item>
-                <Descriptions.Item label="Số tiền bồi thường" span={1}>
+                <Descriptions.Item label="Số tiền hoàn trả" span={1}>
                   {formatCurrency(cancelRequest.compensate_amount)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Mã hợp đồng đăng ký" span={1}>
@@ -1018,6 +1113,20 @@ export default function CancelRequestDetailPage() {
             </Col>
           )}
         </Row>
+
+        {/* Payment QR Modal */}
+        <PayoutQRModal
+          visible={paymentModalVisible}
+          onCancel={handleClosePaymentModal}
+          onVerify={handleVerifyPayment}
+          loading={paymentLoading}
+          qrData={qrData}
+          selectedPayout={{
+            payout_amount: cancelRequest?.compensate_amount,
+          }}
+          claimNumber={`Hoàn tiền hợp đồng ${policy?.policy_number || cancelRequest?.id || ""}`}
+          formatCurrency={formatCurrency}
+        />
 
         <CancelDetailModals
           approveModalVisible={approveModalVisible}

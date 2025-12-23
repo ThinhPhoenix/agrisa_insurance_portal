@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation";
 
 // Components - Lazy loaded for code splitting
 import BasicTab from "@/components/layout/base-policy/create/BasicTab";
-import ConfigurationTab from "@/components/layout/base-policy/create/ConfigurationTab";
+import ConfigurationTab from "@/components/layout/base-policy/create/ConfigurationTab/ConfigurationTab";
 import EstimatedCosts from "@/components/layout/base-policy/create/EstimatedCosts";
 import FAQTab from "@/components/layout/base-policy/create/FAQTab";
 import PolicyTemplateSelector from "@/components/layout/base-policy/create/PolicyTemplateSelector";

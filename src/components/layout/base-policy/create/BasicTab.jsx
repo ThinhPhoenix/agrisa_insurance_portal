@@ -24,6 +24,7 @@ import {
     Tooltip,
     Typography
 } from "antd";
+import dayjs from 'dayjs';
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 const { Option } = Select;
@@ -91,15 +92,14 @@ const BasicTabComponent = ({
 
         // Auto-calculate insuranceValidTo = insuranceValidFrom + coverageDurationDays
         if (basicData.insuranceValidFrom && basicData.coverageDurationDays) {
-            const validTo = basicData.insuranceValidFrom
-                .clone()
-                .add(basicData.coverageDurationDays, "days");
-            // Only update if the calculated value is different from current value
-            if (
-                !basicData.insuranceValidTo ||
-                !basicData.insuranceValidTo.isSame(validTo, "day")
-            ) {
-                updates.insuranceValidTo = validTo;
+            const from = dayjs(basicData.insuranceValidFrom);
+            if (from.isValid()) {
+                const validTo = from.add(Number(basicData.coverageDurationDays), 'day');
+                // Only update if the calculated value is different from current value
+                const currentValidTo = basicData.insuranceValidTo ? dayjs(basicData.insuranceValidTo) : null;
+                if (!currentValidTo || !currentValidTo.isSame(validTo, 'day')) {
+                    updates.insuranceValidTo = validTo;
+                }
             }
         }
 
@@ -128,6 +128,22 @@ const BasicTabComponent = ({
     const timeoutRef = useRef(null);
     const handleValuesChange = useCallback(
         (changedValues, allValues) => {
+            // Auto-calculate insuranceValidTo when insuranceValidFrom or coverageDurationDays changes
+            if (changedValues.insuranceValidFrom || changedValues.coverageDurationDays) {
+                const validFrom = allValues.insuranceValidFrom || changedValues.insuranceValidFrom;
+                const duration = allValues.coverageDurationDays || changedValues.coverageDurationDays;
+
+                if (validFrom && duration) {
+                    const from = dayjs(validFrom);
+                    if (from.isValid()) {
+                        const validTo = from.add(Number(duration), 'day');
+                        allValues.insuranceValidTo = validTo;
+                        // Update the form field immediately
+                        form.setFieldsValue({ insuranceValidTo: validTo });
+                    }
+                }
+            }
+
             // Clear previous timeout
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
@@ -139,7 +155,7 @@ const BasicTabComponent = ({
                 onDataChange(allValues);
             }, 300); // 300ms debounce
         },
-        [onDataChange]
+        [onDataChange, form]
     );
 
     // Cleanup timeout on unmount

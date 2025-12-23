@@ -657,7 +657,7 @@ export default function CancelRequestDetailPage() {
                     isMyRequest
                       ? `Yêu cầu của bạn đang được giữ trên hệ thống trong ${formatRemaining(
                           holdRemainingMs
-                        )}. Bạn có thể Hủy yêu cầu trong thời gian này.`
+                        )} trước khi người nhận có thể nhìn thấy và xem xét yêu cầu. Bạn có thể cân nhắc HỦY YÊU CẦU trong thời gian này.`
                       : `Yêu cầu vừa tạo đang ở giai đoạn giữ ${formatRemaining(
                           holdRemainingMs
                         )} trước khi gửi cho người nhận.`

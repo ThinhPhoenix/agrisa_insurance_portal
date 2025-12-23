@@ -77,10 +77,14 @@ export default function CancelRequestsPage() {
         return "green";
       case "denied":
         return "red";
+      case "cancelled":
+        return "red";
       case "dispute":
         return "volcano";
       case "litigation":
         return "purple";
+      case "payment_failed":
+        return "red";
       default:
         return "default";
     }
@@ -95,10 +99,14 @@ export default function CancelRequestsPage() {
         return "Đã chấp thuận";
       case "denied":
         return "Bị từ chối";
+      case "cancelled":
+        return "Đã hủy";
       case "dispute":
         return "Tranh chấp";
       case "litigation":
         return "Tranh chấp";
+      case "payment_failed":
+        return "Thanh toán thất bại";
       default:
         return status;
     }

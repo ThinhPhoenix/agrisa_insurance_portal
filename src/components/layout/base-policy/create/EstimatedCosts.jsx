@@ -210,7 +210,7 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
             </div>
 
             {/* Total Condition Cost */}
-            {configurationData?.conditions && configurationData.conditions.length > 0 && (
+            {/* {configurationData?.conditions && configurationData.conditions.length > 0 && (
                 <>
                     <Divider style={{ margin: '8px 0' }} />
                     <div className="cost-section" style={{ marginBottom: '12px' }}>
@@ -234,7 +234,7 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                         </Text>
                     </div>
                 </>
-            )}
+            )} */}
 
             {/* Data Sources Breakdown */}
             {basicData.selectedDataSources.length > 0 && (

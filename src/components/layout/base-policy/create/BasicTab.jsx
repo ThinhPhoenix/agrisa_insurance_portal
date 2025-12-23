@@ -168,28 +168,41 @@ const BasicTabComponent = ({
     }, []);
 
     //  Sync form with basicData when it changes (e.g., when template is applied)
+    //  Use deep comparison to prevent infinite loop from reference changes
     const basicDataRef = useRef(basicData);
+    const syncTimeoutRef = useRef(null);
     useEffect(() => {
-        // Only sync if basicData actually changed (not initial mount)
-        const hasChanged = basicDataRef.current !== basicData;
+        // Deep comparison: check if content actually changed
+        const hasContentChanged = JSON.stringify(basicDataRef.current) !== JSON.stringify(basicData);
 
-        if (hasChanged) {
-            // Update form fields with current basicData
-            // This ensures the form displays the latest data when a template is applied
-            form.setFieldsValue(basicData);
+        if (hasContentChanged) {
+            // Clear any pending sync
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
 
-            //  IMPORTANT: Manually trigger onDataChange to recalculate estimated costs
-            // setFieldsValue doesn't trigger onValuesChange, so we need to manually notify parent
-            onDataChange(basicData);
+            // Debounce sync to prevent rapid updates
+            syncTimeoutRef.current = setTimeout(() => {
+                // Update form fields with current basicData
+                form.setFieldsValue(basicData);
 
-            console.log(' BasicTab synced with template data:', {
-                dataSourcesCount: basicData.selectedDataSources?.length || 0,
-                productName: basicData.productName
-            });
+                console.log('✅ BasicTab synced with template data:', {
+                    dataSourcesCount: basicData.selectedDataSources?.length || 0,
+                    productName: basicData.productName
+                });
+
+                // Update ref to new data
+                basicDataRef.current = basicData;
+            }, 100);
         }
 
-        basicDataRef.current = basicData;
-    }, [basicData, form, onDataChange]);
+        // Cleanup
+        return () => {
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
+        };
+    }, [basicData, form]);
 
     // Handle category change
     const handleCategoryChange = useCallback(

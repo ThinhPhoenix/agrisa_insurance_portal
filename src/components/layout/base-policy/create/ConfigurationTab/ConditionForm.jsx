@@ -7,6 +7,8 @@ import { memo, useEffect, useState } from 'react';
 
 const { Title, Text: TypographyText } = Typography;
 
+const renderOptionWithTooltip = (item, content) => content; // fallback if global helper is not available
+
 const ConditionForm = memo(({
     availableDataSources,
     mockData,
@@ -22,46 +24,90 @@ const ConditionForm = memo(({
     const [selectedAggregation, setSelectedAggregation] = useState(() => conditionForm.getFieldValue('aggregationFunction') || editingCondition?.aggregationFunction || null);
 
     useEffect(() => {
-        // Keep local selectedAggregation in sync when editingCondition changes
+        // Keep local selectedAggregation in sync when editingCondition or form changes
         setSelectedAggregation(conditionForm.getFieldValue('aggregationFunction') || editingCondition?.aggregationFunction || null);
     }, [editingCondition, conditionForm]);
 
-    // Helper function to render select option with tooltip
-    const renderOptionWithTooltip = (option, tooltipContent) => {
-        return (
-            <Tooltip
-                title={tooltipContent}
-                placement="right"
-                mouseEnterDelay={0.3}
-            >
-                <div style={{ maxWidth: '280px', cursor: 'pointer' }} className="option-hover-item">
-                    <TypographyText style={{
-                        fontSize: '13px',
-                        display: 'block',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                    }}>
-                        {option.label}
-                    </TypographyText>
-                    {option.description && (
-                        <TypographyText type="secondary" style={{
-                            fontSize: '11px',
-                            display: 'block',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                        }}>
-                            {option.description}
-                        </TypographyText>
-                    )}
-                </div>
-            </Tooltip>
-        );
+    // Compute validationWindowDays from configurationData.monitorInterval & monitorFrequencyUnit
+    const computeValidationWindowDays = () => {
+        const interval = Math.max(1, Number(configurationData?.monitorInterval) || 1);
+        const unit = configurationData?.monitorFrequencyUnit || 'hour';
+        switch (unit) {
+            case 'week': return Math.max(1, interval * 7);
+            case 'day': return Math.max(1, interval);
+            case 'month': return Math.max(1, interval * 30);
+            case 'year': return Math.max(1, interval * 365);
+            default: // hour or smaller
+                return 1;
+        }
     };
 
-    // Handle save condition logic (extracted from ConfigurationTab)
     const handleSaveCondition = () => {
+        // Fast-path: read current form values synchronously to perform immediate checks and show instant warnings
+        const quickValues = conditionForm.getFieldsValue();
+
+        // If required quick fields missing, show immediate warning and abort fast checks
+        if (!quickValues?.dataSourceId || !quickValues?.thresholdOperator || !quickValues?.aggregationFunction) {
+            try { message.destroy(); } catch (e) { }
+            message.warning('Vui lòng chọn nguồn dữ liệu, phương pháp tính và toán tử trước khi lưu.');
+            return;
+        }
+
+        // Quick duplicate check: warn only when same dataSource AND same operator AND same aggregation function
+        const duplicateOperatorQuick = (configurationData.conditions || []).some((c) => {
+            if (editingCondition && c.id === editingCondition.id) return false;
+            return c.dataSourceId === quickValues.dataSourceId &&
+                c.thresholdOperator === quickValues.thresholdOperator &&
+                c.aggregationFunction === quickValues.aggregationFunction;
+        });
+
+        if (duplicateOperatorQuick) {
+            try { message.destroy(); } catch (e) { }
+            message.warning('Nguồn dữ liệu này đã có điều kiện cùng phương pháp tính và toán tử. Vui lòng chọn toán tử hoặc phương pháp khác.');
+            return;
+        }
+
+        // Quick coverage check using quickValues to avoid waiting for validateFields (only for numeric range operators)
+        const tempConditionQuick = {
+            dataSourceId: quickValues.dataSourceId,
+            thresholdOperator: quickValues.thresholdOperator,
+            thresholdValue: quickValues.thresholdValue
+        };
+
+        const isFullCoverageForSourceQuick = (allConditions, targetDataSourceId) => {
+            const numericOps = ['<', '<=', '>', '>='];
+            const numericConds = (allConditions || []).filter(c =>
+                c.dataSourceId === targetDataSourceId && numericOps.includes(c.thresholdOperator)
+            );
+            if (numericConds.length === 0) return false;
+
+            let maxUpper = -Infinity;
+            let minLower = Infinity;
+            for (let i = 0; i < numericConds.length; i++) {
+                const c = numericConds[i];
+                const op = c.thresholdOperator;
+                const val = Number(c.thresholdValue);
+                if (!isFinite(val)) continue;
+                if (op === '<' || op === '<=') {
+                    if (val > maxUpper) maxUpper = val;
+                } else if (op === '>' || op === '>=') {
+                    if (val < minLower) minLower = val;
+                }
+            }
+
+            if (maxUpper === -Infinity || minLower === Infinity) return false;
+            return maxUpper >= minLower;
+        };
+
+        const existingQuick = (configurationData.conditions || []).filter(c => !(editingCondition && c.id === editingCondition.id));
+        const combinedQuick = [...existingQuick, tempConditionQuick];
+        if (isFullCoverageForSourceQuick(combinedQuick, tempConditionQuick.dataSourceId)) {
+            try { message.destroy(); } catch (e) { }
+            message.warning('Không thể lưu: các điều kiện cho nguồn dữ liệu này bao phủ toàn bộ miền giá trị (không còn vùng an toàn). Vui lòng điều chỉnh toán tử hoặc giá trị ngưỡng.');
+            return;
+        }
+
+        // Passed quick checks -> run full validation and proceed
         conditionForm.validateFields().then(values => {
             const selectedDataSource = availableDataSources.find(ds => ds.value === values.dataSourceId);
 
@@ -69,14 +115,12 @@ const ConditionForm = memo(({
             const categoryMultiplier = selectedDataSource?.categoryMultiplier || 1;
             const tierMultiplier = selectedDataSource?.tierMultiplier || 1;
 
-            // ✅ Calculate data source cost ONLY (without frequency cost)
             const calculatedCost = calculateConditionCost(
                 baseCost,
                 categoryMultiplier,
                 tierMultiplier
             );
 
-            // AUTO-SET conditionOrder: Set theo thứ tự thêm của user
             let conditionOrder;
             if (editingCondition) {
                 conditionOrder = editingCondition.conditionOrder;
@@ -84,27 +128,29 @@ const ConditionForm = memo(({
                 conditionOrder = (configurationData.conditions?.length || 0) + 1;
             }
 
+            const computedValidationWindow = computeValidationWindowDays();
+
             const condition = {
-                // Core condition fields (from form)
                 dataSourceId: values.dataSourceId,
                 thresholdOperator: values.thresholdOperator,
                 thresholdValue: values.thresholdValue,
                 earlyWarningThreshold: values.earlyWarningThreshold || null,
                 aggregationFunction: values.aggregationFunction,
                 aggregationWindowDays: values.aggregationWindowDays,
-                consecutiveRequired: values.consecutiveRequired ?? false,
+                // Consecutive requirement is fixed to false and not configurable
+                consecutiveRequired: false,
                 includeComponent: values.includeComponent ?? false,
-                // Baseline CHỈ set khi dùng change_gt hoặc change_lt
+                // Baseline only set when operator is change_gt or change_lt
                 baselineWindowDays: (values.thresholdOperator === 'change_gt' || values.thresholdOperator === 'change_lt')
                     ? (values.baselineWindowDays || null)
                     : null,
                 baselineFunction: (values.thresholdOperator === 'change_gt' || values.thresholdOperator === 'change_lt')
                     ? (values.baselineFunction || null)
                     : null,
-                validationWindowDays: values.validationWindowDays || null,
+                // Validation window is derived from monitor frequency (in days)
+                validationWindowDays: computedValidationWindow || null,
                 dataQuality: values.dataQuality || 'good',
                 conditionOrder,
-
                 // Display labels (for UI table)
                 id: editingCondition?.id || Date.now().toString(),
                 dataSourceLabel: selectedDataSource?.label || '',
@@ -113,7 +159,6 @@ const ConditionForm = memo(({
                 aggregationFunctionLabel: mockData.aggregationFunctions.find(af => af.value === values.aggregationFunction)?.label || '',
                 thresholdOperatorLabel: mockData.thresholdOperators.find(to => to.value === values.thresholdOperator)?.label || '',
                 dataQualityLabel: values.dataQuality === 'good' ? 'Tốt' : values.dataQuality === 'acceptable' ? 'Chấp nhận được' : 'Kém',
-
                 // Cost calculation fields
                 baseCost,
                 categoryMultiplier,
@@ -121,51 +166,11 @@ const ConditionForm = memo(({
                 calculatedCost
             };
 
-            // Prevent using the same threshold operator for the same data source
-            const duplicateOperator = (configurationData.conditions || []).some((c) => {
-                if (editingCondition && c.id === editingCondition.id) return false;
-                return c.dataSourceId === values.dataSourceId && c.thresholdOperator === values.thresholdOperator;
-            });
-
-            if (duplicateOperator) {
-                message.warning('Nguồn dữ liệu này đã có điều kiện sử dụng toán tử đã chọn. Vui lòng chọn toán tử khác.');
-                return;
-            }
-
-            // Check if combined numeric conditions cover entire numeric range
-            const isFullCoverageForSource = (allConditions, targetDataSourceId) => {
-                const numericConds = (allConditions || []).filter(c => c.dataSourceId === targetDataSourceId && ['<', '<=', '>', '>='].includes(c.thresholdOperator));
-                if (numericConds.length === 0) return false;
-
-                let maxUpper = -Infinity;
-                let minLower = Infinity;
-
-                numericConds.forEach(c => {
-                    const op = c.thresholdOperator;
-                    const val = Number(c.thresholdValue);
-                    if (!isFinite(val)) return;
-                    if (op === '<' || op === '<=') {
-                        if (val > maxUpper) maxUpper = val;
-                    } else if (op === '>' || op === '>=') {
-                        if (val < minLower) minLower = val;
-                    }
-                });
-
-                if (maxUpper === -Infinity || minLower === Infinity) return false;
-                return maxUpper >= minLower;
-            };
-
-            const existingConditionsExcludingCurrent = (configurationData.conditions || []).filter(c => !(editingCondition && c.id === editingCondition.id));
-            const combinedConditions = [...existingConditionsExcludingCurrent, condition];
-            if (isFullCoverageForSource(combinedConditions, condition.dataSourceId)) {
-                message.warning('Không thể lưu: các điều kiện cho nguồn dữ liệu này bao phủ toàn bộ miền giá trị (không còn vùng an toàn). Vui lòng điều chỉnh toán tử hoặc giá trị ngưỡng.');
-                return;
-            }
-
-            console.log("🔍 ConditionForm - Created condition:", condition);
-
-            // Call parent callback
             onSave(condition, editingCondition);
+        }).catch(err => {
+            // validation failed - show first error quickly
+            try { message.destroy(); } catch (e) { }
+            message.warning('Vui lòng kiểm tra các trường nhập và thử lại.');
         });
     };
 
@@ -245,6 +250,7 @@ const ConditionForm = memo(({
                                     </Select>
                                 </Form.Item>
                             </Col>
+
                             <Col span={8}>
                                 <Form.Item
                                     name="aggregationFunction"
@@ -281,6 +287,7 @@ const ConditionForm = memo(({
                                     </Select>
                                 </Form.Item>
                             </Col>
+
                             <Col span={8}>
                                 <Form.Item
                                     name="aggregationWindowDays"
@@ -299,6 +306,7 @@ const ConditionForm = memo(({
                                     />
                                 </Form.Item>
                             </Col>
+
                             <Col span={8}>
                                 <Form.Item
                                     name="thresholdOperator"
@@ -345,6 +353,7 @@ const ConditionForm = memo(({
                                     </Select>
                                 </Form.Item>
                             </Col>
+
                             <Col span={8}>
                                 <Form.Item
                                     name="thresholdValue"
@@ -375,6 +384,7 @@ const ConditionForm = memo(({
                                     />
                                 </Form.Item>
                             </Col>
+
                             <Col span={8}>
                                 <Form.Item
                                     name="earlyWarningThreshold"
@@ -390,54 +400,21 @@ const ConditionForm = memo(({
                                     />
                                 </Form.Item>
                             </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="consecutiveRequired"
-                                    label={dict.getFieldLabel('BasePolicyTriggerCondition', 'consecutive_required')}
-                                    tooltip="Yêu cầu điều kiện liên tục (Consecutive Required): Nếu bật, sự kiện bảo hiểm chỉ xảy ra khi điều kiện được thỏa mãn trong nhiều chu kỳ giám sát liên tiếp nhau. Ví dụ: Hạn hán xảy ra nếu không có mưa trong 3 chu kỳ liên tiếp"
-                                    valuePropName="checked"
-                                >
-                                    <Select
-                                        placeholder="Không"
-                                        size="large"
-                                        options={[
-                                            { value: false, label: 'Không' },
-                                            { value: true, label: 'Có' }
-                                        ]}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                                <Form.Item
-                                    name="includeComponent"
-                                    label={dict.getFieldLabel('BasePolicyTriggerCondition', 'include_component')}
-                                    tooltip="Bao gồm thành phần con (Include Component): Cho phép tính toán dựa trên các thành phần con của một loại dữ liệu, nếu có. Ví dụ: Dữ liệu thời tiết có thể bao gồm các thành phần như 'lượng mưa' và 'độ ẩm'"
-                                >
-                                    <Select
-                                        placeholder="Không"
-                                        size="large"
-                                        options={[
-                                            { value: false, label: 'Không' },
-                                            { value: true, label: 'Có' }
-                                        ]}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={8}>
+
+                            {/* validationWindowDays is derived from monitor frequency and hidden from UI */}
+                            <Col span={0} style={{ display: 'none' }}>
                                 <Form.Item
                                     name="validationWindowDays"
-                                    label={dict.getFieldLabel('BasePolicyTriggerCondition', 'validation_window_days')}
-                                    tooltip="Chu kỳ xác thực (Validation Window): Số ngày tối thiểu mà dữ liệu từ một nguồn phải có sẵn và hợp lệ trước khi hệ thống sử dụng nó để tính toán, nhằm đảm bảo tính chính xác"
                                     rules={[{ type: 'number', min: 1, message: getConditionValidation('VALIDATION_WINDOW_DAYS_MIN') }]}
                                 >
                                     <InputNumber
-                                        placeholder="7"
                                         min={1}
                                         size="large"
                                         style={{ width: '100%' }}
                                     />
                                 </Form.Item>
                             </Col>
+
                             <Col span={8}>
                                 <Form.Item
                                     name="dataQuality"
@@ -457,7 +434,7 @@ const ConditionForm = memo(({
                                 </Form.Item>
                             </Col>
 
-                            {/* CONDITIONAL: Baseline fields CHỈ hiện khi chọn change_gt hoặc change_lt */}
+                            {/* Baseline fields only when operator is change_gt or change_lt */}
                             {(() => {
                                 const currentOperator = conditionForm.getFieldValue('thresholdOperator') || selectedThresholdOperator || editingCondition?.thresholdOperator;
                                 return (currentOperator === 'change_gt' || currentOperator === 'change_lt');
@@ -467,7 +444,7 @@ const ConditionForm = memo(({
                                             <Form.Item
                                                 name="baselineWindowDays"
                                                 label={dict.getFieldLabel('BasePolicyTriggerCondition', 'baseline_window_days')}
-                                                tooltip="Chu kỳ tham chiếu (Baseline Window): Khoảng thời gian trong quá khứ (tính bằng ngày) được dùng để tạo ra một giá trị 'nền' hoặc 'bình thường'. BẮT BUỘC khi sử dụng toán tử thay đổi (change_gt/change_lt). Ví dụ: 365 ngày để tính giá trị trung bình hàng năm làm mốc so sánh."
+                                                tooltip="Chu kỳ tham chiếu (Baseline Window): Khoảng thời gian trong quá khứ (tính bằng ngày) được dùng để tạo ra một giá trị 'nền' hoặc 'bình thường'. BẮT BUỘC khi sử dụng toán tử thay đổi (change_gt/change_lt)."
                                                 rules={[
                                                     { required: true, message: 'Chu kỳ tham chiếu là bắt buộc khi sử dụng toán tử thay đổi!' },
                                                     { type: 'number', min: 1, message: getConditionValidation('BASELINE_WINDOW_DAYS_MIN') }
@@ -485,7 +462,7 @@ const ConditionForm = memo(({
                                             <Form.Item
                                                 name="baselineFunction"
                                                 label={dict.getFieldLabel('BasePolicyTriggerCondition', 'baseline_function')}
-                                                tooltip="Hàm tính tham chiếu (Baseline Function): Phương pháp tính toán giá trị 'nền' từ dữ liệu lịch sử. BẮT BUỘC khi sử dụng toán tử thay đổi (change_gt/change_lt). Ví dụ: AVG để tính giá trị trung bình trong chu kỳ tham chiếu làm mốc so sánh với giá trị hiện tại."
+                                                tooltip="Hàm tính tham chiếu (Baseline Function): Phương pháp tính toán giá trị 'nền' từ dữ liệu lịch sử. BẮT BUỘC khi sử dụng toán tử thay đổi (change_gt/change_lt)."
                                                 rules={[
                                                     { required: true, message: 'Hàm tính tham chiếu là bắt buộc khi sử dụng toán tử thay đổi!' }
                                                 ]}
@@ -506,6 +483,7 @@ const ConditionForm = memo(({
                                 )}
                         </Row>
                     </Form>
+
                     <div style={{ marginTop: 16 }}>
                         <Space>
                             <Button

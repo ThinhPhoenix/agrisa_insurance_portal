@@ -27,27 +27,42 @@ const ConfigurationTabComponent = ({
     const dict = useDictionary();
 
     //  ⚠️ CRITICAL: Sync form with configurationData when it changes (e.g., when template is applied)
-    //  This ensures PolicyTemplateSelector can update ConfigurationTab data
+    //  Use deep comparison to prevent infinite loop from reference changes
     const configDataRef = useRef(configurationData);
+    const syncTimeoutRef = useRef(null);
     useEffect(() => {
-        const hasChanged = configDataRef.current !== configurationData;
+        // Deep comparison: check if content actually changed
+        const hasContentChanged = JSON.stringify(configDataRef.current) !== JSON.stringify(configurationData);
 
-        if (hasChanged && formRef.current) {
-            // Update form fields with current configurationData
-            formRef.current.setFieldsValue(configurationData);
+        if (hasContentChanged && formRef.current) {
+            // Clear any pending sync
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
 
-            // Manually trigger onDataChange to ensure parent component updates
-            onDataChange(configurationData);
+            // Debounce sync to prevent rapid updates
+            syncTimeoutRef.current = setTimeout(() => {
+                // Update form fields with current configurationData
+                formRef.current.setFieldsValue(configurationData);
 
-            console.log(' ConfigurationTab synced with template data:', {
-                conditionsCount: configurationData.conditions?.length || 0,
-                logicalOperator: configurationData.logicalOperator,
-                blackoutPeriodsCount: configurationData.blackoutPeriods?.periods?.length || 0
-            });
+                console.log('✅ ConfigurationTab synced with template data:', {
+                    conditionsCount: configurationData.conditions?.length || 0,
+                    logicalOperator: configurationData.logicalOperator,
+                    blackoutPeriodsCount: configurationData.blackoutPeriods?.periods?.length || 0
+                });
+
+                // Update ref to new data
+                configDataRef.current = configurationData;
+            }, 100);
         }
 
-        configDataRef.current = configurationData;
-    }, [configurationData, onDataChange]);
+        // Cleanup
+        return () => {
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
+        };
+    }, [configurationData]);
 
     return (
         <div className="configuration-tab">

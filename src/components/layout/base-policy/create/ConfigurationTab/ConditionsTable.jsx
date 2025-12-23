@@ -3,15 +3,15 @@ import useDictionary from '@/services/hooks/common/use-dictionary';
 import { DeleteOutlined, EditOutlined, HolderOutlined } from '@ant-design/icons';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { Button, Popconfirm, Space, Tag, Typography } from 'antd';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 const { Text: TypographyText } = Typography;
 
 const ConditionsTable = memo(({ conditions, onEdit, onDelete, onDragEnd }) => {
     const dict = useDictionary();
 
-    // Trigger conditions table columns
-    const conditionsColumns = [
+    // Memoize columns to avoid re-creating on each render (reduces re-renders/jank)
+    const conditionsColumns = useMemo(() => [
         {
             title: '#',
             dataIndex: 'conditionOrder',
@@ -132,7 +132,7 @@ const ConditionsTable = memo(({ conditions, onEdit, onDelete, onDragEnd }) => {
                 </div>
             ),
         },
-    ];
+    ], [dict, onEdit, onDelete]);
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
@@ -144,7 +144,7 @@ const ConditionsTable = memo(({ conditions, onEdit, onDelete, onDragEnd }) => {
                             dataSource={conditions}
                             pagination={false}
                             rowKey="id"
-                            components={{
+                            components={useMemo(() => ({
                                 body: {
                                     wrapper: (props) => <tbody {...props}>{props.children}</tbody>,
                                     row: ({ children, ...props }) => {
@@ -193,7 +193,7 @@ const ConditionsTable = memo(({ conditions, onEdit, onDelete, onDragEnd }) => {
                                         );
                                     },
                                 },
-                            }}
+                            }), [conditions])}
                         />
                         {provided.placeholder}
                     </div>

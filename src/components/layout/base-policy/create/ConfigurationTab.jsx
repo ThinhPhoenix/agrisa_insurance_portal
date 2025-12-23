@@ -39,7 +39,7 @@ import {
     message
 } from 'antd';
 import dayjs from 'dayjs';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const { Title, Text, Text: TypographyText } = Typography;
 const { Panel } = Collapse;
@@ -108,6 +108,7 @@ const ConfigurationTabComponent = ({
     const [conditionForm] = Form.useForm();
     const conditionFormRef = useRef();
     const [editingCondition, setEditingCondition] = useState(null);
+    const [selectedDataSourceForForm, setSelectedDataSourceForForm] = useState(null);
     const [blackoutPeriodForm] = Form.useForm(); //  NEW: Form for blackout periods
     const dict = useDictionary();
     const [selectedThresholdOperator, setSelectedThresholdOperator] = useState(null); //  NEW: Track threshold operator
@@ -136,14 +137,23 @@ const ConfigurationTabComponent = ({
 
     const availableDataSources = getAvailableDataSourcesForTrigger();
 
-    //  Filter out data sources that are already used in conditions
-    const unusedDataSources = availableDataSources.filter(dataSource => {
-        // Check if this data source is already used in any condition
-        const isUsed = configurationData.conditions?.some(
-            condition => condition.dataSourceId === dataSource.value
-        );
-        return !isUsed;
-    });
+    // Allow re-using the same base data source for multiple conditions
+    // (we deduplicate availableDataSources by base id in the parent hook)
+    const unusedDataSources = availableDataSources; // kept for backward compatibility in JSX
+
+    // Compute which threshold operators are already used for each dataSourceId
+    const usedOperatorsBySource = useMemo(() => {
+        const map = {};
+        (configurationData.conditions || []).forEach((c) => {
+            // when editing a condition, do not count its current operator
+            if (editingCondition && c.id === editingCondition.id) return;
+            const ds = c.dataSourceId;
+            if (!ds) return;
+            if (!map[ds]) map[ds] = new Set();
+            if (c.thresholdOperator) map[ds].add(c.thresholdOperator);
+        });
+        return map;
+    }, [configurationData.conditions, editingCondition]);
 
     // Handle form values change
     const handleValuesChange = (changedValues, allValues) => {
@@ -224,6 +234,56 @@ const ConfigurationTabComponent = ({
                 calculatedCost
             };
 
+            // Prevent using the same threshold operator for the same data source across different conditions
+            const duplicateOperator = (configurationData.conditions || []).some((c) => {
+                if (editingCondition && c.id === editingCondition.id) return false; // ignore current when editing
+                return c.dataSourceId === values.dataSourceId && c.thresholdOperator === values.thresholdOperator;
+            });
+
+            if (duplicateOperator) {
+                message.warning('Nguồn dữ liệu này đã có điều kiện sử dụng toán tử đã chọn. Vui lòng chọn toán tử khác.');
+                return;
+            }
+
+            // Check if combined numeric conditions for this data source cover entire numeric range
+            const isFullCoverageForSource = (allConditions, targetDataSourceId) => {
+                // Consider only simple numeric operators: <, <=, >, >=
+                const numericConds = (allConditions || []).filter(c => c.dataSourceId === targetDataSourceId && ['<', '<=', '>', '>='].includes(c.thresholdOperator));
+                if (numericConds.length === 0) return false;
+
+                // Track max upper bound from left-side intervals (-Inf, upper]
+                let maxUpper = -Infinity;
+                // Track min lower bound from right-side intervals [lower, +Inf)
+                let minLower = Infinity;
+
+                numericConds.forEach(c => {
+                    const op = c.thresholdOperator;
+                    const val = Number(c.thresholdValue);
+                    if (!isFinite(val)) return;
+                    if (op === '<' || op === '<=') {
+                        // interval (-Inf, val) or (-Inf, val]
+                        // use val as upper
+                        if (val > maxUpper) maxUpper = val;
+                    } else if (op === '>' || op === '>=') {
+                        // interval (val, +Inf) or [val, +Inf)
+                        if (val < minLower) minLower = val;
+                    }
+                });
+
+                // If we have at least one left-reaching and one right-reaching interval
+                if (maxUpper === -Infinity || minLower === Infinity) return false;
+
+                // If maxUpper >= minLower then intervals overlap or touch => coverage across real line
+                return maxUpper >= minLower;
+            };
+
+            const existingConditionsExcludingCurrent = (configurationData.conditions || []).filter(c => !(editingCondition && c.id === editingCondition.id));
+            const combinedConditions = [...existingConditionsExcludingCurrent, condition];
+            if (isFullCoverageForSource(combinedConditions, condition.dataSourceId)) {
+                message.warning('Không thể lưu: các điều kiện cho nguồn dữ liệu này bao phủ toàn bộ miền giá trị (không còn vùng an toàn). Vui lòng điều chỉnh toán tử hoặc giá trị ngưỡng.');
+                return; // block save when coverage is full
+            }
+
             console.log("🔍 ConfigurationTab - Created condition:", condition);
 
             if (editingCondition) {
@@ -242,6 +302,7 @@ const ConfigurationTabComponent = ({
     const handleEditCondition = (condition) => {
         setEditingCondition(condition);
         setSelectedThresholdOperator(condition.thresholdOperator); //  Set selected operator for conditional rendering
+        setSelectedDataSourceForForm(condition.dataSourceId);
         conditionForm.setFieldsValue(condition);
     };
 
@@ -933,13 +994,6 @@ const ConfigurationTabComponent = ({
                                 type="warning"
                                 showIcon
                             />
-                        ) : unusedDataSources.length === 0 && !editingCondition ? (
-                            <Alert
-                                message="Đã sử dụng hết nguồn dữ liệu"
-                                description="Tất cả nguồn dữ liệu đã được thêm vào điều kiện. Vui lòng thêm nguồn dữ liệu mới ở tab 'Thông tin Cơ bản' hoặc chỉnh sửa điều kiện hiện có."
-                                type="info"
-                                showIcon
-                            />
                         ) : (
                             <>
                                 <Form
@@ -951,7 +1005,7 @@ const ConfigurationTabComponent = ({
                                             <Form.Item
                                                 name="dataSourceId"
                                                 label={dict.getFieldLabel('BasePolicyTriggerCondition', 'data_source_id')}
-                                                tooltip="Nguồn dữ liệu để tính điều kiện (trạm khí tượng, vệ tinh, v.v.). Mỗi nguồn chỉ được sử dụng một lần"
+                                                tooltip="Nguồn dữ liệu để tính điều kiện (trạm khí tượng, vệ tinh, v.v.). Có thể sử dụng cùng một nguồn cho nhiều điều kiện để tạo biên độ khác nhau"
                                                 rules={[{ required: true, message: getConditionValidation('DATA_SOURCE_ID_REQUIRED') }]}
                                             >
                                                 <Select
@@ -959,13 +1013,10 @@ const ConfigurationTabComponent = ({
                                                     size="large"
                                                     optionLabelProp="displayLabel"
                                                     popupMatchSelectWidth={300}
-                                                    disabled={!editingCondition && unusedDataSources.length === 0}
+                                                    disabled={availableDataSources.length === 0}
                                                 >
                                                     {/*  Show only unused data sources when adding new, or include current when editing */}
-                                                    {(editingCondition
-                                                        ? availableDataSources
-                                                        : unusedDataSources
-                                                    ).map(source => {
+                                                    {availableDataSources.map(source => {
                                                         const displayLabel = source.label.length > 17 ? source.label.substring(0, 17) + '...' : source.label;
                                                         return (
                                                             <Select.Option
@@ -1095,7 +1146,7 @@ const ConfigurationTabComponent = ({
                                                         }
                                                     }}
                                                 >
-                                                    {mockData.thresholdOperators?.map(operator => (
+                                                    {(mockData.thresholdOperators || []).map(operator => (
                                                         <Select.Option
                                                             key={operator.value}
                                                             value={operator.value}

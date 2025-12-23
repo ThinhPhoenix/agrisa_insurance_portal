@@ -16,14 +16,13 @@ import {
     Form,
     Input,
     InputNumber,
-    message,
     Popconfirm,
     Row,
     Select,
     Switch,
     Table,
     Tooltip,
-    Typography,
+    Typography
 } from "antd";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
@@ -231,15 +230,10 @@ const BasicTabComponent = ({
                 (source) => source.id === values.dataSource
             );
             if (selectedSource) {
-                // Check if already added
-                const exists = basicData.selectedDataSources.find(
-                    (source) => source.id === selectedSource.id
-                );
-
-                if (exists) {
-                    message.warning(dict.ui.msgDataSourceAlreadyAdded);
-                    return;
-                }
+                // Create an instance wrapper to allow same data source added multiple times
+                const instanceId = `inst_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .slice(2, 7)}`;
 
                 // Find category and tier to get multipliers
                 const selectedCategoryObj = categories.find(
@@ -251,9 +245,12 @@ const BasicTabComponent = ({
 
                 const dataSourceToAdd = {
                     ...selectedSource,
+                    // Keep original id (data source id from API) and add unique instance id
+                    originalDataSourceId: selectedSource.id,
+                    instanceId,
                     category: selectedCategory,
                     tier: selectedTier,
-                    categoryLabel: selectedCategory, // Since selectedCategory is already the name
+                    categoryLabel: selectedCategory,
                     tierLabel: selectedTierObj?.label || selectedTier,
                     // Add multipliers for condition calculation
                     categoryMultiplier:
@@ -317,7 +314,7 @@ const BasicTabComponent = ({
                 <Popconfirm
                     title={dict.ui.msgDeleteDataSource}
                     description={dict.ui.msgConfirmDeleteDataSource}
-                    onConfirm={() => onRemoveDataSource(record.id)}
+                    onConfirm={() => onRemoveDataSource(record.instanceId || record.id)}
                     okText={dict.ui.delete}
                     cancelText={dict.ui.cancel}
                 >
@@ -1377,96 +1374,87 @@ const BasicTabComponent = ({
                                     optionLabelProp="label"
                                     loading={dataSourcesLoading}
                                 >
-                                    {dataSources
-                                        .filter(
-                                            (source) =>
-                                                !basicData.selectedDataSources.some(
-                                                    (selected) =>
-                                                        selected.id ===
-                                                        source.id
-                                                )
-                                        )
-                                        .map((source) => (
-                                            <Option
-                                                key={source.id}
-                                                value={source.id}
-                                                label={source.label}
-                                            >
-                                                <Tooltip
-                                                    title={
+                                    {dataSources.map((source) => (
+                                        <Option
+                                            key={source.id}
+                                            value={source.id}
+                                            label={source.label}
+                                        >
+                                            <Tooltip
+                                                title={
+                                                    <div>
                                                         <div>
-                                                            <div>
-                                                                <strong>
-                                                                    {
-                                                                        source.label
-                                                                    }
-                                                                </strong>
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    marginTop:
-                                                                        "4px",
-                                                                }}
-                                                            >
+                                                            <strong>
                                                                 {
-                                                                    source.description
+                                                                    source.label
                                                                 }
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    marginTop:
-                                                                        "4px",
-                                                                    color: "#52c41a",
-                                                                }}
-                                                            >
-                                                                Nhà cung cấp:{" "}
-                                                                {
-                                                                    source.data_provider
-                                                                }
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    marginTop:
-                                                                        "4px",
-                                                                    color: "#1890ff",
-                                                                }}
-                                                            >
-                                                                Chi phí:{" "}
-                                                                {source.baseCost.toLocaleString()}{" "}
-                                                                ₫/tháng
-                                                            </div>
+                                                            </strong>
                                                         </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            cursor: "pointer",
-                                                        }}
-                                                    >
-                                                        <Text>
-                                                            {source.label}
-                                                        </Text>
-                                                        <br />
-                                                        <Text
-                                                            type="secondary"
+                                                        <div
                                                             style={{
-                                                                fontSize:
-                                                                    "12px",
+                                                                marginTop:
+                                                                    "4px",
                                                             }}
                                                         >
                                                             {
+                                                                source.description
+                                                            }
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                marginTop:
+                                                                    "4px",
+                                                                color: "#52c41a",
+                                                            }}
+                                                        >
+                                                            Nhà cung cấp:{" "}
+                                                            {
                                                                 source.data_provider
-                                                            }{" "}
-                                                            -{" "}
+                                                            }
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                marginTop:
+                                                                    "4px",
+                                                                color: "#1890ff",
+                                                            }}
+                                                        >
+                                                            Chi phí:{" "}
                                                             {source.baseCost.toLocaleString()}{" "}
                                                             ₫/tháng
-                                                        </Text>
+                                                        </div>
                                                     </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
+                                                }
+                                                placement="right"
+                                                mouseEnterDelay={0.3}
+                                            >
+                                                <div
+                                                    style={{
+                                                        cursor: "pointer",
+                                                    }}
+                                                >
+                                                    <Text>
+                                                        {source.label}
+                                                    </Text>
+                                                    <br />
+                                                    <Text
+                                                        type="secondary"
+                                                        style={{
+                                                            fontSize:
+                                                                "12px",
+                                                        }}
+                                                    >
+                                                        {
+                                                            source.data_provider
+                                                        }{" "}
+                                                        -{" "}
+                                                        {source.baseCost.toLocaleString()}{" "}
+                                                        ₫/tháng
+                                                    </Text>
+                                                </div>
+                                            </Tooltip>
+                                        </Option>
+                                    ))}
                                 </Select>
                             </Form.Item>
                         </Col>
@@ -1501,7 +1489,7 @@ const BasicTabComponent = ({
                     <Table
                         columns={dataSourceColumns}
                         dataSource={basicData.selectedDataSources}
-                        rowKey="id"
+                        rowKey={(record, index) => record.instanceId || `${record.id}_${index}`}
                         pagination={false}
                         className="data-source-table"
                         size="middle"

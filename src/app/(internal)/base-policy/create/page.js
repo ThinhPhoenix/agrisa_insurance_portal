@@ -139,10 +139,10 @@ const CreatePolicyPage = () => {
         // 3. Navigate to basic tab to show filled data
         handleTabChange(TABS.BASIC);
 
-        message.success(
-          `Đã áp dụng template "${templateInfo.name}"! Vui lòng kiểm tra và điều chỉnh thông tin nếu cần.`,
-          5
-        );
+        // message.success(
+        //   `Đã áp dụng template "${templateInfo.name}"! Vui lòng kiểm tra và điều chỉnh thông tin nếu cần.`,
+        //   5
+        // );
 
         console.log("✅ Template applied successfully:", {
           templateId: templateInfo.id,

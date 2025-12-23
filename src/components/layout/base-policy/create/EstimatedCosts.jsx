@@ -1,7 +1,7 @@
+import { calculateConditionCost, calculateFrequencyCost } from '@/stores/policy-store';
 import { CalculatorOutlined, PercentageOutlined } from '@ant-design/icons';
 import { Card, Col, Divider, Progress, Row, Space, Statistic, Tag, Typography } from 'antd';
 import { memo, useMemo } from 'react';
-import { calculateConditionCost, calculateFrequencyCost } from '@/stores/policy-store';
 
 const { Title, Text } = Typography;
 
@@ -215,7 +215,7 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                     <Divider style={{ margin: '8px 0' }} />
                     <div className="cost-section" style={{ marginBottom: '12px' }}>
                         <Statistic
-                            title="Tổng Chi phí Điều kiện (gửi BE)"
+                            title="Tổng Chi phí Điều kiện"
                             value={totalConditionCost}
                             suffix="VND"
                             precision={0}
@@ -314,10 +314,10 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                     <strong>Chi phí Giám sát:</strong> (TB Cơ sở) - (10.000 × Khoảng × Hệ số)
                 </Text>
                 <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2', marginBottom: '4px' }}>
-                    Ví dụ: 3 nguồn @ 200k cơ sở (×1.5 ×1.5), giám sát 2 ngày:<br/>
-                    • Dữ liệu: 3 × (200k × 1.5 × 1.5) = 1.350.000 ₫<br/>
-                    • TB Cơ sở: (200k + 200k + 200k) / 3 = 200k<br/>
-                    • Giám sát: 200k - (10k × 2 × 0.8) = 184.000 ₫<br/>
+                    Ví dụ: 3 nguồn @ 200k cơ sở (×1.5 ×1.5), giám sát 2 ngày:<br />
+                    • Dữ liệu: 3 × (200k × 1.5 × 1.5) = 1.350.000 ₫<br />
+                    • TB Cơ sở: (200k + 200k + 200k) / 3 = 200k<br />
+                    • Giám sát: 200k - (10k × 2 × 0.8) = 184.000 ₫<br />
                     • <strong>Tổng: 1.534.000 ₫/tháng</strong>
                 </Text>
                 <Text strong style={{ fontSize: '9px', display: 'block', marginBottom: '2px' }}>

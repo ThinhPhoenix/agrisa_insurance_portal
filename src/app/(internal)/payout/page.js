@@ -8,8 +8,8 @@ import {
     statusFilter,
     useFilterableList,
 } from "@/services/hooks/common";
-import usePayout from "@/services/hooks/payout/use-payout";
 import useBulkVerify from "@/services/hooks/payout/use-bulk-verify";
+import usePayout from "@/services/hooks/payout/use-payout";
 import {
     CheckCircleOutlined,
     ClockCircleOutlined,
@@ -19,7 +19,16 @@ import {
     SearchOutlined,
     WalletOutlined,
 } from "@ant-design/icons";
-import { Button, Collapse, Layout, Space, Spin, Tag, Typography, message } from "antd";
+import {
+    Button,
+    Collapse,
+    Layout,
+    Space,
+    Spin,
+    Tag,
+    Typography,
+    message,
+} from "antd";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import "./payout.css";
@@ -124,16 +133,23 @@ export default function PayoutListPage() {
             .filter((id) => id); // Filter out null/undefined values
 
         if (registeredPolicyIds.length === 0) {
-            console.error("Không có registered_policy_id hợp lệ trong các chi trả đã chọn");
+            console.error(
+                "Không có registered_policy_id hợp lệ trong các chi trả đã chọn"
+            );
             return;
         }
 
-        console.log("Bulk verifying payouts with registered_policy_ids:", registeredPolicyIds);
+        console.log(
+            "Bulk verifying payouts with registered_policy_ids:",
+            registeredPolicyIds
+        );
 
         const result = await bulkVerifyPayouts(registeredPolicyIds);
 
         if (result) {
-            message.success(`Xác minh thành công ${registeredPolicyIds.length} chi trả!`);
+            message.success(
+                `Xác minh thành công ${registeredPolicyIds.length} chi trả!`
+            );
             console.log("Bulk verification successful:", result);
             // Refresh the payouts list
             fetchPayouts();

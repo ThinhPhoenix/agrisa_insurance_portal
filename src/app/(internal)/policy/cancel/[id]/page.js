@@ -20,6 +20,7 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import {
+  Alert,
   Button,
   Card,
   Col,
@@ -82,6 +83,30 @@ export default function CancelRequestDetailPage() {
   ] = useState(false);
   const [resolveAction, setResolveAction] = useState(null); // 'approve' or 'keep_active'
   const [submitting, setSubmitting] = useState(false);
+
+  // Server holds newly created cancel requests for 1 hour before notifying the holder.
+  // During this hold the requester may revoke the request. We track remaining hold time.
+  const HOLD_DURATION_MS = 60 * 60 * 1000; // 1 hour
+  const [holdRemainingMs, setHoldRemainingMs] = useState(null);
+
+  // Update holdRemainingMs every second while there is a created_at timestamp
+  useEffect(() => {
+    if (!cancelRequest?.created_at) {
+      setHoldRemainingMs(null);
+      return;
+    }
+
+    const createdTs = new Date(cancelRequest.created_at).getTime();
+
+    const updateRemaining = () => {
+      const remaining = HOLD_DURATION_MS - (Date.now() - createdTs);
+      setHoldRemainingMs(remaining > 0 ? remaining : 0);
+    };
+
+    updateRemaining();
+    const timer = setInterval(updateRemaining, 1000);
+    return () => clearInterval(timer);
+  }, [cancelRequest?.created_at]);
 
   // User display names
   const [requestedByName, setRequestedByName] = useState("");
@@ -207,10 +232,14 @@ export default function CancelRequestDetailPage() {
         return "green";
       case "denied":
         return "red";
+      case "cancelled":
+        return "red";
       case "dispute":
         return "volcano";
       case "litigation":
         return "purple";
+      case "payment_failed":
+        return "red";
       default:
         return "default";
     }
@@ -225,10 +254,14 @@ export default function CancelRequestDetailPage() {
         return "Đã chấp thuận";
       case "denied":
         return "Bị từ chối";
+      case "cancelled":
+        return "Đã hủy";
       case "dispute":
         return "Tranh chấp";
       case "litigation":
         return "Tranh chấp";
+      case "payment_failed":
+        return "Thanh toán thất bại";
       default:
         return status;
     }
@@ -291,6 +324,19 @@ export default function CancelRequestDetailPage() {
       style: "currency",
       currency: "VND",
     }).format(amount);
+  };
+
+  // Format remaining hold time into human readable string
+  const formatRemaining = (ms) => {
+    if (ms == null) return "";
+    if (ms <= 0) return "0s";
+    const total = Math.floor(ms / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
   };
 
   // Parse evidence object - handles BE format: { description, images: [{ url, comment }] }
@@ -538,13 +584,43 @@ export default function CancelRequestDetailPage() {
             </Space>
           </div>
           <div>
+            {/* Informational banner about 1-hour server hold: show countdown while holding, then show "sent" notice after hold expires */}
+            {cancelRequest?.status === "pending_review" &&
+              !cancelRequest?.during_notice_period && (
+                <div className="mb-3">
+                  {holdRemainingMs > 0 ? (
+                    <Alert
+                      type="info"
+                      showIcon
+                      message={
+                        isMyRequest
+                          ? `Yêu cầu của bạn đang được giữ trên hệ thống trong ${formatRemaining(
+                              holdRemainingMs
+                            )}. Bạn có thể Hủy yêu cầu trong thời gian này.`
+                          : `Yêu cầu vừa tạo đang ở giai đoạn giữ ${formatRemaining(
+                              holdRemainingMs
+                            )} trước khi gửi cho người nhận.`
+                      }
+                    />
+                  ) : holdRemainingMs === 0 ? (
+                    <Alert
+                      type="info"
+                      showIcon
+                      message={"Yêu cầu đã được hệ thống gửi đến người nhận"}
+                    />
+                  ) : null}
+                </div>
+              )}
+
             <Space>
               <Button onClick={() => router.back()}>Quay lại</Button>
-              {isMyRequest && cancelRequest?.during_notice_period && (
-                <Button danger onClick={handleRevoke} loading={submitting}>
-                  Hủy yêu cầu hủy hợp đồng
-                </Button>
-              )}
+              {isMyRequest &&
+                cancelRequest?.status === "pending_review" &&
+                !cancelRequest?.during_notice_period && (
+                  <Button danger onClick={handleRevoke} loading={submitting}>
+                    Hủy yêu cầu hủy hợp đồng
+                  </Button>
+                )}
               {!isMyRequest && cancelRequest.status === "pending_review" && (
                 <>
                   <Button

@@ -1,5 +1,6 @@
 "use client";
 
+import CustomTable from "@/components/custom-table";
 import { usePartnerDashboard } from "@/services/hooks/dashboard/use-fetch-dashboard";
 import {
   ArrowDownOutlined,
@@ -35,7 +36,6 @@ import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { useEffect, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
-import CustomTable from "@/components/custom-table";
 import "./dashboard.css";
 
 const { Title, Text } = Typography;
@@ -984,7 +984,7 @@ export default function DashboardPage() {
             <Card className="dashboard-card" bodyStyle={{ padding: 16 }}>
               <Space direction="vertical" size={4} style={{ width: "100%" }}>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  Số claim
+                  Số chi trả
                 </Text>
                 <div
                   style={{ fontSize: 18, fontWeight: 600, color: "#722ed1" }}
@@ -1592,7 +1592,7 @@ export default function DashboardPage() {
                   {dashboard.formatCurrency(
                     data.monthly_payout_per_claim_trend[0].avg_payout_per_claim
                   )}
-                  /claim
+                  /chi trả
                 </Tag>
               ) : null}
             </Space>

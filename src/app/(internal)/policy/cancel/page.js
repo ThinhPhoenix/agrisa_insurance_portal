@@ -157,18 +157,18 @@ export default function CancelRequestsPage() {
       width: 150,
       render: (type) => <Tag color="blue">{getCancelTypeText(type)}</Tag>,
     },
-    {
-      title: "Lý do",
-      dataIndex: "reason",
-      key: "reason",
-      width: 200,
-      ellipsis: true,
-      render: (text) => (
-        <div className="truncate" title={text}>
-          {text}
-        </div>
-      ),
-    },
+    // {
+    //   title: "Lý do",
+    //   dataIndex: "reason",
+    //   key: "reason",
+    //   width: 200,
+    //   ellipsis: true,
+    //   render: (text) => (
+    //     <div className="truncate" title={text}>
+    //       {text}
+    //     </div>
+    //   ),
+    // },
     {
       title: "Trạng thái",
       dataIndex: "status",

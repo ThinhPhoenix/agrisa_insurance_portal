@@ -167,8 +167,15 @@ const ConfigurationTabComponent = ({
             const categoryMultiplier = selectedDataSource?.categoryMultiplier || 1;
             const tierMultiplier = selectedDataSource?.tierMultiplier || 1;
 
-            // Calculate condition cost
-            const calculatedCost = calculateConditionCost(baseCost, categoryMultiplier, tierMultiplier);
+            // ✅ Calculate data source cost ONLY (without frequency cost)
+            // Frequency cost will be added separately when:
+            // 1. Building backend payload (added to each condition's calculated_cost for validation)
+            // 2. Displaying total estimated cost (added once to avoid double-counting)
+            const calculatedCost = calculateConditionCost(
+                baseCost,
+                categoryMultiplier,
+                tierMultiplier
+            );
 
             //  AUTO-SET conditionOrder: Set theo thứ tự thêm của user
             // Nếu đang edit, giữ nguyên order cũ

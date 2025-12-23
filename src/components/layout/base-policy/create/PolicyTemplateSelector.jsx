@@ -5,6 +5,7 @@ import {
     CloseOutlined,
     CopyOutlined,
     EnvironmentOutlined,
+    ExclamationCircleOutlined,
     InfoCircleOutlined,
     ThunderboltOutlined
 } from '@ant-design/icons';
@@ -101,7 +102,7 @@ const POLICY_TEMPLATES = [
         configurationData: {
             logicalOperator: 'OR',
             monitorInterval: 1,
-            monitorFrequencyUnit: 'week',
+            monitorFrequencyUnit: 'hour',
             growthStage: 'Giai đoạn sinh trưởng thân lá',
             blackoutPeriods: {
                 periods: [
@@ -192,7 +193,7 @@ const POLICY_TEMPLATES = [
         configurationData: {
             logicalOperator: 'OR',
             monitorInterval: 3,
-            monitorFrequencyUnit: 'day',
+            monitorFrequencyUnit: 'hour',
             growthStage: 'Giai đoạn phát triển thân lá và trổ bông',
             blackoutPeriods: {
                 periods: [
@@ -283,7 +284,7 @@ const POLICY_TEMPLATES = [
         configurationData: {
             logicalOperator: 'OR',
             monitorInterval: 3,
-            monitorFrequencyUnit: 'day',
+            monitorFrequencyUnit: 'hour',
             growthStage: 'Toàn bộ chu kỳ sinh trưởng',
             blackoutPeriods: {
                 periods: []
@@ -383,7 +384,7 @@ const POLICY_TEMPLATES = [
         configurationData: {
             logicalOperator: 'OR',
             monitorInterval: 1,
-            monitorFrequencyUnit: 'week',
+            monitorFrequencyUnit: 'hour',
             growthStage: 'Giai đoạn ra hoa và phát triển quả',
             blackoutPeriods: {
                 periods: [
@@ -462,7 +463,7 @@ const PolicyTemplateSelector = memo(({
             setIsPreloading(true);
 
             try {
-                console.log('🔄 Pre-loading data for templates...');
+                // Pre-loading data for templates
 
                 // Step 1: Find Satellite category (đã có từ trước)
                 const satelliteCategory = categories.find(cat =>
@@ -470,41 +471,38 @@ const PolicyTemplateSelector = memo(({
                 );
 
                 if (!satelliteCategory) {
-                    console.error('❌ Satellite category not found');
                     message.error('Không tìm thấy category Satellite. Vui lòng tải lại trang.');
                     setIsPreloading(false);
                     return;
                 }
-
-                console.log('📡 Found Satellite category:', satelliteCategory.id);
+                // Satellite category found
 
                 // Step 2: Fetch tiers cho Satellite (nếu chưa có)
                 let satelliteTiers = tiersRef.current.filter(t => t.data_tier_category_id === satelliteCategory.id);
-                console.log(`🔍 Current Satellite tiers count: ${satelliteTiers.length}`);
+                // Current Satellite tiers count available in ref
 
                 if (satelliteTiers.length === 0) {
-                    console.log('⬇️ Fetching tiers for Satellite...');
+                    // Fetching tiers for Satellite...
                     await fetchTiersByCategory(satelliteCategory.id);
 
                     // Đợi state update và retry tìm tiers using ref
-                    console.log('⏳ Waiting for tiers to be loaded...');
+                    // Waiting for tiers to be loaded
                     await new Promise(resolve => setTimeout(resolve, 2000));
 
                     // Retry finding tiers using ref (ref always has latest value)
                     satelliteTiers = tiersRef.current.filter(t => t.data_tier_category_id === satelliteCategory.id);
-                    console.log(`🔍 After fetch - Satellite tiers count: ${satelliteTiers.length}`);
-
+                    // After fetch - Satellite tiers count checked
                     if (satelliteTiers.length === 0) {
-                        console.warn('⚠️ Tiers still not loaded after fetch, will try again when user applies template');
+                        // Tiers still not loaded after fetch
                     } else {
-                        console.log('✅ Tiers fetched and loaded');
+                        // Tiers fetched and loaded
                     }
                 } else {
-                    console.log('✅ Tiers already loaded');
+                    // Tiers already loaded
                 }
 
                 // Step 3: Find "Nâng cao" tier và fetch data sources
-                console.log('🔍 Looking for "Nâng cao" tier...');
+                // Looking for "Nâng cao" tier...
 
                 // Retry mechanism để tìm tier "Nâng cao" using ref
                 let nangCaoTier = null;
@@ -518,7 +516,7 @@ const PolicyTemplateSelector = memo(({
                     );
 
                     if (!nangCaoTier && retries < maxRetries - 1) {
-                        console.log(`⏳ Tier "Nâng cao" not found yet, retry ${retries + 1}/${maxRetries}...`);
+                        // retrying to find "Nâng cao" tier
                         await new Promise(resolve => setTimeout(resolve, 500));
                         retries++;
                     } else {
@@ -527,46 +525,38 @@ const PolicyTemplateSelector = memo(({
                 }
 
                 if (nangCaoTier) {
-                    console.log('📊 Found "Nâng cao" tier:', nangCaoTier.id);
+                    // Found "Nâng cao" tier
 
                     // Check if data sources already loaded using ref
                     let nangCaoDataSources = dataSourcesRef.current.filter(ds => ds.data_tier_id === nangCaoTier.id);
-                    console.log(`🔍 Current data sources for "Nâng cao": ${nangCaoDataSources.length}`);
+                    // Current data sources count for "Nâng cao" available in ref
 
                     if (nangCaoDataSources.length === 0) {
-                        console.log('⬇️ Fetching data sources for "Nâng cao" tier...');
+                        // Fetching data sources for "Nâng cao" tier...
                         await fetchDataSourcesByTier(nangCaoTier.id);
 
                         // Đợi state update và retry using ref
-                        console.log('⏳ Waiting for data sources to be loaded...');
+                        // Waiting for data sources to be loaded
                         await new Promise(resolve => setTimeout(resolve, 2000));
 
                         // Check again using ref
                         nangCaoDataSources = dataSourcesRef.current.filter(ds => ds.data_tier_id === nangCaoTier.id);
-                        console.log(`🔍 After fetch - Data sources count: ${nangCaoDataSources.length}`);
-
+                        // After fetch - Data sources count checked
                         if (nangCaoDataSources.length > 0) {
-                            console.log('✅ Data sources fetched successfully');
+                            // Data sources fetched successfully
                         } else {
-                            console.warn('⚠️ Data sources still not loaded after fetch');
+                            // Data sources still not loaded after fetch
                         }
                     } else {
-                        console.log('✅ Data sources already loaded');
+                        // Data sources already loaded
                     }
                 } else {
-                    console.error('❌ Could not find "Nâng cao" tier after retries');
+                    // Could not find "Nâng cao" tier after retries
                     message.warning('Không tìm thấy tier "Nâng cao". Vui lòng thử lại hoặc chọn tier thủ công.');
                 }
-
-                console.log('✅ Pre-loading complete');
-                console.log('📊 Final state:', {
-                    categories: categories.length,
-                    tiers: tiersRef.current.length,
-                    dataSources: dataSourcesRef.current.length
-                });
+                // Pre-loading complete; final state counts available via props/refs
 
             } catch (error) {
-                console.error('❌ Error pre-loading data:', error);
                 message.error('Có lỗi khi tải dữ liệu. Vui lòng thử lại.');
             } finally {
                 setIsPreloading(false);
@@ -589,38 +579,35 @@ const PolicyTemplateSelector = memo(({
     // Xử lý áp dụng template
     const handleApplyTemplate = (template) => {
         Modal.confirm({
-            title: '⚠️ Xác nhận áp dụng template',
+            title: 'Xác nhận áp dụng template',
+            icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+            centered: true,
+            width: 560,
+            maskClosable: false,
             content: (
-                <Space direction="vertical" style={{ width: '100%' }}>
-                    <Paragraph>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ wordBreak: 'break-word', fontSize: 14 }}>
                         Bạn có chắc chắn muốn áp dụng template <Text strong>"{template.name}"</Text>?
-                    </Paragraph>
+                    </div>
                     <Alert
                         message="Lưu ý"
                         description="Tất cả dữ liệu hiện tại trong form sẽ bị ghi đè. Hành động này không thể hoàn tác."
                         type="warning"
                         showIcon
                     />
-                </Space>
+                </div>
             ),
             okText: 'Áp dụng',
             cancelText: 'Hủy',
             okButtonProps: { danger: true },
-            onOk: () => {
-                applyTemplate(template);
-            }
+            onOk: () => applyTemplate(template)
         });
     };
 
     // Logic áp dụng template
     const applyTemplate = async (template) => {
         try {
-            console.log('🔄 Starting template application:', template.name);
-            console.log('📊 Current state:', {
-                categories: categories.length,
-                tiers: tiers.length,
-                dataSources: dataSources.length
-            });
+            // Starting template application
 
             // ✅ RETRY LOGIC: If data not loaded, trigger fetch
             let retryCategories = categories;
@@ -628,7 +615,7 @@ const PolicyTemplateSelector = memo(({
             let retryDataSources = dataSources;
 
             if (categories.length === 0) {
-                console.warn('⚠️ Categories not loaded, attempting fetch...');
+                // Categories not loaded, attempt fetch
                 if (fetchCategories) {
                     await fetchCategories();
                     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -646,12 +633,9 @@ const PolicyTemplateSelector = memo(({
                 );
 
                 if (!category) {
-                    console.warn(`⚠️ Category not found for: ${reqSource.categoryName}`);
-                    console.warn(`Available categories:`, retryCategories.map(c => ({ name: c.category_name, id: c.id })));
+                    // Category not found for required source
                     continue; // Skip this source and continue with next
                 }
-
-                console.log(`✅ Found category: ${category.category_name} (ID: ${category.id})`);
 
                 // Tìm tier (so sánh chính xác với tierName và category_id)
                 let tier = retryTiers.find(t =>
@@ -661,7 +645,6 @@ const PolicyTemplateSelector = memo(({
 
                 // If tier not found, attempt to fetch for this category
                 if (!tier && fetchTiersByCategory) {
-                    console.warn(`⚠️ Tier not found for category ${category.category_name}, attempting fetch...`);
                     await fetchTiersByCategory(category.id);
                     await new Promise(resolve => setTimeout(resolve, 1500));
                     retryTiers = tiers;
@@ -673,14 +656,9 @@ const PolicyTemplateSelector = memo(({
                 }
 
                 if (!tier) {
-                    console.warn(`⚠️ Tier not found for: ${reqSource.tierName} in category ${category.category_name}`);
-                    console.warn(`Available tiers for category ${category.category_name}:`,
-                        retryTiers.filter(t => t.data_tier_category_id === category.id).map(t => ({ name: t.tier_name, id: t.id }))
-                    );
+                    // Tier not found for the required category
                     continue; // Skip this source
                 }
-
-                console.log(`✅ Found tier: ${tier.tier_name} (ID: ${tier.id})`);
 
                 // Tìm data source (so sánh chính xác với parameter_name và tier_id)
                 let dataSource = retryDataSources.find(ds =>
@@ -690,7 +668,6 @@ const PolicyTemplateSelector = memo(({
 
                 // If data source not found, attempt to fetch for this tier
                 if (!dataSource && fetchDataSourcesByTier) {
-                    console.warn(`⚠️ Data source not found for tier ${tier.tier_name}, attempting fetch...`);
                     await fetchDataSourcesByTier(tier.id);
                     await new Promise(resolve => setTimeout(resolve, 1500));
                     retryDataSources = dataSources;
@@ -702,19 +679,9 @@ const PolicyTemplateSelector = memo(({
                 }
 
                 if (!dataSource) {
-                    console.warn(`⚠️ Data source not found: ${reqSource.parameterName}`);
-                    console.warn(`Available data sources for tier ${tier.tier_name}:`,
-                        retryDataSources.filter(ds => ds.data_tier_id === tier.id).map(ds => ({ name: ds.parameter_name, id: ds.id }))
-                    );
+                    // Data source not found for the required parameter
                     continue; // Skip this source
                 }
-
-                console.log(`✅ Mapped data source: ${dataSource.parameter_name}`, {
-                    category: category.category_name,
-                    tier: tier.tier_name,
-                    dataSource: dataSource.parameter_name,
-                    baseCost: dataSource.base_cost
-                });
 
                 // Tính calculatedCost
                 const calculatedCost = Math.round(
@@ -744,7 +711,6 @@ const PolicyTemplateSelector = memo(({
             }
 
             if (mappedDataSources.length === 0) {
-                console.error('❌ Failed to map any data sources');
                 message.error('Không tìm thấy nguồn dữ liệu phù hợp. Vui lòng kiểm tra lại cấu hình hệ thống.');
                 return;
             }
@@ -756,8 +722,7 @@ const PolicyTemplateSelector = memo(({
                 );
 
                 if (!dataSource) {
-                    console.warn(`⚠️ Data source not found for condition: ${condition.parameterName}`);
-                    console.warn(`Available sources:`, mappedDataSources.map(ds => ds.parameterName));
+                    // Data source not found for condition
                     return null;
                 }
 
@@ -817,7 +782,6 @@ const PolicyTemplateSelector = memo(({
             }).filter(Boolean);
 
             if (mappedConditions.length === 0) {
-                console.error('❌ Failed to map any conditions');
                 message.error('Không thể tạo điều kiện kích hoạt. Vui lòng kiểm tra lại nguồn dữ liệu.');
                 return;
             }
@@ -849,7 +813,6 @@ const PolicyTemplateSelector = memo(({
             message.success(`✅ Đã áp dụng template "${template.name}" thành công!`);
 
         } catch (error) {
-            console.error('❌ Error applying template:', error);
             message.error('Có lỗi xảy ra khi áp dụng template. Vui lòng thử lại.');
         }
     };

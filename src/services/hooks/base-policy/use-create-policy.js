@@ -2,7 +2,7 @@ import mockData from "@/app/(internal)/base-policy/mock..json";
 import axiosInstance from "@/libs/axios-instance";
 import { getErrorMessage } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";
-import { calculateConditionCost, usePolicyStore } from "@/stores/policy-store";
+import { calculateConditionCost, calculateFrequencyCost, usePolicyStore } from "@/stores/policy-store";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -76,7 +76,7 @@ const useCreatePolicy = () => {
   const [configurationData, setConfigurationData] = useState({
     logicalOperator: "AND",
     monitorInterval: 1,
-    monitorFrequencyUnit: "day",
+    monitorFrequencyUnit: "hour",
     growthStage: "",
     blackoutPeriods: { periods: [] },
     conditions: [],
@@ -114,19 +114,10 @@ const useCreatePolicy = () => {
   const [dataSourcesLoading, setDataSourcesLoading] = useState(false);
   const [dataSourcesError, setDataSourcesError] = useState(null);
 
-  // ✅ Monitor Frequency Cost Multipliers
-  const MONITOR_FREQUENCY_COST = {
-    hour: 2.0,
-    day: 1.5,
-    week: 1.0,
-    month: 0.8,
-    year: 0.5,
-  };
-
   // ✅ OPTIMIZATION: Memoize expensive cost calculations
   // Only recalculate when dependencies actually change
   const estimatedCosts = useMemo(() => {
-    let monthlyDataCost = 0;
+    let totalDataSourceCost = 0;
     let dataComplexityScore = 0;
 
     // Skip calculation if no data sources
@@ -143,7 +134,7 @@ const useCreatePolicy = () => {
       };
     }
 
-    // ✅ FIXED: Data sources already have calculatedCost from template mapping
+    // ✅ Calculate data source costs (sum of base × category × tier for all sources)
     basicData.selectedDataSources.forEach((source) => {
       let sourceMonthlyBaseCost = 0;
 
@@ -184,7 +175,7 @@ const useCreatePolicy = () => {
         }
       }
 
-      monthlyDataCost += sourceMonthlyBaseCost;
+      totalDataSourceCost += sourceMonthlyBaseCost;
     });
 
     const uniqueDataSources = new Set(
@@ -192,24 +183,34 @@ const useCreatePolicy = () => {
     );
     dataComplexityScore = uniqueDataSources.size;
 
-    const monitorFrequencyMultiplier =
-      MONITOR_FREQUENCY_COST[configurationData.monitorFrequencyUnit] ||
-      MONITOR_FREQUENCY_COST.day;
-    const monitorFrequencyCost =
-      (configurationData.monitorInterval || 1) * monitorFrequencyMultiplier;
+    // ✅ NEW FORMULA: Calculate frequency cost using new backend formula
+    // frequencyCost = FrequencyBaseCost - (10000 × MonitorInterval × FrequencyUnitMultiplier)
+    // Where FrequencyBaseCost = average of all data source base costs
+    const frequencyCost = calculateFrequencyCost(
+      configurationData.monitorInterval,
+      configurationData.monitorFrequencyUnit,
+      basicData.selectedDataSources
+    );
 
-    // ✅ Total cost = Data Cost + Monitor Frequency Addition (matching backend formula)
-    const totalEstimatedCost = monthlyDataCost + monitorFrequencyCost;
+    // ✅ Monthly data cost = data source costs + frequency cost (counted once)
+    const monthlyDataCost = totalDataSourceCost + frequencyCost;
 
-    console.log("[estimatedCosts] Final calculation:", {
-      monthlyDataCost,
+    // Total estimated cost (same as monthly data cost for monthly billing)
+    const totalEstimatedCost = monthlyDataCost;
+
+    // For display purposes, extract the frequency multiplier
+    const frequencyMultipliers = { hour: 0.5, day: 0.8, week: 1.0, month: 1.5, year: 2.0 };
+    const monitorFrequencyCost = frequencyMultipliers[configurationData.monitorFrequencyUnit] || frequencyMultipliers.hour;
+
+    console.log("[estimatedCosts] NEW Formula calculation:", {
+      totalDataSourceCost,
       monitorFrequencyUnit: configurationData.monitorFrequencyUnit,
-      monitorFrequencyMultiplier,
       monitorInterval: configurationData.monitorInterval,
-      monitorFrequencyCost,
+      frequencyCost,
+      formula: "FrequencyBaseCost(avg of baseCosts) - (10000 × interval × multiplier)",
+      monthlyDataCost,
       totalEstimatedCost,
-      totalEstimatedCostRounded: Math.round(totalEstimatedCost),
-      dataSourcCount: basicData.selectedDataSources?.length,
+      dataSourceCount: basicData.selectedDataSources?.length,
     });
 
     return {
@@ -217,7 +218,7 @@ const useCreatePolicy = () => {
       dataComplexityScore,
       premiumBaseRate: basicData.premiumBaseRate,
       totalEstimatedCost: Math.round(totalEstimatedCost),
-      monitorFrequencyCost,
+      monitorFrequencyCost, // This is the multiplier for display
     };
   }, [
     basicData.selectedDataSources,
@@ -823,7 +824,7 @@ const useCreatePolicy = () => {
     setConfigurationData({
       logicalOperator: "AND",
       monitorInterval: 1,
-      monitorFrequencyUnit: "day",
+      monitorFrequencyUnit: "hour",
       growthStage: "",
       blackoutPeriods: { periods: [] },
       conditions: [],

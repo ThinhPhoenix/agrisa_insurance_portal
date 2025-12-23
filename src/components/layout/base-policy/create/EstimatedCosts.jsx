@@ -1,35 +1,82 @@
 import { CalculatorOutlined, PercentageOutlined } from '@ant-design/icons';
 import { Card, Col, Divider, Progress, Row, Space, Statistic, Tag, Typography } from 'antd';
 import { memo, useMemo } from 'react';
+import { calculateConditionCost, calculateFrequencyCost } from '@/stores/policy-store';
 
 const { Title, Text } = Typography;
 
 // ✅ OPTIMIZATION: Memoize EstimatedCosts to prevent unnecessary re-renders
 const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData }) => {
     const {
-        monthlyDataCost,
         dataComplexityScore,
         premiumBaseRate,
-        totalEstimatedCost,
-        monitorFrequencyCost
     } = estimatedCosts;
 
-    // ✅ OPTIMIZATION: Memoize expensive calculations
-    const totalConditionCost = useMemo(() =>
-        (configurationData?.conditions || []).reduce(
-            (sum, condition) => sum + (condition.calculatedCost || 0),
-            0
+    // ✅ NEW: Recalculate costs using the new formula to ensure accuracy
+    // Calculate frequency cost ONCE (not per condition)
+    // FrequencyBaseCost = average of all data source base costs
+    const frequencyCost = useMemo(() =>
+        calculateFrequencyCost(
+            configurationData?.monitorInterval || 1,
+            configurationData?.monitorFrequencyUnit || 'hour',
+            basicData?.selectedDataSources || []
         ),
-        [configurationData?.conditions]
+        [configurationData?.monitorInterval, configurationData?.monitorFrequencyUnit, basicData?.selectedDataSources]
     );
 
-    // Monitor frequency cost labels
+    // Calculate total data source costs (sum of all data sources without frequency cost)
+    const totalDataSourceCost = useMemo(() =>
+        (basicData?.selectedDataSources || []).reduce((sum, source) => {
+            const cost = calculateConditionCost(
+                source.baseCost || 0,
+                source.categoryMultiplier || 1,
+                source.tierMultiplier || 1
+            );
+            return sum + cost;
+        }, 0),
+        [basicData?.selectedDataSources]
+    );
+
+    // Monthly data cost = data sources cost + frequency cost (counted once)
+    const monthlyDataCost = useMemo(() =>
+        totalDataSourceCost + frequencyCost,
+        [totalDataSourceCost, frequencyCost]
+    );
+
+    // ✅ Total condition cost as sent to backend (for display in "Tổng Chi phí Điều kiện" section)
+    // Note: Each condition's calculatedCost now ONLY contains data source cost (base × category × tier)
+    // When building backend payload, frequency cost is added to EACH condition for validation
+    // So we simulate what backend will receive: sum of data source costs + (frequency cost × number of conditions)
+    const totalConditionCost = useMemo(() => {
+        const conditionsCount = configurationData?.conditions?.length || 0;
+        if (conditionsCount === 0) return 0;
+
+        const dataSourceCostsSum = (configurationData?.conditions || []).reduce(
+            (sum, condition) => sum + (condition.calculatedCost || 0),
+            0
+        );
+
+        // Backend receives: each condition with frequency cost added
+        // Total = sum of data source costs + (frequency cost × number of conditions)
+        return dataSourceCostsSum + (frequencyCost * conditionsCount);
+    }, [configurationData?.conditions, frequencyCost]);
+
+    // Total estimated cost (same as monthlyDataCost for monthly billing)
+    const totalEstimatedCost = monthlyDataCost;
+
+    // Monitor frequency cost multiplier for display
+    const monitorFrequencyCost = useMemo(() => {
+        const multipliers = { hour: 0.5, day: 0.8, week: 1.0, month: 1.5, year: 2.0 };
+        return multipliers[configurationData?.monitorFrequencyUnit] || multipliers.hour;
+    }, [configurationData?.monitorFrequencyUnit]);
+
+    // Monitor frequency cost labels (updated with new multipliers)
     const frequencyLabels = {
-        hour: "Giờ (2.0x)",
-        day: "Ngày (1.5x)",
+        hour: "Giờ (0.5x)",
+        day: "Ngày (0.8x)",
         week: "Tuần (1.0x)",
-        month: "Tháng (0.8x)",
-        year: "Năm (0.5x)",
+        month: "Tháng (1.5x)",
+        year: "Năm (2.0x)",
     };
 
     // Calculate complexity level
@@ -72,9 +119,9 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                     }}
                 />
                 <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
-                    {basicData.selectedDataSources.length} nguồn dữ liệu
+                    {basicData.selectedDataSources.length} nguồn dữ liệu: {totalDataSourceCost.toLocaleString('vi-VN')} ₫
                     {configurationData?.monitorInterval && configurationData?.monitorFrequencyUnit && (
-                        <> • Giám sát × {monitorFrequencyCost.toFixed(2)}</>
+                        <> • Chi phí giám sát: {frequencyCost.toLocaleString('vi-VN')} ₫</>
                     )}
                 </Text>
             </div>
@@ -183,7 +230,7 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                             }}
                         />
                         <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
-                            {configurationData.conditions.length} điều kiện • Đã tính tần suất
+                            {configurationData.conditions.length} điều kiện • Mỗi điều kiện có cộng chi phí giám sát ({frequencyCost.toLocaleString('vi-VN')} ₫)
                         </Text>
                     </div>
                 </>
@@ -258,19 +305,26 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
             <Divider style={{ margin: '8px 0' }} />
             <div style={{ background: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
                 <Text strong style={{ fontSize: '10px', display: 'block', marginBottom: '4px' }}>
-                    Cách tính Chi phí Điều kiện
+                    Cách tính Chi phí (Công thức mới)
                 </Text>
                 <Text type="secondary" style={{ fontSize: '9px', display: 'block', marginBottom: '4px' }}>
-                    Chi phí = (Cơ sở × Danh mục × Gói) + (Tần suất × Hệ số)
+                    <strong>Chi phí Dữ liệu:</strong> Σ(Cơ sở × Danh mục × Gói) cho tất cả nguồn
+                </Text>
+                <Text type="secondary" style={{ fontSize: '9px', display: 'block', marginBottom: '4px' }}>
+                    <strong>Chi phí Giám sát:</strong> (TB Cơ sở) - (10.000 × Khoảng × Hệ số)
                 </Text>
                 <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2', marginBottom: '4px' }}>
-                    Ví dụ: (200.000 × 1.5 × 1.5) + (2 × 1.0) = 450.000 + 2 = 450.002 VND
+                    Ví dụ: 3 nguồn @ 200k cơ sở (×1.5 ×1.5), giám sát 2 ngày:<br/>
+                    • Dữ liệu: 3 × (200k × 1.5 × 1.5) = 1.350.000 ₫<br/>
+                    • TB Cơ sở: (200k + 200k + 200k) / 3 = 200k<br/>
+                    • Giám sát: 200k - (10k × 2 × 0.8) = 184.000 ₫<br/>
+                    • <strong>Tổng: 1.534.000 ₫/tháng</strong>
                 </Text>
                 <Text strong style={{ fontSize: '9px', display: 'block', marginBottom: '2px' }}>
-                    Hệ số Tần suất:
+                    Hệ số Tần suất (mới):
                 </Text>
                 <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2' }}>
-                    • Giờ: 2.0 | Ngày: 1.5 | Tuần: 1.0 | Tháng: 0.8 | Năm: 0.5
+                    • Giờ: 0.5 | Ngày: 0.8 | Tuần: 1.0 | Tháng: 1.5 | Năm: 2.0
                 </Text>
             </div>
         </Card>

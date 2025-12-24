@@ -59,7 +59,6 @@ export function useActivePolicies() {
     loading,
     error,
     refetch: fetchPolicies,
-    // Keep original data for calculations
     allPolicies: policies,
   };
 }

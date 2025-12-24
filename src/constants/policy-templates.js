@@ -30,7 +30,7 @@ export const POLICY_TEMPLATES = [
       productCode: "RICE_NDVI_BASIC_2025",
       productDescription:
         "Bảo hiểm tiên tiến sử dụng chỉ số thực vật NDVI từ ảnh vệ tinh để giám sát sức khỏe cây lúa. Chi trả tự động khi phát hiện sự suy giảm đáng kể của NDVI, báo hiệu cây bị stress, bệnh hại hoặc thiếu dinh dưỡng.",
-      cropType: "Lúa",
+      cropType: "rice",
       coverageCurrency: "VND",
       coverageDurationDays: 120,
       isPerHectare: true,
@@ -121,7 +121,7 @@ export const POLICY_TEMPLATES = [
       productCode: "RICE_NDMI_DROUGHT_2025",
       productDescription:
         "Bảo hiểm chống hạn hán cho cây lúa sử dụng chỉ số NDMI (Normalized Difference Moisture Index) để đánh giá hàm lượng nước trong thảm thực vật. Chi trả tự động khi phát hiện tình trạng thiếu nước nghiêm trọng.",
-      cropType: "Lúa",
+      cropType: "rice",
       coverageCurrency: "VND",
       coverageDurationDays: 120,
       isPerHectare: true,
@@ -212,7 +212,7 @@ export const POLICY_TEMPLATES = [
       productCode: "RICE_COMPREHENSIVE_2025",
       productDescription:
         "Bảo hiểm toàn diện cho cây lúa kết hợp cả chỉ số NDVI (sức khỏe cây) và NDMI (hàm lượng nước). Bảo vệ cây lúa khỏi cả bệnh hại lẫn hạn hán. Chi trả tự động khi một trong hai chỉ số vượt ngưỡng cảnh báo.",
-      cropType: "Lúa",
+      cropType: "rice",
       coverageCurrency: "VND",
       coverageDurationDays: 150,
       isPerHectare: true,
@@ -323,7 +323,7 @@ export const POLICY_TEMPLATES = [
       productCode: "COFFEE_NDVI_2025",
       productDescription:
         "Bảo hiểm chuyên biệt cho cây cà phê sử dụng chỉ số NDVI để giám sát sức khỏe cây. Phát hiện sớm tình trạng stress do nhiệt độ, bệnh hại, hoặc thiếu dinh dưỡng qua sự suy giảm NDVI.",
-      cropType: "Cà phê",
+      cropType: "coffee",
       coverageCurrency: "VND",
       coverageDurationDays: 180,
       isPerHectare: true,

@@ -30,6 +30,20 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 const { Option } = Select;
 const { Title, Text } = Typography;
 
+// Inline crop types from mock..json to avoid external dependency in this component
+const cropTypes = [
+    {
+        value: "rice",
+        label: "Cây Lúa (Rice)",
+        description: "Cây lúa với chu kỳ phát triển 120-150 ngày",
+    },
+    {
+        value: "coffee",
+        label: "Cây Cà phê (Coffee)",
+        description: "Cây cà phê với chu kỳ phát triển 365 ngày",
+    },
+];
+
 //  OPTIMIZATION: Memoize BasicTab to prevent unnecessary re-renders
 const BasicTabComponent = ({
     basicData,
@@ -455,7 +469,7 @@ const BasicTabComponent = ({
                                 size="large"
                                 optionLabelProp="label"
                             >
-                                {mockData.cropTypes.map((crop) => (
+                                {cropTypes.map((crop) => (
                                     <Option
                                         key={crop.value}
                                         value={crop.value}

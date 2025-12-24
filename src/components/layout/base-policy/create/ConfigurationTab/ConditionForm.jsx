@@ -439,7 +439,7 @@ const ConditionForm = memo(({
                             <Col span={8}>
                                 <Form.Item
                                     name="dataQuality"
-                                    label={dict.getFieldLabel('DataQuality', 'poor') || 'Chất lượng dữ liệu'}
+                                    label={dict.getFieldLabel('DataQuality') || 'Chất lượng dữ liệu'}
                                     tooltip="Chất lượng dữ liệu (Data Quality): Mức độ tin cậy và chính xác của nguồn dữ liệu được sử dụng. Tốt (good): dữ liệu chất lượng cao, Chấp nhận được (acceptable): dữ liệu đủ dùng, Kém (poor): dữ liệu chất lượng thấp"
                                     initialValue="good"
                                 >

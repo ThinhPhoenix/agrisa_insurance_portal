@@ -163,21 +163,26 @@ export const calculateConditionCost = (
 };
 
 /**
- * Calculate frequency cost component using new backend formula:
+ * Calculate frequency cost component using EXACT backend formula from base_policy.go:
  * frequencyCost = FrequencyBaseCost - (10000 * MonitorInterval * FrequencyUnitMultiplier)
  *
- * Where FrequencyBaseCost = average of base costs of all selected data sources
+ * CRITICAL: FrequencyBaseCost = 200,000 VND (CONSTANT from backend models.FrequencyBaseCost)
+ * NOT average of base costs - this was incorrect!
  *
- * @param {number} monitorInterval - Monitoring interval
+ * Backend reference: base_policy.go:90-92, base_policy_service.go:378
+ * Constants: FrequencyBaseCost = 200000, CostPerMonitorFrequencyUnit multipliers
+ *
+ * @param {number} monitorInterval - Monitoring interval (e.g., 1, 2, 3...)
  * @param {string} monitorFrequencyUnit - Frequency unit (hour/day/week/month/year)
- * @param {Array} selectedDataSources - Array of selected data sources with baseCost property
+ * @param {Array} selectedDataSources - NOT USED, kept for backward compatibility
  * @returns {number} Frequency cost in VND, clamped to >= 0
  */
 export const calculateFrequencyCost = (
   monitorInterval,
   monitorFrequencyUnit,
-  selectedDataSources = []
+  selectedDataSources = [] // Kept for API compatibility but not used
 ) => {
+  // ✅ EXACT multipliers from backend models.CostPerMonitorFrequencyUnit
   const MONITOR_FREQUENCY_MULTIPLIERS = {
     hour: 0.5,
     day: 0.8,
@@ -186,24 +191,19 @@ export const calculateFrequencyCost = (
     year: 2.0,
   };
 
-  // ✅ Calculate FrequencyBaseCost as average of all data source base costs (before multipliers)
-  // This is NOT a fixed constant, but calculated from the data packages
-  let frequencyBaseCost = 0;
-  if (selectedDataSources && selectedDataSources.length > 0) {
-    const totalBaseCost = selectedDataSources.reduce(
-      (sum, source) => sum + (source.baseCost || 0),
-      0
-    );
-    frequencyBaseCost = totalBaseCost / selectedDataSources.length;
-  }
+  // ✅ CRITICAL FIX: FrequencyBaseCost is a CONSTANT 200,000 VND from backend
+  // Backend source: models.FrequencyBaseCost = 200000 (in base_policy.go)
+  const FREQUENCY_BASE_COST = 200000; // VND constant
 
   const frequencyMultiplier =
     MONITOR_FREQUENCY_MULTIPLIERS[monitorFrequencyUnit] ||
     MONITOR_FREQUENCY_MULTIPLIERS.hour;
-  const deduction = 10000 * (monitorInterval || 1) * frequencyMultiplier;
-  const frequencyCost = frequencyBaseCost - deduction;
 
-  // Clamp to >= 0 to avoid negative costs
+  // Formula from backend: FrequencyBaseCost - (10000 × interval × multiplier)
+  const deduction = 10000 * (monitorInterval || 1) * frequencyMultiplier;
+  const frequencyCost = FREQUENCY_BASE_COST - deduction;
+
+  // Clamp to >= 0 to avoid negative costs (per backend constraint)
   return Math.max(0, Math.round(frequencyCost));
 };
 
@@ -338,22 +338,28 @@ export const usePolicyStore = create((set, get) => ({
     const { basicData, configurationData, tagsData } = get();
     const warnings = []; // Collect warnings to show user
 
-    // ✅ Calculate frequency cost using new backend formula
-    // frequencyCost = FrequencyBaseCost - (10000 * MonitorInterval * FrequencyUnitMultiplier)
-    // Where FrequencyBaseCost = average of all data source base costs
+    // ✅ CRITICAL: Calculate frequency cost using EXACT backend formula
+    // frequencyCost = 200,000 - (10,000 × MonitorInterval × FrequencyUnitMultiplier)
+    // Where FrequencyBaseCost = 200,000 VND (CONSTANT from models.FrequencyBaseCost)
     const frequencyCost = calculateFrequencyCost(
       configurationData.monitorInterval,
       configurationData.monitorFrequencyUnit,
-      basicData.selectedDataSources
+      basicData.selectedDataSources // Not used, kept for compatibility
     );
 
-    console.log("📊 Frequency Cost Calculation:", {
+    const FREQUENCY_MULTIPLIERS = {
+      hour: 0.5, day: 0.8, week: 1.0, month: 1.5, year: 2.0
+    };
+    const multiplier = FREQUENCY_MULTIPLIERS[configurationData.monitorFrequencyUnit] || 0.5;
+
+    console.log("📊 Frequency Cost Calculation (EXACT Backend Formula):", {
       monitorInterval: configurationData.monitorInterval,
       monitorFrequencyUnit: configurationData.monitorFrequencyUnit,
+      frequencyMultiplier: multiplier,
       frequencyCost,
+      formula: "200,000 - (10,000 × interval × multiplier)",
+      breakdown: `200,000 - (10,000 × ${configurationData.monitorInterval} × ${multiplier}) = ${frequencyCost} VND`,
       dataSourcesCount: basicData.selectedDataSources?.length || 0,
-      formula:
-        "FrequencyBaseCost(avg of baseCosts) - (10000 × interval × multiplier)",
     });
 
     // Build document_tags object (will be included in base_policy)
@@ -465,24 +471,28 @@ export const usePolicyStore = create((set, get) => ({
     };
 
     // Build conditions array
-    const conditions = configurationData.conditions.map((condition) => {
-      // Compute data source cost: base_cost × tier_multiplier × category_multiplier
+    const conditions = configurationData.conditions.map((condition, idx) => {
+      // Compute data source cost: base_cost × category_multiplier × tier_multiplier
       const dataSourceCost = calculateConditionCost(
         condition.baseCost,
         condition.categoryMultiplier,
         condition.tierMultiplier
       );
 
-      // ✅ NEW Backend formula: calculated_cost = (base × tier × category) + [FrequencyBaseCost - (10000 × interval × frequency)]
+      // ✅ EXACT Backend formula from base_policy_service.go:378
+      // calculated_cost = (base × category × tier) + [200,000 - (10,000 × interval × frequency)]
       // Each condition includes the frequency cost for backend validation
       const calculatedCost = Math.round(dataSourceCost + frequencyCost);
 
-      console.log("💰 Condition cost calculation:", {
+      console.log(`💰 Condition ${idx + 1} calculated_cost:`, {
+        dataSourceId: condition.dataSourceId,
+        baseCost: condition.baseCost,
+        categoryMultiplier: condition.categoryMultiplier,
+        tierMultiplier: condition.tierMultiplier,
         dataSourceCost,
         frequencyCost,
         calculatedCost,
-        formula:
-          "(base × tier × category) + [FrequencyBaseCost - (10000 × interval × frequency)]",
+        formula: `(${condition.baseCost} × ${condition.categoryMultiplier} × ${condition.tierMultiplier}) + ${frequencyCost} = ${calculatedCost} VND`,
       });
 
       //  Build condition object, include REQUIRED and OPTIONAL fields with defaults

@@ -136,7 +136,7 @@ const TriggerLogicExplainerComponent = ({ configurationData = {}, mockData = {} 
         // Phần cảnh báo sớm
         let warningText = '';
         if (earlyWarningThreshold) {
-            warningText = `⚠️ Cảnh báo sớm sẽ được gửi khi đạt ngưỡng ${earlyWarningThreshold}${unitStr}, giúp nông dân có thời gian chuẩn bị.`;
+            warningText = `Cảnh báo sớm sẽ được gửi khi đạt ngưỡng ${earlyWarningThreshold}${unitStr}, giúp nông dân có thời gian chuẩn bị.`;
         }
 
         return {

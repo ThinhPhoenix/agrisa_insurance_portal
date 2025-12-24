@@ -121,7 +121,7 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
                 <Text type="secondary" style={{ fontSize: '10px', lineHeight: '1.2' }}>
                     {basicData.selectedDataSources.length} nguồn dữ liệu: {totalDataSourceCost.toLocaleString('vi-VN')} ₫
                     {configurationData?.monitorInterval && configurationData?.monitorFrequencyUnit && (
-                        <> • Chi phí giám sát: {frequencyCost.toLocaleString('vi-VN')} ₫</>
+                        <> • Chi phí tần suất: {frequencyCost.toLocaleString('vi-VN')} ₫</>
                     )}
                 </Text>
             </div>
@@ -305,26 +305,30 @@ const EstimatedCostsComponent = ({ estimatedCosts, basicData, configurationData 
             <Divider style={{ margin: '8px 0' }} />
             <div style={{ background: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
                 <Text strong style={{ fontSize: '10px', display: 'block', marginBottom: '4px' }}>
-                    Cách tính Chi phí (Công thức mới)
+                    📋 Công thức Tính Chi phí
                 </Text>
                 <Text type="secondary" style={{ fontSize: '9px', display: 'block', marginBottom: '4px' }}>
-                    <strong>Chi phí Dữ liệu:</strong> Σ(Cơ sở × Danh mục × Gói) cho tất cả nguồn
+                    <strong>Chi phí Nguồn dữ liệu:</strong> Σ(base_cost × category × tier)
                 </Text>
                 <Text type="secondary" style={{ fontSize: '9px', display: 'block', marginBottom: '4px' }}>
-                    <strong>Chi phí Giám sát:</strong> (TB Cơ sở) - (10.000 × Khoảng × Hệ số)
+                    <strong>Chi phí Tần suất:</strong> 200.000 - (10.000 × interval × hệ_số)
                 </Text>
-                <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2', marginBottom: '4px' }}>
-                    Ví dụ: 3 nguồn @ 200k cơ sở (×1.5 ×1.5), giám sát 2 ngày:<br />
-                    • Dữ liệu: 3 × (200k × 1.5 × 1.5) = 1.350.000 ₫<br />
-                    • TB Cơ sở: (200k + 200k + 200k) / 3 = 200k<br />
-                    • Giám sát: 200k - (10k × 2 × 0.8) = 184.000 ₫<br />
-                    • <strong>Tổng: 1.534.000 ₫/tháng</strong>
+                <Text type="secondary" style={{ fontSize: '9px', display: 'block', marginBottom: '4px' }}>
+                    <strong>Tổng/tháng:</strong> Chi phí nguồn + Chi phí tần suất
                 </Text>
+                <Divider style={{ margin: '6px 0' }} />
+                <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.3', display: 'block', marginBottom: '4px' }}>
+                    💡 <strong>Ví dụ:</strong> 3 nguồn @ 200k base (×1.5 category ×1.5 tier), giám sát mỗi 2 ngày:<br />
+                    • Nguồn: 3 × (200k × 1.5 × 1.5) = 1.350.000 ₫<br />
+                    • Tần suất: 200k - (10k × 2 × 0.8) = 184.000 ₫<br />
+                    → <strong>Tổng: 1.534.000 ₫/tháng</strong>
+                </Text>
+                <Divider style={{ margin: '6px 0' }} />
                 <Text strong style={{ fontSize: '9px', display: 'block', marginBottom: '2px' }}>
-                    Hệ số Tần suất (mới):
+                    🔢 Hệ số Tần suất:
                 </Text>
                 <Text type="secondary" style={{ fontSize: '8px', lineHeight: '1.2' }}>
-                    • Giờ: 0.5 | Ngày: 0.8 | Tuần: 1.0 | Tháng: 1.5 | Năm: 2.0
+                    Giờ: 0.5 | Ngày: 0.8 | Tuần: 1.0 | Tháng: 1.5 | Năm: 2.0
                 </Text>
             </div>
         </Card>

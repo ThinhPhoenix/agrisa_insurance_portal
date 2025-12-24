@@ -187,13 +187,13 @@ const useCreatePolicy = () => {
     );
     dataComplexityScore = uniqueDataSources.size;
 
-    // ✅ NEW FORMULA: Calculate frequency cost using new backend formula
-    // frequencyCost = FrequencyBaseCost - (10000 × MonitorInterval × FrequencyUnitMultiplier)
-    // Where FrequencyBaseCost = average of all data source base costs
+    // ✅ CRITICAL FIX: Calculate frequency cost using EXACT backend formula
+    // frequencyCost = 200,000 - (10,000 × MonitorInterval × FrequencyUnitMultiplier)
+    // Where FrequencyBaseCost = 200,000 VND (CONSTANT from backend models.FrequencyBaseCost)
     const frequencyCost = calculateFrequencyCost(
       configurationData.monitorInterval,
       configurationData.monitorFrequencyUnit,
-      basicData.selectedDataSources
+      basicData.selectedDataSources // Not used anymore, kept for API compatibility
     );
 
     // ✅ Monthly data cost = data source costs + frequency cost (counted once)
@@ -214,13 +214,13 @@ const useCreatePolicy = () => {
       frequencyMultipliers[configurationData.monitorFrequencyUnit] ||
       frequencyMultipliers.hour;
 
-    console.log("[estimatedCosts] NEW Formula calculation:", {
+    console.log("💰 [estimatedCosts] CORRECT Backend Formula:", {
       totalDataSourceCost,
       monitorFrequencyUnit: configurationData.monitorFrequencyUnit,
       monitorInterval: configurationData.monitorInterval,
       frequencyCost,
-      formula:
-        "FrequencyBaseCost(avg of baseCosts) - (10000 × interval × multiplier)",
+      formula: "200,000 - (10,000 × interval × multiplier)",
+      breakdown: `200,000 - (10,000 × ${configurationData.monitorInterval} × ${monitorFrequencyCost}) = ${frequencyCost}`,
       monthlyDataCost,
       totalEstimatedCost,
       dataSourceCount: basicData.selectedDataSources?.length,
@@ -577,7 +577,9 @@ const useCreatePolicy = () => {
         return {
           ...prev,
           selectedDataSources: prev.selectedDataSources.filter(
-            (source) => source.instanceId !== instanceIdOrId
+            (source) =>
+              // ✅ FIX: Check BOTH instanceId (manual add) AND id (template data)
+              source.instanceId !== instanceIdOrId && source.id !== instanceIdOrId
           ),
         };
       });

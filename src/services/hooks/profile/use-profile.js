@@ -243,3 +243,37 @@ export const useGetPublicUser = () => {
 
   return { getPublicUser, isLoading, error, data };
 };
+
+// Hook to get all insurance partners (public)
+export const useGetAllPartners = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  const getAllPartners = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await axiosInstance.get(
+        endpoints.profile.get_all_partners
+      );
+      if (response.data?.success) {
+        setData(response.data.data || []);
+        return { success: true, data: response.data.data || [] };
+      } else {
+        const msg =
+          response.data?.message || "Không thể tải danh sách công ty bảo hiểm";
+        setError(msg);
+        return { success: false, message: msg };
+      }
+    } catch (err) {
+      const msg = handleError(err) || "Có lỗi khi lấy danh sách công ty";
+      setError(msg);
+      return { success: false, message: msg };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { getAllPartners, isLoading, error, data };
+};

@@ -63,30 +63,56 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
   if (!request) return null;
 
   const statusConfig = STATUS_CONFIG[request.status] || STATUS_CONFIG.pending;
-  const canRevoke =
+  // Check if user can revoke: allow revoke while request is pending (admin not finalised yet)
+  const canRevoke = request.status === "pending";
+
+  // Check if admin is processing (pending but past cancellable period)
+  const adminProcessing =
     request.status === "pending" &&
-    new Date() <= new Date(request.cancellable_until);
+    new Date() > new Date(request.cancellable_until);
 
   const handleRevoke = () => {
     Modal.confirm({
-      title: "Xác nhận hủy yêu cầu",
+      title: "Xác nhận hủy yêu cầu xóa hồ sơ",
       icon: <ExclamationCircleOutlined />,
-      content: "Bạn có chắc chắn muốn hủy yêu cầu xóa hồ sơ công ty này không?",
-      okText: "Hủy yêu cầu",
+      content: (
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <Paragraph>
+            Bạn có chắc chắn muốn hủy yêu cầu xóa hồ sơ công ty này không?
+          </Paragraph>
+          <Alert
+            message="Sau khi hủy yêu cầu:"
+            description={
+              <ul style={{ marginBottom: 0, paddingLeft: 20 }}>
+                <li>Hồ sơ công ty của bạn sẽ tiếp tục hoạt động bình thường</li>
+                <li>Các hợp đồng bảo hiểm vẫn được duy trì</li>
+                <li>Bạn có thể tạo yêu cầu hủy hồ sơ mới nếu cần</li>
+              </ul>
+            }
+            type="info"
+            showIcon
+            style={{ marginTop: 12 }}
+          />
+        </Space>
+      ),
+      okText: "Xác nhận hủy yêu cầu",
       cancelText: "Đóng",
       okButtonProps: { danger: true },
+      width: 600,
       onOk: async () => {
         setRevoking(true);
         const result = await revokeDeletionRequest({
           request_id: request.request_id,
-          review_note: "Partner revoked the deletion request",
+          review_note: "Đối tác đã tự hủy yêu cầu xóa hồ sơ",
         });
 
         if (result.success) {
-          message.success(result.message);
+          message.success(
+            result.message || "Đã hủy yêu cầu xóa hồ sơ thành công"
+          );
           onRefresh && onRefresh();
         } else {
-          message.error(result.message);
+          message.error(result.message || "Không thể hủy yêu cầu");
         }
         setRevoking(false);
       },
@@ -145,17 +171,20 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
         </Row>
 
         {/* Status-specific alerts */}
-        {request.status === "pending" && canRevoke && (
+        {request.status === "pending" && !adminProcessing && (
           <Alert
-            message="Thời gian hủy yêu cầu"
+            message="Bạn có thể hủy yêu cầu này"
             description={
               <Space direction="vertical" style={{ width: "100%" }}>
+                <Paragraph style={{ marginBottom: 8 }}>
+                  Yêu cầu của bạn đang chờ xử lý. Bạn có thể tự hủy yêu cầu này
+                  trước khi quản trị viên xem xét.
+                </Paragraph>
                 <Text>
-                  Bạn còn{" "}
-                  <strong>
+                  Thời gian còn lại để tự hủy:{" "}
+                  <strong style={{ color: "#ff4d4f" }}>
                     {timeRemaining?.days} ngày {timeRemaining?.hours} giờ
-                  </strong>{" "}
-                  để có thể hủy yêu cầu này.
+                  </strong>
                 </Text>
                 <Progress
                   percent={Math.round(progressPercent)}
@@ -165,6 +194,12 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
                     "100%": "#ff4d4f",
                   }}
                 />
+                <Alert
+                  message="Sau khi hết thời gian này, chỉ quản trị viên mới có thể xử lý yêu cầu."
+                  type="info"
+                  showIcon
+                  style={{ marginTop: 8 }}
+                />
               </Space>
             }
             type="warning"
@@ -173,10 +208,26 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
           />
         )}
 
-        {request.status === "pending" && !canRevoke && (
+        {request.status === "pending" && adminProcessing && (
           <Alert
-            message="Đang chờ quản trị viên xử lý"
-            description="Thời gian hủy yêu cầu đã hết. Yêu cầu của bạn đang được quản trị viên xem xét."
+            message="Quản trị viên đang xử lý"
+            description={
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Text>
+                  Thời gian tự hủy yêu cầu đã hết. Yêu cầu của bạn hiện đang
+                  được quản trị viên xem xét và xử lý.
+                </Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Quản trị viên sẽ kiểm tra các điều kiện sau trước khi phê
+                  duyệt:
+                </Text>
+                <ul style={{ marginBottom: 0, paddingLeft: 20, fontSize: 12 }}>
+                  <li>Không còn hợp đồng nào đang hoạt động</li>
+                  <li>Tất cả nghĩa vụ tài chính đã được hoàn thành</li>
+                  <li>Các hợp đồng đã được chuyển giao hoặc hủy thành công</li>
+                </ul>
+              </Space>
+            }
             type="info"
             showIcon
             icon={<InfoCircleOutlined />}
@@ -352,20 +403,43 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
         </div>
 
         {/* Actions */}
-        {canRevoke && (
-          <Row justify="end">
-            <Col>
-              <Button
-                type="primary"
-                danger
-                icon={<RollbackOutlined />}
-                onClick={handleRevoke}
-                loading={revoking || isLoading}
-              >
-                Hủy yêu cầu xóa hồ sơ
-              </Button>
-            </Col>
-          </Row>
+        {request.status === "pending" && (
+          <Card
+            style={{
+              backgroundColor: "#fff7e6",
+              border: "2px solid #ffa940",
+              borderRadius: "8px",
+            }}
+          >
+            <Space direction="vertical" style={{ width: "100%" }} size="middle">
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <RollbackOutlined style={{ fontSize: 24, color: "#ff4d4f" }} />
+                <div style={{ flex: 1 }}>
+                  <Title level={5} style={{ margin: 0, marginBottom: 4 }}>
+                    Bạn muốn hủy yêu cầu này?
+                  </Title>
+                  <Text type="secondary">
+                    Nhấn nút bên dưới để hủy yêu cầu xóa hồ sơ. Công ty của bạn
+                    sẽ tiếp tục hoạt động bình thường.
+                  </Text>
+                </div>
+              </div>
+              <Row justify="end">
+                <Col>
+                  <Button
+                    type="primary"
+                    danger
+                    size="large"
+                    icon={<RollbackOutlined />}
+                    onClick={handleRevoke}
+                    loading={revoking || isLoading}
+                  >
+                    Hủy yêu cầu xóa hồ sơ
+                  </Button>
+                </Col>
+              </Row>
+            </Space>
+          </Card>
         )}
       </Space>
     </Card>

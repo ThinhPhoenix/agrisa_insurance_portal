@@ -91,6 +91,8 @@ export const endpoints = {
         // Partner public profile
         get_partner: (partner_id) =>
             `/profile/public/api/v1/insurance-partners/${partner_id}`,
+        // Get all insurance partners (public)
+        get_all_partners: `/profile/public/api/v1/insurance-partners`,
         // Account/profile for current authenticated user (protected)
         me: `/profile/protected/api/v1/me`,
         // Update user profile (account info)

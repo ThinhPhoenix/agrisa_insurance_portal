@@ -1,4 +1,5 @@
 "use client";
+import CustomTable from "@/components/custom-table";
 import CreateEmployeeModal from "@/components/layout/profile/CreateEmployeeModal";
 import DeletionRequestModal from "@/components/layout/profile/DeletionRequestModal";
 import DeletionRequestStatus from "@/components/layout/profile/DeletionRequestStatus";
@@ -12,14 +13,17 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  CloseCircleOutlined,
   DeleteOutlined,
   EditOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
   GlobalOutlined,
+  HistoryOutlined,
   MailOutlined,
   PhoneOutlined,
   StarOutlined,
+  StopOutlined,
   TeamOutlined,
   UserAddOutlined,
 } from "@ant-design/icons";
@@ -1205,11 +1209,131 @@ function CompanyInfoTab() {
         </Row>
       </Card>
 
+      {/* Deletion Requests History Table */}
+      {deletionRequests && deletionRequests.length > 1 && (
+        <Card
+          title={
+            <Space>
+              <HistoryOutlined style={{ color: "#18573f", fontSize: 20 }} />
+              <span>Lịch sử yêu cầu hủy hồ sơ</span>
+            </Space>
+          }
+          style={{
+            borderRadius: "8px",
+            border: "1px solid #f0f0f0",
+            marginTop: 24,
+          }}
+        >
+          <CustomTable
+            dataSource={deletionRequests}
+            rowKey="request_id"
+            columns={[
+              {
+                title: "Mã yêu cầu",
+                dataIndex: "request_id",
+                key: "request_id",
+                render: (text) => (
+                  <Text code copyable>
+                    {text}
+                  </Text>
+                ),
+              },
+              {
+                title: "Trạng thái",
+                dataIndex: "status",
+                key: "status",
+                render: (status) => {
+                  const statusConfig = {
+                    pending: {
+                      color: "warning",
+                      icon: <ClockCircleOutlined />,
+                      text: "Đang chờ xử lý",
+                    },
+                    approved: {
+                      color: "error",
+                      icon: <CheckCircleOutlined />,
+                      text: "Được chấp thuận",
+                    },
+                    rejected: {
+                      color: "default",
+                      icon: <CloseCircleOutlined />,
+                      text: "Bị từ chối",
+                    },
+                    cancelled: {
+                      color: "default",
+                      icon: <StopOutlined />,
+                      text: "Đã hủy",
+                    },
+                    completed: {
+                      color: "success",
+                      icon: <CheckCircleOutlined />,
+                      text: "Hoàn thành",
+                    },
+                  };
+                  const config = statusConfig[status] || statusConfig.pending;
+                  return (
+                    <Tag color={config.color} icon={config.icon}>
+                      {config.text}
+                    </Tag>
+                  );
+                },
+              },
+              {
+                title: "Ngày yêu cầu",
+                dataIndex: "requested_at",
+                key: "requested_at",
+                render: (date) =>
+                  date ? new Date(date).toLocaleString("vi-VN") : "—",
+              },
+              {
+                title: "Hạn tự hủy",
+                dataIndex: "cancellable_until",
+                key: "cancellable_until",
+                render: (date) =>
+                  date ? new Date(date).toLocaleString("vi-VN") : "—",
+              },
+              {
+                title: "Người xử lý",
+                dataIndex: "reviewed_by_name",
+                key: "reviewed_by_name",
+                render: (text) => text || "—",
+              },
+              {
+                title: "Ngày xử lý",
+                dataIndex: "reviewed_at",
+                key: "reviewed_at",
+                render: (date) =>
+                  date ? new Date(date).toLocaleString("vi-VN") : "—",
+              },
+              {
+                title: "Lý do",
+                dataIndex: "detailed_explanation",
+                key: "detailed_explanation",
+                ellipsis: true,
+                render: (text) => (
+                  <Text ellipsis={{ tooltip: text }} style={{ maxWidth: 200 }}>
+                    {text || "—"}
+                  </Text>
+                ),
+              },
+            ]}
+            pagination={{
+              pageSize: 5,
+              showSizeChanger: true,
+              pageSizeOptions: ["5", "10", "20"],
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} của ${total} yêu cầu`,
+            }}
+          />
+        </Card>
+      )}
+
       {/* Deletion Request Modal */}
       <DeletionRequestModal
         visible={deletionModalVisible}
         onClose={() => setDeletionModalVisible(false)}
         onSuccess={handleDeletionSuccess}
+        targetPartnerId={data?.partner_id}
       />
     </>
   );

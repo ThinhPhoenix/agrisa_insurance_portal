@@ -28,6 +28,35 @@ const ConditionForm = memo(({
         setSelectedAggregation(conditionForm.getFieldValue('aggregationFunction') || editingCondition?.aggregationFunction || null);
     }, [editingCondition, conditionForm]);
 
+    // Populate form only when editing an existing condition; otherwise reset the form
+    useEffect(() => {
+        if (editingCondition) {
+            // Map editingCondition fields to form fields
+            conditionForm.setFieldsValue({
+                dataSourceId: editingCondition.dataSourceId ?? null,
+                aggregationFunction: editingCondition.aggregationFunction ?? null,
+                aggregationWindowDays: editingCondition.aggregationWindowDays ?? null,
+                thresholdOperator: editingCondition.thresholdOperator ?? null,
+                thresholdValue: editingCondition.thresholdValue ?? null,
+                earlyWarningThreshold: editingCondition.earlyWarningThreshold ?? null,
+                validationWindowDays: editingCondition.validationWindowDays ?? 30,
+                dataQuality: editingCondition.dataQuality ?? 'good',
+                includeComponent: editingCondition.includeComponent ?? false,
+                baselineWindowDays: editingCondition.baselineWindowDays ?? null,
+                baselineFunction: editingCondition.baselineFunction ?? null
+            });
+            setSelectedAggregation(editingCondition.aggregationFunction ?? null);
+        } else {
+            // When not editing, clear any previous values so the user gets a blank form for adding
+            try {
+                conditionForm.resetFields();
+            } catch (e) {
+                // ignore
+            }
+            setSelectedAggregation(null);
+        }
+    }, [editingCondition, conditionForm]);
+
     // validationWindowDays is fixed to 30 (no longer derived from monitor frequency)
 
     const handleSaveCondition = () => {
@@ -154,6 +183,11 @@ const ConditionForm = memo(({
             };
 
             onSave(condition, editingCondition);
+            // If we just added a new condition (not editing), clear the form for a fresh entry
+            if (!editingCondition) {
+                try { conditionForm.resetFields(); } catch (e) { }
+                setSelectedAggregation(null);
+            }
         }).catch(err => {
             // validation failed - show first error quickly
             try { message.destroy(); } catch (e) { }

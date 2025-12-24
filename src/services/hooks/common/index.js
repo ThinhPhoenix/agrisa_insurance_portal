@@ -4,6 +4,6 @@
  */
 
 export * from "./filter-helpers";
-export { useDataSource } from "./use-data-source";
+export { default as useDataSource } from "./use-data-source";
 export { useFilterableList } from "./use-filterable-list";
 export { useTableData } from "./use-table-data";

@@ -15,7 +15,7 @@ const nextConfig = {
 
         return config;
     },
-    base: process.env.GITHUB_REPO
+    basePath: `/${process.env.GITHUB_REPO.split("/")[1]}`,
 };
 
 module.exports = nextConfig;

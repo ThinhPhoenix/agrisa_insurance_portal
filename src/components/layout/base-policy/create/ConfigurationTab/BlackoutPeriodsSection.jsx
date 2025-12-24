@@ -44,6 +44,12 @@ const BlackoutPeriodsSection = memo(({
                                 const startDate = values.start;
                                 const endDate = values.end;
 
+                                // If either date missing, do not proceed
+                                if (!startDate || !endDate) {
+                                    message.warning('Vui lòng chọn cả ngày bắt đầu và ngày kết thúc để thêm giai đoạn.');
+                                    return;
+                                }
+
                                 // Validation 1: Kiểm tra start < end
                                 if (startDate.isAfter(endDate) || startDate.isSame(endDate)) {
                                     message.error('Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
@@ -127,9 +133,6 @@ const BlackoutPeriodsSection = memo(({
                                         name="start"
                                         label={dict.getFieldLabel('BasePolicyTrigger', 'blackout_periods') || 'Ngày bắt đầu'}
                                         tooltip="Ngày bắt đầu giai đoạn không kích hoạt (chỉ chọn được trong khoảng thời gian bảo hiểm có hiệu lực)"
-                                        rules={[
-                                            { required: true, message: 'Vui lòng chọn ngày bắt đầu!' }
-                                        ]}
                                     >
                                         <DatePicker
                                             format="DD/MM/YYYY"
@@ -186,9 +189,6 @@ const BlackoutPeriodsSection = memo(({
                                         name="end"
                                         label={dict.getFieldLabel('BasePolicyTrigger', 'blackout_periods') || 'Ngày kết thúc'}
                                         tooltip="Ngày kết thúc giai đoạn không kích hoạt (phải sau ngày bắt đầu và trong khoảng thời gian bảo hiểm có hiệu lực)"
-                                        rules={[
-                                            { required: true, message: 'Vui lòng chọn ngày kết thúc!' }
-                                        ]}
                                     >
                                         <DatePicker
                                             format="DD/MM/YYYY"

@@ -873,14 +873,14 @@ const PlaceholderMappingPanelComponent = forwardRef(({
                 if (isMapped) {
                     return (
                         <Tag icon={<CheckCircleOutlined />} color="processing">
-                            Đã map
+                            Đã thêm
                         </Tag>
                     );
                 }
 
                 return (
                     <Tag icon={<ExclamationCircleOutlined />} color="warning">
-                        Chưa map
+                        Chưa thêm
                     </Tag>
                 );
             }

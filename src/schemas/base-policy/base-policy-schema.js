@@ -39,12 +39,8 @@ export const basePolicySchema = z
       })
       .min(3, getBasePolicyValidation("PRODUCT_NAME_MIN_LENGTH")),
 
-    productCode: z
-      .string({
-        required_error: getBasePolicyError("PRODUCT_CODE_REQUIRED"),
-      })
-      .min(1, getBasePolicyError("PRODUCT_CODE_REQUIRED"))
-      .regex(/^[A-Z0-9_]+$/, getBasePolicyValidation("PRODUCT_CODE_FORMAT")),
+    // `productCode` is auto-generated on backend; no validation needed
+    productCode: z.string().optional().nullable(),
 
     coverageCurrency: z
       .string({

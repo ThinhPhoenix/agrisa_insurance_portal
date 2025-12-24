@@ -398,14 +398,8 @@ const BasicTabComponent = ({
                         {/* Product code is auto-generated and hidden from the user. */}
                         <Form.Item
                             name="productCode"
-                            // keep validation rules for form submission but hide UI
+                            // productCode is auto-generated; keep pattern but not required
                             rules={[
-                                {
-                                    required: true,
-                                    message: getBasePolicyError(
-                                        "PRODUCT_CODE_REQUIRED"
-                                    ),
-                                },
                                 {
                                     pattern: /^[A-Za-z0-9_]+$/,
                                     message:
@@ -568,12 +562,6 @@ const BasicTabComponent = ({
                             tooltip="Số tiền phí cố định cho hợp đồng (không tính toán)"
                             rules={[
                                 {
-                                    required: true,
-                                    message: getBasePolicyError(
-                                        "FIX_PREMIUM_AMOUNT_REQUIRED"
-                                    ),
-                                },
-                                {
                                     type: "number",
                                     min: 0,
                                     message: getBasePolicyError(
@@ -715,12 +703,6 @@ const BasicTabComponent = ({
                             label={dict.getFieldLabel('BasePolicy', 'fix_payout_amount')}
                             tooltip="Số tiền chi trả cố định khi xảy ra sự cố"
                             rules={[
-                                {
-                                    required: true,
-                                    message: getBasePolicyError(
-                                        "FIX_PAYOUT_AMOUNT_REQUIRED"
-                                    ),
-                                },
                                 {
                                     type: "number",
                                     min: 0,

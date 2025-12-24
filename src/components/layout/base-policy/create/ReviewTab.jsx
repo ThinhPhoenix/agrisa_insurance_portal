@@ -97,6 +97,11 @@ const ReviewTabComponent = ({
     ];
 
     // Conditions summary table columns
+    // Check if any condition uses change_lt or change_gt (which require baseline)
+    const hasBaselineConditions = configurationData.conditions?.some(cond =>
+        cond.thresholdOperator === 'change_lt' || cond.thresholdOperator === 'change_gt'
+    );
+
     const conditionColumns = [
         {
             title: '#',
@@ -144,8 +149,8 @@ const ReviewTabComponent = ({
                 </Space>
             ),
         },
-        {
-            title: 'Baseline',
+        ...(hasBaselineConditions ? [{
+            title: 'Đường cơ sở',
             key: 'baseline',
             width: 150,
             render: (_, record) => (
@@ -158,7 +163,7 @@ const ReviewTabComponent = ({
                     </Space>
                 ) : <Text type="secondary">-</Text>
             ),
-        },
+        }] : []),
         {
             title: 'Chi phí',
             key: 'cost',
@@ -308,7 +313,7 @@ const ReviewTabComponent = ({
                             <Text strong>{basicData.productName || 'Chưa nhập'}</Text>
                         </Descriptions.Item>
                         <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'product_code')}>
-                            <Text code>{basicData.productCode || 'Chưa nhập'}</Text>
+                            <Text code>{basicData.productCode ? basicData.productCode : 'Sẽ được tạo khi tạo gói'}</Text>
                         </Descriptions.Item>
                         {/* <Descriptions.Item label="Đối tác bảo hiểm">
                             {basicData.insuranceProviderId || 'Chưa nhập'}

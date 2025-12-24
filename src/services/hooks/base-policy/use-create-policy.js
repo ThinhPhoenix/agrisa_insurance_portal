@@ -429,7 +429,7 @@ const useCreatePolicy = () => {
   const validateBasicTab = useCallback(() => {
     const requiredFields = [
       "productName",
-      "productCode",
+      // "productCode" is auto-generated; not required from user
       "coverageDurationDays",
       "isPerHectare",
       "premiumBaseRate",
@@ -893,8 +893,13 @@ const useCreatePolicy = () => {
       return `${base}_${suffix}`;
     };
 
-    // If productCode is missing, generate and set it so validation/payload include it.
-    if (!basicData.productCode) {
+    // If productCode is missing, generate and set it only when we have
+    // `insuranceValidFrom` and `coverageDurationDays` (auto-generate rule).
+    if (
+      !basicData.productCode &&
+      basicData.insuranceValidFrom &&
+      basicData.coverageDurationDays
+    ) {
       const generated = generateProductCode(basicData.productName);
       setBasicData((prev) => ({ ...prev, productCode: generated }));
     }

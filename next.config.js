@@ -15,6 +15,7 @@ const nextConfig = {
 
         return config;
     },
+    base: process.env.GITHUB_REPO
 };
 
 module.exports = nextConfig;

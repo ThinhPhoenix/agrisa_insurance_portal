@@ -262,7 +262,7 @@ const BlackoutPeriodsSection = memo(({
                             </Row>
                         </Form>
                     </Card>
-
+                    {/* comments */}
                     {/* Blackout Periods Table */}
                     {configurationData.blackoutPeriods?.periods?.length > 0 && (
                         <Table

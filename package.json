@@ -7,7 +7,8 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
-        "ass": "bun ./src/assets/generate-assets-index.js"
+        "ass": "bun ./src/assets/generate-assets-index.js",
+        "env": "gh secret set -f .env"
     },
     "dependencies": {
         "@hello-pangea/dnd": "^18.0.1",

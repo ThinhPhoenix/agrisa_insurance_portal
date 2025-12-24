@@ -1,4 +1,4 @@
-import TriggerLogicExplainer from '@/components/layout/base-policy/TriggerLogicExplainer';
+import TriggerLogicExplainer from '@/components/layout/base-policy/create/ConfigurationTab/TriggerLogicExplainer/TriggerLogicExplainer';
 import useDictionary from '@/services/hooks/common/use-dictionary';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Alert, Card, Form } from 'antd';

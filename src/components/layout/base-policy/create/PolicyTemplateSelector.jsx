@@ -414,9 +414,14 @@ const PolicyTemplateSelector = memo(({
             }
 
             // 3. Prepare final data
+            // Ensure templates do NOT inject a pre-defined productCode.
+            // Remove productCode from template.basicData and set to empty so
+            // the form/hook will auto-generate it on create.
+            const { productCode, ...templateBasicRest } = template.basicData || {};
             const finalBasicData = {
-                ...template.basicData,
-                selectedDataSources: mappedDataSources
+                ...templateBasicRest,
+                productCode: "",
+                selectedDataSources: mappedDataSources,
             };
 
             const finalConfigurationData = {

@@ -881,9 +881,22 @@ const useCreatePolicy = () => {
   }, []);
 
   const handleCreatePolicy = useCallback(async () => {
-    if (!validateReviewTab()) {
-      message.error("Vui lòng hoàn thành tất cả thông tin bắt buộc");
-      return false;
+    // Auto-generate `productCode` if it's empty. Keep pattern A-Z0-9 and underscores.
+    const generateProductCode = (name) => {
+      const base = (name || "PRODUCT")
+        .toString()
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      const suffix = Date.now().toString(36).slice(-6).toUpperCase();
+      return `${base}_${suffix}`;
+    };
+
+    // If productCode is missing, generate and set it so validation/payload include it.
+    if (!basicData.productCode) {
+      const generated = generateProductCode(basicData.productName);
+      setBasicData((prev) => ({ ...prev, productCode: generated }));
     }
 
     setLoading(true);

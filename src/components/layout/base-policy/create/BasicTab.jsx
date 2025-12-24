@@ -395,10 +395,10 @@ const BasicTabComponent = ({
                         </Form.Item>
                     </Col>
                     <Col span={12}>
+                        {/* Product code is auto-generated and hidden from the user. */}
                         <Form.Item
                             name="productCode"
-                            label={dict.getFieldLabel('BasePolicy', 'product_code')}
-                            tooltip={dict.getFieldNote('BasePolicy', 'product_code') || 'Mã duy nhất (chữ, số, _ - tự động viết hoa)'}
+                            // keep validation rules for form submission but hide UI
                             rules={[
                                 {
                                     required: true,
@@ -412,15 +412,10 @@ const BasicTabComponent = ({
                                         "Mã sản phẩm chỉ được chứa chữ cái, số và dấu gạch dưới (_)!",
                                 },
                             ]}
-                            normalize={(value) =>
-                                value ? value.toUpperCase() : value
-                            }
+                            normalize={(value) => (value ? value.toUpperCase() : value)}
+                            style={{ display: "none" }}
                         >
-                            <Input
-                                placeholder="Ví dụ: rice_winter_2025"
-                                size="large"
-                                style={{ textTransform: "uppercase" }}
-                            />
+                            <Input />
                         </Form.Item>
                     </Col>
                 </Row>

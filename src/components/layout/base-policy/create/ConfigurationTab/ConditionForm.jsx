@@ -28,19 +28,7 @@ const ConditionForm = memo(({
         setSelectedAggregation(conditionForm.getFieldValue('aggregationFunction') || editingCondition?.aggregationFunction || null);
     }, [editingCondition, conditionForm]);
 
-    // Compute validationWindowDays from configurationData.monitorInterval & monitorFrequencyUnit
-    const computeValidationWindowDays = () => {
-        const interval = Math.max(1, Number(configurationData?.monitorInterval) || 1);
-        const unit = configurationData?.monitorFrequencyUnit || 'hour';
-        switch (unit) {
-            case 'week': return Math.max(1, interval * 7);
-            case 'day': return Math.max(1, interval);
-            case 'month': return Math.max(1, interval * 30);
-            case 'year': return Math.max(1, interval * 365);
-            default: // hour or smaller
-                return 1;
-        }
-    };
+    // validationWindowDays is fixed to 30 (no longer derived from monitor frequency)
 
     const handleSaveCondition = () => {
         // Fast-path: read current form values synchronously to perform immediate checks and show instant warnings
@@ -128,7 +116,6 @@ const ConditionForm = memo(({
                 conditionOrder = (configurationData.conditions?.length || 0) + 1;
             }
 
-            const computedValidationWindow = computeValidationWindowDays();
 
             const condition = {
                 dataSourceId: values.dataSourceId,
@@ -147,8 +134,8 @@ const ConditionForm = memo(({
                 baselineFunction: (values.thresholdOperator === 'change_gt' || values.thresholdOperator === 'change_lt')
                     ? (values.baselineFunction || null)
                     : null,
-                // Validation window is derived from monitor frequency (in days)
-                validationWindowDays: computedValidationWindow || null,
+                // Validation window is fixed to 30 days
+                validationWindowDays: 30,
                 dataQuality: values.dataQuality || 'good',
                 conditionOrder,
                 // Display labels (for UI table)

@@ -173,7 +173,11 @@ export const calculateConditionCost = (
  * @param {Array} selectedDataSources - Array of selected data sources with baseCost property
  * @returns {number} Frequency cost in VND, clamped to >= 0
  */
-export const calculateFrequencyCost = (monitorInterval, monitorFrequencyUnit, selectedDataSources = []) => {
+export const calculateFrequencyCost = (
+  monitorInterval,
+  monitorFrequencyUnit,
+  selectedDataSources = []
+) => {
   const MONITOR_FREQUENCY_MULTIPLIERS = {
     hour: 0.5,
     day: 0.8,
@@ -186,11 +190,16 @@ export const calculateFrequencyCost = (monitorInterval, monitorFrequencyUnit, se
   // This is NOT a fixed constant, but calculated from the data packages
   let frequencyBaseCost = 0;
   if (selectedDataSources && selectedDataSources.length > 0) {
-    const totalBaseCost = selectedDataSources.reduce((sum, source) => sum + (source.baseCost || 0), 0);
+    const totalBaseCost = selectedDataSources.reduce(
+      (sum, source) => sum + (source.baseCost || 0),
+      0
+    );
     frequencyBaseCost = totalBaseCost / selectedDataSources.length;
   }
 
-  const frequencyMultiplier = MONITOR_FREQUENCY_MULTIPLIERS[monitorFrequencyUnit] || MONITOR_FREQUENCY_MULTIPLIERS.hour;
+  const frequencyMultiplier =
+    MONITOR_FREQUENCY_MULTIPLIERS[monitorFrequencyUnit] ||
+    MONITOR_FREQUENCY_MULTIPLIERS.hour;
   const deduction = 10000 * (monitorInterval || 1) * frequencyMultiplier;
   const frequencyCost = frequencyBaseCost - deduction;
 
@@ -213,8 +222,16 @@ export const calculateTotalConditionCost = (
   monitorFrequencyUnit,
   selectedDataSources = []
 ) => {
-  const dataSourceCost = calculateConditionCost(baseCost, categoryMultiplier, tierMultiplier);
-  const frequencyCost = calculateFrequencyCost(monitorInterval, monitorFrequencyUnit, selectedDataSources);
+  const dataSourceCost = calculateConditionCost(
+    baseCost,
+    categoryMultiplier,
+    tierMultiplier
+  );
+  const frequencyCost = calculateFrequencyCost(
+    monitorInterval,
+    monitorFrequencyUnit,
+    selectedDataSources
+  );
 
   return Math.round(dataSourceCost + frequencyCost);
 };
@@ -335,7 +352,8 @@ export const usePolicyStore = create((set, get) => ({
       monitorFrequencyUnit: configurationData.monitorFrequencyUnit,
       frequencyCost,
       dataSourcesCount: basicData.selectedDataSources?.length || 0,
-      formula: "FrequencyBaseCost(avg of baseCosts) - (10000 × interval × multiplier)",
+      formula:
+        "FrequencyBaseCost(avg of baseCosts) - (10000 × interval × multiplier)",
     });
 
     // Build document_tags object (will be included in base_policy)
@@ -367,7 +385,7 @@ export const usePolicyStore = create((set, get) => ({
       //  Provider & Product Info
       insurance_provider_id: basicData.insuranceProviderId, // Must be partner_id, validated before calling this
       product_name: basicData.productName,
-      product_code: basicData.productCode,
+      // product_code: optional - if empty, BE will generate upon create
       product_description: basicData.productDescription || "",
       crop_type: basicData.cropType || "",
 
@@ -415,6 +433,12 @@ export const usePolicyStore = create((set, get) => ({
         basicData.importantAdditionalInformation || "",
     };
 
+    // Include `product_code` only when user/template provided one.
+    // If missing, backend is expected to generate the product code on create.
+    if (basicData.productCode) {
+      base_policy.product_code = basicData.productCode;
+    }
+
     // Build trigger object
     const trigger = {
       logical_operator: configurationData.logicalOperator,
@@ -457,7 +481,8 @@ export const usePolicyStore = create((set, get) => ({
         dataSourceCost,
         frequencyCost,
         calculatedCost,
-        formula: "(base × tier × category) + [FrequencyBaseCost - (10000 × interval × frequency)]",
+        formula:
+          "(base × tier × category) + [FrequencyBaseCost - (10000 × interval × frequency)]",
       });
 
       //  Build condition object, include REQUIRED and OPTIONAL fields with defaults
@@ -646,7 +671,7 @@ export const usePolicyStore = create((set, get) => ({
           "⚠️ User has mappings but hasn't applied to PDF yet. Recommend clicking 'Apply' button first."
         );
         warnings.push(
-          "Bạn đã map các trường nhưng chưa bấm nút 'Áp dụng'. Hãy bấm 'Áp dụng' để tạo fillable PDF trước khi submit."
+          "Bạn đã thêm các trường nhưng chưa bấm nút 'Áp dụng'. Hãy bấm 'Áp dụng' để tạo fillable PDF trước khi submit."
         );
       }
     }

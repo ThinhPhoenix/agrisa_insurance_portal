@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation";
 
 // Components - Lazy loaded for code splitting
 import BasicTab from "@/components/layout/base-policy/create/BasicTab";
-import ConfigurationTab from "@/components/layout/base-policy/create/ConfigurationTab";
+import ConfigurationTab from "@/components/layout/base-policy/create/ConfigurationTab/ConfigurationTab";
 import EstimatedCosts from "@/components/layout/base-policy/create/EstimatedCosts";
 import FAQTab from "@/components/layout/base-policy/create/FAQTab";
 import PolicyTemplateSelector from "@/components/layout/base-policy/create/PolicyTemplateSelector";
@@ -139,10 +139,10 @@ const CreatePolicyPage = () => {
         // 3. Navigate to basic tab to show filled data
         handleTabChange(TABS.BASIC);
 
-        message.success(
-          `Đã áp dụng template "${templateInfo.name}"! Vui lòng kiểm tra và điều chỉnh thông tin nếu cần.`,
-          5
-        );
+        // message.success(
+        //   `Đã áp dụng template "${templateInfo.name}"! Vui lòng kiểm tra và điều chỉnh thông tin nếu cần.`,
+        //   5
+        // );
 
         console.log("✅ Template applied successfully:", {
           templateId: templateInfo.id,

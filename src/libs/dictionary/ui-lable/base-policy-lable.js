@@ -85,7 +85,7 @@ export const BASE_POLICY_UI_LABELS = {
   btnReset: "Đặt lại",
   btnPrevious: "Quay lại",
   btnNext: "Tiếp theo",
-  btnCreatePolicy: "Tạo Policy",
+  btnCreatePolicy: "Tạo Gói Bảo hiểm",
   btnCreating: "Đang tạo...",
 
   // Messages

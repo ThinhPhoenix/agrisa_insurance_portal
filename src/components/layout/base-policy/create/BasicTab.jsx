@@ -16,15 +16,15 @@ import {
     Form,
     Input,
     InputNumber,
-    message,
     Popconfirm,
     Row,
     Select,
     Switch,
     Table,
     Tooltip,
-    Typography,
+    Typography
 } from "antd";
+import dayjs from 'dayjs';
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 const { Option } = Select;
@@ -92,15 +92,14 @@ const BasicTabComponent = ({
 
         // Auto-calculate insuranceValidTo = insuranceValidFrom + coverageDurationDays
         if (basicData.insuranceValidFrom && basicData.coverageDurationDays) {
-            const validTo = basicData.insuranceValidFrom
-                .clone()
-                .add(basicData.coverageDurationDays, "days");
-            // Only update if the calculated value is different from current value
-            if (
-                !basicData.insuranceValidTo ||
-                !basicData.insuranceValidTo.isSame(validTo, "day")
-            ) {
-                updates.insuranceValidTo = validTo;
+            const from = dayjs(basicData.insuranceValidFrom);
+            if (from.isValid()) {
+                const validTo = from.add(Number(basicData.coverageDurationDays), 'day');
+                // Only update if the calculated value is different from current value
+                const currentValidTo = basicData.insuranceValidTo ? dayjs(basicData.insuranceValidTo) : null;
+                if (!currentValidTo || !currentValidTo.isSame(validTo, 'day')) {
+                    updates.insuranceValidTo = validTo;
+                }
             }
         }
 
@@ -129,6 +128,22 @@ const BasicTabComponent = ({
     const timeoutRef = useRef(null);
     const handleValuesChange = useCallback(
         (changedValues, allValues) => {
+            // Auto-calculate insuranceValidTo when insuranceValidFrom or coverageDurationDays changes
+            if (changedValues.insuranceValidFrom || changedValues.coverageDurationDays) {
+                const validFrom = allValues.insuranceValidFrom || changedValues.insuranceValidFrom;
+                const duration = allValues.coverageDurationDays || changedValues.coverageDurationDays;
+
+                if (validFrom && duration) {
+                    const from = dayjs(validFrom);
+                    if (from.isValid()) {
+                        const validTo = from.add(Number(duration), 'day');
+                        allValues.insuranceValidTo = validTo;
+                        // Update the form field immediately
+                        form.setFieldsValue({ insuranceValidTo: validTo });
+                    }
+                }
+            }
+
             // Clear previous timeout
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
@@ -140,7 +155,7 @@ const BasicTabComponent = ({
                 onDataChange(allValues);
             }, 300); // 300ms debounce
         },
-        [onDataChange]
+        [onDataChange, form]
     );
 
     // Cleanup timeout on unmount
@@ -153,28 +168,41 @@ const BasicTabComponent = ({
     }, []);
 
     //  Sync form with basicData when it changes (e.g., when template is applied)
+    //  Use deep comparison to prevent infinite loop from reference changes
     const basicDataRef = useRef(basicData);
+    const syncTimeoutRef = useRef(null);
     useEffect(() => {
-        // Only sync if basicData actually changed (not initial mount)
-        const hasChanged = basicDataRef.current !== basicData;
+        // Deep comparison: check if content actually changed
+        const hasContentChanged = JSON.stringify(basicDataRef.current) !== JSON.stringify(basicData);
 
-        if (hasChanged) {
-            // Update form fields with current basicData
-            // This ensures the form displays the latest data when a template is applied
-            form.setFieldsValue(basicData);
+        if (hasContentChanged) {
+            // Clear any pending sync
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
 
-            //  IMPORTANT: Manually trigger onDataChange to recalculate estimated costs
-            // setFieldsValue doesn't trigger onValuesChange, so we need to manually notify parent
-            onDataChange(basicData);
+            // Debounce sync to prevent rapid updates
+            syncTimeoutRef.current = setTimeout(() => {
+                // Update form fields with current basicData
+                form.setFieldsValue(basicData);
 
-            console.log(' BasicTab synced with template data:', {
-                dataSourcesCount: basicData.selectedDataSources?.length || 0,
-                productName: basicData.productName
-            });
+                console.log('✅ BasicTab synced with template data:', {
+                    dataSourcesCount: basicData.selectedDataSources?.length || 0,
+                    productName: basicData.productName
+                });
+
+                // Update ref to new data
+                basicDataRef.current = basicData;
+            }, 100);
         }
 
-        basicDataRef.current = basicData;
-    }, [basicData, form, onDataChange]);
+        // Cleanup
+        return () => {
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
+        };
+    }, [basicData, form]);
 
     // Handle category change
     const handleCategoryChange = useCallback(
@@ -231,15 +259,10 @@ const BasicTabComponent = ({
                 (source) => source.id === values.dataSource
             );
             if (selectedSource) {
-                // Check if already added
-                const exists = basicData.selectedDataSources.find(
-                    (source) => source.id === selectedSource.id
-                );
-
-                if (exists) {
-                    message.warning(dict.ui.msgDataSourceAlreadyAdded);
-                    return;
-                }
+                // Create an instance wrapper to allow same data source added multiple times
+                const instanceId = `inst_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .slice(2, 7)}`;
 
                 // Find category and tier to get multipliers
                 const selectedCategoryObj = categories.find(
@@ -251,9 +274,12 @@ const BasicTabComponent = ({
 
                 const dataSourceToAdd = {
                     ...selectedSource,
+                    // Keep original id (data source id from API) and add unique instance id
+                    originalDataSourceId: selectedSource.id,
+                    instanceId,
                     category: selectedCategory,
                     tier: selectedTier,
-                    categoryLabel: selectedCategory, // Since selectedCategory is already the name
+                    categoryLabel: selectedCategory,
                     tierLabel: selectedTierObj?.label || selectedTier,
                     // Add multipliers for condition calculation
                     categoryMultiplier:
@@ -317,7 +343,7 @@ const BasicTabComponent = ({
                 <Popconfirm
                     title={dict.ui.msgDeleteDataSource}
                     description={dict.ui.msgConfirmDeleteDataSource}
-                    onConfirm={() => onRemoveDataSource(record.id)}
+                    onConfirm={() => onRemoveDataSource(record.instanceId || record.id)}
                     okText={dict.ui.delete}
                     cancelText={dict.ui.cancel}
                 >
@@ -369,32 +395,21 @@ const BasicTabComponent = ({
                         </Form.Item>
                     </Col>
                     <Col span={12}>
+                        {/* Product code is auto-generated and hidden from the user. */}
                         <Form.Item
                             name="productCode"
-                            label={dict.getFieldLabel('BasePolicy', 'product_code')}
-                            tooltip={dict.getFieldNote('BasePolicy', 'product_code') || 'Mã duy nhất (chữ, số, _ - tự động viết hoa)'}
+                            // productCode is auto-generated; keep pattern but not required
                             rules={[
-                                {
-                                    required: true,
-                                    message: getBasePolicyError(
-                                        "PRODUCT_CODE_REQUIRED"
-                                    ),
-                                },
                                 {
                                     pattern: /^[A-Za-z0-9_]+$/,
                                     message:
                                         "Mã sản phẩm chỉ được chứa chữ cái, số và dấu gạch dưới (_)!",
                                 },
                             ]}
-                            normalize={(value) =>
-                                value ? value.toUpperCase() : value
-                            }
+                            normalize={(value) => (value ? value.toUpperCase() : value)}
+                            style={{ display: "none" }}
                         >
-                            <Input
-                                placeholder="Ví dụ: rice_winter_2025"
-                                size="large"
-                                style={{ textTransform: "uppercase" }}
-                            />
+                            <Input />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -547,12 +562,6 @@ const BasicTabComponent = ({
                             tooltip="Số tiền phí cố định cho hợp đồng (không tính toán)"
                             rules={[
                                 {
-                                    required: true,
-                                    message: getBasePolicyError(
-                                        "FIX_PREMIUM_AMOUNT_REQUIRED"
-                                    ),
-                                },
-                                {
                                     type: "number",
                                     min: 0,
                                     message: getBasePolicyError(
@@ -694,12 +703,6 @@ const BasicTabComponent = ({
                             label={dict.getFieldLabel('BasePolicy', 'fix_payout_amount')}
                             tooltip="Số tiền chi trả cố định khi xảy ra sự cố"
                             rules={[
-                                {
-                                    required: true,
-                                    message: getBasePolicyError(
-                                        "FIX_PAYOUT_AMOUNT_REQUIRED"
-                                    ),
-                                },
                                 {
                                     type: "number",
                                     min: 0,
@@ -1377,96 +1380,87 @@ const BasicTabComponent = ({
                                     optionLabelProp="label"
                                     loading={dataSourcesLoading}
                                 >
-                                    {dataSources
-                                        .filter(
-                                            (source) =>
-                                                !basicData.selectedDataSources.some(
-                                                    (selected) =>
-                                                        selected.id ===
-                                                        source.id
-                                                )
-                                        )
-                                        .map((source) => (
-                                            <Option
-                                                key={source.id}
-                                                value={source.id}
-                                                label={source.label}
-                                            >
-                                                <Tooltip
-                                                    title={
+                                    {dataSources.map((source) => (
+                                        <Option
+                                            key={source.id}
+                                            value={source.id}
+                                            label={source.label}
+                                        >
+                                            <Tooltip
+                                                title={
+                                                    <div>
                                                         <div>
-                                                            <div>
-                                                                <strong>
-                                                                    {
-                                                                        source.label
-                                                                    }
-                                                                </strong>
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    marginTop:
-                                                                        "4px",
-                                                                }}
-                                                            >
+                                                            <strong>
                                                                 {
-                                                                    source.description
+                                                                    source.label
                                                                 }
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    marginTop:
-                                                                        "4px",
-                                                                    color: "#52c41a",
-                                                                }}
-                                                            >
-                                                                Nhà cung cấp:{" "}
-                                                                {
-                                                                    source.data_provider
-                                                                }
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    marginTop:
-                                                                        "4px",
-                                                                    color: "#1890ff",
-                                                                }}
-                                                            >
-                                                                Chi phí:{" "}
-                                                                {source.baseCost.toLocaleString()}{" "}
-                                                                ₫/tháng
-                                                            </div>
+                                                            </strong>
                                                         </div>
-                                                    }
-                                                    placement="right"
-                                                    mouseEnterDelay={0.3}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            cursor: "pointer",
-                                                        }}
-                                                    >
-                                                        <Text>
-                                                            {source.label}
-                                                        </Text>
-                                                        <br />
-                                                        <Text
-                                                            type="secondary"
+                                                        <div
                                                             style={{
-                                                                fontSize:
-                                                                    "12px",
+                                                                marginTop:
+                                                                    "4px",
                                                             }}
                                                         >
                                                             {
+                                                                source.description
+                                                            }
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                marginTop:
+                                                                    "4px",
+                                                                color: "#52c41a",
+                                                            }}
+                                                        >
+                                                            Nhà cung cấp:{" "}
+                                                            {
                                                                 source.data_provider
-                                                            }{" "}
-                                                            -{" "}
+                                                            }
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                marginTop:
+                                                                    "4px",
+                                                                color: "#1890ff",
+                                                            }}
+                                                        >
+                                                            Chi phí:{" "}
                                                             {source.baseCost.toLocaleString()}{" "}
                                                             ₫/tháng
-                                                        </Text>
+                                                        </div>
                                                     </div>
-                                                </Tooltip>
-                                            </Option>
-                                        ))}
+                                                }
+                                                placement="right"
+                                                mouseEnterDelay={0.3}
+                                            >
+                                                <div
+                                                    style={{
+                                                        cursor: "pointer",
+                                                    }}
+                                                >
+                                                    <Text>
+                                                        {source.label}
+                                                    </Text>
+                                                    <br />
+                                                    <Text
+                                                        type="secondary"
+                                                        style={{
+                                                            fontSize:
+                                                                "12px",
+                                                        }}
+                                                    >
+                                                        {
+                                                            source.data_provider
+                                                        }{" "}
+                                                        -{" "}
+                                                        {source.baseCost.toLocaleString()}{" "}
+                                                        ₫/tháng
+                                                    </Text>
+                                                </div>
+                                            </Tooltip>
+                                        </Option>
+                                    ))}
                                 </Select>
                             </Form.Item>
                         </Col>
@@ -1501,7 +1495,7 @@ const BasicTabComponent = ({
                     <Table
                         columns={dataSourceColumns}
                         dataSource={basicData.selectedDataSources}
-                        rowKey="id"
+                        rowKey={(record, index) => record.instanceId || `${record.id}_${index}`}
                         pagination={false}
                         className="data-source-table"
                         size="middle"

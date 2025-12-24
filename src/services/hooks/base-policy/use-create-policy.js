@@ -2,7 +2,11 @@ import mockData from "@/app/(internal)/base-policy/mock..json";
 import axiosInstance from "@/libs/axios-instance";
 import { getErrorMessage } from "@/libs/message";
 import { endpoints } from "@/services/endpoints";
-import { calculateConditionCost, calculateFrequencyCost, usePolicyStore } from "@/stores/policy-store";
+import {
+  calculateConditionCost,
+  calculateFrequencyCost,
+  usePolicyStore,
+} from "@/stores/policy-store";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -199,15 +203,24 @@ const useCreatePolicy = () => {
     const totalEstimatedCost = monthlyDataCost;
 
     // For display purposes, extract the frequency multiplier
-    const frequencyMultipliers = { hour: 0.5, day: 0.8, week: 1.0, month: 1.5, year: 2.0 };
-    const monitorFrequencyCost = frequencyMultipliers[configurationData.monitorFrequencyUnit] || frequencyMultipliers.hour;
+    const frequencyMultipliers = {
+      hour: 0.5,
+      day: 0.8,
+      week: 1.0,
+      month: 1.5,
+      year: 2.0,
+    };
+    const monitorFrequencyCost =
+      frequencyMultipliers[configurationData.monitorFrequencyUnit] ||
+      frequencyMultipliers.hour;
 
     console.log("[estimatedCosts] NEW Formula calculation:", {
       totalDataSourceCost,
       monitorFrequencyUnit: configurationData.monitorFrequencyUnit,
       monitorInterval: configurationData.monitorInterval,
       frequencyCost,
-      formula: "FrequencyBaseCost(avg of baseCosts) - (10000 × interval × multiplier)",
+      formula:
+        "FrequencyBaseCost(avg of baseCosts) - (10000 × interval × multiplier)",
       monthlyDataCost,
       totalEstimatedCost,
       dataSourceCount: basicData.selectedDataSources?.length,
@@ -416,7 +429,7 @@ const useCreatePolicy = () => {
   const validateBasicTab = useCallback(() => {
     const requiredFields = [
       "productName",
-      "productCode",
+      // "productCode" is auto-generated; not required from user
       "coverageDurationDays",
       "isPerHectare",
       "premiumBaseRate",
@@ -536,27 +549,38 @@ const useCreatePolicy = () => {
       ],
     }));
   }, []);
-
   const handleRemoveDataSource = useCallback(
-    (id) => {
-      // Check if this data source is used in any trigger conditions
-      const triggerUsingDataSource = configurationData.conditions.find(
-        (condition) => condition.dataSourceId === id
-      );
-
-      if (triggerUsingDataSource) {
-        message.warning(
-          "Đã có điều kiện kích hoạt cho gói dữ liệu này, vui lòng xóa điều kiện kích hoạt trước"
+    (instanceIdOrId) => {
+      // Find the instance in selectedDataSources (we support instanceId for duplicates)
+      setBasicData((prev) => {
+        const instance = prev.selectedDataSources.find(
+          (s) => s.instanceId === instanceIdOrId || s.id === instanceIdOrId
         );
-        return;
-      }
 
-      setBasicData((prev) => ({
-        ...prev,
-        selectedDataSources: prev.selectedDataSources.filter(
-          (source) => source.id !== id
-        ),
-      }));
+        if (!instance) return prev;
+
+        // Determine the base data source id used by conditions
+        const baseId = instance.originalDataSourceId || instance.id;
+
+        // Check if this base data source is used in any trigger conditions
+        const triggerUsingDataSource = configurationData.conditions.find(
+          (condition) => condition.dataSourceId === baseId
+        );
+
+        if (triggerUsingDataSource) {
+          message.warning(
+            "Đã có điều kiện kích hoạt cho gói dữ liệu này, vui lòng xóa điều kiện kích hoạt trước"
+          );
+          return prev;
+        }
+
+        return {
+          ...prev,
+          selectedDataSources: prev.selectedDataSources.filter(
+            (source) => source.instanceId !== instanceIdOrId
+          ),
+        };
+      });
     },
     [configurationData.conditions]
   );
@@ -748,15 +772,25 @@ const useCreatePolicy = () => {
   }, []);
 
   const getAvailableDataSourcesForTrigger = useCallback(() => {
-    return basicData.selectedDataSources.map((source) => ({
-      value: source.id,
-      label: `${source.label} (${source.category}/${source.tier})`,
-      parameterName: source.parameterName,
-      unit: source.unit,
-      baseCost: source.baseCost,
-      categoryMultiplier: source.categoryMultiplier || 1,
-      tierMultiplier: source.tierMultiplier || 1,
-    }));
+    // Deduplicate by base data source id so options are unique even when the same
+    // data source was added multiple times (for creating multiple conditions)
+    const map = {};
+    basicData.selectedDataSources.forEach((source) => {
+      const baseId = source.originalDataSourceId || source.id;
+      if (!map[baseId]) {
+        map[baseId] = {
+          value: baseId,
+          label: `${source.label} (${source.category}/${source.tier})`,
+          parameterName: source.parameterName,
+          unit: source.unit,
+          baseCost: source.baseCost,
+          categoryMultiplier: source.categoryMultiplier || 1,
+          tierMultiplier: source.tierMultiplier || 1,
+        };
+      }
+    });
+
+    return Object.values(map);
   }, [basicData.selectedDataSources]);
 
   // ✅ BLACKOUT PERIODS HANDLERS
@@ -847,9 +881,27 @@ const useCreatePolicy = () => {
   }, []);
 
   const handleCreatePolicy = useCallback(async () => {
-    if (!validateReviewTab()) {
-      message.error("Vui lòng hoàn thành tất cả thông tin bắt buộc");
-      return false;
+    // Auto-generate `productCode` if it's empty. Keep pattern A-Z0-9 and underscores.
+    const generateProductCode = (name) => {
+      const base = (name || "PRODUCT")
+        .toString()
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      const suffix = Date.now().toString(36).slice(-6).toUpperCase();
+      return `${base}_${suffix}`;
+    };
+
+    // If productCode is missing, generate and set it only when we have
+    // `insuranceValidFrom` and `coverageDurationDays` (auto-generate rule).
+    if (
+      !basicData.productCode &&
+      basicData.insuranceValidFrom &&
+      basicData.coverageDurationDays
+    ) {
+      const generated = generateProductCode(basicData.productName);
+      setBasicData((prev) => ({ ...prev, productCode: generated }));
     }
 
     setLoading(true);

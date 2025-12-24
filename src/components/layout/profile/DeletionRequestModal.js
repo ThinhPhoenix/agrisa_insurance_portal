@@ -14,7 +14,6 @@ import {
   InfoCircleOutlined,
   MailOutlined,
   PhoneOutlined,
-  StarOutlined,
   SwapOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
@@ -30,7 +29,6 @@ import {
   Input,
   message,
   Modal,
-  Rate,
   Row,
   Space,
   Spin,
@@ -278,18 +276,10 @@ export default function DeletionRequestModal({
                     <Title level={5} style={{ margin: 0, marginBottom: 4 }}>
                       {selectedPartner.partner_display_name}
                     </Title>
-                    <Space size="small">
-                      <Rate
-                        disabled
-                        value={selectedPartner.partner_rating_score || 0}
-                        style={{ fontSize: 12 }}
-                      />
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {selectedPartner.partner_rating_score?.toFixed(1) ||
-                          "0"}{" "}
-                        ({selectedPartner.partner_rating_count || 0})
-                      </Text>
-                    </Space>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {selectedPartner.partner_rating_score?.toFixed(1) || "0"}{" "}
+                      ({selectedPartner.partner_rating_count || 0})
+                    </Text>
                     <div style={{ marginTop: 4 }}>
                       <Tag color="green" icon={<CheckCircleOutlined />}>
                         Đã chọn
@@ -472,19 +462,10 @@ export default function DeletionRequestModal({
                         )}
                         <div style={{ marginTop: 8 }}>
                           <Space size="middle">
-                            <Space size="small">
-                              <StarOutlined style={{ color: "#faad14" }} />
-                              <Rate
-                                disabled
-                                value={partner.partner_rating_score || 0}
-                                style={{ fontSize: 12 }}
-                              />
-                              <Text type="secondary" style={{ fontSize: 12 }}>
-                                {partner.partner_rating_score?.toFixed(1) ||
-                                  "0"}{" "}
-                                ({partner.partner_rating_count || 0})
-                              </Text>
-                            </Space>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              {partner.partner_rating_score?.toFixed(1) || "0"}{" "}
+                              ({partner.partner_rating_count || 0})
+                            </Text>
                           </Space>
                         </div>
                         {partner.trust_metric_experience && (
@@ -618,11 +599,6 @@ export default function DeletionRequestModal({
                     </Text>
                   )}
                   <div style={{ marginTop: 8 }}>
-                    <Rate
-                      disabled
-                      value={partnerDetail.partner_rating_score || 0}
-                      style={{ fontSize: 16 }}
-                    />
                     <Text style={{ marginLeft: 12, color: "#8c8c8c" }}>
                       {partnerDetail.partner_rating_score?.toFixed(1) || "0"} (
                       {partnerDetail.partner_rating_count || 0} đánh giá)
@@ -700,7 +676,6 @@ export default function DeletionRequestModal({
               </Col>
               <Col xs={12} sm={6}>
                 <Card style={{ textAlign: "center" }}>
-                  <StarOutlined style={{ fontSize: 20, color: "#faad14" }} />
                   <div style={{ fontSize: 12, color: "#8c8c8c", marginTop: 8 }}>
                     Tổng chi trả
                   </div>

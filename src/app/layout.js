@@ -1,5 +1,6 @@
 import AntdConfigProvider from "@/providers/antd-config-provider";
 import AntdStylesProvider from "@/providers/antd-styles-provider";
+import AuthRefreshProvider from "@/providers/auth-refresh-provider";
 import NotificationPermissionProvider from "@/providers/notification-permission-provider";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -17,7 +18,9 @@ export default function RootLayout({ children }) {
             <body className={inter.className}>
                 <NotificationPermissionProvider>
                     <AntdStylesProvider>
-                        <AntdConfigProvider>{children}</AntdConfigProvider>
+                        <AntdConfigProvider>
+                            <AuthRefreshProvider>{children}</AuthRefreshProvider>
+                        </AntdConfigProvider>
                     </AntdStylesProvider>
                 </NotificationPermissionProvider>
             </body>

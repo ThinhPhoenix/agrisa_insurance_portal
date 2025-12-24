@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: "export",
+    distDir: "dist",
     images: {
         unoptimized: true,
     },
@@ -15,6 +17,7 @@ const nextConfig = {
 
         return config;
     },
+    basePath: `/${process.env.GITHUB_REPO.split("/")[1]}` || "",
 };
 
 module.exports = nextConfig;

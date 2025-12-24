@@ -7,7 +7,7 @@ import {
   WalletOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Col, Row, Space, Typography } from "antd";
+import { Button, Card, Col, Row, Space, Tooltip, Typography } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -75,6 +75,27 @@ export default function ClaimHeader({
   onReject,
   submitting,
 }) {
+  // Derived values for tooltips
+  const overVal = claimDetail?.over_threshold_value;
+  const fix = claimDetail?.calculated_fix_payout;
+  const thresh = claimDetail?.calculated_threshold_payout;
+  let derivedMultiplier = null;
+  if (overVal && thresh != null && overVal !== 0) {
+    // avoid divide by zero; overVal may be percentage (e.g. 0.41)
+    derivedMultiplier = thresh / overVal;
+  }
+
+  const claimFormulaTooltip = `Tổng tiền chi trả = Chi trả cố định + Chi trả theo ngưỡng\n(Sau đó áp các giới hạn: mức tối đa của gói bảo hiểm và mức bảo hiểm của hợp đồng)`;
+
+  const fixTooltip = `Chi trả cố định: Khoản tiền do hệ thống tính toán dựa trên mức bảo hiểm cơ bản của gói bảo hiểm.`;
+
+  const thresholdTooltip = derivedMultiplier
+    ? `Chi trả theo ngưỡng: ${thresh} = ${overVal} × ${derivedMultiplier.toFixed(
+        4
+      )}\nHệ số được suy ra từ dữ liệu.`
+    : `Chi trả theo ngưỡng: Khoản tiền bổ sung dựa trên giá trị vượt quá ngưỡng được phép.`;
+
+  const overThresholdTooltip = `Giá trị chênh lệch đo được (dạng phần trăm). Ví dụ: 0.41 = 41%.\nGiá trị này dùng để tính khoản chi trả bổ sung.`;
   return (
     <>
       {/* Header */}
@@ -179,12 +200,24 @@ export default function ClaimHeader({
                   />
                 </div>
               </div>
-              <Text
-                type="secondary"
-                style={{ fontSize: "13px", display: "block" }}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 6,
+                  alignItems: "center",
+                }}
               >
-                Tổng số tiền chi trả
-              </Text>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: "13px", display: "block" }}
+                >
+                  Tổng số tiền chi trả
+                </Text>
+                <Tooltip title={claimFormulaTooltip} placement="top">
+                  <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                </Tooltip>
+              </div>
               <div
                 style={{
                   fontSize: "24px",
@@ -226,12 +259,24 @@ export default function ClaimHeader({
                   />
                 </div>
               </div>
-              <Text
-                type="secondary"
-                style={{ fontSize: "13px", display: "block" }}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 6,
+                  alignItems: "center",
+                }}
               >
-                Chi trả cố định
-              </Text>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: "13px", display: "block" }}
+                >
+                  Chi trả cố định
+                </Text>
+                <Tooltip title={fixTooltip} placement="top">
+                  <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                </Tooltip>
+              </div>
               <div
                 style={{
                   fontSize: "20px",
@@ -273,12 +318,24 @@ export default function ClaimHeader({
                   />
                 </div>
               </div>
-              <Text
-                type="secondary"
-                style={{ fontSize: "13px", display: "block" }}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 6,
+                  alignItems: "center",
+                }}
               >
-                Chi trả theo ngưỡng
-              </Text>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: "13px", display: "block" }}
+                >
+                  Chi trả theo ngưỡng
+                </Text>
+                <Tooltip title={thresholdTooltip} placement="top">
+                  <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                </Tooltip>
+              </div>
               <div
                 style={{
                   fontSize: "20px",
@@ -320,12 +377,24 @@ export default function ClaimHeader({
                   />
                 </div>
               </div>
-              <Text
-                type="secondary"
-                style={{ fontSize: "13px", display: "block" }}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 6,
+                  alignItems: "center",
+                }}
               >
-                Giá trị vượt ngưỡng
-              </Text>
+                <Text
+                  type="secondary"
+                  style={{ fontSize: "13px", display: "block" }}
+                >
+                  Giá trị vượt ngưỡng
+                </Text>
+                <Tooltip title={overThresholdTooltip} placement="top">
+                  <InfoCircleOutlined style={{ color: "#8c8c8c" }} />
+                </Tooltip>
+              </div>
               <div
                 style={{
                   fontSize: "24px",
@@ -335,7 +404,7 @@ export default function ClaimHeader({
                 }}
               >
                 {claimDetail.over_threshold_value
-                  ? `${claimDetail.over_threshold_value.toFixed(2)}%`
+                  ? `${(claimDetail.over_threshold_value * 100).toFixed(2)}%`
                   : "-"}
               </div>
             </div>

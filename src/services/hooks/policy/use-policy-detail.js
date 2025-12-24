@@ -15,6 +15,7 @@ export function usePolicyDetail(policyId) {
   const [basePolicy, setBasePolicy] = useState(null);
   const [riskAnalysis, setRiskAnalysis] = useState(null);
   const [monitoringData, setMonitoringData] = useState(null);
+  const [farmerDisplayName, setFarmerDisplayName] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -83,6 +84,28 @@ export function usePolicyDetail(policyId) {
 
         setPolicy(policyData);
 
+        // 2a. Fetch public user (farmer) display name if available
+        if (policyData.farmer_id) {
+          try {
+            const publicUserUrl = endpoints.profile.get_public_user_by_id(
+              policyData.farmer_id
+            );
+            const publicUserResp = await axiosInstance.get(publicUserUrl);
+            if (publicUserResp.data?.success && publicUserResp.data.data) {
+              const display =
+                publicUserResp.data.data.display_name ||
+                publicUserResp.data.data.full_name ||
+                `Nông dân đăng kí ${policyData.farmer_id}`;
+              setFarmerDisplayName(display);
+            } else {
+              setFarmerDisplayName(`Nông dân đăng kí ${policyData.farmer_id}`);
+            }
+          } catch (err) {
+            console.error("Error fetching public user:", err);
+            setFarmerDisplayName(`Nông dân đăng kí ${policyData.farmer_id}`);
+          }
+        }
+
         // 2. Fetch Farm Detail if farm_id exists
         if (policyData.farm_id) {
           try {
@@ -102,7 +125,10 @@ export function usePolicyDetail(policyId) {
           try {
             console.log("=== FETCHING BASE POLICY ===");
             console.log("Base Policy ID:", policyData.base_policy_id);
-            console.log("Insurance Provider ID:", policyData.insurance_provider_id);
+            console.log(
+              "Insurance Provider ID:",
+              policyData.insurance_provider_id
+            );
 
             const basePolicyUrl = endpoints.policy.base_policy.get_detail(
               policyData.base_policy_id,
@@ -309,5 +335,6 @@ export function usePolicyDetail(policyId) {
     accessDenied,
     refetch: fetchPolicyDetail,
     hasRiskAnalysis, // New field to check if risk analysis exists
+    farmerDisplayName,
   };
 }

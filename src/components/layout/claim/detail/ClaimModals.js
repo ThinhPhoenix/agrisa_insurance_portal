@@ -240,7 +240,7 @@ export default function ClaimModals({
                 />
               </Form.Item>
 
-              <Form.Item
+              {/* <Form.Item
                 name="validated_by"
                 label="Người Đánh Giá"
                 rules={[
@@ -256,7 +256,7 @@ export default function ClaimModals({
                   placeholder="Ví dụ: Nguyễn Văn A - Chuyên viên thẩm định"
                   size="large"
                 />
-              </Form.Item>
+              </Form.Item> */}
 
               <Form.Item
                 name="validation_notes"

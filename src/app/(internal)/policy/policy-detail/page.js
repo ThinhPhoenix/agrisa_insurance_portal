@@ -94,6 +94,7 @@ export default function PolicyDetailPage() {
     accessDenied,
     refetch,
     hasRiskAnalysis,
+    farmerDisplayName,
   } = usePolicyDetail(policyId);
 
   const [decisionModalVisible, setDecisionModalVisible] = useState(false);
@@ -634,7 +635,13 @@ export default function PolicyDetailPage() {
           <span className="hidden sm:inline">Cơ bản</span>
         </span>
       ),
-      children: <BasicInfoTab policy={policy} farm={farm} />,
+      children: (
+        <BasicInfoTab
+          policy={policy}
+          farm={farm}
+          farmerDisplayName={farmerDisplayName}
+        />
+      ),
     },
     {
       key: "basePolicy",

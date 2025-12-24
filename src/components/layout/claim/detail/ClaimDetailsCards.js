@@ -1,5 +1,6 @@
 "use client";
 
+import { useGetPublicUser } from "@/services/hooks/profile/use-profile";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -8,6 +9,7 @@ import {
 } from "@ant-design/icons";
 import { Card, Col, Descriptions, Space, Typography } from "antd";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const { Text } = Typography;
 
@@ -85,6 +87,35 @@ export default function ClaimDetailsCards({
   basePolicy,
   farm,
 }) {
+  const { getPublicUser, isLoading: isLoadingReviewer } = useGetPublicUser();
+  const [reviewerLabel, setReviewerLabel] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const reviewerId = claimDetail?.reviewed_by;
+    if (!reviewerId) return;
+
+    // Fetch public user display name; fallback to id
+    getPublicUser(reviewerId)
+      .then((res) => {
+        if (!mounted) return;
+        if (res.success && res.data) {
+          setReviewerLabel(
+            res.data.display_name || res.data.full_name || reviewerId
+          );
+        } else {
+          setReviewerLabel(reviewerId);
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setReviewerLabel(reviewerId);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [claimDetail?.reviewed_by, getPublicUser]);
   const hasPartnerReview =
     claimDetail.partner_review_timestamp ||
     claimDetail.partner_decision ||
@@ -255,7 +286,13 @@ export default function ClaimDetailsCards({
               </Descriptions.Item>
               <Descriptions.Item label="Người đánh giá" span={1}>
                 {claimDetail.reviewed_by ? (
-                  <Text>{claimDetail.reviewed_by}</Text>
+                  isLoadingReviewer ? (
+                    <Text type="secondary">Đang tải...</Text>
+                  ) : reviewerLabel ? (
+                    <Text>{reviewerLabel}</Text>
+                  ) : (
+                    <Text>{claimDetail.reviewed_by}</Text>
+                  )
                 ) : (
                   <Text type="secondary">-</Text>
                 )}

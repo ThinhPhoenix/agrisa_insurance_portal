@@ -1,5 +1,4 @@
 import GlassmorphismBadge from "@/components/layout/policy/detail/glassmorphism-badge";
-import { useGetPublicUser } from "@/services/hooks/profile/use-profile";
 import {
   CalendarOutlined,
   DollarOutlined,
@@ -31,36 +30,19 @@ const CROP_TYPE_COLORS = {
   tea: "#389e0d",
 };
 
-export default function BasicInfoTab({ policy, farm }) {
-  const { getPublicUser } = useGetPublicUser();
+export default function BasicInfoTab({ policy, farm, farmerDisplayName }) {
   const [farmerLabel, setFarmerLabel] = useState(
-    policy?.farmer_id ? `Nông dân đăng kí ${policy.farmer_id}` : ""
+    farmerDisplayName || (policy?.farmer_id ? `Nông dân đăng kí ${policy.farmer_id}` : "")
   );
 
+  // Keep farmerLabel in sync if parent provides the display name later
   useEffect(() => {
-    let mounted = true;
-    const id = policy?.farmer_id;
-    if (!id) return;
-
-    // attempt to fetch public user display name; fallback to id label
-    getPublicUser(id)
-      .then((res) => {
-        if (!mounted) return;
-        if (res.success && res.data?.display_name) {
-          setFarmerLabel(res.data.display_name);
-        } else {
-          setFarmerLabel(`Nông dân đăng kí ${id}`);
-        }
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setFarmerLabel(`Nông dân đăng kí ${id}`);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [policy?.farmer_id, getPublicUser]);
+    if (farmerDisplayName) {
+      setFarmerLabel(farmerDisplayName);
+    } else if (policy?.farmer_id) {
+      setFarmerLabel(`Nông dân đăng kí ${policy.farmer_id}`);
+    }
+  }, [farmerDisplayName, policy?.farmer_id]);
   return (
     <Card>
       {/* Policy Info Section */}

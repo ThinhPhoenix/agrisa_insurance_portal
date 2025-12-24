@@ -138,7 +138,7 @@ const BasicTabComponent = ({
                     if (from.isValid()) {
                         const validTo = from.add(Number(duration), 'day');
                         allValues.insuranceValidTo = validTo;
-                        // Update the form field immediately
+                        // Update the form field immediately (non-text field, safe)
                         form.setFieldsValue({ insuranceValidTo: validTo });
                     }
                 }
@@ -150,10 +150,10 @@ const BasicTabComponent = ({
             }
 
             // Debounce the onChange call to prevent re-render during typing
-            // This fixes Vietnamese input composition issues
+            // CRITICAL: 600ms delay required for Vietnamese IME composition to complete properly
             timeoutRef.current = setTimeout(() => {
                 onDataChange(allValues);
-            }, 300); // 300ms debounce
+            }, 600); // 600ms debounce for Vietnamese typing (increased from 300ms)
         },
         [onDataChange, form]
     );
@@ -183,8 +183,18 @@ const BasicTabComponent = ({
 
             // Debounce sync to prevent rapid updates
             syncTimeoutRef.current = setTimeout(() => {
-                // Update form fields with current basicData
-                form.setFieldsValue(basicData);
+                // ✅ FIX: Only sync non-text fields to prevent Vietnamese IME interruption
+                // Exclude fields that user actively types into to avoid cursor jump
+                const { productName, productDescription, importantAdditionalInformation, ...safeFields } = basicData;
+
+                // Get current form values for text fields
+                const currentTextFields = form.getFieldsValue(['productName', 'productDescription', 'importantAdditionalInformation']);
+
+                // Merge: use form's current text values + new non-text values
+                form.setFieldsValue({
+                    ...safeFields,
+                    ...currentTextFields, // Preserve what user is typing
+                });
 
                 console.log('✅ BasicTab synced with template data:', {
                     dataSourcesCount: basicData.selectedDataSources?.length || 0,
@@ -193,7 +203,7 @@ const BasicTabComponent = ({
 
                 // Update ref to new data
                 basicDataRef.current = basicData;
-            }, 100);
+            }, 150); // Slightly longer delay to avoid race with handleValuesChange
         }
 
         // Cleanup

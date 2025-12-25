@@ -364,11 +364,11 @@ export default function PolicyDetailPage() {
           const userData = JSON.parse(meData);
           const partnerId = userData?.partner_id;
 
-          if (!partnerId || policy.insurance_provider_id !== partnerId) {
-            message.error(getApprovalError("UNAUTHORIZED_APPROVE"));
-            router.push(`/policy/${pageType}`);
-            return;
-          }
+          // if (!partnerId || policy.insurance_provider_id !== partnerId) {
+          //   message.error(getApprovalError("UNAUTHORIZED_APPROVE"));
+          //   router.push(`/policy/${pageType}`);
+          //   return;
+          // }
         } catch (e) {
           console.error("Failed to parse user data:", e);
           message.error(getApprovalError("USER_DATA_PARSE_FAILED"));

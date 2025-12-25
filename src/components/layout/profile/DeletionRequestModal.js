@@ -102,7 +102,7 @@ export default function DeletionRequestModal({
     setSubmitting(true);
     const payload = {
       detailed_explanation: values.detailed_explanation || "",
-      transfer_to_partner_id: selectedPartner.partner_id,
+      transfer_partner_id: selectedPartner.partner_id,
     };
 
     const result = await createDeletionRequest(payload);

@@ -1,4 +1,5 @@
 import { useRevokeDeletionRequest } from "@/services/hooks/profile/use-partner-deletion";
+import { Utils } from "@/utils/utils";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -280,12 +281,10 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
           </Descriptions.Item>
 
           <Descriptions.Item label="Ngày yêu cầu">
-            {new Date(request.requested_at).toLocaleString("vi-VN")}
+            {Utils.formatStringVietnameseDateTime(request.requested_at)}
           </Descriptions.Item>
 
-          <Descriptions.Item label="Hạn hủy yêu cầu" span={2}>
-            {new Date(request.cancellable_until).toLocaleString("vi-VN")}
-          </Descriptions.Item>
+         
 
           {request.detailed_explanation && (
             <Descriptions.Item label="Lý do" span={2}>
@@ -303,7 +302,7 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
 
               <Descriptions.Item label="Ngày xử lý">
                 {request.reviewed_at
-                  ? new Date(request.reviewed_at).toLocaleString("vi-VN")
+                  ? Utils.formatStringVietnameseDateTime(request.reviewed_at)
                   : "—"}
               </Descriptions.Item>
 
@@ -332,7 +331,7 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
                     <Text strong>Tạo yêu cầu</Text>
                     <br />
                     <Text type="secondary">
-                      {new Date(request.requested_at).toLocaleString("vi-VN")}
+                      {Utils.formatStringVietnameseDateTime(request.requested_at)}
                     </Text>
                     <br />
                     <Text type="secondary">
@@ -341,28 +340,7 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
                   </>
                 ),
               },
-              ...(request.status === "pending"
-                ? [
-                    {
-                      color: canRevoke ? "blue" : "gray",
-                      children: (
-                        <>
-                          <Text strong>
-                            {canRevoke
-                              ? "Thời gian hủy yêu cầu"
-                              : "Chờ quản trị viên xử lý"}
-                          </Text>
-                          <br />
-                          <Text type="secondary">
-                            {canRevoke
-                              ? `Còn ${timeRemaining?.days} ngày ${timeRemaining?.hours} giờ`
-                              : "Đang chờ xử lý"}
-                          </Text>
-                        </>
-                      ),
-                    },
-                  ]
-                : []),
+              
               ...(request.status === "approved" ||
               request.status === "rejected" ||
               request.status === "cancelled"
@@ -381,9 +359,7 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
                           {request.reviewed_at && (
                             <>
                               <Text type="secondary">
-                                {new Date(request.reviewed_at).toLocaleString(
-                                  "vi-VN"
-                                )}
+                                {Utils.formatStringVietnameseDateTime(request.reviewed_at)}
                               </Text>
                               <br />
                             </>

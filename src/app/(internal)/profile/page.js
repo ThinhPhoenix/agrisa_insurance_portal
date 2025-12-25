@@ -47,6 +47,7 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import "./profile.css";
+import { Utils } from "@/utils/utils";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -1283,15 +1284,9 @@ function CompanyInfoTab() {
                 dataIndex: "requested_at",
                 key: "requested_at",
                 render: (date) =>
-                  date ? new Date(date).toLocaleString("vi-VN") : "—",
+                  Utils.formatStringVietnameseDateTime(date) || "—",
               },
-              {
-                title: "Hạn tự hủy",
-                dataIndex: "cancellable_until",
-                key: "cancellable_until",
-                render: (date) =>
-                  date ? new Date(date).toLocaleString("vi-VN") : "—",
-              },
+              
               {
                 title: "Người xử lý",
                 dataIndex: "reviewed_by_name",
@@ -1303,7 +1298,7 @@ function CompanyInfoTab() {
                 dataIndex: "reviewed_at",
                 key: "reviewed_at",
                 render: (date) =>
-                  date ? new Date(date).toLocaleString("vi-VN") : "—",
+                  Utils.formatStringVietnameseDateTime(date) || "—",
               },
               {
                 title: "Lý do",

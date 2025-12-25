@@ -285,7 +285,7 @@ export default function DashboardPage() {
 
   // Financial Summary Doughnut Chart
   const financialSummaryChart = {
-    labels: ["Phí bảo hiểm", "Chi trả bồi thường", "Chi phí dữ liệu"],
+    labels: ["Phí bảo hiểm", "Chi trả bảo hiểm", "Chi phí dữ liệu"],
     datasets: [
       {
         data: [totalPremium, totalPayout, totalDataCost],
@@ -408,7 +408,7 @@ export default function DashboardPage() {
           ),
           datasets: [
             {
-              label: "Chi trả TB mỗi bồi thường",
+              label: "Chi trả trung bình trên mỗi đơn",
               data: data.monthly_payout_per_claim_trend.map(
                 (item) => item.avg_payout_per_claim || 0
               ),
@@ -419,7 +419,7 @@ export default function DashboardPage() {
               yAxisID: "y",
             },
             {
-              label: "Số lượng bồi thường",
+              label: "Số lượng đơn đã chi trả",
               data: data.monthly_payout_per_claim_trend.map(
                 (item) => item.total_paid_claims || 0
               ),
@@ -808,7 +808,7 @@ export default function DashboardPage() {
                   {dashboard.formatCurrency(totalPayout)}
                 </div>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  Chi trả bồi thường
+                  Chi trả bảo hiểm
                 </Text>
               </div>
             </Col>
@@ -913,7 +913,7 @@ export default function DashboardPage() {
                   {dashboard.formatCurrency(data?.total_payout_disbursed || 0)}
                 </div>
                 <Text type="secondary" style={{ fontSize: 11 }}>
-                  Bồi thường
+                  Chi trả bảo hiểm
                 </Text>
               </Space>
             </Card>
@@ -1541,7 +1541,7 @@ export default function DashboardPage() {
           title={
             <Space>
               <LineChartOutlined style={{ color: "#18573f" }} />
-              <span>Phân tích chi trả bồi thường</span>
+              <span>Phân tích chi trả</span>
             </Space>
           }
           extra={
@@ -1622,7 +1622,7 @@ export default function DashboardPage() {
                       labels: payoutPerClaimChart.labels,
                       datasets: [
                         {
-                          label: "Chi trả TB mỗi bồi thường",
+                          label: "Chi trả trung bình trên mỗi đơn",
                           data: payoutPerClaimChart.datasets[0].data,
                           backgroundColor: "rgba(24, 87, 63, 0.6)",
                           borderColor: "#18573f",
@@ -1631,7 +1631,7 @@ export default function DashboardPage() {
                           yAxisID: "y",
                         },
                         {
-                          label: "Số lượng bồi thường",
+                          label: "Số lượng chi trả",
                           data: payoutPerClaimChart.datasets[1].data,
                           backgroundColor: "rgba(250, 173, 20, 0.6)",
                           borderColor: "#faad14",
@@ -1648,7 +1648,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <Empty
-              description="Chưa có dữ liệu chi trả bồi thường"
+              description="Chưa có dữ liệu chi trả"
               style={{ padding: "60px 0" }}
             />
           )}

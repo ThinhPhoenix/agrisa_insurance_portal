@@ -43,10 +43,18 @@ export const POLICY_TEMPLATES = [
       fixPayoutAmount: 5000000,
       payoutCap: 10000000,
       overThresholdMultiplier: 1.2,
-      enrollmentStartDay: dayjs().subtract(5, "day"),
-      enrollmentEndDay: dayjs().add(25, "day"),
-      insuranceValidFrom: dayjs(),
-      insuranceValidTo: dayjs().add(120, "day"),
+      get enrollmentStartDay() {
+        return dayjs();
+      },
+      get enrollmentEndDay() {
+        return dayjs().add(25, "day");
+      },
+      get insuranceValidFrom() {
+        return dayjs();
+      },
+      get insuranceValidTo() {
+        return dayjs().add(120, "day");
+      },
       autoRenewal: false,
       renewalDiscountRate: 0,
       basePolicyInvalidDate: null,
@@ -134,10 +142,18 @@ export const POLICY_TEMPLATES = [
       fixPayoutAmount: 6000000,
       payoutCap: 12000000,
       overThresholdMultiplier: 1.3,
-      enrollmentStartDay: dayjs().subtract(3, "day"),
-      enrollmentEndDay: dayjs().add(27, "day"),
-      insuranceValidFrom: dayjs().add(10, "day"),
-      insuranceValidTo: dayjs().add(130, "day"),
+      get enrollmentStartDay() {
+        return dayjs();
+      },
+      get enrollmentEndDay() {
+        return dayjs().add(27, "day");
+      },
+      get insuranceValidFrom() {
+        return dayjs().add(10, "day");
+      },
+      get insuranceValidTo() {
+        return dayjs().add(130, "day");
+      },
       autoRenewal: false,
       renewalDiscountRate: 0,
       basePolicyInvalidDate: null,
@@ -225,10 +241,18 @@ export const POLICY_TEMPLATES = [
       fixPayoutAmount: 7500000,
       payoutCap: 15000000,
       overThresholdMultiplier: 1.5,
-      enrollmentStartDay: dayjs().subtract(7, "day"),
-      enrollmentEndDay: dayjs().add(23, "day"),
-      insuranceValidFrom: dayjs(),
-      insuranceValidTo: dayjs().add(150, "day"),
+      get enrollmentStartDay() {
+        return dayjs();
+      },
+      get enrollmentEndDay() {
+        return dayjs().add(23, "day");
+      },
+      get insuranceValidFrom() {
+        return dayjs();
+      },
+      get insuranceValidTo() {
+        return dayjs().add(150, "day");
+      },
       autoRenewal: true,
       renewalDiscountRate: 0.1,
       basePolicyInvalidDate: null,
@@ -336,10 +360,18 @@ export const POLICY_TEMPLATES = [
       fixPayoutAmount: 8000000,
       payoutCap: 18000000,
       overThresholdMultiplier: 1.4,
-      enrollmentStartDay: dayjs().subtract(10, "day"),
-      enrollmentEndDay: dayjs().add(20, "day"),
-      insuranceValidFrom: dayjs().add(5, "day"),
-      insuranceValidTo: dayjs().add(185, "day"),
+      get enrollmentStartDay() {
+        return dayjs();
+      },
+      get enrollmentEndDay() {
+        return dayjs().add(20, "day");
+      },
+      get insuranceValidFrom() {
+        return dayjs().add(5, "day");
+      },
+      get insuranceValidTo() {
+        return dayjs().add(185, "day");
+      },
       autoRenewal: false,
       renewalDiscountRate: 0,
       basePolicyInvalidDate: null,

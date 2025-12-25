@@ -414,12 +414,24 @@ const PolicyTemplateSelector = memo(({
             }
 
             // 3. Prepare final data
+            // Evaluate any getters on template.basicData to plain values
+            const templateBasicRaw = template.basicData || {};
+            const templateBasicRest = {};
+            for (const key in templateBasicRaw) {
+                try {
+                    // Access the property to evaluate getters
+                    templateBasicRest[key] = templateBasicRaw[key];
+                } catch (e) {
+                    // ignore any accessor errors
+                }
+            }
+
             // Ensure templates do NOT inject a pre-defined productCode.
-            // Remove productCode from template.basicData and set to empty so
-            // the form/hook will auto-generate it on create.
-            const { productCode, ...templateBasicRest } = template.basicData || {};
+            // Also fallback productName/productDescription to template metadata
             const finalBasicData = {
                 ...templateBasicRest,
+                productName: templateBasicRest.productName || template.name,
+                productDescription: templateBasicRest.productDescription || template.description,
                 productCode: "",
                 selectedDataSources: mappedDataSources,
             };

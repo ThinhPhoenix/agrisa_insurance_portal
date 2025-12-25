@@ -257,7 +257,17 @@ const useCreatePolicy = () => {
           setCategoriesError("Không có danh mục dữ liệu nào");
           message.info("Không có danh mục dữ liệu nào");
         } else {
-          setCategories(response.data.data);
+          // Normalize categories to ensure UI fields exist
+          const normalized = response.data.data.map((cat) => ({
+            id: cat.id,
+            category_name: cat.category_name || cat.name || "",
+            category_description:
+              cat.category_description || cat.description || "",
+            category_cost_multiplier:
+              cat.category_cost_multiplier ?? cat.categoryCostMultiplier ?? 1,
+            ...cat,
+          }));
+          setCategories(normalized);
         }
       } else {
         throw new Error(response.data.message || "Failed to fetch categories");
@@ -579,7 +589,8 @@ const useCreatePolicy = () => {
           selectedDataSources: prev.selectedDataSources.filter(
             (source) =>
               // ✅ FIX: Check BOTH instanceId (manual add) AND id (template data)
-              source.instanceId !== instanceIdOrId && source.id !== instanceIdOrId
+              source.instanceId !== instanceIdOrId &&
+              source.id !== instanceIdOrId
           ),
         };
       });

@@ -7,7 +7,13 @@ import { memo, useEffect, useState } from 'react';
 
 const { Title, Text: TypographyText } = Typography;
 
-const renderOptionWithTooltip = (item, content) => content; // fallback if global helper is not available
+const renderOptionWithTooltip = (item, content) => {
+    // If item has a description, expose it as a native title attribute (works in dropdown items)
+    if (item && item.description) {
+        return <div title={item.description}>{content}</div>;
+    }
+    return content;
+};
 
 const ConditionForm = memo(({
     availableDataSources,
@@ -300,7 +306,7 @@ const ConditionForm = memo(({
                                                 key={func.value}
                                                 value={func.value}
                                                 label={func.label}
-                                                description={func.description}
+                                                title={func.description}
                                             >
                                                 {renderOptionWithTooltip(func, <div><div><strong>{func.label}</strong></div><div style={{ marginTop: '4px' }}>{func.description}</div></div>)}
                                             </Select.Option>
@@ -313,7 +319,7 @@ const ConditionForm = memo(({
                                 <Form.Item
                                     name="aggregationWindowDays"
                                     label={dict.getFieldLabel('BasePolicyTriggerCondition', 'aggregation_window_days')}
-                                    tooltip="Chu kỳ tổng hợp (Aggregation Window): Khoảng thời gian (tính bằng ngày) mà dữ liệu được gom lại để tính toán. Ví dụ: 30 ngày nghĩa là sẽ tính tổng/trung bình dữ liệu của 30 ngày gần nhất"
+                                    tooltip="Cửa sổ tính toán (Aggregation Window): Khoảng thời gian (tính bằng ngày) mà dữ liệu được gom lại để tính toán. Ví dụ: 30 ngày nghĩa là sẽ tính tổng/trung bình dữ liệu của 30 ngày gần nhất"
                                     rules={[
                                         { required: true, message: getConditionValidation('AGGREGATION_WINDOW_DAYS_REQUIRED') },
                                         { type: 'number', min: 1, message: getConditionValidation('AGGREGATION_WINDOW_DAYS_MIN') }
@@ -365,7 +371,7 @@ const ConditionForm = memo(({
                                                     key={operator.value}
                                                     value={operator.value}
                                                     label={operator.label}
-                                                    description={operator.description}
+                                                    title={operator.description}
                                                 >
                                                     {renderOptionWithTooltip(operator, <div><div><strong>{operator.label}</strong></div><div style={{ marginTop: '4px' }}>{operator.description}</div></div>)}
                                                 </Select.Option>

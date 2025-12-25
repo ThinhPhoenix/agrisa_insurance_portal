@@ -1266,60 +1266,41 @@ const BasicTabComponent = ({
                                     optionLabelProp="label"
                                     loading={categoriesLoading}
                                 >
-                                    {categories?.map((category) => (
-                                        <Option
-                                            key={category.id}
-                                            value={category.category_name}
-                                            label={category.category_name}
-                                        >
-                                            <Tooltip
-                                                title={
-                                                    <div>
-                                                        <div>
-                                                            <strong>
-                                                                {
-                                                                    category.category_name
-                                                                }
-                                                            </strong>
-                                                        </div>
-                                                        <div
-                                                            style={{
-                                                                marginTop:
-                                                                    "4px",
-                                                            }}
-                                                        >
-                                                            {
-                                                                category.category_description
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                }
-                                                placement="right"
-                                                mouseEnterDelay={0.3}
+                                    {categories?.map((category) => {
+                                        const multiplier = category.category_cost_multiplier ?? category.categoryCostMultiplier ?? 1;
+                                        const labelText = `${category.category_name} (x${multiplier})`;
+                                        return (
+                                            <Option
+                                                key={category.id}
+                                                value={category.category_name}
+                                                label={labelText}
                                             >
-                                                <div
-                                                    style={{
-                                                        cursor: "pointer",
-                                                    }}
+                                                <Tooltip
+                                                    title={
+                                                        <div>
+                                                            <div>
+                                                                <strong>{category.category_name}</strong>
+                                                            </div>
+                                                            <div style={{ marginTop: "4px" }}>
+                                                                {category.category_description}
+                                                            </div>
+                                                            <div style={{ marginTop: "6px", color: "#52c41a" }}>
+                                                                Hệ số (Category Multiplier): x{multiplier}
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    placement="right"
+                                                    mouseEnterDelay={0.3}
                                                 >
-                                                    <Text>
-                                                        {category.category_name}
-                                                    </Text>
-                                                    <br />
-                                                    <Text
-                                                        type="secondary"
-                                                        style={{
-                                                            fontSize: "12px",
-                                                        }}
-                                                    >
-                                                        {
-                                                            category.category_description
-                                                        }
-                                                    </Text>
-                                                </div>
-                                            </Tooltip>
-                                        </Option>
-                                    ))}
+                                                    <div style={{ cursor: "pointer" }}>
+                                                        <Text>{category.category_name} <Text type="secondary">(x{multiplier})</Text></Text>
+                                                        <br />
+                                                        <Text type="secondary" style={{ fontSize: "12px" }}>{category.category_description}</Text>
+                                                    </div>
+                                                </Tooltip>
+                                            </Option>
+                                        );
+                                    })}
                                 </Select>
                             </Form.Item>
                         </Col>

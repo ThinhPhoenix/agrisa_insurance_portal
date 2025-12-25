@@ -44,8 +44,12 @@ export default function PaymentSuccessPage() {
             : "Giao dịch của bạn đã được xử lý thành công."
         }
         extra={[
-          <Button type="primary" key="home" onClick={() => router.push("/")}>
-            Về trang chủ
+          <Button
+            type="primary"
+            key="base"
+            onClick={() => router.push("/base-policy")}
+          >
+            Về danh sách Gói bảo hiểm
           </Button>,
           <Button key="orders" onClick={() => router.push("/orders")}>
             Xem đơn hàng

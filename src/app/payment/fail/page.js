@@ -60,8 +60,8 @@ export default function PaymentFailPage() {
           <Button type="primary" key="retry" onClick={() => router.back()}>
             Thử lại
           </Button>,
-          <Button key="home" onClick={() => router.push("/")}>
-            Về trang chủ
+          <Button key="base" onClick={() => router.push("/base-policy")}>
+            Về danh sách Gói bảo hiểm
           </Button>,
           <Button key="support" onClick={() => router.push("/support")}>
             Liên hệ hỗ trợ

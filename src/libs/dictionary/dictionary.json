@@ -1,1541 +1,1541 @@
 {
-    "QUẢN LÝ BẢO HIỂM": {},
-    "BasePolicy": {
-        "id": { "tieng_viet": "Mã sản phẩm bảo hiểm", "ghi_chu": "" },
-        "insurance_provider_id": {
-            "tieng_viet": "Mã công ty bảo hiểm",
-            "ghi_chu": ""
-        },
-        "product_name": {
-            "tieng_viet": "Tên gói bảo hiểm",
-            "ghi_chu": "Ví dụ: Bảo hiểm lúa cơ bản"
-        },
-        "product_code": {
-            "tieng_viet": "Mã bảo hiểm",
-            "ghi_chu": "Mã ngắn gọn"
-        },
-        "product_description": {
-            "tieng_viet": "Mô tả chi tiết",
-            "ghi_chu": "Giải thích chi tiết"
-        },
-        "crop_type": {
-            "tieng_viet": "Loại cây trồng",
-            "ghi_chu": "Lúa, cà phê..."
-        },
-        "coverage_currency": {
-            "tieng_viet": "Đơn vị tiền",
-            "ghi_chu": "VND hoặc USD"
-        },
-        "coverage_duration_days": {
-            "tieng_viet": "Thời hạn bảo hiểm",
-            "ghi_chu": "Số ngày được bảo hiểm"
-        },
-        "fix_premium_amount": {
-            "tieng_viet": "Phí bảo hiểm cố định",
-            "ghi_chu": "Số tiền phải đóng"
-        },
-        "is_per_hectare": {
-            "tieng_viet": "Tính theo hecta",
-            "ghi_chu": "Phí tính theo diện tích hay không (boolean)"
-        },
-        "premium_base_rate": {
-            "tieng_viet": "Tỷ lệ phí cơ bản",
-            "ghi_chu": "Ví dụ: 0.05=5%"
-        },
-        "max_premium_payment_prolong": {
-            "tieng_viet": "Thời gian gia hạn nộp phí",
-            "ghi_chu": "Số giây được kéo dài thanh toán"
-        },
-        "fix_payout_amount": {
-            "tieng_viet": "Phí bồi thường cố định",
-            "ghi_chu": "Số tiền nhận khi có rủi ro"
-        },
-        "is_payout_per_hectare": {
-            "tieng_viet": "Bồi thường theo hecta",
-            "ghi_chu": "Tính theo diện tích hay không (boolean)"
-        },
-        "over_threshold_multiplier": {
-            "tieng_viet": "Hệ số vượt ngưỡng",
-            "ghi_chu": "Phải lớn hơn 0 (hợp lệ trong khoảng (0, 1)). Giá trị ≤ 0 hoặc ≥ 1 sẽ làm số tiền chi trả không hợp lệ."
-        },
-        "payout_base_rate": {
-            "tieng_viet": "Tỷ lệ bồi thường cơ bản",
-            "ghi_chu": "Ví dụ: 0.8=80%"
-        },
-        "payout_cap": {
-            "tieng_viet": "Mức bồi thường tối đa",
-            "ghi_chu": "Giới hạn trên"
-        },
-        "cancel_premium_rate": {
-            "tieng_viet": "Tỷ lệ hoàn phí khi hủy",
-            "ghi_chu": "Phần trăm được hoàn lại"
-        },
-        "enrollment_start_day": {
-            "tieng_viet": "Ngày mở đăng ký",
-            "ghi_chu": "Ngày bắt đầu cho phép đăng ký"
-        },
-        "enrollment_end_day": {
-            "tieng_viet": "Ngày đóng đăng ký",
-            "ghi_chu": "Ngày hết hạn đăng ký"
-        },
-        "auto_renewal": {
-            "tieng_viet": "Tự động gia hạn",
-            "ghi_chu": "Có tự động gia hạn không"
-        },
-        "renewal_discount_rate": {
-            "tieng_viet": "Giảm giá khi gia hạn",
-            "ghi_chu": "Ví dụ: 0.1 = giảm 10%"
-        },
-        "base_policy_invalid_date": {
-            "tieng_viet": "Ngày hết hiệu lực gói",
-            "ghi_chu": "Ngày sản phẩm không còn bán"
-        },
-        "insurance_valid_from_day": {
-            "tieng_viet": "Hiệu lực từ ngày",
-            "ghi_chu": "Bảo hiểm bắt đầu có giá trị"
-        },
-        "insurance_valid_to_day": {
-            "tieng_viet": "Hết hiệu lực vào ngày",
-            "ghi_chu": "Bảo hiểm hết giá trị"
-        },
-        "status": { "tieng_viet": "Tình trạng hiện tại", "ghi_chu": "" },
-        "template_document_url": {
-            "tieng_viet": "Đường dẫn tài liệu mẫu",
-            "ghi_chu": "Link xem file PDF mẫu"
-        },
-        "document_validation_status": {
-            "tieng_viet": "Tình trạng kiểm tra tài liệu",
-            "ghi_chu": ""
-        },
-        "document_validation_score": {
-            "tieng_viet": "Điểm kiểm tra tài liệu",
-            "ghi_chu": "Điểm đánh giá tài liệu"
-        },
-        "document_tags": {
-            "tieng_viet": "Thẻ tài liệu",
-            "ghi_chu": "Nhãn phân loại tài liệu"
-        },
-        "important_additional_information": {
-            "tieng_viet": "Lưu ý quan trọng",
-            "ghi_chu": "Lưu ý đặc biệt"
-        },
-        "created_at": {
-            "tieng_viet": "Ngày tạo",
-            "ghi_chu": "Thời gian tạo bản ghi"
-        },
-        "updated_at": {
-            "tieng_viet": "Ngày cập nhật",
-            "ghi_chu": "Lần sửa gần nhất"
-        },
-        "created_by": {
-            "tieng_viet": "Người tạo",
-            "ghi_chu": "Mã người tạo sản phẩm"
-        }
+  "QUẢN LÝ BẢO HIỂM": {},
+  "BasePolicy": {
+    "id": { "tieng_viet": "Mã sản phẩm bảo hiểm", "ghi_chu": "" },
+    "insurance_provider_id": {
+      "tieng_viet": "Mã công ty bảo hiểm",
+      "ghi_chu": ""
     },
-    "BasePolicyStatus": {
-        "draft": { "tieng_viet": "Bản nháp", "ghi_chu": "Chưa hoàn tất" },
-        "payment_due": {
-            "tieng_viet": "Tới hạn thanh toán",
-            "ghi_chu": "Tới hạn thanh toán data mỗi tháng"
-        },
-        "active": { "tieng_viet": "Đang bán", "ghi_chu": "Sản phẩm đang bán" },
-        "closed": { "tieng_viet": "Đã đóng", "ghi_chu": "Ngừng bán" },
-        "archived": { "tieng_viet": "Đã lưu trữ", "ghi_chu": "Không dùng nữa" }
+    "product_name": {
+      "tieng_viet": "Tên gói bảo hiểm",
+      "ghi_chu": "Ví dụ: Bảo hiểm lúa cơ bản"
     },
-    "BasePolicyTrigger": {
-        "id": { "tieng_viet": "Mã kích hoạt", "ghi_chu": "" },
-        "base_policy_id": { "tieng_viet": "Mã gói bảo hiểm", "ghi_chu": "" },
-        "logical_operator": {
-            "tieng_viet": "Toán tử logic",
-            "ghi_chu": "AND hoặc OR"
-        },
-        "growth_stage": {
-            "tieng_viet": "Giai đoạn sinh trưởng",
-            "ghi_chu": "Giai đoạn phát triển của cây"
-        },
-        "monitor_interval": {
-            "tieng_viet": "Tần suất theo dõi",
-            "ghi_chu": "Tần suất kiểm tra"
-        },
-        "monitor_frequency_unit": {
-            "tieng_viet": "Đơn vị theo dõi",
-            "ghi_chu": "Giờ, ngày, tuần, tháng"
-        },
-        "blackout_periods": {
-            "tieng_viet": "Hiệu lực BH tạm ngưng vào",
-            "ghi_chu": "Khoảng thời gian không kích hoạt bảo hiểm"
-        },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+    "product_code": {
+      "tieng_viet": "Mã bảo hiểm",
+      "ghi_chu": "Mã ngắn gọn"
     },
-    "BasePolicyTriggerCondition": {
-        "id": { "tieng_viet": "Mã điều kiện", "ghi_chu": "" },
-        "base_policy_trigger_id": { "tieng_viet": "Mã trigger", "ghi_chu": "" },
-        "data_source_id": { "tieng_viet": "Mã nguồn dữ liệu", "ghi_chu": "" },
-        "threshold_operator": {
-            "tieng_viet": "Toán tử so sánh",
-            "ghi_chu": "<, <=, >, >=, ==, !="
-        },
-        "threshold_value": {
-            "tieng_viet": "Ngưỡng kích hoạt",
-            "ghi_chu": "Mức cần đạt để kích hoạt"
-        },
-        "early_warning_threshold": {
-            "tieng_viet": "Ngưỡng cảnh báo sớm",
-            "ghi_chu": "Cảnh báo trước khi đạt ngưỡng chính"
-        },
-        "aggregation_function": {
-            "tieng_viet": "Phương pháp tính",
-            "ghi_chu": "avg, min, max, sum, change"
-        },
-        "aggregation_window_days": {
-            "tieng_viet": "Chu kỳ tính toán",
-            "ghi_chu": "Khoảng thời gian để tính"
-        },
-        "consecutive_required": {
-            "tieng_viet": "Điều kiện liên tiếp",
-            "ghi_chu": "Phải xảy ra liên tục hay không"
-        },
-        "include_component": { "tieng_viet": "Yếu tố phụ", "ghi_chu": "" },
-        "baseline_window_days": {
-            "tieng_viet": "Khoảng đo lường chuẩn",
-            "ghi_chu": "Khoảng thời gian tham chiếu"
-        },
-        "baseline_function": {
-            "tieng_viet": "Cách tính đo lường",
-            "ghi_chu": ""
-        },
-        "validation_window_days": {
-            "tieng_viet": "Khoảng xác minh",
-            "ghi_chu": "Thời gian kiểm tra"
-        },
-        "condition_order": { "tieng_viet": "Thứ tự điều kiện", "ghi_chu": "" },
-        "base_cost": { "tieng_viet": "Phí gốc", "ghi_chu": "" },
-        "category_multiplier": { "tieng_viet": "Hệ số loại", "ghi_chu": "" },
-        "tier_multiplier": { "tieng_viet": "Hệ số bậc", "ghi_chu": "" },
-        "calculated_cost": {
-            "tieng_viet": "Tổng phí",
-            "ghi_chu": "Tổng chi phí cuối cùng"
-        },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+    "product_description": {
+      "tieng_viet": "Mô tả chi tiết",
+      "ghi_chu": "Giải thích chi tiết"
     },
-    "RegisteredPolicy": {
-        "id": { "tieng_viet": "Mã hợp đồng", "ghi_chu": "" },
-        "policy_number": {
-            "tieng_viet": "Số hợp đồng",
-            "ghi_chu": "Số theo dõi hợp đồng"
-        },
-        "base_policy_id": { "tieng_viet": "Mã bảo hiểm gốc", "ghi_chu": "" },
-        "insurance_provider_id": {
-            "tieng_viet": "Mã công ty bảo hiểm",
-            "ghi_chu": ""
-        },
-        "farm_id": { "tieng_viet": "Mã nông trại", "ghi_chu": "" },
-        "farmer_id": { "tieng_viet": "Mã nông dân", "ghi_chu": "" },
-        "coverage_amount": {
-            "tieng_viet": "Mức bồi thường",
-            "ghi_chu": "Mức bồi thường tối đa"
-        },
-        "coverage_start_date": { "tieng_viet": "Hiệu lực từ", "ghi_chu": "" },
-        "coverage_end_date": {
-            "tieng_viet": "Hết hiệu lực vào",
-            "ghi_chu": ""
-        },
-        "planting_date": { "tieng_viet": "Ngày gieo trồng", "ghi_chu": "" },
-        "area_multiplier": {
-            "tieng_viet": "Hệ số diện tích",
-            "ghi_chu": "Nhân với diện tích thực tế"
-        },
-        "total_farmer_premium": {
-            "tieng_viet": "Tổng phí thanh toán (nông dân)",
-            "ghi_chu": ""
-        },
-        "premium_paid_by_farmer": {
-            "tieng_viet": "Nông dân đã thanh toán",
-            "ghi_chu": "Có/Không"
-        },
-        "premium_paid_at": {
-            "tieng_viet": "Thời điểm thanh toán phí",
-            "ghi_chu": ""
-        },
-        "data_complexity_score": {
-            "tieng_viet": "Điểm phức tạp dữ liệu",
-            "ghi_chu": ""
-        },
-        "monthly_data_cost": {
-            "tieng_viet": "Chi phí dữ liệu hàng tháng",
-            "ghi_chu": ""
-        },
-        "total_data_cost": { "tieng_viet": "Tổng phí dữ liệu", "ghi_chu": "" },
-        "status": { "tieng_viet": "Tình trạng hợp đồng", "ghi_chu": "" },
-        "underwriting_status": {
-            "tieng_viet": "Tình trạng thẩm định",
-            "ghi_chu": ""
-        },
-        "signed_policy_document_url": {
-            "tieng_viet": "Đường dẫn hợp đồng đã ký",
-            "ghi_chu": "Link xem hợp đồng"
-        },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" },
-        "registered_by": { "tieng_viet": "Người đăng ký", "ghi_chu": "" }
+    "crop_type": {
+      "tieng_viet": "Loại cây trồng",
+      "ghi_chu": "Lúa, cà phê..."
     },
-    "PolicyStatus": {
-        "draft": { "tieng_viet": "Bản nháp", "ghi_chu": "Chưa hoàn tất" },
-        "pending_review": {
-            "tieng_viet": "Chờ xét duyệt",
-            "ghi_chu": "Đang chờ kiểm tra"
-        },
-        "pending_payment": {
-            "tieng_viet": "Chờ thanh toán",
-            "ghi_chu": "Chưa đóng phí"
-        },
-        "active": {
-            "tieng_viet": "Đang có hiệu lực",
-            "ghi_chu": "Đang được bảo hiểm"
-        },
-        "payout": {
-            "tieng_viet": "Đang chi trả",
-            "ghi_chu": "Đang nhận bồi thường"
-        },
-        "expired": {
-            "tieng_viet": "Hết hạn",
-            "ghi_chu": "Đã hết thời gian bảo hiểm"
-        },
-        "pending_cancel": {
-            "tieng_viet": "Chờ hủy",
-            "ghi_chu": "Đang xử lý yêu cầu hủy"
-        },
-        "cancelled": {
-            "tieng_viet": "Đã hủy",
-            "ghi_chu": "Hợp đồng đã hủy bỏ"
-        },
-        "rejected": {
-            "tieng_viet": "Bị từ chối",
-            "ghi_chu": "Không được chấp thuận"
-        },
-        "dispute": {
-            "tieng_viet": "Tranh chấp",
-            "ghi_chu": "Đang có tranh cãi"
-        },
-        "cancelled_pending_payment": {
-            "tieng_viet": "Đã hủy do chưa thanh toán",
-            "ghi_chu": "Hủy vì không thanh toán phí"
-        }
+    "coverage_currency": {
+      "tieng_viet": "Đơn vị tiền",
+      "ghi_chu": "VND hoặc USD"
     },
-    "UnderwritingStatus": {
-        "pending": {
-            "tieng_viet": "Đang chờ thẩm định",
-            "ghi_chu": "Chờ kiểm tra hồ sơ"
-        },
-        "approved": { "tieng_viet": "Đã duyệt", "ghi_chu": "Được chấp thuận" },
-        "rejected": {
-            "tieng_viet": "Bị từ chối",
-            "ghi_chu": "Không được chấp thuận"
-        }
+    "coverage_duration_days": {
+      "tieng_viet": "Thời hạn bảo hiểm",
+      "ghi_chu": "Số ngày được bảo hiểm"
     },
-    "RegisteredPolicyUnderwriting": {
-        "id": { "tieng_viet": "Mã thẩm định", "ghi_chu": "" },
-        "registered_policy_id": { "tieng_viet": "Mã hợp đồng", "ghi_chu": "" },
-        "validation_timestamp": {
-            "tieng_viet": "Thời gian thẩm định",
-            "ghi_chu": ""
-        },
-        "underwriting_status": {
-            "tieng_viet": "Kết quả thẩm định",
-            "ghi_chu": ""
-        },
-        "recommendations": {
-            "tieng_viet": "Đề xuất",
-            "ghi_chu": "Các khuyến nghị"
-        },
-        "reason": { "tieng_viet": "Lý do", "ghi_chu": "Giải thích kết quả" },
-        "reason_evidence": {
-            "tieng_viet": "Bằng chứng",
-            "ghi_chu": "Căn cứ đưa ra kết luận"
-        },
-        "validated_by": { "tieng_viet": "Người thẩm định", "ghi_chu": "" },
-        "validation_notes": {
-            "tieng_viet": "Ghi chú thẩm định",
-            "ghi_chu": ""
-        },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+    "fix_premium_amount": {
+      "tieng_viet": "Phí bảo hiểm cố định/ha",
+      "ghi_chu": "Số tiền phải đóng"
     },
-    "CancelRequest": {
-        "id": { "tieng_viet": "Mã yêu cầu hủy", "ghi_chu": "" },
-        "registered_policy_id": { "tieng_viet": "Mã hợp đồng", "ghi_chu": "" },
-        "cancel_request_type": { "tieng_viet": "Loại yêu cầu", "ghi_chu": "" },
-        "reason": { "tieng_viet": "Lý do", "ghi_chu": "" },
-        "evidence": { "tieng_viet": "Bằng chứng", "ghi_chu": "" },
-        "status": { "tieng_viet": "Tình trạng yêu cầu", "ghi_chu": "" },
-        "requested_by": { "tieng_viet": "Người yêu cầu", "ghi_chu": "" },
-        "requested_at": { "tieng_viet": "Thời gian yêu cầu", "ghi_chu": "" },
-        "compensate_amount": {
-            "tieng_viet": "Số tiền đề nghị bồi thường",
-            "ghi_chu": "Số tiền yêu cầu được trả"
-        },
-        "paid": { "tieng_viet": "Đã chi trả", "ghi_chu": "" },
-        "paid_at": { "tieng_viet": "Thời gian chi trả", "ghi_chu": "" },
-        "during_notice_period": {
-            "tieng_viet": "Trong thời gian thông báo",
-            "ghi_chu": ""
-        },
-        "reviewed_by": { "tieng_viet": "Người xem xét", "ghi_chu": "" },
-        "reviewed_at": { "tieng_viet": "Thời gian xem xét", "ghi_chu": "" },
-        "review_notes": { "tieng_viet": "Ghi chú xem xét", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+    "is_per_hectare": {
+      "tieng_viet": "Tính theo hecta",
+      "ghi_chu": "Phí tính theo diện tích hay không (boolean)"
     },
-    "CancelRequestType": {
-        "contract_violation": {
-            "tieng_viet": "Vi phạm hợp đồng",
-            "ghi_chu": "Công ty vi phạm cam kết / Nông dân vi phạm"
-        },
-        "other": { "tieng_viet": "Lý do khác", "ghi_chu": "Các lý do khác" },
-        "policyholder_request": {
-            "tieng_viet": "Yêu cầu từ người mua bảo hiểm",
-            "ghi_chu": "Người mua muốn hủy"
-        }
+    "premium_base_rate": {
+      "tieng_viet": "Tỷ lệ phí cơ bản",
+      "ghi_chu": "Ví dụ: 0.05=5%"
     },
-    "CancelRequestStatus": {
-        "approved": { "tieng_viet": "Đã chấp thuận", "ghi_chu": "Đồng ý hủy" },
-        "litigation": {
-            "tieng_viet": "Kiện tụng",
-            "ghi_chu": "Đang tranh chấp pháp lý"
-        },
-        "denied": { "tieng_viet": "Bị từ chối", "ghi_chu": "Không được hủy" },
-        "pending_review": {
-            "tieng_viet": "Đang xem xét",
-            "ghi_chu": "Đang kiểm tra hồ sơ"
-        },
-        "cancelled": {
-            "tieng_viet": "Đã hủy yêu cầu",
-            "ghi_chu": "Rút lại yêu cầu"
-        },
-        "payment_failed": {
-            "tieng_viet": "Thanh toán thất bại",
-            "ghi_chu": "Không chi trả được"
-        }
+    "max_premium_payment_prolong": {
+      "tieng_viet": "Thời gian gia hạn nộp phí",
+      "ghi_chu": "Số giây được kéo dài thanh toán"
     },
-    "QUẢN LÝ BỒI THƯỜNG": {},
-    "Claim": {
-        "id": {
-            "tieng_viet": "Mã yêu cầu bồi thường",
-            "ghi_chu": "ID định danh"
-        },
-        "claim_number": {
-            "tieng_viet": "Số hồ sơ bồi thường",
-            "ghi_chu": "Số theo dõi hồ sơ"
-        },
-        "registered_policy_id": {
-            "tieng_viet": "Mã hợp đồng",
-            "ghi_chu": "ID hợp đồng đã đăng ký"
-        },
-        "base_policy_id": {
-            "tieng_viet": "Mã gói bảo hiểm",
-            "ghi_chu": "ID gói bảo hiểm gốc"
-        },
-        "farm_id": {
-            "tieng_viet": "Mã mảnh đất",
-            "ghi_chu": "ID mảnh đất canh tác"
-        },
-        "base_policy_trigger_id": {
-            "tieng_viet": "Mã điều kiện kích hoạt",
-            "ghi_chu": "ID điều kiện bồi thường"
-        },
-        "trigger_timestamp": {
-            "tieng_viet": "Điều kiện kích hoạt vào",
-            "ghi_chu": "Thời gian xảy ra sự kiện"
-        },
-        "over_threshold_value": {
-            "tieng_viet": "Giá trị vượt ngưỡng",
-            "ghi_chu": "Chênh lệch so với mốc"
-        },
-        "calculated_fix_payout": {
-            "tieng_viet": "Mức bồi thường cố định",
-            "ghi_chu": "Số tiền trả theo gói"
-        },
-        "calculated_threshold_payout": {
-            "tieng_viet": "Mức bồi thường theo ngưỡng",
-            "ghi_chu": "Số tiền trả theo mức độ thiệt hại"
-        },
-        "claim_amount": {
-            "tieng_viet": "Số tiền bồi thường",
-            "ghi_chu": "Tổng số tiền đề nghị bồi thường"
-        },
-        "status": { "tieng_viet": "Trạng thái", "ghi_chu": "Tình trạng xử lý" },
-        "auto_generated": {
-            "tieng_viet": "Tự động tạo",
-            "ghi_chu": "Hệ thống tự phát hiện"
-        },
-        "partner_review_timestamp": {
-            "tieng_viet": "Thời điểm đối tác xem xét",
-            "ghi_chu": ""
-        },
-        "partner_decision": {
-            "tieng_viet": "Quyết định đối tác",
-            "ghi_chu": "Chấp nhận/từ chối từ công ty BH"
-        },
-        "partner_notes": {
-            "tieng_viet": "Ghi chú đối tác",
-            "ghi_chu": "Lý do quyết định"
-        },
-        "reviewed_by": {
-            "tieng_viet": "Người xét duyệt",
-            "ghi_chu": "ID nhân viên xử lý"
-        },
-        "auto_approval_deadline": {
-            "tieng_viet": "Hạn tự động duyệt",
-            "ghi_chu": "Thời hạn duyệt tự động"
-        },
-        "auto_approved": {
-            "tieng_viet": "Đã tự động duyệt",
-            "ghi_chu": "Được phê duyệt tự động"
-        },
-        "evidence_summary": {
-            "tieng_viet": "Tóm tắt bằng chứng",
-            "ghi_chu": "Dữ liệu chứng minh thiệt hại"
-        },
-        "created_at": {
-            "tieng_viet": "Ngày tạo",
-            "ghi_chu": "Thời gian khởi tạo"
-        },
-        "updated_at": {
-            "tieng_viet": "Ngày cập nhật",
-            "ghi_chu": "Thời gian cập nhật gần nhất"
-        }
+    "fix_payout_amount": {
+      "tieng_viet": "Phí chi trả cố định",
+      "ghi_chu": "Số tiền nhận khi có rủi ro"
     },
-    "ClaimStatus": {
-        "generated": { "tieng_viet": "Đã tạo", "ghi_chu": "Mới tạo" },
-        "pending_partner_review": {
-            "tieng_viet": "Chờ đối tác xem xét",
-            "ghi_chu": "Chờ công ty bảo hiểm duyệt"
-        },
-        "approved": { "tieng_viet": "Đã duyệt", "ghi_chu": "Được chấp thuận" },
-        "rejected": {
-            "tieng_viet": "Bị từ chối",
-            "ghi_chu": "Không được chấp thuận"
-        },
-        "paid": { "tieng_viet": "Đã chi trả", "ghi_chu": "Đã thanh toán xong" }
+    "is_payout_per_hectare": {
+      "tieng_viet": "Chi trả theo hecta",
+      "ghi_chu": "Tính theo diện tích hay không (boolean)"
     },
-    "ClaimRejection": {
-        "id": { "tieng_viet": "Mã từ chối", "ghi_chu": "" },
-        "claim_id": { "tieng_viet": "Mã yêu cầu bồi thường", "ghi_chu": "" },
-        "validation_timestamp": {
-            "tieng_viet": "Thời gian xác nhận",
-            "ghi_chu": ""
-        },
-        "claim_rejection_type": { "tieng_viet": "Loại từ chối", "ghi_chu": "" },
-        "reason": { "tieng_viet": "Lý do", "ghi_chu": "" },
-        "reason_evidence": { "tieng_viet": "Bằng chứng", "ghi_chu": "" },
-        "validated_by": { "tieng_viet": "Người xác nhận", "ghi_chu": "" },
-        "validation_notes": { "tieng_viet": "Ghi chú xác nhận", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+    "over_threshold_multiplier": {
+      "tieng_viet": "Hệ số vượt ngưỡng",
+      "ghi_chu": "Phải lớn hơn 0 (hợp lệ trong khoảng (0, 1)). Giá trị ≤ 0 hoặc ≥ 1 sẽ làm số tiền chi trả không hợp lệ."
     },
-    "ClaimRejectionType": {
-        "claim_data_incorrect": {
-            "tieng_viet": "Dữ liệu bồi thường không chính xác",
-            "ghi_chu": ""
-        },
-        "trigger_not_met": {
-            "tieng_viet": "Không đạt điều kiện kích hoạt",
-            "ghi_chu": ""
-        },
-        "policy_not_active": {
-            "tieng_viet": "Hợp đồng không còn hiệu lực",
-            "ghi_chu": ""
-        },
-        "location_mismatch": {
-            "tieng_viet": "Vị trí không khớp",
-            "ghi_chu": ""
-        },
-        "duplicate_claim": { "tieng_viet": "Yêu cầu trùng lặp", "ghi_chu": "" },
-        "suspected_fraud": { "tieng_viet": "Nghi ngờ gian lận", "ghi_chu": "" },
-        "other": { "tieng_viet": "Lý do khác", "ghi_chu": "" }
+    "payout_base_rate": {
+      "tieng_viet": "Tỷ lệ chi trả cơ bản",
+      "ghi_chu": "Ví dụ: 0.8=80%"
+    },
+    "payout_cap": {
+      "tieng_viet": "Mức chi trả tối đa",
+      "ghi_chu": "Giới hạn trên"
+    },
+    "cancel_premium_rate": {
+      "tieng_viet": "Tỷ lệ hoàn phí khi hủy",
+      "ghi_chu": "Phần trăm được hoàn lại"
+    },
+    "enrollment_start_day": {
+      "tieng_viet": "Ngày mở đăng ký",
+      "ghi_chu": "Ngày bắt đầu cho phép đăng ký"
+    },
+    "enrollment_end_day": {
+      "tieng_viet": "Ngày đóng đăng ký",
+      "ghi_chu": "Ngày hết hạn đăng ký"
+    },
+    "auto_renewal": {
+      "tieng_viet": "Tự động gia hạn",
+      "ghi_chu": "Có tự động gia hạn không"
+    },
+    "renewal_discount_rate": {
+      "tieng_viet": "Giảm giá khi gia hạn",
+      "ghi_chu": "Ví dụ: 0.1 = giảm 10%"
+    },
+    "base_policy_invalid_date": {
+      "tieng_viet": "Ngày hết hiệu lực gói",
+      "ghi_chu": "Ngày sản phẩm không còn bán"
+    },
+    "insurance_valid_from_day": {
+      "tieng_viet": "Hiệu lực từ ngày",
+      "ghi_chu": "Bảo hiểm bắt đầu có giá trị"
+    },
+    "insurance_valid_to_day": {
+      "tieng_viet": "Hết hiệu lực vào ngày",
+      "ghi_chu": "Bảo hiểm hết giá trị"
+    },
+    "status": { "tieng_viet": "Tình trạng hiện tại", "ghi_chu": "" },
+    "template_document_url": {
+      "tieng_viet": "Đường dẫn tài liệu mẫu",
+      "ghi_chu": "Link xem file PDF mẫu"
+    },
+    "document_validation_status": {
+      "tieng_viet": "Tình trạng kiểm tra tài liệu",
+      "ghi_chu": ""
+    },
+    "document_validation_score": {
+      "tieng_viet": "Điểm kiểm tra tài liệu",
+      "ghi_chu": "Điểm đánh giá tài liệu"
+    },
+    "document_tags": {
+      "tieng_viet": "Thẻ tài liệu",
+      "ghi_chu": "Nhãn phân loại tài liệu"
+    },
+    "important_additional_information": {
+      "tieng_viet": "Lưu ý quan trọng",
+      "ghi_chu": "Lưu ý đặc biệt"
+    },
+    "created_at": {
+      "tieng_viet": "Ngày tạo",
+      "ghi_chu": "Thời gian tạo bản ghi"
+    },
+    "updated_at": {
+      "tieng_viet": "Ngày cập nhật",
+      "ghi_chu": "Lần sửa gần nhất"
+    },
+    "created_by": {
+      "tieng_viet": "Người tạo",
+      "ghi_chu": "Mã người tạo sản phẩm"
+    }
+  },
+  "BasePolicyStatus": {
+    "draft": { "tieng_viet": "Bản nháp", "ghi_chu": "Chưa hoàn tất" },
+    "payment_due": {
+      "tieng_viet": "Tới hạn thanh toán",
+      "ghi_chu": "Tới hạn thanh toán data mỗi tháng"
+    },
+    "active": { "tieng_viet": "Đang bán", "ghi_chu": "Sản phẩm đang bán" },
+    "closed": { "tieng_viet": "Đã đóng", "ghi_chu": "Ngừng bán" },
+    "archived": { "tieng_viet": "Đã lưu trữ", "ghi_chu": "Không dùng nữa" }
+  },
+  "BasePolicyTrigger": {
+    "id": { "tieng_viet": "Mã kích hoạt", "ghi_chu": "" },
+    "base_policy_id": { "tieng_viet": "Mã gói bảo hiểm", "ghi_chu": "" },
+    "logical_operator": {
+      "tieng_viet": "Toán tử logic",
+      "ghi_chu": "AND hoặc OR"
+    },
+    "growth_stage": {
+      "tieng_viet": "Giai đoạn sinh trưởng",
+      "ghi_chu": "Giai đoạn phát triển của cây"
+    },
+    "monitor_interval": {
+      "tieng_viet": "Tần suất theo dõi",
+      "ghi_chu": "Tần suất kiểm tra"
+    },
+    "monitor_frequency_unit": {
+      "tieng_viet": "Đơn vị theo dõi",
+      "ghi_chu": "Giờ, ngày, tuần, tháng"
+    },
+    "blackout_periods": {
+      "tieng_viet": "Hiệu lực BH tạm ngưng vào",
+      "ghi_chu": "Khoảng thời gian không kích hoạt bảo hiểm"
+    },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+  },
+  "BasePolicyTriggerCondition": {
+    "id": { "tieng_viet": "Mã điều kiện", "ghi_chu": "" },
+    "base_policy_trigger_id": { "tieng_viet": "Mã trigger", "ghi_chu": "" },
+    "data_source_id": { "tieng_viet": "Mã nguồn dữ liệu", "ghi_chu": "" },
+    "threshold_operator": {
+      "tieng_viet": "Toán tử so sánh",
+      "ghi_chu": "<, <=, >, >=, ==, !="
+    },
+    "threshold_value": {
+      "tieng_viet": "Ngưỡng kích hoạt",
+      "ghi_chu": "Mức cần đạt để kích hoạt"
+    },
+    "early_warning_threshold": {
+      "tieng_viet": "Ngưỡng cảnh báo sớm",
+      "ghi_chu": "Cảnh báo trước khi đạt ngưỡng chính"
+    },
+    "aggregation_function": {
+      "tieng_viet": "Phương pháp tính",
+      "ghi_chu": "avg, min, max, sum, change"
+    },
+    "aggregation_window_days": {
+      "tieng_viet": "Cửa sổ tính toán",
+      "ghi_chu": "Khoảng thời gian để tính"
+    },
+    "consecutive_required": {
+      "tieng_viet": "Điều kiện liên tiếp",
+      "ghi_chu": "Phải xảy ra liên tục hay không"
+    },
+    "include_component": { "tieng_viet": "Yếu tố phụ", "ghi_chu": "" },
+    "baseline_window_days": {
+      "tieng_viet": "Khoảng đo lường chuẩn",
+      "ghi_chu": "Khoảng thời gian tham chiếu"
+    },
+    "baseline_function": {
+      "tieng_viet": "Cách tính đo lường",
+      "ghi_chu": ""
+    },
+    "validation_window_days": {
+      "tieng_viet": "Khoảng xác minh",
+      "ghi_chu": "Thời gian kiểm tra"
+    },
+    "condition_order": { "tieng_viet": "Thứ tự điều kiện", "ghi_chu": "" },
+    "base_cost": { "tieng_viet": "Phí gốc", "ghi_chu": "" },
+    "category_multiplier": { "tieng_viet": "Hệ số loại", "ghi_chu": "" },
+    "tier_multiplier": { "tieng_viet": "Hệ số bậc", "ghi_chu": "" },
+    "calculated_cost": {
+      "tieng_viet": "Tổng phí",
+      "ghi_chu": "Tổng chi phí cuối cùng"
+    },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+  },
+  "RegisteredPolicy": {
+    "id": { "tieng_viet": "Mã hợp đồng", "ghi_chu": "" },
+    "policy_number": {
+      "tieng_viet": "Số hợp đồng",
+      "ghi_chu": "Số theo dõi hợp đồng"
+    },
+    "base_policy_id": { "tieng_viet": "Mã bảo hiểm gốc", "ghi_chu": "" },
+    "insurance_provider_id": {
+      "tieng_viet": "Mã công ty bảo hiểm",
+      "ghi_chu": ""
+    },
+    "farm_id": { "tieng_viet": "Mã nông trại", "ghi_chu": "" },
+    "farmer_id": { "tieng_viet": "Mã nông dân", "ghi_chu": "" },
+    "coverage_amount": {
+      "tieng_viet": "Mức chi trả",
+      "ghi_chu": "Mức chi trả tối đa"
+    },
+    "coverage_start_date": { "tieng_viet": "Hiệu lực từ", "ghi_chu": "" },
+    "coverage_end_date": {
+      "tieng_viet": "Hết hiệu lực vào",
+      "ghi_chu": ""
+    },
+    "planting_date": { "tieng_viet": "Ngày gieo trồng", "ghi_chu": "" },
+    "area_multiplier": {
+      "tieng_viet": "Hệ số diện tích",
+      "ghi_chu": "Nhân với diện tích thực tế"
+    },
+    "total_farmer_premium": {
+      "tieng_viet": "Tổng phí thanh toán (nông dân)",
+      "ghi_chu": ""
+    },
+    "premium_paid_by_farmer": {
+      "tieng_viet": "Nông dân đã thanh toán",
+      "ghi_chu": "Có/Không"
+    },
+    "premium_paid_at": {
+      "tieng_viet": "Thời điểm thanh toán phí",
+      "ghi_chu": ""
+    },
+    "data_complexity_score": {
+      "tieng_viet": "Điểm phức tạp dữ liệu",
+      "ghi_chu": ""
+    },
+    "monthly_data_cost": {
+      "tieng_viet": "Chi phí dữ liệu hàng tháng",
+      "ghi_chu": ""
+    },
+    "total_data_cost": { "tieng_viet": "Tổng phí dữ liệu", "ghi_chu": "" },
+    "status": { "tieng_viet": "Tình trạng hợp đồng", "ghi_chu": "" },
+    "underwriting_status": {
+      "tieng_viet": "Tình trạng thẩm định",
+      "ghi_chu": ""
+    },
+    "signed_policy_document_url": {
+      "tieng_viet": "Đường dẫn hợp đồng đã ký",
+      "ghi_chu": "Link xem hợp đồng"
+    },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" },
+    "registered_by": { "tieng_viet": "Người đăng ký", "ghi_chu": "" }
+  },
+  "PolicyStatus": {
+    "draft": { "tieng_viet": "Bản nháp", "ghi_chu": "Chưa hoàn tất" },
+    "pending_review": {
+      "tieng_viet": "Chờ xét duyệt",
+      "ghi_chu": "Đang chờ kiểm tra"
+    },
+    "pending_payment": {
+      "tieng_viet": "Chờ thanh toán",
+      "ghi_chu": "Chưa đóng phí"
+    },
+    "active": {
+      "tieng_viet": "Đang có hiệu lực",
+      "ghi_chu": "Đang được bảo hiểm"
+    },
+    "payout": {
+      "tieng_viet": "Đang chi trả",
+      "ghi_chu": "Đang nhận chi trả"
+    },
+    "expired": {
+      "tieng_viet": "Hết hạn",
+      "ghi_chu": "Đã hết thời gian bảo hiểm"
+    },
+    "pending_cancel": {
+      "tieng_viet": "Chờ hủy",
+      "ghi_chu": "Đang xử lý yêu cầu hủy"
+    },
+    "cancelled": {
+      "tieng_viet": "Đã hủy",
+      "ghi_chu": "Hợp đồng đã hủy bỏ"
+    },
+    "rejected": {
+      "tieng_viet": "Bị từ chối",
+      "ghi_chu": "Không được chấp thuận"
+    },
+    "dispute": {
+      "tieng_viet": "Tranh chấp",
+      "ghi_chu": "Đang có tranh cãi"
+    },
+    "cancelled_pending_payment": {
+      "tieng_viet": "Đã hủy do chưa thanh toán",
+      "ghi_chu": "Hủy vì không thanh toán phí"
+    }
+  },
+  "UnderwritingStatus": {
+    "pending": {
+      "tieng_viet": "Đang chờ thẩm định",
+      "ghi_chu": "Chờ kiểm tra hồ sơ"
+    },
+    "approved": { "tieng_viet": "Đã duyệt", "ghi_chu": "Được chấp thuận" },
+    "rejected": {
+      "tieng_viet": "Bị từ chối",
+      "ghi_chu": "Không được chấp thuận"
+    }
+  },
+  "RegisteredPolicyUnderwriting": {
+    "id": { "tieng_viet": "Mã thẩm định", "ghi_chu": "" },
+    "registered_policy_id": { "tieng_viet": "Mã hợp đồng", "ghi_chu": "" },
+    "validation_timestamp": {
+      "tieng_viet": "Thời gian thẩm định",
+      "ghi_chu": ""
+    },
+    "underwriting_status": {
+      "tieng_viet": "Kết quả thẩm định",
+      "ghi_chu": ""
+    },
+    "recommendations": {
+      "tieng_viet": "Đề xuất",
+      "ghi_chu": "Các khuyến nghị"
+    },
+    "reason": { "tieng_viet": "Lý do", "ghi_chu": "Giải thích kết quả" },
+    "reason_evidence": {
+      "tieng_viet": "Bằng chứng",
+      "ghi_chu": "Căn cứ đưa ra kết luận"
+    },
+    "validated_by": { "tieng_viet": "Người thẩm định", "ghi_chu": "" },
+    "validation_notes": {
+      "tieng_viet": "Ghi chú thẩm định",
+      "ghi_chu": ""
+    },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+  },
+  "CancelRequest": {
+    "id": { "tieng_viet": "Mã yêu cầu hủy", "ghi_chu": "" },
+    "registered_policy_id": { "tieng_viet": "Mã hợp đồng", "ghi_chu": "" },
+    "cancel_request_type": { "tieng_viet": "Loại yêu cầu", "ghi_chu": "" },
+    "reason": { "tieng_viet": "Lý do", "ghi_chu": "" },
+    "evidence": { "tieng_viet": "Bằng chứng", "ghi_chu": "" },
+    "status": { "tieng_viet": "Tình trạng yêu cầu", "ghi_chu": "" },
+    "requested_by": { "tieng_viet": "Người yêu cầu", "ghi_chu": "" },
+    "requested_at": { "tieng_viet": "Thời gian yêu cầu", "ghi_chu": "" },
+    "compensate_amount": {
+      "tieng_viet": "Số tiền đề nghị chi trả",
+      "ghi_chu": "Số tiền yêu cầu được trả"
+    },
+    "paid": { "tieng_viet": "Đã chi trả", "ghi_chu": "" },
+    "paid_at": { "tieng_viet": "Thời gian chi trả", "ghi_chu": "" },
+    "during_notice_period": {
+      "tieng_viet": "Trong thời gian thông báo",
+      "ghi_chu": ""
+    },
+    "reviewed_by": { "tieng_viet": "Người xem xét", "ghi_chu": "" },
+    "reviewed_at": { "tieng_viet": "Thời gian xem xét", "ghi_chu": "" },
+    "review_notes": { "tieng_viet": "Ghi chú xem xét", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+  },
+  "CancelRequestType": {
+    "contract_violation": {
+      "tieng_viet": "Vi phạm hợp đồng",
+      "ghi_chu": "Công ty vi phạm cam kết / Nông dân vi phạm"
+    },
+    "other": { "tieng_viet": "Lý do khác", "ghi_chu": "Các lý do khác" },
+    "policyholder_request": {
+      "tieng_viet": "Yêu cầu từ người mua bảo hiểm",
+      "ghi_chu": "Người mua muốn hủy"
+    }
+  },
+  "CancelRequestStatus": {
+    "approved": { "tieng_viet": "Đã chấp thuận", "ghi_chu": "Đồng ý hủy" },
+    "litigation": {
+      "tieng_viet": "Kiện tụng",
+      "ghi_chu": "Đang tranh chấp pháp lý"
+    },
+    "denied": { "tieng_viet": "Bị từ chối", "ghi_chu": "Không được hủy" },
+    "pending_review": {
+      "tieng_viet": "Đang xem xét",
+      "ghi_chu": "Đang kiểm tra hồ sơ"
+    },
+    "cancelled": {
+      "tieng_viet": "Đã hủy yêu cầu",
+      "ghi_chu": "Rút lại yêu cầu"
+    },
+    "payment_failed": {
+      "tieng_viet": "Thanh toán thất bại",
+      "ghi_chu": "Không chi trả được"
+    }
+  },
+  "QUẢN LÝ CHI TRẢ": {},
+  "Claim": {
+    "id": {
+      "tieng_viet": "Mã yêu cầu chi trả",
+      "ghi_chu": "ID định danh"
+    },
+    "claim_number": {
+      "tieng_viet": "Số hồ sơ chi trả",
+      "ghi_chu": "Số theo dõi hồ sơ"
+    },
+    "registered_policy_id": {
+      "tieng_viet": "Mã hợp đồng",
+      "ghi_chu": "ID hợp đồng đã đăng ký"
+    },
+    "base_policy_id": {
+      "tieng_viet": "Mã gói bảo hiểm",
+      "ghi_chu": "ID gói bảo hiểm gốc"
+    },
+    "farm_id": {
+      "tieng_viet": "Mã mảnh đất",
+      "ghi_chu": "ID mảnh đất canh tác"
+    },
+    "base_policy_trigger_id": {
+      "tieng_viet": "Mã điều kiện kích hoạt",
+      "ghi_chu": "ID điều kiện chi trả"
+    },
+    "trigger_timestamp": {
+      "tieng_viet": "Điều kiện kích hoạt vào",
+      "ghi_chu": "Thời gian xảy ra sự kiện"
+    },
+    "over_threshold_value": {
+      "tieng_viet": "Giá trị vượt ngưỡng",
+      "ghi_chu": "Chênh lệch so với mốc"
+    },
+    "calculated_fix_payout": {
+      "tieng_viet": "Mức chi trả cố định",
+      "ghi_chu": "Số tiền trả theo gói"
+    },
+    "calculated_threshold_payout": {
+      "tieng_viet": "Mức chi trả theo ngưỡng",
+      "ghi_chu": "Số tiền trả theo mức độ thiệt hại"
+    },
+    "claim_amount": {
+      "tieng_viet": "Số tiền chi trả",
+      "ghi_chu": "Tổng số tiền đề nghị chi trả"
+    },
+    "status": { "tieng_viet": "Trạng thái", "ghi_chu": "Tình trạng xử lý" },
+    "auto_generated": {
+      "tieng_viet": "Tự động tạo",
+      "ghi_chu": "Hệ thống tự phát hiện"
+    },
+    "partner_review_timestamp": {
+      "tieng_viet": "Thời điểm đối tác xem xét",
+      "ghi_chu": ""
+    },
+    "partner_decision": {
+      "tieng_viet": "Quyết định đối tác",
+      "ghi_chu": "Chấp nhận/từ chối từ công ty BH"
+    },
+    "partner_notes": {
+      "tieng_viet": "Ghi chú đối tác",
+      "ghi_chu": "Lý do quyết định"
+    },
+    "reviewed_by": {
+      "tieng_viet": "Người xét duyệt",
+      "ghi_chu": "ID nhân viên xử lý"
+    },
+    "auto_approval_deadline": {
+      "tieng_viet": "Hạn tự động duyệt",
+      "ghi_chu": "Thời hạn duyệt tự động"
+    },
+    "auto_approved": {
+      "tieng_viet": "Đã tự động duyệt",
+      "ghi_chu": "Được phê duyệt tự động"
+    },
+    "evidence_summary": {
+      "tieng_viet": "Tóm tắt bằng chứng",
+      "ghi_chu": "Dữ liệu chứng minh thiệt hại"
+    },
+    "created_at": {
+      "tieng_viet": "Ngày tạo",
+      "ghi_chu": "Thời gian khởi tạo"
+    },
+    "updated_at": {
+      "tieng_viet": "Ngày cập nhật",
+      "ghi_chu": "Thời gian cập nhật gần nhất"
+    }
+  },
+  "ClaimStatus": {
+    "generated": { "tieng_viet": "Đã tạo", "ghi_chu": "Mới tạo" },
+    "pending_partner_review": {
+      "tieng_viet": "Chờ đối tác xem xét",
+      "ghi_chu": "Chờ công ty bảo hiểm duyệt"
+    },
+    "approved": { "tieng_viet": "Đã duyệt", "ghi_chu": "Được chấp thuận" },
+    "rejected": {
+      "tieng_viet": "Bị từ chối",
+      "ghi_chu": "Không được chấp thuận"
+    },
+    "paid": { "tieng_viet": "Đã chi trả", "ghi_chu": "Đã thanh toán xong" }
+  },
+  "ClaimRejection": {
+    "id": { "tieng_viet": "Mã từ chối", "ghi_chu": "" },
+    "claim_id": { "tieng_viet": "Mã yêu cầu chi trả", "ghi_chu": "" },
+    "validation_timestamp": {
+      "tieng_viet": "Thời gian xác nhận",
+      "ghi_chu": ""
+    },
+    "claim_rejection_type": { "tieng_viet": "Loại từ chối", "ghi_chu": "" },
+    "reason": { "tieng_viet": "Lý do", "ghi_chu": "" },
+    "reason_evidence": { "tieng_viet": "Bằng chứng", "ghi_chu": "" },
+    "validated_by": { "tieng_viet": "Người xác nhận", "ghi_chu": "" },
+    "validation_notes": { "tieng_viet": "Ghi chú xác nhận", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+  },
+  "ClaimRejectionType": {
+    "claim_data_incorrect": {
+      "tieng_viet": "Dữ liệu chi trả không chính xác",
+      "ghi_chu": ""
+    },
+    "trigger_not_met": {
+      "tieng_viet": "Không đạt điều kiện kích hoạt",
+      "ghi_chu": ""
+    },
+    "policy_not_active": {
+      "tieng_viet": "Hợp đồng không còn hiệu lực",
+      "ghi_chu": ""
+    },
+    "location_mismatch": {
+      "tieng_viet": "Vị trí không khớp",
+      "ghi_chu": ""
+    },
+    "duplicate_claim": { "tieng_viet": "Yêu cầu trùng lặp", "ghi_chu": "" },
+    "suspected_fraud": { "tieng_viet": "Nghi ngờ gian lận", "ghi_chu": "" },
+    "other": { "tieng_viet": "Lý do khác", "ghi_chu": "" }
+  },
+  "Payout": {
+    "id": { "tieng_viet": "Mã chi trả", "ghi_chu": "ID giao dịch" },
+    "claim_id": {
+      "tieng_viet": "Mã yêu cầu chi trả",
+      "ghi_chu": "ID hồ sơ liên quan"
+    },
+    "registered_policy_id": {
+      "tieng_viet": "Mã hợp đồng",
+      "ghi_chu": "ID hợp đồng"
+    },
+    "farm_id": { "tieng_viet": "Mã mảnh đất", "ghi_chu": "ID mảnh đất" },
+    "farmer_id": {
+      "tieng_viet": "Mã nông dân",
+      "ghi_chu": "ID người nông dân"
+    },
+    "payout_amount": {
+      "tieng_viet": "Số tiền chi trả",
+      "ghi_chu": "Số tiền thực nhận"
+    },
+    "currency": {
+      "tieng_viet": "Đơn vị tiền tệ",
+      "ghi_chu": "VND, USD..."
+    },
+    "status": {
+      "tieng_viet": "Trạng thái chi trả",
+      "ghi_chu": "Đang xử lý/đã trả/thất bại"
+    },
+    "initiated_at": {
+      "tieng_viet": "Thời điểm bắt đầu",
+      "ghi_chu": "Lúc khởi tạo chi trả"
+    },
+    "completed_at": {
+      "tieng_viet": "Thời điểm hoàn thành",
+      "ghi_chu": "Lúc hoàn tất chi trả"
+    },
+    "farmer_confirmed": {
+      "tieng_viet": "Đã xác nhận nhận tiền",
+      "ghi_chu": "Nông dân đã nhận chưa"
+    },
+    "farmer_confirmation_timestamp": {
+      "tieng_viet": "Thời điểm xác nhận",
+      "ghi_chu": "Khi nông dân xác nhận"
+    },
+    "farmer_rating": {
+      "tieng_viet": "Đánh giá",
+      "ghi_chu": "Số sao đánh giá (1-5)"
+    },
+    "farmer_feedback": {
+      "tieng_viet": "Phản hồi",
+      "ghi_chu": "Ý kiến của nông dân"
+    },
+    "created_at": {
+      "tieng_viet": "Ngày tạo",
+      "ghi_chu": "Thời gian tạo bản ghi"
+    }
+  },
+  "PayoutStatus": {
+    "pending": { "tieng_viet": "Đang chờ", "ghi_chu": "Chưa xử lý" },
+    "processing": { "tieng_viet": "Đang xử lý", "ghi_chu": "Đang chi trả" },
+    "completed": {
+      "tieng_viet": "Hoàn thành",
+      "ghi_chu": "Đã chi trả xong"
+    },
+    "failed": { "tieng_viet": "Thất bại", "ghi_chu": "Không chi trả được" }
+  },
+  "QUẢN LÝ PHÂN TÍCH RỦI RO": {},
+  "RegisteredPolicyRiskAnalysis": {
+    "id": { "tieng_viet": "Mã phân tích", "ghi_chu": "ID định danh" },
+    "registered_policy_id": {
+      "tieng_viet": "Mã hợp đồng",
+      "ghi_chu": "ID hợp đồng đã đăng ký"
+    },
+    "analysis_status": {
+      "tieng_viet": "Trạng thái phân tích",
+      "ghi_chu": "Tình trạng đánh giá"
+    },
+    "analysis_type": {
+      "tieng_viet": "Loại phân tích",
+      "ghi_chu": "Thủ công/AI"
+    },
+    "analysis_source": {
+      "tieng_viet": "Nguồn phân tích",
+      "ghi_chu": "Ai thực hiện đánh giá"
+    },
+    "analysis_timestamp": {
+      "tieng_viet": "Thời điểm phân tích",
+      "ghi_chu": "Thời gian thực hiện"
+    },
+    "overall_risk_score": {
+      "tieng_viet": "Điểm rủi ro tổng thể",
+      "ghi_chu": "Tổng điểm đánh giá (0-1)"
+    },
+    "overall_risk_level": {
+      "tieng_viet": "Mức độ rủi ro",
+      "ghi_chu": "Thấp/trung bình/cao/nghiêm trọng"
+    },
+    "identified_risks": {
+      "tieng_viet": "Các rủi ro phát hiện",
+      "ghi_chu": "Các nguy cơ đã xác định"
+    },
+    "recommendations": {
+      "tieng_viet": "Khuyến nghị",
+      "ghi_chu": "Đề xuất xử lý"
+    },
+    "raw_output": {
+      "tieng_viet": "Kết quả thô",
+      "ghi_chu": "Dữ liệu gốc từ AI"
+    },
+    "analysis_notes": { "tieng_viet": "Ghi chú", "ghi_chu": "Lưu ý thêm" },
+    "created_at": {
+      "tieng_viet": "Ngày tạo",
+      "ghi_chu": "Thời gian tạo bản ghi"
+    }
+  },
+  "RiskAnalysisType": {
+    "ai_model": {
+      "tieng_viet": "Mô hình AI",
+      "ghi_chu": "Phân tích bằng AI"
+    },
+    "document_validation": {
+      "tieng_viet": "Xác thực tài liệu",
+      "ghi_chu": "Kiểm tra giấy tờ"
+    },
+    "cross_reference": {
+      "tieng_viet": "Đối chiếu chéo",
+      "ghi_chu": "So sánh nhiều nguồn"
+    },
+    "manual": {
+      "tieng_viet": "Thủ công",
+      "ghi_chu": "Người kiểm tra trực tiếp"
+    }
+  },
+  "RiskLevel": {
+    "low": { "tieng_viet": "Thấp", "ghi_chu": "Rủi ro thấp" },
+    "medium": { "tieng_viet": "Trung bình", "ghi_chu": "Rủi ro vừa phải" },
+    "high": { "tieng_viet": "Cao", "ghi_chu": "Rủi ro cao" },
+    "critical": {
+      "tieng_viet": "Nghiêm trọng",
+      "ghi_chu": "Rủi ro cực cao"
+    }
+  },
+  "QUẢN LÝ NÔNG TRẠI": {},
+  "Farm": {
+    "id": { "tieng_viet": "Mã nông trại", "ghi_chu": "Mã số duy nhất" },
+    "owner_id": {
+      "tieng_viet": "Mã chủ sở hữu",
+      "ghi_chu": "ID người sở hữu"
+    },
+    "farm_name": {
+      "tieng_viet": "Tên nông trại",
+      "ghi_chu": "Ví dụ: Trang trại lúa Đồng Tháp"
+    },
+    "farm_code": {
+      "tieng_viet": "Mã code",
+      "ghi_chu": "Mã ngắn gọn để tra cứu"
+    },
+    "boundary": {
+      "tieng_viet": "Toạ độ ranh giới",
+      "ghi_chu": "Đường biên xung quanh ruộng"
+    },
+    "center_location": {
+      "tieng_viet": "Vị trí trung tâm",
+      "ghi_chu": "Tọa độ điểm giữa"
+    },
+    "agro_polygon_id": {
+      "tieng_viet": "Mã vùng nông nghiệp",
+      "ghi_chu": "ID từ hệ thống bản đồ"
+    },
+    "area_sqm": {
+      "tieng_viet": "Diện tích",
+      "ghi_chu": "Số mét vuông (m²)"
+    },
+    "province": {
+      "tieng_viet": "Tỉnh/Thành phố",
+      "ghi_chu": "Ví dụ: Đồng Tháp, An Giang"
+    },
+    "district": {
+      "tieng_viet": "Quận/Huyện",
+      "ghi_chu": "Ví dụ: Cao Lãnh, Châu Đốc"
+    },
+    "commune": { "tieng_viet": "Phường/Xã", "ghi_chu": "Ví dụ: Xã Mỹ Hội" },
+    "address": {
+      "tieng_viet": "Địa chỉ chi tiết",
+      "ghi_chu": "Địa chỉ chi tiết của ruộng"
+    },
+    "crop_type": {
+      "tieng_viet": "Loại cây trồng",
+      "ghi_chu": "Lúa, ngô, cà phê..."
+    },
+    "planting_date": {
+      "tieng_viet": "Ngày gieo trồng",
+      "ghi_chu": "Ngày bắt đầu mùa vụ"
+    },
+    "expected_harvest_date": {
+      "tieng_viet": "Ngày thu hoạch dự kiến",
+      "ghi_chu": "Ngày dự tính gặt"
+    },
+    "crop_type_verified": {
+      "tieng_viet": "Xác thực loại cây",
+      "ghi_chu": "Cán bộ đã xác nhận loại cây chưa"
+    },
+    "crop_type_verified_at": {
+      "tieng_viet": "Thời điểm xác thực loại cây",
+      "ghi_chu": ""
+    },
+    "crop_type_verified_by": {
+      "tieng_viet": "Người xác thực loại cây",
+      "ghi_chu": ""
+    },
+    "crop_type_confidence": {
+      "tieng_viet": "Độ tin cậy loại cây",
+      "ghi_chu": "Mức độ chắc chắn"
+    },
+    "land_certificate_number": {
+      "tieng_viet": "Số giấy chứng nhận quyền sử dụng đất",
+      "ghi_chu": ""
+    },
+    "land_certificate_url": {
+      "tieng_viet": "Ảnh giấy chứng nhận quyền sử dụng đất",
+      "ghi_chu": "Đường dẫn ảnh giấy chứng nhận"
+    },
+    "land_ownership_verified": {
+      "tieng_viet": "Xác thực giấy chứng nhận",
+      "ghi_chu": "Đã xác minh sổ đỏ chưa"
+    },
+    "land_ownership_verified_at": {
+      "tieng_viet": "Thời điểm xác thực giấy chứng nhận",
+      "ghi_chu": ""
+    },
+    "has_irrigation": {
+      "tieng_viet": "Có tưới tiêu không",
+      "ghi_chu": "Có hệ thống nước không"
+    },
+    "irrigation_type": {
+      "tieng_viet": "Loại hệ thống tưới",
+      "ghi_chu": "Kênh mương, máy bơm, tưới nhỏ giọt..."
+    },
+    "soil_type": {
+      "tieng_viet": "Loại đất",
+      "ghi_chu": "Đất phù sa, đất sét, đất cát..."
+    },
+    "status": {
+      "tieng_viet": "Tình trạng",
+      "ghi_chu": "Đang hoạt động, tạm nghỉ..."
+    },
+    "created_at": {
+      "tieng_viet": "Ngày tạo",
+      "ghi_chu": "Ngày đăng ký nông trại"
+    },
+    "updated_at": {
+      "tieng_viet": "Ngày cập nhật",
+      "ghi_chu": "Lần sửa gần nhất"
+    },
+    "farm_photos": {
+      "tieng_viet": "Ảnh nông trại",
+      "ghi_chu": "Danh sách ảnh chụp ruộng"
+    },
+    "owner_national_id": {
+      "tieng_viet": "CMND/CCCD chủ sở hữu",
+      "ghi_chu": ""
+    },
+    "land_certificate_photos": {
+      "tieng_viet": "Ảnh giấy chứng nhận đất",
+      "ghi_chu": "Danh sách ảnh sổ đỏ"
+    }
+  },
+  "FarmStatus": {
+    "active": {
+      "tieng_viet": "Đang hoạt động",
+      "ghi_chu": "Nông trại đang canh tác"
+    },
+    "inactive": {
+      "tieng_viet": "Ngừng hoạt động",
+      "ghi_chu": "Không canh tác"
+    },
+    "archived": { "tieng_viet": "Đã lưu trữ", "ghi_chu": "Không dùng nữa" }
+  },
+  "FarmPhoto": {
+    "id": { "tieng_viet": "Mã ảnh", "ghi_chu": "" },
+    "farm_id": { "tieng_viet": "Mã nông trại", "ghi_chu": "" },
+    "photo_url": {
+      "tieng_viet": "Đường dẫn ảnh",
+      "ghi_chu": "Link để xem ảnh"
+    },
+    "photo_type": {
+      "tieng_viet": "Loại ảnh",
+      "ghi_chu": "Ảnh ruộng, ảnh cây trồng"
+    },
+    "taken_at": { "tieng_viet": "Thời gian chụp", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tải lên", "ghi_chu": "" }
+  },
+  "PhotoType": {
+    "crop": { "tieng_viet": "Ảnh cây trồng", "ghi_chu": "" },
+    "boundary": { "tieng_viet": "Ảnh ranh giới", "ghi_chu": "" },
+    "land_certificate": {
+      "tieng_viet": "Ảnh giấy chứng nhận đất",
+      "ghi_chu": ""
+    },
+    "satellite": { "tieng_viet": "Ảnh vệ tinh", "ghi_chu": "" },
+    "other": { "tieng_viet": "Ảnh khác", "ghi_chu": "" }
+  },
+  "QUẢN LÝ NGUỒN DỮ LIỆU": {},
+  "DataSource": {
+    "id": { "tieng_viet": "Mã nguồn dữ liệu", "ghi_chu": "" },
+    "data_source": {
+      "tieng_viet": "Loại nguồn",
+      "ghi_chu": "Thời tiết, vệ tinh..."
+    },
+    "parameter_name": {
+      "tieng_viet": "Tên tham số",
+      "ghi_chu": "NDVI, NDMI, rainfall..."
+    },
+    "parameter_type": {
+      "tieng_viet": "Loại tham số",
+      "ghi_chu": "Số, boolean, danh mục"
+    },
+    "unit": { "tieng_viet": "Đơn vị", "ghi_chu": "mm, %, độ C..." },
+    "support_component": {
+      "tieng_viet": "Hỗ trợ thành phần",
+      "ghi_chu": ""
+    },
+    "display_name_vi": {
+      "tieng_viet": "Tên hiển thị tiếng Việt",
+      "ghi_chu": ""
+    },
+    "description_vi": { "tieng_viet": "Mô tả tiếng Việt", "ghi_chu": "" },
+    "min_value": { "tieng_viet": "Giá trị nhỏ nhất", "ghi_chu": "" },
+    "max_value": { "tieng_viet": "Giá trị lớn nhất", "ghi_chu": "" },
+    "update_frequency": {
+      "tieng_viet": "Tần suất cập nhật",
+      "ghi_chu": ""
+    },
+    "spatial_resolution": {
+      "tieng_viet": "Độ phân giải không gian",
+      "ghi_chu": ""
+    },
+    "accuracy_rating": {
+      "tieng_viet": "Đánh giá độ chính xác",
+      "ghi_chu": ""
+    },
+    "base_cost": { "tieng_viet": "Chi phí cơ bản", "ghi_chu": "" },
+    "data_tier_id": { "tieng_viet": "Mã cấp độ dữ liệu", "ghi_chu": "" },
+    "data_provider": {
+      "tieng_viet": "Nhà cung cấp dữ liệu",
+      "ghi_chu": ""
+    },
+    "api_endpoint": { "tieng_viet": "Địa chỉ API", "ghi_chu": "" },
+    "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+  },
+  "DataSourceType": {
+    "weather": {
+      "tieng_viet": "Thời tiết",
+      "ghi_chu": "Dữ liệu khí tượng"
+    },
+    "satellite": { "tieng_viet": "Vệ tinh", "ghi_chu": "Ảnh vệ tinh" },
+    "derived": { "tieng_viet": "Dẫn xuất", "ghi_chu": "Dữ liệu tính toán" }
+  },
+  "ParameterType": {
+    "numeric": { "tieng_viet": "Số", "ghi_chu": "Giá trị số" },
+    "boolean": { "tieng_viet": "Boolean", "ghi_chu": "Đúng/Sai" },
+    "categorical": { "tieng_viet": "Danh mục", "ghi_chu": "Phân loại" }
+  },
+  "DataSourceParameterName": {
+    "ndvi": {
+      "tieng_viet": "Chỉ số thảm thực vật",
+      "ghi_chu": "Normalized Difference Vegetation Index"
+    },
+    "ndmi": {
+      "tieng_viet": "Chỉ số độ ẩm",
+      "ghi_chu": "Normalized Difference Moisture Index"
+    },
+    "rainfall": { "tieng_viet": "Lượng mưa", "ghi_chu": "Lượng nước mưa" }
+  },
+  "DataTierCategory": {
+    "id": { "tieng_viet": "Mã danh mục", "ghi_chu": "" },
+    "category_name": { "tieng_viet": "Tên danh mục", "ghi_chu": "" },
+    "category_description": {
+      "tieng_viet": "Mô tả danh mục",
+      "ghi_chu": ""
+    },
+    "category_cost_multiplier": {
+      "tieng_viet": "Hệ số chi phí danh mục",
+      "ghi_chu": ""
+    },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+  },
+  "DataTier": {
+    "id": { "tieng_viet": "Mã cấp độ", "ghi_chu": "" },
+    "data_tier_category_id": {
+      "tieng_viet": "Mã danh mục cấp độ",
+      "ghi_chu": ""
+    },
+    "tier_level": { "tieng_viet": "Cấp độ", "ghi_chu": "Số thứ tự cấp độ" },
+    "tier_name": { "tieng_viet": "Tên cấp độ", "ghi_chu": "" },
+    "data_tier_multiplier": {
+      "tieng_viet": "Hệ số chi phí cấp độ",
+      "ghi_chu": ""
+    },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+  },
+  "QUẢN LÝ THANH TOÁN": {},
+  "PaymentStatus": {
+    "pending": { "tieng_viet": "Đang chờ", "ghi_chu": "Chưa thanh toán" },
+    "paid": { "tieng_viet": "Đã thanh toán", "ghi_chu": "Đã hoàn tất" },
+    "overdue": { "tieng_viet": "Quá hạn", "ghi_chu": "Trễ hạn thanh toán" },
+    "cancelled": { "tieng_viet": "Đã hủy", "ghi_chu": "Hủy giao dịch" },
+    "refunded": { "tieng_viet": "Đã hoàn tiền", "ghi_chu": "Đã trả lại" }
+  },
+  "PaymentType": {
+    "policy_registration_payment": {
+      "tieng_viet": "Thanh toán đăng ký bảo hiểm",
+      "ghi_chu": ""
+    },
+    "policy_payout_payment": {
+      "tieng_viet": "Thanh toán chi trả",
+      "ghi_chu": ""
+    },
+    "policy_compensation_payment": {
+      "tieng_viet": "Thanh toán chi trả hủy hợp đồng",
+      "ghi_chu": ""
+    },
+    "policy_renewal_payment": {
+      "tieng_viet": "Thanh toán gia hạn",
+      "ghi_chu": ""
+    }
+  },
+  "QUẢN LÝ XÁC THỰC": {},
+  "ValidationStatus": {
+    "pending": { "tieng_viet": "Đang chờ", "ghi_chu": "Chờ xử lý" },
+    "passed": { "tieng_viet": "Đạt", "ghi_chu": "Tài liệu hợp lệ" },
+    "passed_ai": {
+      "tieng_viet": "Đạt (AI)",
+      "ghi_chu": "AI xác nhận hợp lệ"
+    },
+    "failed": {
+      "tieng_viet": "Không đạt",
+      "ghi_chu": "Tài liệu không hợp lệ"
+    },
+    "warning": {
+      "tieng_viet": "Cảnh báo",
+      "ghi_chu": "Có vấn đề cần lưu ý"
+    }
+  },
+  "QUẢN LÝ TOÁN TỬ": {},
+  "ThresholdOperator": {
+    "<": { "tieng_viet": "Nhỏ hơn", "ghi_chu": "" },
+    "<=": { "tieng_viet": "Nhỏ hơn hoặc bằng", "ghi_chu": "" },
+    ">": { "tieng_viet": "Lớn hơn", "ghi_chu": "" },
+    ">=": { "tieng_viet": "Lớn hơn hoặc bằng", "ghi_chu": "" },
+    "==": { "tieng_viet": "Bằng", "ghi_chu": "" },
+    "!=": { "tieng_viet": "Khác", "ghi_chu": "" },
+    "change_gt": {
+      "tieng_viet": "Thay đổi lớn hơn",
+      "ghi_chu": "Biến động tăng"
+    },
+    "change_lt": {
+      "tieng_viet": "Thay đổi nhỏ hơn",
+      "ghi_chu": "Biến động giảm"
+    }
+  },
+  "AggregationFunction": {
+    "sum": { "tieng_viet": "Mức tổng", "ghi_chu": "Cộng tất cả giá trị" },
+    "avg": {
+      "tieng_viet": "Mức trung bình",
+      "ghi_chu": "Lấy giá trị trung bình"
+    },
+    "min": {
+      "tieng_viet": "Mức nhỏ nhất",
+      "ghi_chu": "Lấy giá trị nhỏ nhất"
+    },
+    "max": {
+      "tieng_viet": "Mức cao nhất",
+      "ghi_chu": "Lấy giá trị lớn nhất"
+    },
+    "change": { "tieng_viet": "Thay đổi", "ghi_chu": "Tính mức biến động" }
+  },
+  "LogicalOperator": {
+    "AND": { "tieng_viet": "VÀ", "ghi_chu": "Tất cả điều kiện phải thỏa" },
+    "OR": {
+      "tieng_viet": "HOẶC",
+      "ghi_chu": "Một trong các điều kiện thỏa"
+    },
+    "NAND": { "tieng_viet": "KHÔNG-VÀ", "ghi_chu": "Phủ định AND" },
+    "NOR": { "tieng_viet": "KHÔNG-HOẶC", "ghi_chu": "Phủ định OR" }
+  },
+  "MonitorFrequency": {
+    "hour": { "tieng_viet": "Giờ", "ghi_chu": "" },
+    "day": { "tieng_viet": "Ngày", "ghi_chu": "" },
+    "week": { "tieng_viet": "Tuần", "ghi_chu": "" },
+    "month": { "tieng_viet": "Tháng", "ghi_chu": "" },
+    "year": { "tieng_viet": "Năm", "ghi_chu": "" }
+  },
+  "DataQuality": {
+    "good": { "tieng_viet": "Tốt", "ghi_chu": "Chất lượng tốt" },
+    "acceptable": {
+      "tieng_viet": "Chấp nhận được",
+      "ghi_chu": "Chất lượng trung bình"
+    },
+    "poor": { "tieng_viet": "Kém", "ghi_chu": "Chất lượng thấp" }
+  },
+  "QUẢN LÝ ĐỐI TÁC BẢO HIỂM": {},
+  "InsurancePartner": {
+    "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
+    "legal_company_name": {
+      "tieng_viet": "Tên pháp lý công ty",
+      "ghi_chu": ""
+    },
+    "partner_trading_name": {
+      "tieng_viet": "Tên giao dịch",
+      "ghi_chu": ""
+    },
+    "partner_display_name": { "tieng_viet": "Tên hiển thị", "ghi_chu": "" },
+    "partner_logo_url": { "tieng_viet": "Đường dẫn logo", "ghi_chu": "" },
+    "cover_photo_url": { "tieng_viet": "Đường dẫn ảnh bìa", "ghi_chu": "" },
+    "company_type": { "tieng_viet": "Loại hình công ty", "ghi_chu": "" },
+    "incorporation_date": { "tieng_viet": "Ngày thành lập", "ghi_chu": "" },
+    "tax_identification_number": {
+      "tieng_viet": "Mã số thuế",
+      "ghi_chu": ""
+    },
+    "business_registration_number": {
+      "tieng_viet": "Số đăng ký kinh doanh",
+      "ghi_chu": ""
+    },
+    "partner_tagline": { "tieng_viet": "Khẩu hiệu", "ghi_chu": "" },
+    "partner_description": { "tieng_viet": "Mô tả đối tác", "ghi_chu": "" },
+    "partner_phone": { "tieng_viet": "Số điện thoại", "ghi_chu": "" },
+    "partner_official_email": {
+      "tieng_viet": "Email chính thức",
+      "ghi_chu": ""
+    },
+    "head_office_address": {
+      "tieng_viet": "Địa chỉ trụ sở chính",
+      "ghi_chu": ""
+    },
+    "province_code": { "tieng_viet": "Mã tỉnh", "ghi_chu": "" },
+    "province_name": { "tieng_viet": "Tên tỉnh", "ghi_chu": "" },
+    "ward_code": { "tieng_viet": "Mã phường/xã", "ghi_chu": "" },
+    "ward_name": { "tieng_viet": "Tên phường/xã", "ghi_chu": "" },
+    "postal_code": { "tieng_viet": "Mã bưu điện", "ghi_chu": "" },
+    "fax_number": { "tieng_viet": "Số fax", "ghi_chu": "" },
+    "customer_service_hotline": {
+      "tieng_viet": "Hotline CSKH",
+      "ghi_chu": ""
+    },
+    "insurance_license_number": {
+      "tieng_viet": "Số giấy phép bảo hiểm",
+      "ghi_chu": ""
+    },
+    "license_issue_date": {
+      "tieng_viet": "Ngày cấp giấy phép",
+      "ghi_chu": ""
+    },
+    "license_expiry_date": {
+      "tieng_viet": "Ngày hết hạn giấy phép",
+      "ghi_chu": ""
+    },
+    "authorized_insurance_lines": {
+      "tieng_viet": "Các loại bảo hiểm được phép",
+      "ghi_chu": ""
+    },
+    "operating_provinces": {
+      "tieng_viet": "Các tỉnh hoạt động",
+      "ghi_chu": ""
+    },
+    "year_established": { "tieng_viet": "Năm thành lập", "ghi_chu": "" },
+    "partner_website": { "tieng_viet": "Website", "ghi_chu": "" },
+    "partner_rating_score": {
+      "tieng_viet": "Điểm đánh giá",
+      "ghi_chu": ""
+    },
+    "partner_rating_count": {
+      "tieng_viet": "Số lượt đánh giá",
+      "ghi_chu": ""
+    },
+    "trust_metric_experience": {
+      "tieng_viet": "Chỉ số kinh nghiệm",
+      "ghi_chu": ""
+    },
+    "trust_metric_clients": {
+      "tieng_viet": "Chỉ số khách hàng",
+      "ghi_chu": ""
+    },
+    "trust_metric_claim_rate": {
+      "tieng_viet": "Tỷ lệ chi trả",
+      "ghi_chu": ""
+    },
+    "total_payouts": {
+      "tieng_viet": "Tổng số tiền đã chi trả",
+      "ghi_chu": ""
+    },
+    "average_payout_time": {
+      "tieng_viet": "Thời gian chi trả trung bình",
+      "ghi_chu": ""
+    },
+    "confirmation_timeline": {
+      "tieng_viet": "Thời gian xác nhận",
+      "ghi_chu": ""
+    },
+    "hotline": { "tieng_viet": "Đường dây nóng", "ghi_chu": "" },
+    "support_hours": { "tieng_viet": "Giờ hỗ trợ", "ghi_chu": "" },
+    "coverage_areas": { "tieng_viet": "Khu vực phủ sóng", "ghi_chu": "" },
+    "status": { "tieng_viet": "Tình trạng", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" },
+    "last_updated_by_id": {
+      "tieng_viet": "Mã người cập nhật cuối",
+      "ghi_chu": ""
+    },
+    "last_updated_by_name": {
+      "tieng_viet": "Tên người cập nhật cuối",
+      "ghi_chu": ""
+    },
+    "legal_document_urls": {
+      "tieng_viet": "Đường dẫn tài liệu pháp lý",
+      "ghi_chu": ""
+    }
+  },
+  "Product": {
+    "product_id": { "tieng_viet": "Mã sản phẩm", "ghi_chu": "" },
+    "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
+    "product_name": { "tieng_viet": "Tên sản phẩm", "ghi_chu": "" },
+    "product_icon": { "tieng_viet": "Icon sản phẩm", "ghi_chu": "" },
+    "product_description": {
+      "tieng_viet": "Mô tả sản phẩm",
+      "ghi_chu": ""
+    },
+    "product_supported_crop": {
+      "tieng_viet": "Loại cây được hỗ trợ",
+      "ghi_chu": "Lúa nước hoặc cà phê"
+    },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+  },
+  "PartnerReview": {
+    "review_id": { "tieng_viet": "Mã đánh giá", "ghi_chu": "" },
+    "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
+    "reviewer_id": { "tieng_viet": "Mã người đánh giá", "ghi_chu": "" },
+    "reviewer_name": { "tieng_viet": "Tên người đánh giá", "ghi_chu": "" },
+    "reviewer_avatar_url": {
+      "tieng_viet": "Đường dẫn avatar người đánh giá",
+      "ghi_chu": ""
+    },
+    "rating_stars": {
+      "tieng_viet": "Số sao đánh giá",
+      "ghi_chu": "1-5 sao"
+    },
+    "review_content": { "tieng_viet": "Nội dung đánh giá", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+  },
+  "PartnerDeletionRequest": {
+    "request_id": { "tieng_viet": "Mã yêu cầu", "ghi_chu": "" },
+    "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
+    "requested_by": { "tieng_viet": "Người yêu cầu", "ghi_chu": "" },
+    "requested_by_name": {
+      "tieng_viet": "Tên người yêu cầu",
+      "ghi_chu": ""
+    },
+    "detailed_explanation": {
+      "tieng_viet": "Giải thích chi tiết",
+      "ghi_chu": ""
+    },
+    "status": { "tieng_viet": "Tình trạng", "ghi_chu": "" },
+    "requested_at": { "tieng_viet": "Thời gian yêu cầu", "ghi_chu": "" },
+    "cancellable_until": {
+      "tieng_viet": "Có thể hủy đến",
+      "ghi_chu": "Thời hạn có thể hủy yêu cầu"
+    },
+    "reviewed_by_id": { "tieng_viet": "Mã người xem xét", "ghi_chu": "" },
+    "reviewed_by_name": {
+      "tieng_viet": "Tên người xem xét",
+      "ghi_chu": ""
+    },
+    "reviewed_at": { "tieng_viet": "Thời gian xem xét", "ghi_chu": "" },
+    "review_note": { "tieng_viet": "Ghi chú xem xét", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
+  },
+  "DeletionRequestStatus": {
+    "pending": { "tieng_viet": "Đang chờ", "ghi_chu": "" },
+    "approved": { "tieng_viet": "Đã duyệt", "ghi_chu": "" },
+    "rejected": { "tieng_viet": "Bị từ chối", "ghi_chu": "" },
+    "cancelled": { "tieng_viet": "Đã hủy", "ghi_chu": "" },
+    "completed": { "tieng_viet": "Hoàn thành", "ghi_chu": "" }
+  },
+  "QUẢN LÝ HỒ SƠ NGƯỜI DÙNG": {},
+  "UserProfile": {
+    "profile_id": { "tieng_viet": "Mã hồ sơ", "ghi_chu": "" },
+    "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
+    "role_id": { "tieng_viet": "Mã vai trò", "ghi_chu": "" },
+    "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
+    "full_name": { "tieng_viet": "Họ và tên", "ghi_chu": "" },
+    "display_name": { "tieng_viet": "Tên hiển thị", "ghi_chu": "" },
+    "date_of_birth": { "tieng_viet": "Ngày sinh", "ghi_chu": "" },
+    "gender": { "tieng_viet": "Giới tính", "ghi_chu": "" },
+    "nationality": { "tieng_viet": "Quốc tịch", "ghi_chu": "" },
+    "primary_phone": { "tieng_viet": "Số điện thoại chính", "ghi_chu": "" },
+    "alternate_phone": { "tieng_viet": "Số điện thoại phụ", "ghi_chu": "" },
+    "email": { "tieng_viet": "Email", "ghi_chu": "" },
+    "permanent_address": {
+      "tieng_viet": "Địa chỉ thường trú",
+      "ghi_chu": ""
+    },
+    "current_address": { "tieng_viet": "Địa chỉ hiện tại", "ghi_chu": "" },
+    "province_code": { "tieng_viet": "Mã tỉnh", "ghi_chu": "" },
+    "province_name": { "tieng_viet": "Tên tỉnh", "ghi_chu": "" },
+    "district_code": { "tieng_viet": "Mã quận/huyện", "ghi_chu": "" },
+    "district_name": { "tieng_viet": "Tên quận/huyện", "ghi_chu": "" },
+    "ward_code": { "tieng_viet": "Mã phường/xã", "ghi_chu": "" },
+    "ward_name": { "tieng_viet": "Tên phường/xã", "ghi_chu": "" },
+    "postal_code": { "tieng_viet": "Mã bưu điện", "ghi_chu": "" },
+    "account_number": {
+      "tieng_viet": "Số tài khoản ngân hàng",
+      "ghi_chu": ""
+    },
+    "account_name": {
+      "tieng_viet": "Tên tài khoản ngân hàng",
+      "ghi_chu": ""
+    },
+    "bank_code": { "tieng_viet": "Mã ngân hàng", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" },
+    "last_updated_by": {
+      "tieng_viet": "Người cập nhật cuối",
+      "ghi_chu": ""
+    },
+    "last_updated_by_name": {
+      "tieng_viet": "Tên người cập nhật cuối",
+      "ghi_chu": ""
+    }
+  },
+  "QUẢN LÝ NGƯỜI DÙNG VÀ XÁC THỰC": {},
+  "User": {
+    "id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
+    "phone_number": { "tieng_viet": "Số điện thoại", "ghi_chu": "" },
+    "email": { "tieng_viet": "Email", "ghi_chu": "" },
+    "password_hash": { "tieng_viet": "Mật khẩu đã mã hóa", "ghi_chu": "" },
+    "national_id": { "tieng_viet": "CMND/CCCD", "ghi_chu": "" },
+    "status": { "tieng_viet": "Trạng thái", "ghi_chu": "" },
+    "email_verified": { "tieng_viet": "Email đã xác thực", "ghi_chu": "" },
+    "phone_verified": {
+      "tieng_viet": "Số điện thoại đã xác thực",
+      "ghi_chu": ""
+    },
+    "kyc_verified": {
+      "tieng_viet": "KYC đã xác thực",
+      "ghi_chu": "Know Your Customer"
+    },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" },
+    "last_login": { "tieng_viet": "Đăng nhập lần cuối", "ghi_chu": "" },
+    "locked_until": {
+      "tieng_viet": "Khóa đến",
+      "ghi_chu": "Thời gian khóa tài khoản"
+    },
+    "login_attempts": {
+      "tieng_viet": "Số lần đăng nhập thất bại",
+      "ghi_chu": ""
+    },
+    "face_liveness": {
+      "tieng_viet": "Dữ liệu nhận diện khuôn mặt",
+      "ghi_chu": ""
+    }
+  },
+  "UserStatus": {
+    "active": { "tieng_viet": "Hoạt động", "ghi_chu": "" },
+    "suspended": { "tieng_viet": "Đình chỉ", "ghi_chu": "" },
+    "pending_verification": { "tieng_viet": "Chờ xác thực", "ghi_chu": "" },
+    "deactivated": { "tieng_viet": "Vô hiệu hóa", "ghi_chu": "" }
+  },
+  "UserEkycProgress": {
+    "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
+    "cic_no": {
+      "tieng_viet": "Số CIC",
+      "ghi_chu": "Số định danh công dân"
+    },
+    "is_ocr_done": {
+      "tieng_viet": "Đã hoàn thành OCR",
+      "ghi_chu": "Đã quét CMND/CCCD"
+    },
+    "ocr_done_at": {
+      "tieng_viet": "Thời gian hoàn thành OCR",
+      "ghi_chu": ""
+    },
+    "is_face_verified": {
+      "tieng_viet": "Đã xác thực khuôn mặt",
+      "ghi_chu": ""
+    },
+    "face_verified_at": {
+      "tieng_viet": "Thời gian xác thực khuôn mặt",
+      "ghi_chu": ""
+    }
+  },
+  "UserCard": {
+    "national_id": { "tieng_viet": "Số CMND/CCCD", "ghi_chu": "" },
+    "name": { "tieng_viet": "Họ và tên", "ghi_chu": "" },
+    "dob": { "tieng_viet": "Ngày sinh", "ghi_chu": "Date of Birth" },
+    "sex": { "tieng_viet": "Giới tính", "ghi_chu": "" },
+    "nationality": { "tieng_viet": "Quốc tịch", "ghi_chu": "" },
+    "home": { "tieng_viet": "Quê quán", "ghi_chu": "" },
+    "address": { "tieng_viet": "Địa chỉ", "ghi_chu": "" },
+    "doe": { "tieng_viet": "Ngày hết hạn", "ghi_chu": "Date of Expiry" },
+    "number_of_name_lines": { "tieng_viet": "Số dòng tên", "ghi_chu": "" },
+    "features": { "tieng_viet": "Đặc điểm", "ghi_chu": "" },
+    "issue_date": { "tieng_viet": "Ngày cấp", "ghi_chu": "" },
+    "mrz": {
+      "tieng_viet": "Vùng đọc máy",
+      "ghi_chu": "Machine Readable Zone"
+    },
+    "issue_loc": { "tieng_viet": "Nơi cấp", "ghi_chu": "" },
+    "image_front": { "tieng_viet": "Ảnh mặt trước", "ghi_chu": "" },
+    "image_back": { "tieng_viet": "Ảnh mặt sau", "ghi_chu": "" },
+    "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" }
+  },
+  "QUẢN LÝ VAI TRÒ VÀ QUYỀN": {},
+  "Role": {
+    "id": { "tieng_viet": "Mã vai trò", "ghi_chu": "" },
+    "name": { "tieng_viet": "Tên vai trò", "ghi_chu": "" },
+    "display_name": { "tieng_viet": "Tên hiển thị", "ghi_chu": "" },
+    "description": { "tieng_viet": "Mô tả", "ghi_chu": "" },
+    "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+  },
+  "UserRole": {
+    "id": { "tieng_viet": "Mã", "ghi_chu": "" },
+    "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
+    "role_id": { "tieng_viet": "Mã vai trò", "ghi_chu": "" },
+    "assigned_by": { "tieng_viet": "Người phân quyền", "ghi_chu": "" },
+    "assigned_at": { "tieng_viet": "Thời gian phân quyền", "ghi_chu": "" },
+    "expires_at": { "tieng_viet": "Thời gian hết hạn", "ghi_chu": "" },
+    "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" }
+  },
+  "Permission": {
+    "id": { "tieng_viet": "Mã quyền", "ghi_chu": "" },
+    "name": { "tieng_viet": "Tên quyền", "ghi_chu": "" },
+    "resource": { "tieng_viet": "Tài nguyên", "ghi_chu": "" },
+    "action": { "tieng_viet": "Hành động", "ghi_chu": "" },
+    "description": { "tieng_viet": "Mô tả", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+  },
+  "RolePermission": {
+    "id": { "tieng_viet": "Mã", "ghi_chu": "" },
+    "role_id": { "tieng_viet": "Mã vai trò", "ghi_chu": "" },
+    "permission_id": { "tieng_viet": "Mã quyền", "ghi_chu": "" },
+    "granted_at": { "tieng_viet": "Thời gian cấp quyền", "ghi_chu": "" }
+  },
+  "RoleHierarchy": {
+    "id": { "tieng_viet": "Mã", "ghi_chu": "" },
+    "parent_role_id": { "tieng_viet": "Mã vai trò cha", "ghi_chu": "" },
+    "child_role_id": { "tieng_viet": "Mã vai trò con", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+  },
+  "QUẢN LÝ PHIÊN ĐĂNG NHẬP": {},
+  "UserSession": {
+    "id": { "tieng_viet": "Mã phiên", "ghi_chu": "" },
+    "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
+    "token_hash": { "tieng_viet": "Mã token đã mã hóa", "ghi_chu": "" },
+    "refresh_token_hash": {
+      "tieng_viet": "Mã refresh token đã mã hóa",
+      "ghi_chu": ""
+    },
+    "device_info": { "tieng_viet": "Thông tin thiết bị", "ghi_chu": "" },
+    "ip_address": { "tieng_viet": "Địa chỉ IP", "ghi_chu": "" },
+    "expires_at": { "tieng_viet": "Thời gian hết hạn", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" }
+  },
+  "APIKey": {
+    "id": { "tieng_viet": "Mã API key", "ghi_chu": "" },
+    "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
+    "key_hash": { "tieng_viet": "Key đã mã hóa", "ghi_chu": "" },
+    "key_name": { "tieng_viet": "Tên key", "ghi_chu": "" },
+    "rate_limit": {
+      "tieng_viet": "Giới hạn tốc độ",
+      "ghi_chu": "Số request tối đa"
+    },
+    "expires_at": { "tieng_viet": "Thời gian hết hạn", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
+    "last_used": { "tieng_viet": "Lần sử dụng cuối", "ghi_chu": "" },
+    "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" }
+  },
+  "APIKeyPermission": {
+    "id": { "tieng_viet": "Mã", "ghi_chu": "" },
+    "api_key_id": { "tieng_viet": "Mã API key", "ghi_chu": "" },
+    "permission_name": { "tieng_viet": "Tên quyền", "ghi_chu": "" },
+    "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
+  },
+  "GEOMETRY": {},
+  "GeoJSONPolygon": {
+    "type": {
+      "tieng_viet": "Loại hình học",
+      "ghi_chu": "Luôn là 'Polygon'"
+    },
+    "coordinates": {
+      "tieng_viet": "Tọa độ ranh giới",
+      "ghi_chu": "Danh sách các điểm tạo thành ranh giới"
+    }
+  },
+  "GeoJSONPoint": {
+    "type": { "tieng_viet": "Loại hình học", "ghi_chu": "Luôn là 'Point'" },
+    "coordinates": { "tieng_viet": "Tọa độ", "ghi_chu": "[Kinh độ, Vĩ độ]" }
+  },
+  "THUẬT NGỮ CHUNG": {},
+  "Common": {
+    "GeoJSON": {
+      "tieng_viet": "Định dạng tọa độ",
+      "ghi_chu": "Chuẩn lưu trữ bản đồ"
+    },
+    "Polygon": {
+      "tieng_viet": "Vùng/Khu vực",
+      "ghi_chu": "Hình đa giác trên bản đồ"
+    },
+    "Point": { "tieng_viet": "Điểm", "ghi_chu": "Một vị trí cụ thể" },
+    "Coordinates": {
+      "tieng_viet": "Tọa độ",
+      "ghi_chu": "Vị trí trên bản đồ (kinh độ, vĩ độ)"
+    },
+    "Longitude": { "tieng_viet": "Kinh độ", "ghi_chu": "Tọa độ đông tây" },
+    "Latitude": { "tieng_viet": "Vĩ độ", "ghi_chu": "Tọa độ bắc-nam" },
+    "Base64": {
+      "tieng_viet": "Mã hóa ảnh",
+      "ghi_chu": "Chuyển ảnh thành chuỗi ký tự"
+    },
+    "Timestamp": {
+      "tieng_viet": "Mốc thời gian",
+      "ghi_chu": "Số đếm giây từ 1/1/1970"
+    },
+    "DTO": {
+      "tieng_viet": "Dữ liệu truyền tải",
+      "ghi_chu": "Gói dữ liệu gửi/nhận"
+    },
+    "UUID": {
+      "tieng_viet": "Mã định danh duy nhất",
+      "ghi_chu": "Chuỗi ký tự không trùng lặp"
+    },
+    "Premium": {
+      "tieng_viet": "Phí bảo hiểm",
+      "ghi_chu": "Số tiền phải đóng định kỳ"
     },
     "Payout": {
-        "id": { "tieng_viet": "Mã chi trả", "ghi_chu": "ID giao dịch" },
-        "claim_id": {
-            "tieng_viet": "Mã yêu cầu bồi thường",
-            "ghi_chu": "ID hồ sơ liên quan"
-        },
-        "registered_policy_id": {
-            "tieng_viet": "Mã hợp đồng",
-            "ghi_chu": "ID hợp đồng"
-        },
-        "farm_id": { "tieng_viet": "Mã mảnh đất", "ghi_chu": "ID mảnh đất" },
-        "farmer_id": {
-            "tieng_viet": "Mã nông dân",
-            "ghi_chu": "ID người nông dân"
-        },
-        "payout_amount": {
-            "tieng_viet": "Số tiền bồi thường",
-            "ghi_chu": "Số tiền thực nhận"
-        },
-        "currency": {
-            "tieng_viet": "Đơn vị tiền tệ",
-            "ghi_chu": "VND, USD..."
-        },
-        "status": {
-            "tieng_viet": "Trạng thái chi trả",
-            "ghi_chu": "Đang xử lý/đã trả/thất bại"
-        },
-        "initiated_at": {
-            "tieng_viet": "Thời điểm bắt đầu",
-            "ghi_chu": "Lúc khởi tạo chi trả"
-        },
-        "completed_at": {
-            "tieng_viet": "Thời điểm hoàn thành",
-            "ghi_chu": "Lúc hoàn tất chi trả"
-        },
-        "farmer_confirmed": {
-            "tieng_viet": "Đã xác nhận nhận tiền",
-            "ghi_chu": "Nông dân đã nhận chưa"
-        },
-        "farmer_confirmation_timestamp": {
-            "tieng_viet": "Thời điểm xác nhận",
-            "ghi_chu": "Khi nông dân xác nhận"
-        },
-        "farmer_rating": {
-            "tieng_viet": "Đánh giá",
-            "ghi_chu": "Số sao đánh giá (1-5)"
-        },
-        "farmer_feedback": {
-            "tieng_viet": "Phản hồi",
-            "ghi_chu": "Ý kiến của nông dân"
-        },
-        "created_at": {
-            "tieng_viet": "Ngày tạo",
-            "ghi_chu": "Thời gian tạo bản ghi"
-        }
+      "tieng_viet": "Tiền chi trả",
+      "ghi_chu": "Số tiền được nhận khi có rủi ro"
     },
-    "PayoutStatus": {
-        "pending": { "tieng_viet": "Đang chờ", "ghi_chu": "Chưa xử lý" },
-        "processing": { "tieng_viet": "Đang xử lý", "ghi_chu": "Đang chi trả" },
-        "completed": {
-            "tieng_viet": "Hoàn thành",
-            "ghi_chu": "Đã chi trả xong"
-        },
-        "failed": { "tieng_viet": "Thất bại", "ghi_chu": "Không chi trả được" }
+    "Coverage": {
+      "tieng_viet": "Mức bảo hiểm",
+      "ghi_chu": "Số tiền được bảo vệ"
     },
-    "QUẢN LÝ PHÂN TÍCH RỦI RO": {},
-    "RegisteredPolicyRiskAnalysis": {
-        "id": { "tieng_viet": "Mã phân tích", "ghi_chu": "ID định danh" },
-        "registered_policy_id": {
-            "tieng_viet": "Mã hợp đồng",
-            "ghi_chu": "ID hợp đồng đã đăng ký"
-        },
-        "analysis_status": {
-            "tieng_viet": "Trạng thái phân tích",
-            "ghi_chu": "Tình trạng đánh giá"
-        },
-        "analysis_type": {
-            "tieng_viet": "Loại phân tích",
-            "ghi_chu": "Thủ công/AI"
-        },
-        "analysis_source": {
-            "tieng_viet": "Nguồn phân tích",
-            "ghi_chu": "Ai thực hiện đánh giá"
-        },
-        "analysis_timestamp": {
-            "tieng_viet": "Thời điểm phân tích",
-            "ghi_chu": "Thời gian thực hiện"
-        },
-        "overall_risk_score": {
-            "tieng_viet": "Điểm rủi ro tổng thể",
-            "ghi_chu": "Tổng điểm đánh giá (0-1)"
-        },
-        "overall_risk_level": {
-            "tieng_viet": "Mức độ rủi ro",
-            "ghi_chu": "Thấp/trung bình/cao/nghiêm trọng"
-        },
-        "identified_risks": {
-            "tieng_viet": "Các rủi ro phát hiện",
-            "ghi_chu": "Các nguy cơ đã xác định"
-        },
-        "recommendations": {
-            "tieng_viet": "Khuyến nghị",
-            "ghi_chu": "Đề xuất xử lý"
-        },
-        "raw_output": {
-            "tieng_viet": "Kết quả thô",
-            "ghi_chu": "Dữ liệu gốc từ AI"
-        },
-        "analysis_notes": { "tieng_viet": "Ghi chú", "ghi_chu": "Lưu ý thêm" },
-        "created_at": {
-            "tieng_viet": "Ngày tạo",
-            "ghi_chu": "Thời gian tạo bản ghi"
-        }
+    "Underwriting": {
+      "tieng_viet": "Thẩm định",
+      "ghi_chu": "Đánh giá rủi ro để chấp nhận bảo hiểm"
     },
-    "RiskAnalysisType": {
-        "ai_model": {
-            "tieng_viet": "Mô hình AI",
-            "ghi_chu": "Phân tích bằng AI"
-        },
-        "document_validation": {
-            "tieng_viet": "Xác thực tài liệu",
-            "ghi_chu": "Kiểm tra giấy tờ"
-        },
-        "cross_reference": {
-            "tieng_viet": "Đối chiếu chéo",
-            "ghi_chu": "So sánh nhiều nguồn"
-        },
-        "manual": {
-            "tieng_viet": "Thủ công",
-            "ghi_chu": "Người kiểm tra trực tiếp"
-        }
+    "Policy": {
+      "tieng_viet": "Hợp đồng bảo hiểm",
+      "ghi_chu": "Giấy tờ cam kết"
     },
-    "RiskLevel": {
-        "low": { "tieng_viet": "Thấp", "ghi_chu": "Rủi ro thấp" },
-        "medium": { "tieng_viet": "Trung bình", "ghi_chu": "Rủi ro vừa phải" },
-        "high": { "tieng_viet": "Cao", "ghi_chu": "Rủi ro cao" },
-        "critical": {
-            "tieng_viet": "Nghiêm trọng",
-            "ghi_chu": "Rủi ro cực cao"
-        }
+    "Trigger": {
+      "tieng_viet": "Điều kiện kích hoạt",
+      "ghi_chu": "Sự kiện làm phát sinh quyền lợi"
     },
-    "QUẢN LÝ NÔNG TRẠI": {},
-    "Farm": {
-        "id": { "tieng_viet": "Mã nông trại", "ghi_chu": "Mã số duy nhất" },
-        "owner_id": {
-            "tieng_viet": "Mã chủ sở hữu",
-            "ghi_chu": "ID người sở hữu"
-        },
-        "farm_name": {
-            "tieng_viet": "Tên nông trại",
-            "ghi_chu": "Ví dụ: Trang trại lúa Đồng Tháp"
-        },
-        "farm_code": {
-            "tieng_viet": "Mã code",
-            "ghi_chu": "Mã ngắn gọn để tra cứu"
-        },
-        "boundary": {
-            "tieng_viet": "Toạ độ ranh giới",
-            "ghi_chu": "Đường biên xung quanh ruộng"
-        },
-        "center_location": {
-            "tieng_viet": "Vị trí trung tâm",
-            "ghi_chu": "Tọa độ điểm giữa"
-        },
-        "agro_polygon_id": {
-            "tieng_viet": "Mã vùng nông nghiệp",
-            "ghi_chu": "ID từ hệ thống bản đồ"
-        },
-        "area_sqm": {
-            "tieng_viet": "Diện tích",
-            "ghi_chu": "Số mét vuông (m²)"
-        },
-        "province": {
-            "tieng_viet": "Tỉnh/Thành phố",
-            "ghi_chu": "Ví dụ: Đồng Tháp, An Giang"
-        },
-        "district": {
-            "tieng_viet": "Quận/Huyện",
-            "ghi_chu": "Ví dụ: Cao Lãnh, Châu Đốc"
-        },
-        "commune": { "tieng_viet": "Phường/Xã", "ghi_chu": "Ví dụ: Xã Mỹ Hội" },
-        "address": {
-            "tieng_viet": "Địa chỉ chi tiết",
-            "ghi_chu": "Địa chỉ chi tiết của ruộng"
-        },
-        "crop_type": {
-            "tieng_viet": "Loại cây trồng",
-            "ghi_chu": "Lúa, ngô, cà phê..."
-        },
-        "planting_date": {
-            "tieng_viet": "Ngày gieo trồng",
-            "ghi_chu": "Ngày bắt đầu mùa vụ"
-        },
-        "expected_harvest_date": {
-            "tieng_viet": "Ngày thu hoạch dự kiến",
-            "ghi_chu": "Ngày dự tính gặt"
-        },
-        "crop_type_verified": {
-            "tieng_viet": "Xác thực loại cây",
-            "ghi_chu": "Cán bộ đã xác nhận loại cây chưa"
-        },
-        "crop_type_verified_at": {
-            "tieng_viet": "Thời điểm xác thực loại cây",
-            "ghi_chu": ""
-        },
-        "crop_type_verified_by": {
-            "tieng_viet": "Người xác thực loại cây",
-            "ghi_chu": ""
-        },
-        "crop_type_confidence": {
-            "tieng_viet": "Độ tin cậy loại cây",
-            "ghi_chu": "Mức độ chắc chắn"
-        },
-        "land_certificate_number": {
-            "tieng_viet": "Số giấy chứng nhận quyền sử dụng đất",
-            "ghi_chu": ""
-        },
-        "land_certificate_url": {
-            "tieng_viet": "Ảnh giấy chứng nhận quyền sử dụng đất",
-            "ghi_chu": "Đường dẫn ảnh giấy chứng nhận"
-        },
-        "land_ownership_verified": {
-            "tieng_viet": "Xác thực giấy chứng nhận",
-            "ghi_chu": "Đã xác minh sổ đỏ chưa"
-        },
-        "land_ownership_verified_at": {
-            "tieng_viet": "Thời điểm xác thực giấy chứng nhận",
-            "ghi_chu": ""
-        },
-        "has_irrigation": {
-            "tieng_viet": "Có tưới tiêu không",
-            "ghi_chu": "Có hệ thống nước không"
-        },
-        "irrigation_type": {
-            "tieng_viet": "Loại hệ thống tưới",
-            "ghi_chu": "Kênh mương, máy bơm, tưới nhỏ giọt..."
-        },
-        "soil_type": {
-            "tieng_viet": "Loại đất",
-            "ghi_chu": "Đất phù sa, đất sét, đất cát..."
-        },
-        "status": {
-            "tieng_viet": "Tình trạng",
-            "ghi_chu": "Đang hoạt động, tạm nghỉ..."
-        },
-        "created_at": {
-            "tieng_viet": "Ngày tạo",
-            "ghi_chu": "Ngày đăng ký nông trại"
-        },
-        "updated_at": {
-            "tieng_viet": "Ngày cập nhật",
-            "ghi_chu": "Lần sửa gần nhất"
-        },
-        "farm_photos": {
-            "tieng_viet": "Ảnh nông trại",
-            "ghi_chu": "Danh sách ảnh chụp ruộng"
-        },
-        "owner_national_id": {
-            "tieng_viet": "CMND/CCCD chủ sở hữu",
-            "ghi_chu": ""
-        },
-        "land_certificate_photos": {
-            "tieng_viet": "Ảnh giấy chứng nhận đất",
-            "ghi_chu": "Danh sách ảnh sổ đỏ"
-        }
+    "Threshold": { "tieng_viet": "Ngưỡng", "ghi_chu": "Mức giới hạn" },
+    "Blackout Period": {
+      "tieng_viet": "Thời gian ngưng hiệu lực tạm thời",
+      "ghi_chu": "Khoảng thời gian không được kích hoạt"
     },
-    "FarmStatus": {
-        "active": {
-            "tieng_viet": "Đang hoạt động",
-            "ghi_chu": "Nông trại đang canh tác"
-        },
-        "inactive": {
-            "tieng_viet": "Ngừng hoạt động",
-            "ghi_chu": "Không canh tác"
-        },
-        "archived": { "tieng_viet": "Đã lưu trữ", "ghi_chu": "Không dùng nữa" }
+    "Enrollment": {
+      "tieng_viet": "Đăng ký",
+      "ghi_chu": "Ghi danh tham gia"
     },
-    "FarmPhoto": {
-        "id": { "tieng_viet": "Mã ảnh", "ghi_chu": "" },
-        "farm_id": { "tieng_viet": "Mã nông trại", "ghi_chu": "" },
-        "photo_url": {
-            "tieng_viet": "Đường dẫn ảnh",
-            "ghi_chu": "Link để xem ảnh"
-        },
-        "photo_type": {
-            "tieng_viet": "Loại ảnh",
-            "ghi_chu": "Ảnh ruộng, ảnh cây trồng"
-        },
-        "taken_at": { "tieng_viet": "Thời gian chụp", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tải lên", "ghi_chu": "" }
+    "Evidence": {
+      "tieng_viet": "Bằng chứng",
+      "ghi_chu": "Chứng cứ, tài liệu chứng minh"
     },
-    "PhotoType": {
-        "crop": { "tieng_viet": "Ảnh cây trồng", "ghi_chu": "" },
-        "boundary": { "tieng_viet": "Ảnh ranh giới", "ghi_chu": "" },
-        "land_certificate": {
-            "tieng_viet": "Ảnh giấy chứng nhận đất",
-            "ghi_chu": ""
-        },
-        "satellite": { "tieng_viet": "Ảnh vệ tinh", "ghi_chu": "" },
-        "other": { "tieng_viet": "Ảnh khác", "ghi_chu": "" }
+    "Dispute": {
+      "tieng_viet": "Tranh chấp",
+      "ghi_chu": "Bất đồng quan điểm"
     },
-    "QUẢN LÝ NGUỒN DỮ LIỆU": {},
-    "DataSource": {
-        "id": { "tieng_viet": "Mã nguồn dữ liệu", "ghi_chu": "" },
-        "data_source": {
-            "tieng_viet": "Loại nguồn",
-            "ghi_chu": "Thời tiết, vệ tinh..."
-        },
-        "parameter_name": {
-            "tieng_viet": "Tên tham số",
-            "ghi_chu": "NDVI, NDMI, rainfall..."
-        },
-        "parameter_type": {
-            "tieng_viet": "Loại tham số",
-            "ghi_chu": "Số, boolean, danh mục"
-        },
-        "unit": { "tieng_viet": "Đơn vị", "ghi_chu": "mm, %, độ C..." },
-        "support_component": {
-            "tieng_viet": "Hỗ trợ thành phần",
-            "ghi_chu": ""
-        },
-        "display_name_vi": {
-            "tieng_viet": "Tên hiển thị tiếng Việt",
-            "ghi_chu": ""
-        },
-        "description_vi": { "tieng_viet": "Mô tả tiếng Việt", "ghi_chu": "" },
-        "min_value": { "tieng_viet": "Giá trị nhỏ nhất", "ghi_chu": "" },
-        "max_value": { "tieng_viet": "Giá trị lớn nhất", "ghi_chu": "" },
-        "update_frequency": {
-            "tieng_viet": "Tần suất cập nhật",
-            "ghi_chu": ""
-        },
-        "spatial_resolution": {
-            "tieng_viet": "Độ phân giải không gian",
-            "ghi_chu": ""
-        },
-        "accuracy_rating": {
-            "tieng_viet": "Đánh giá độ chính xác",
-            "ghi_chu": ""
-        },
-        "base_cost": { "tieng_viet": "Chi phí cơ bản", "ghi_chu": "" },
-        "data_tier_id": { "tieng_viet": "Mã cấp độ dữ liệu", "ghi_chu": "" },
-        "data_provider": {
-            "tieng_viet": "Nhà cung cấp dữ liệu",
-            "ghi_chu": ""
-        },
-        "api_endpoint": { "tieng_viet": "Địa chỉ API", "ghi_chu": "" },
-        "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
-    },
-    "DataSourceType": {
-        "weather": {
-            "tieng_viet": "Thời tiết",
-            "ghi_chu": "Dữ liệu khí tượng"
-        },
-        "satellite": { "tieng_viet": "Vệ tinh", "ghi_chu": "Ảnh vệ tinh" },
-        "derived": { "tieng_viet": "Dẫn xuất", "ghi_chu": "Dữ liệu tính toán" }
-    },
-    "ParameterType": {
-        "numeric": { "tieng_viet": "Số", "ghi_chu": "Giá trị số" },
-        "boolean": { "tieng_viet": "Boolean", "ghi_chu": "Đúng/Sai" },
-        "categorical": { "tieng_viet": "Danh mục", "ghi_chu": "Phân loại" }
-    },
-    "DataSourceParameterName": {
-        "ndvi": {
-            "tieng_viet": "Chỉ số thảm thực vật",
-            "ghi_chu": "Normalized Difference Vegetation Index"
-        },
-        "ndmi": {
-            "tieng_viet": "Chỉ số độ ẩm",
-            "ghi_chu": "Normalized Difference Moisture Index"
-        },
-        "rainfall": { "tieng_viet": "Lượng mưa", "ghi_chu": "Lượng nước mưa" }
-    },
-    "DataTierCategory": {
-        "id": { "tieng_viet": "Mã danh mục", "ghi_chu": "" },
-        "category_name": { "tieng_viet": "Tên danh mục", "ghi_chu": "" },
-        "category_description": {
-            "tieng_viet": "Mô tả danh mục",
-            "ghi_chu": ""
-        },
-        "category_cost_multiplier": {
-            "tieng_viet": "Hệ số chi phí danh mục",
-            "ghi_chu": ""
-        },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
-    },
-    "DataTier": {
-        "id": { "tieng_viet": "Mã cấp độ", "ghi_chu": "" },
-        "data_tier_category_id": {
-            "tieng_viet": "Mã danh mục cấp độ",
-            "ghi_chu": ""
-        },
-        "tier_level": { "tieng_viet": "Cấp độ", "ghi_chu": "Số thứ tự cấp độ" },
-        "tier_name": { "tieng_viet": "Tên cấp độ", "ghi_chu": "" },
-        "data_tier_multiplier": {
-            "tieng_viet": "Hệ số chi phí cấp độ",
-            "ghi_chu": ""
-        },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
-    },
-    "QUẢN LÝ THANH TOÁN": {},
-    "PaymentStatus": {
-        "pending": { "tieng_viet": "Đang chờ", "ghi_chu": "Chưa thanh toán" },
-        "paid": { "tieng_viet": "Đã thanh toán", "ghi_chu": "Đã hoàn tất" },
-        "overdue": { "tieng_viet": "Quá hạn", "ghi_chu": "Trễ hạn thanh toán" },
-        "cancelled": { "tieng_viet": "Đã hủy", "ghi_chu": "Hủy giao dịch" },
-        "refunded": { "tieng_viet": "Đã hoàn tiền", "ghi_chu": "Đã trả lại" }
-    },
-    "PaymentType": {
-        "policy_registration_payment": {
-            "tieng_viet": "Thanh toán đăng ký bảo hiểm",
-            "ghi_chu": ""
-        },
-        "policy_payout_payment": {
-            "tieng_viet": "Thanh toán bồi thường",
-            "ghi_chu": ""
-        },
-        "policy_compensation_payment": {
-            "tieng_viet": "Thanh toán bồi thường hủy hợp đồng",
-            "ghi_chu": ""
-        },
-        "policy_renewal_payment": {
-            "tieng_viet": "Thanh toán gia hạn",
-            "ghi_chu": ""
-        }
-    },
-    "QUẢN LÝ XÁC THỰC": {},
-    "ValidationStatus": {
-        "pending": { "tieng_viet": "Đang chờ", "ghi_chu": "Chờ xử lý" },
-        "passed": { "tieng_viet": "Đạt", "ghi_chu": "Tài liệu hợp lệ" },
-        "passed_ai": {
-            "tieng_viet": "Đạt (AI)",
-            "ghi_chu": "AI xác nhận hợp lệ"
-        },
-        "failed": {
-            "tieng_viet": "Không đạt",
-            "ghi_chu": "Tài liệu không hợp lệ"
-        },
-        "warning": {
-            "tieng_viet": "Cảnh báo",
-            "ghi_chu": "Có vấn đề cần lưu ý"
-        }
-    },
-    "QUẢN LÝ TOÁN TỬ": {},
-    "ThresholdOperator": {
-        "<": { "tieng_viet": "Nhỏ hơn", "ghi_chu": "" },
-        "<=": { "tieng_viet": "Nhỏ hơn hoặc bằng", "ghi_chu": "" },
-        ">": { "tieng_viet": "Lớn hơn", "ghi_chu": "" },
-        ">=": { "tieng_viet": "Lớn hơn hoặc bằng", "ghi_chu": "" },
-        "==": { "tieng_viet": "Bằng", "ghi_chu": "" },
-        "!=": { "tieng_viet": "Khác", "ghi_chu": "" },
-        "change_gt": {
-            "tieng_viet": "Thay đổi lớn hơn",
-            "ghi_chu": "Biến động tăng"
-        },
-        "change_lt": {
-            "tieng_viet": "Thay đổi nhỏ hơn",
-            "ghi_chu": "Biến động giảm"
-        }
-    },
-    "AggregationFunction": {
-        "sum": { "tieng_viet": "Mức tổng", "ghi_chu": "Cộng tất cả giá trị" },
-        "avg": {
-            "tieng_viet": "Mức trung bình",
-            "ghi_chu": "Lấy giá trị trung bình"
-        },
-        "min": {
-            "tieng_viet": "Mức nhỏ nhất",
-            "ghi_chu": "Lấy giá trị nhỏ nhất"
-        },
-        "max": {
-            "tieng_viet": "Mức cao nhất",
-            "ghi_chu": "Lấy giá trị lớn nhất"
-        },
-        "change": { "tieng_viet": "Thay đổi", "ghi_chu": "Tính mức biến động" }
-    },
-    "LogicalOperator": {
-        "AND": { "tieng_viet": "VÀ", "ghi_chu": "Tất cả điều kiện phải thỏa" },
-        "OR": {
-            "tieng_viet": "HOẶC",
-            "ghi_chu": "Một trong các điều kiện thỏa"
-        },
-        "NAND": { "tieng_viet": "KHÔNG-VÀ", "ghi_chu": "Phủ định AND" },
-        "NOR": { "tieng_viet": "KHÔNG-HOẶC", "ghi_chu": "Phủ định OR" }
-    },
-    "MonitorFrequency": {
-        "hour": { "tieng_viet": "Giờ", "ghi_chu": "" },
-        "day": { "tieng_viet": "Ngày", "ghi_chu": "" },
-        "week": { "tieng_viet": "Tuần", "ghi_chu": "" },
-        "month": { "tieng_viet": "Tháng", "ghi_chu": "" },
-        "year": { "tieng_viet": "Năm", "ghi_chu": "" }
-    },
-    "DataQuality": {
-        "good": { "tieng_viet": "Tốt", "ghi_chu": "Chất lượng tốt" },
-        "acceptable": {
-            "tieng_viet": "Chấp nhận được",
-            "ghi_chu": "Chất lượng trung bình"
-        },
-        "poor": { "tieng_viet": "Kém", "ghi_chu": "Chất lượng thấp" }
-    },
-    "QUẢN LÝ ĐỐI TÁC BẢO HIỂM": {},
-    "InsurancePartner": {
-        "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
-        "legal_company_name": {
-            "tieng_viet": "Tên pháp lý công ty",
-            "ghi_chu": ""
-        },
-        "partner_trading_name": {
-            "tieng_viet": "Tên giao dịch",
-            "ghi_chu": ""
-        },
-        "partner_display_name": { "tieng_viet": "Tên hiển thị", "ghi_chu": "" },
-        "partner_logo_url": { "tieng_viet": "Đường dẫn logo", "ghi_chu": "" },
-        "cover_photo_url": { "tieng_viet": "Đường dẫn ảnh bìa", "ghi_chu": "" },
-        "company_type": { "tieng_viet": "Loại hình công ty", "ghi_chu": "" },
-        "incorporation_date": { "tieng_viet": "Ngày thành lập", "ghi_chu": "" },
-        "tax_identification_number": {
-            "tieng_viet": "Mã số thuế",
-            "ghi_chu": ""
-        },
-        "business_registration_number": {
-            "tieng_viet": "Số đăng ký kinh doanh",
-            "ghi_chu": ""
-        },
-        "partner_tagline": { "tieng_viet": "Khẩu hiệu", "ghi_chu": "" },
-        "partner_description": { "tieng_viet": "Mô tả đối tác", "ghi_chu": "" },
-        "partner_phone": { "tieng_viet": "Số điện thoại", "ghi_chu": "" },
-        "partner_official_email": {
-            "tieng_viet": "Email chính thức",
-            "ghi_chu": ""
-        },
-        "head_office_address": {
-            "tieng_viet": "Địa chỉ trụ sở chính",
-            "ghi_chu": ""
-        },
-        "province_code": { "tieng_viet": "Mã tỉnh", "ghi_chu": "" },
-        "province_name": { "tieng_viet": "Tên tỉnh", "ghi_chu": "" },
-        "ward_code": { "tieng_viet": "Mã phường/xã", "ghi_chu": "" },
-        "ward_name": { "tieng_viet": "Tên phường/xã", "ghi_chu": "" },
-        "postal_code": { "tieng_viet": "Mã bưu điện", "ghi_chu": "" },
-        "fax_number": { "tieng_viet": "Số fax", "ghi_chu": "" },
-        "customer_service_hotline": {
-            "tieng_viet": "Hotline CSKH",
-            "ghi_chu": ""
-        },
-        "insurance_license_number": {
-            "tieng_viet": "Số giấy phép bảo hiểm",
-            "ghi_chu": ""
-        },
-        "license_issue_date": {
-            "tieng_viet": "Ngày cấp giấy phép",
-            "ghi_chu": ""
-        },
-        "license_expiry_date": {
-            "tieng_viet": "Ngày hết hạn giấy phép",
-            "ghi_chu": ""
-        },
-        "authorized_insurance_lines": {
-            "tieng_viet": "Các loại bảo hiểm được phép",
-            "ghi_chu": ""
-        },
-        "operating_provinces": {
-            "tieng_viet": "Các tỉnh hoạt động",
-            "ghi_chu": ""
-        },
-        "year_established": { "tieng_viet": "Năm thành lập", "ghi_chu": "" },
-        "partner_website": { "tieng_viet": "Website", "ghi_chu": "" },
-        "partner_rating_score": {
-            "tieng_viet": "Điểm đánh giá",
-            "ghi_chu": ""
-        },
-        "partner_rating_count": {
-            "tieng_viet": "Số lượt đánh giá",
-            "ghi_chu": ""
-        },
-        "trust_metric_experience": {
-            "tieng_viet": "Chỉ số kinh nghiệm",
-            "ghi_chu": ""
-        },
-        "trust_metric_clients": {
-            "tieng_viet": "Chỉ số khách hàng",
-            "ghi_chu": ""
-        },
-        "trust_metric_claim_rate": {
-            "tieng_viet": "Tỷ lệ bồi thường",
-            "ghi_chu": ""
-        },
-        "total_payouts": {
-            "tieng_viet": "Tổng số tiền đã bồi thường",
-            "ghi_chu": ""
-        },
-        "average_payout_time": {
-            "tieng_viet": "Thời gian bồi thường trung bình",
-            "ghi_chu": ""
-        },
-        "confirmation_timeline": {
-            "tieng_viet": "Thời gian xác nhận",
-            "ghi_chu": ""
-        },
-        "hotline": { "tieng_viet": "Đường dây nóng", "ghi_chu": "" },
-        "support_hours": { "tieng_viet": "Giờ hỗ trợ", "ghi_chu": "" },
-        "coverage_areas": { "tieng_viet": "Khu vực phủ sóng", "ghi_chu": "" },
-        "status": { "tieng_viet": "Tình trạng", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" },
-        "last_updated_by_id": {
-            "tieng_viet": "Mã người cập nhật cuối",
-            "ghi_chu": ""
-        },
-        "last_updated_by_name": {
-            "tieng_viet": "Tên người cập nhật cuối",
-            "ghi_chu": ""
-        },
-        "legal_document_urls": {
-            "tieng_viet": "Đường dẫn tài liệu pháp lý",
-            "ghi_chu": ""
-        }
-    },
-    "Product": {
-        "product_id": { "tieng_viet": "Mã sản phẩm", "ghi_chu": "" },
-        "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
-        "product_name": { "tieng_viet": "Tên sản phẩm", "ghi_chu": "" },
-        "product_icon": { "tieng_viet": "Icon sản phẩm", "ghi_chu": "" },
-        "product_description": {
-            "tieng_viet": "Mô tả sản phẩm",
-            "ghi_chu": ""
-        },
-        "product_supported_crop": {
-            "tieng_viet": "Loại cây được hỗ trợ",
-            "ghi_chu": "Lúa nước hoặc cà phê"
-        },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
-    },
-    "PartnerReview": {
-        "review_id": { "tieng_viet": "Mã đánh giá", "ghi_chu": "" },
-        "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
-        "reviewer_id": { "tieng_viet": "Mã người đánh giá", "ghi_chu": "" },
-        "reviewer_name": { "tieng_viet": "Tên người đánh giá", "ghi_chu": "" },
-        "reviewer_avatar_url": {
-            "tieng_viet": "Đường dẫn avatar người đánh giá",
-            "ghi_chu": ""
-        },
-        "rating_stars": {
-            "tieng_viet": "Số sao đánh giá",
-            "ghi_chu": "1-5 sao"
-        },
-        "review_content": { "tieng_viet": "Nội dung đánh giá", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
-    },
-    "PartnerDeletionRequest": {
-        "request_id": { "tieng_viet": "Mã yêu cầu", "ghi_chu": "" },
-        "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
-        "requested_by": { "tieng_viet": "Người yêu cầu", "ghi_chu": "" },
-        "requested_by_name": {
-            "tieng_viet": "Tên người yêu cầu",
-            "ghi_chu": ""
-        },
-        "detailed_explanation": {
-            "tieng_viet": "Giải thích chi tiết",
-            "ghi_chu": ""
-        },
-        "status": { "tieng_viet": "Tình trạng", "ghi_chu": "" },
-        "requested_at": { "tieng_viet": "Thời gian yêu cầu", "ghi_chu": "" },
-        "cancellable_until": {
-            "tieng_viet": "Có thể hủy đến",
-            "ghi_chu": "Thời hạn có thể hủy yêu cầu"
-        },
-        "reviewed_by_id": { "tieng_viet": "Mã người xem xét", "ghi_chu": "" },
-        "reviewed_by_name": {
-            "tieng_viet": "Tên người xem xét",
-            "ghi_chu": ""
-        },
-        "reviewed_at": { "tieng_viet": "Thời gian xem xét", "ghi_chu": "" },
-        "review_note": { "tieng_viet": "Ghi chú xem xét", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" }
-    },
-    "DeletionRequestStatus": {
-        "pending": { "tieng_viet": "Đang chờ", "ghi_chu": "" },
-        "approved": { "tieng_viet": "Đã duyệt", "ghi_chu": "" },
-        "rejected": { "tieng_viet": "Bị từ chối", "ghi_chu": "" },
-        "cancelled": { "tieng_viet": "Đã hủy", "ghi_chu": "" },
-        "completed": { "tieng_viet": "Hoàn thành", "ghi_chu": "" }
-    },
-    "QUẢN LÝ HỒ SƠ NGƯỜI DÙNG": {},
-    "UserProfile": {
-        "profile_id": { "tieng_viet": "Mã hồ sơ", "ghi_chu": "" },
-        "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
-        "role_id": { "tieng_viet": "Mã vai trò", "ghi_chu": "" },
-        "partner_id": { "tieng_viet": "Mã đối tác", "ghi_chu": "" },
-        "full_name": { "tieng_viet": "Họ và tên", "ghi_chu": "" },
-        "display_name": { "tieng_viet": "Tên hiển thị", "ghi_chu": "" },
-        "date_of_birth": { "tieng_viet": "Ngày sinh", "ghi_chu": "" },
-        "gender": { "tieng_viet": "Giới tính", "ghi_chu": "" },
-        "nationality": { "tieng_viet": "Quốc tịch", "ghi_chu": "" },
-        "primary_phone": { "tieng_viet": "Số điện thoại chính", "ghi_chu": "" },
-        "alternate_phone": { "tieng_viet": "Số điện thoại phụ", "ghi_chu": "" },
-        "email": { "tieng_viet": "Email", "ghi_chu": "" },
-        "permanent_address": {
-            "tieng_viet": "Địa chỉ thường trú",
-            "ghi_chu": ""
-        },
-        "current_address": { "tieng_viet": "Địa chỉ hiện tại", "ghi_chu": "" },
-        "province_code": { "tieng_viet": "Mã tỉnh", "ghi_chu": "" },
-        "province_name": { "tieng_viet": "Tên tỉnh", "ghi_chu": "" },
-        "district_code": { "tieng_viet": "Mã quận/huyện", "ghi_chu": "" },
-        "district_name": { "tieng_viet": "Tên quận/huyện", "ghi_chu": "" },
-        "ward_code": { "tieng_viet": "Mã phường/xã", "ghi_chu": "" },
-        "ward_name": { "tieng_viet": "Tên phường/xã", "ghi_chu": "" },
-        "postal_code": { "tieng_viet": "Mã bưu điện", "ghi_chu": "" },
-        "account_number": {
-            "tieng_viet": "Số tài khoản ngân hàng",
-            "ghi_chu": ""
-        },
-        "account_name": {
-            "tieng_viet": "Tên tài khoản ngân hàng",
-            "ghi_chu": ""
-        },
-        "bank_code": { "tieng_viet": "Mã ngân hàng", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" },
-        "last_updated_by": {
-            "tieng_viet": "Người cập nhật cuối",
-            "ghi_chu": ""
-        },
-        "last_updated_by_name": {
-            "tieng_viet": "Tên người cập nhật cuối",
-            "ghi_chu": ""
-        }
-    },
-    "QUẢN LÝ NGƯỜI DÙNG VÀ XÁC THỰC": {},
-    "User": {
-        "id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
-        "phone_number": { "tieng_viet": "Số điện thoại", "ghi_chu": "" },
-        "email": { "tieng_viet": "Email", "ghi_chu": "" },
-        "password_hash": { "tieng_viet": "Mật khẩu đã mã hóa", "ghi_chu": "" },
-        "national_id": { "tieng_viet": "CMND/CCCD", "ghi_chu": "" },
-        "status": { "tieng_viet": "Trạng thái", "ghi_chu": "" },
-        "email_verified": { "tieng_viet": "Email đã xác thực", "ghi_chu": "" },
-        "phone_verified": {
-            "tieng_viet": "Số điện thoại đã xác thực",
-            "ghi_chu": ""
-        },
-        "kyc_verified": {
-            "tieng_viet": "KYC đã xác thực",
-            "ghi_chu": "Know Your Customer"
-        },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "updated_at": { "tieng_viet": "Ngày cập nhật", "ghi_chu": "" },
-        "last_login": { "tieng_viet": "Đăng nhập lần cuối", "ghi_chu": "" },
-        "locked_until": {
-            "tieng_viet": "Khóa đến",
-            "ghi_chu": "Thời gian khóa tài khoản"
-        },
-        "login_attempts": {
-            "tieng_viet": "Số lần đăng nhập thất bại",
-            "ghi_chu": ""
-        },
-        "face_liveness": {
-            "tieng_viet": "Dữ liệu nhận diện khuôn mặt",
-            "ghi_chu": ""
-        }
-    },
-    "UserStatus": {
-        "active": { "tieng_viet": "Hoạt động", "ghi_chu": "" },
-        "suspended": { "tieng_viet": "Đình chỉ", "ghi_chu": "" },
-        "pending_verification": { "tieng_viet": "Chờ xác thực", "ghi_chu": "" },
-        "deactivated": { "tieng_viet": "Vô hiệu hóa", "ghi_chu": "" }
-    },
-    "UserEkycProgress": {
-        "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
-        "cic_no": {
-            "tieng_viet": "Số CIC",
-            "ghi_chu": "Số định danh công dân"
-        },
-        "is_ocr_done": {
-            "tieng_viet": "Đã hoàn thành OCR",
-            "ghi_chu": "Đã quét CMND/CCCD"
-        },
-        "ocr_done_at": {
-            "tieng_viet": "Thời gian hoàn thành OCR",
-            "ghi_chu": ""
-        },
-        "is_face_verified": {
-            "tieng_viet": "Đã xác thực khuôn mặt",
-            "ghi_chu": ""
-        },
-        "face_verified_at": {
-            "tieng_viet": "Thời gian xác thực khuôn mặt",
-            "ghi_chu": ""
-        }
-    },
-    "UserCard": {
-        "national_id": { "tieng_viet": "Số CMND/CCCD", "ghi_chu": "" },
-        "name": { "tieng_viet": "Họ và tên", "ghi_chu": "" },
-        "dob": { "tieng_viet": "Ngày sinh", "ghi_chu": "Date of Birth" },
-        "sex": { "tieng_viet": "Giới tính", "ghi_chu": "" },
-        "nationality": { "tieng_viet": "Quốc tịch", "ghi_chu": "" },
-        "home": { "tieng_viet": "Quê quán", "ghi_chu": "" },
-        "address": { "tieng_viet": "Địa chỉ", "ghi_chu": "" },
-        "doe": { "tieng_viet": "Ngày hết hạn", "ghi_chu": "Date of Expiry" },
-        "number_of_name_lines": { "tieng_viet": "Số dòng tên", "ghi_chu": "" },
-        "features": { "tieng_viet": "Đặc điểm", "ghi_chu": "" },
-        "issue_date": { "tieng_viet": "Ngày cấp", "ghi_chu": "" },
-        "mrz": {
-            "tieng_viet": "Vùng đọc máy",
-            "ghi_chu": "Machine Readable Zone"
-        },
-        "issue_loc": { "tieng_viet": "Nơi cấp", "ghi_chu": "" },
-        "image_front": { "tieng_viet": "Ảnh mặt trước", "ghi_chu": "" },
-        "image_back": { "tieng_viet": "Ảnh mặt sau", "ghi_chu": "" },
-        "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" }
-    },
-    "QUẢN LÝ VAI TRÒ VÀ QUYỀN": {},
-    "Role": {
-        "id": { "tieng_viet": "Mã vai trò", "ghi_chu": "" },
-        "name": { "tieng_viet": "Tên vai trò", "ghi_chu": "" },
-        "display_name": { "tieng_viet": "Tên hiển thị", "ghi_chu": "" },
-        "description": { "tieng_viet": "Mô tả", "ghi_chu": "" },
-        "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
-    },
-    "UserRole": {
-        "id": { "tieng_viet": "Mã", "ghi_chu": "" },
-        "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
-        "role_id": { "tieng_viet": "Mã vai trò", "ghi_chu": "" },
-        "assigned_by": { "tieng_viet": "Người phân quyền", "ghi_chu": "" },
-        "assigned_at": { "tieng_viet": "Thời gian phân quyền", "ghi_chu": "" },
-        "expires_at": { "tieng_viet": "Thời gian hết hạn", "ghi_chu": "" },
-        "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" }
-    },
-    "Permission": {
-        "id": { "tieng_viet": "Mã quyền", "ghi_chu": "" },
-        "name": { "tieng_viet": "Tên quyền", "ghi_chu": "" },
-        "resource": { "tieng_viet": "Tài nguyên", "ghi_chu": "" },
-        "action": { "tieng_viet": "Hành động", "ghi_chu": "" },
-        "description": { "tieng_viet": "Mô tả", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
-    },
-    "RolePermission": {
-        "id": { "tieng_viet": "Mã", "ghi_chu": "" },
-        "role_id": { "tieng_viet": "Mã vai trò", "ghi_chu": "" },
-        "permission_id": { "tieng_viet": "Mã quyền", "ghi_chu": "" },
-        "granted_at": { "tieng_viet": "Thời gian cấp quyền", "ghi_chu": "" }
-    },
-    "RoleHierarchy": {
-        "id": { "tieng_viet": "Mã", "ghi_chu": "" },
-        "parent_role_id": { "tieng_viet": "Mã vai trò cha", "ghi_chu": "" },
-        "child_role_id": { "tieng_viet": "Mã vai trò con", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
-    },
-    "QUẢN LÝ PHIÊN ĐĂNG NHẬP": {},
-    "UserSession": {
-        "id": { "tieng_viet": "Mã phiên", "ghi_chu": "" },
-        "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
-        "token_hash": { "tieng_viet": "Mã token đã mã hóa", "ghi_chu": "" },
-        "refresh_token_hash": {
-            "tieng_viet": "Mã refresh token đã mã hóa",
-            "ghi_chu": ""
-        },
-        "device_info": { "tieng_viet": "Thông tin thiết bị", "ghi_chu": "" },
-        "ip_address": { "tieng_viet": "Địa chỉ IP", "ghi_chu": "" },
-        "expires_at": { "tieng_viet": "Thời gian hết hạn", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" }
-    },
-    "APIKey": {
-        "id": { "tieng_viet": "Mã API key", "ghi_chu": "" },
-        "user_id": { "tieng_viet": "Mã người dùng", "ghi_chu": "" },
-        "key_hash": { "tieng_viet": "Key đã mã hóa", "ghi_chu": "" },
-        "key_name": { "tieng_viet": "Tên key", "ghi_chu": "" },
-        "rate_limit": {
-            "tieng_viet": "Giới hạn tốc độ",
-            "ghi_chu": "Số request tối đa"
-        },
-        "expires_at": { "tieng_viet": "Thời gian hết hạn", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" },
-        "last_used": { "tieng_viet": "Lần sử dụng cuối", "ghi_chu": "" },
-        "is_active": { "tieng_viet": "Đang hoạt động", "ghi_chu": "" }
-    },
-    "APIKeyPermission": {
-        "id": { "tieng_viet": "Mã", "ghi_chu": "" },
-        "api_key_id": { "tieng_viet": "Mã API key", "ghi_chu": "" },
-        "permission_name": { "tieng_viet": "Tên quyền", "ghi_chu": "" },
-        "created_at": { "tieng_viet": "Ngày tạo", "ghi_chu": "" }
-    },
-    "GEOMETRY": {},
-    "GeoJSONPolygon": {
-        "type": {
-            "tieng_viet": "Loại hình học",
-            "ghi_chu": "Luôn là 'Polygon'"
-        },
-        "coordinates": {
-            "tieng_viet": "Tọa độ ranh giới",
-            "ghi_chu": "Danh sách các điểm tạo thành ranh giới"
-        }
-    },
-    "GeoJSONPoint": {
-        "type": { "tieng_viet": "Loại hình học", "ghi_chu": "Luôn là 'Point'" },
-        "coordinates": { "tieng_viet": "Tọa độ", "ghi_chu": "[Kinh độ, Vĩ độ]" }
-    },
-    "THUẬT NGỮ CHUNG": {},
-    "Common": {
-        "GeoJSON": {
-            "tieng_viet": "Định dạng tọa độ",
-            "ghi_chu": "Chuẩn lưu trữ bản đồ"
-        },
-        "Polygon": {
-            "tieng_viet": "Vùng/Khu vực",
-            "ghi_chu": "Hình đa giác trên bản đồ"
-        },
-        "Point": { "tieng_viet": "Điểm", "ghi_chu": "Một vị trí cụ thể" },
-        "Coordinates": {
-            "tieng_viet": "Tọa độ",
-            "ghi_chu": "Vị trí trên bản đồ (kinh độ, vĩ độ)"
-        },
-        "Longitude": { "tieng_viet": "Kinh độ", "ghi_chu": "Tọa độ đông tây" },
-        "Latitude": { "tieng_viet": "Vĩ độ", "ghi_chu": "Tọa độ bắc-nam" },
-        "Base64": {
-            "tieng_viet": "Mã hóa ảnh",
-            "ghi_chu": "Chuyển ảnh thành chuỗi ký tự"
-        },
-        "Timestamp": {
-            "tieng_viet": "Mốc thời gian",
-            "ghi_chu": "Số đếm giây từ 1/1/1970"
-        },
-        "DTO": {
-            "tieng_viet": "Dữ liệu truyền tải",
-            "ghi_chu": "Gói dữ liệu gửi/nhận"
-        },
-        "UUID": {
-            "tieng_viet": "Mã định danh duy nhất",
-            "ghi_chu": "Chuỗi ký tự không trùng lặp"
-        },
-        "Premium": {
-            "tieng_viet": "Phí bảo hiểm",
-            "ghi_chu": "Số tiền phải đóng định kỳ"
-        },
-        "Payout": {
-            "tieng_viet": "Tiền bồi thường",
-            "ghi_chu": "Số tiền được nhận khi có rủi ro"
-        },
-        "Coverage": {
-            "tieng_viet": "Mức bảo hiểm",
-            "ghi_chu": "Số tiền được bảo vệ"
-        },
-        "Underwriting": {
-            "tieng_viet": "Thẩm định",
-            "ghi_chu": "Đánh giá rủi ro để chấp nhận bảo hiểm"
-        },
-        "Policy": {
-            "tieng_viet": "Hợp đồng bảo hiểm",
-            "ghi_chu": "Giấy tờ cam kết"
-        },
-        "Trigger": {
-            "tieng_viet": "Điều kiện kích hoạt",
-            "ghi_chu": "Sự kiện làm phát sinh quyền lợi"
-        },
-        "Threshold": { "tieng_viet": "Ngưỡng", "ghi_chu": "Mức giới hạn" },
-        "Blackout Period": {
-            "tieng_viet": "Thời gian ngưng hiệu lực tạm thời",
-            "ghi_chu": "Khoảng thời gian không được kích hoạt"
-        },
-        "Enrollment": {
-            "tieng_viet": "Đăng ký",
-            "ghi_chu": "Ghi danh tham gia"
-        },
-        "Evidence": {
-            "tieng_viet": "Bằng chứng",
-            "ghi_chu": "Chứng cứ, tài liệu chứng minh"
-        },
-        "Dispute": {
-            "tieng_viet": "Tranh chấp",
-            "ghi_chu": "Bất đồng quan điểm"
-        },
-        "Claim": {
-            "tieng_viet": "Yêu cầu bồi thường",
-            "ghi_chu": "Đòi quyền lợi bảo hiểm"
-        }
+    "Claim": {
+      "tieng_viet": "Yêu cầu chi trả",
+      "ghi_chu": "Đòi quyền lợi bảo hiểm"
     }
+  }
 }

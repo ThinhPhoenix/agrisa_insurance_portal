@@ -160,7 +160,7 @@ const ClaimsTab = ({ policyId }) => {
       width: 170,
       render: (value) => value ? (
         <Text strong style={{ fontSize: '13px', color: '#d46b08' }}>
-          {value.toFixed(2)}%
+          {value.toFixed(2)}
         </Text>
       ) : "-",
     },

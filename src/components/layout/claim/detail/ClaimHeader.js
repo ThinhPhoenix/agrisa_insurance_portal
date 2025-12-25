@@ -404,7 +404,7 @@ export default function ClaimHeader({
                 }}
               >
                 {claimDetail.over_threshold_value
-                  ? `${(claimDetail.over_threshold_value * 100).toFixed(2)}%`
+                  ? `${(claimDetail.over_threshold_value * 100).toFixed(2)}`
                   : "-"}
               </div>
             </div>

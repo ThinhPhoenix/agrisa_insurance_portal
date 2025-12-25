@@ -674,7 +674,7 @@ export default function ClaimStatusSection({
                           width: 130,
                           render: (val) => (
                             <Text style={{ fontSize: "13px" }}>
-                              {val ? `${val}%` : "-"}
+                              {val ? `${val}` : "-"}
                             </Text>
                           ),
                         },

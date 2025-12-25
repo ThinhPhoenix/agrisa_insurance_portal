@@ -244,7 +244,7 @@ export default function ClaimListPage() {
       dataIndex: "over_threshold_value",
       key: "over_threshold_value",
       width: 160,
-      render: (value) => (value ? `${value.toFixed(2)}%` : "-"),
+      render: (value) => (value ? `${value.toFixed(2)}` : "-"),
     },
     {
       title: "Phương thức tạo",

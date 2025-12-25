@@ -118,7 +118,7 @@ export default function CancelRequestsPage() {
       case "contract_violation":
         return "Vi phạm hợp đồng";
       case "policyholder_request":
-        return "Yêu cầu từ nông dân";
+        return "Yêu cầu từ đối tác";
       case "non_payment":
         return "Không thanh toán";
       case "regulatory_change":

@@ -1648,7 +1648,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <Empty
-              description="Chưa có dữ liệu chi trả"
+              description="Chưa có dữ liệu chi trả  "
               style={{ padding: "60px 0" }}
             />
           )}

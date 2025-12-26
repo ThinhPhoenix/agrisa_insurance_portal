@@ -166,6 +166,26 @@
   @apply p-2 rounded-md transition-colors duration-200;
 }
 
+/* Glassmorphism circular icon button for action cells */
+.glass-icon-button {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 10px rgba(8, 15, 30, 0.12);
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.glass-icon-button .anticon {
+  font-size: 14px;
+}
+
 /* Loading State */
 .insurance-loading {
   @apply flex justify-center items-center min-h-96 text-gray-500;

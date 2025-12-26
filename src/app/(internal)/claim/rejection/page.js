@@ -235,11 +235,18 @@ export default function RejectionListPage() {
       fixed: "right",
       width: 120,
       render: (_, record) => (
-        <Link href={`/claim/detail?id=${record.claim_id}`}>
-          <Button type="primary" size="small" icon={<EyeOutlined />}>
-            Xem Claim
-          </Button>
-        </Link>
+        <div className="insurance-actions-cell">
+          <Link href={`/claim/detail?id=${record.claim_id}`}>
+            <Button
+              type="dashed"
+              size="small"
+              className="insurance-action-btn !bg-blue-100 !border-blue-200 !text-blue-800 hover:!bg-blue-200"
+            >
+              <EyeOutlined />
+              Xem
+            </Button>
+          </Link>
+        </div>
       ),
     },
   ];
@@ -341,7 +348,7 @@ export default function RejectionListPage() {
           <div>
             <Link href="/claim">
               <Button type="default" icon={<FileTextOutlined />}>
-                Xem tất cả bồi thường
+                Xem tất cả yêu cầu chi trả
               </Button>
             </Link>
           </div>
@@ -402,7 +409,7 @@ export default function RejectionListPage() {
                   : "-"}
               </div>
               <div className="insurance-summary-label-compact">
-                Phổ biến nhất
+                Loại từ chối phổ biến nhất
               </div>
             </div>
           </div>

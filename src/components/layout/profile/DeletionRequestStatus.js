@@ -141,6 +141,29 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
     ? Math.max(0, 100 - (timeRemaining.totalMs / totalCancellationPeriod) * 100)
     : 100;
 
+  // Determine the most recent cancellation (if available)
+  const latestCancellation = (() => {
+    if (request.cancellation_history && request.cancellation_history.length) {
+      const sorted = [...request.cancellation_history].sort(
+        (a, b) => new Date(b.at) - new Date(a.at)
+      );
+      return {
+        at: sorted[0].at,
+        by: sorted[0].by || sorted[0].by_name,
+        note: sorted[0].note,
+      };
+    }
+
+    if (request.status === "cancelled") {
+      return {
+        at: request.reviewed_at,
+        by: request.reviewed_by_name || request.reviewed_by,
+      };
+    }
+
+    return null;
+  })();
+
   return (
     <Card
       style={{
@@ -284,7 +307,16 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
             {Utils.formatStringVietnameseDateTime(request.requested_at)}
           </Descriptions.Item>
 
-         
+          {latestCancellation && (
+            <Descriptions.Item label="Lần hủy gần nhất" span={2}>
+              <Text>
+                {Utils.formatStringVietnameseDateTime(latestCancellation.at)}{" "}
+                {latestCancellation.by && (
+                  <Text type="secondary">(Bởi: {latestCancellation.by})</Text>
+                )}
+              </Text>
+            </Descriptions.Item>
+          )}
 
           {request.detailed_explanation && (
             <Descriptions.Item label="Lý do" span={2}>
@@ -331,7 +363,9 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
                     <Text strong>Tạo yêu cầu</Text>
                     <br />
                     <Text type="secondary">
-                      {Utils.formatStringVietnameseDateTime(request.requested_at)}
+                      {Utils.formatStringVietnameseDateTime(
+                        request.requested_at
+                      )}
                     </Text>
                     <br />
                     <Text type="secondary">
@@ -340,7 +374,7 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
                   </>
                 ),
               },
-              
+
               ...(request.status === "approved" ||
               request.status === "rejected" ||
               request.status === "cancelled"
@@ -359,7 +393,9 @@ export default function DeletionRequestStatus({ request, onRefresh }) {
                           {request.reviewed_at && (
                             <>
                               <Text type="secondary">
-                                {Utils.formatStringVietnameseDateTime(request.reviewed_at)}
+                                {Utils.formatStringVietnameseDateTime(
+                                  request.reviewed_at
+                                )}
                               </Text>
                               <br />
                             </>

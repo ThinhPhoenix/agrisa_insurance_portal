@@ -9,6 +9,7 @@ import {
   useGetPartnerProfile,
 } from "@/services/hooks/profile/use-profile";
 import { useAuthStore } from "@/stores/auth-store";
+import { Utils } from "@/utils/utils";
 import {
   CalendarOutlined,
   CheckCircleOutlined,
@@ -47,7 +48,6 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import "./profile.css";
-import { Utils } from "@/utils/utils";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -505,13 +505,20 @@ function CompanyInfoTab() {
     try {
       const result = await getDeletionRequests(userId);
       if (result.success && result.data && result.data.length > 0) {
+        // Sort by requested_at descending (most recent first)
+        const sortedRequests = [...result.data].sort(
+          (a, b) => new Date(b.requested_at) - new Date(a.requested_at)
+        );
+
         // Find the most recent pending request
-        const pendingRequest = result.data.find((r) => r.status === "pending");
+        const pendingRequest = sortedRequests.find(
+          (r) => r.status === "pending"
+        );
         if (pendingRequest) {
           setCurrentDeletionRequest(pendingRequest);
         } else {
           // If no pending, show the most recent one
-          setCurrentDeletionRequest(result.data[0]);
+          setCurrentDeletionRequest(sortedRequests[0]);
         }
       }
     } catch (e) {
@@ -1226,7 +1233,9 @@ function CompanyInfoTab() {
           }}
         >
           <CustomTable
-            dataSource={deletionRequests}
+            dataSource={[...deletionRequests].sort(
+              (a, b) => new Date(b.requested_at) - new Date(a.requested_at)
+            )}
             rowKey="request_id"
             columns={[
               {
@@ -1286,7 +1295,29 @@ function CompanyInfoTab() {
                 render: (date) =>
                   Utils.formatStringVietnameseDateTime(date) || "—",
               },
-              
+              {
+                title: "Ngày hủy gần nhất",
+                key: "cancellation_date",
+                render: (record) => {
+                  // If status is cancelled, show reviewed_at as cancellation date
+                  if (record.status === "cancelled" && record.reviewed_at) {
+                    return Utils.formatStringVietnameseDateTime(
+                      record.reviewed_at
+                    );
+                  }
+                  // Otherwise check if there's a cancellation_history
+                  if (
+                    record.cancellation_history &&
+                    record.cancellation_history.length > 0
+                  ) {
+                    const sorted = [...record.cancellation_history].sort(
+                      (a, b) => new Date(b.at) - new Date(a.at)
+                    );
+                    return Utils.formatStringVietnameseDateTime(sorted[0].at);
+                  }
+                  return "—";
+                },
+              },
               {
                 title: "Người xử lý",
                 dataIndex: "reviewed_by_name",

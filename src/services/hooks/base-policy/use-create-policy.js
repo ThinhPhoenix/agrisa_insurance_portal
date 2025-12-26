@@ -1,6 +1,7 @@
 import mockData from "@/app/(internal)/base-policy/mock..json";
 import axiosInstance from "@/libs/axios-instance";
 import { getErrorMessage } from "@/libs/message";
+import { getBasePolicyError } from "@/libs/message/policy-message";
 import { endpoints } from "@/services/endpoints";
 import {
   calculateConditionCost,
@@ -1008,7 +1009,12 @@ const useCreatePolicy = () => {
       // Show Vietnamese error to user
       let vietnameseError = "Có lỗi xảy ra khi tạo chính sách bảo hiểm";
 
-      if (error.response?.status === 401) {
+      // Check for specific backend error messages
+      const errorMessage = error.response?.data?.error?.message || error.response?.data?.message || "";
+
+      if (errorMessage.includes("profile is in deletion state")) {
+        vietnameseError = getBasePolicyError("PROFILE_IN_DELETION_STATE");
+      } else if (error.response?.status === 401) {
         vietnameseError = getErrorMessage("SESSION_EXPIRED");
       } else if (error.response?.status === 403) {
         vietnameseError = getErrorMessage("FORBIDDEN");

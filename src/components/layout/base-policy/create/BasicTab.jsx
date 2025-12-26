@@ -984,29 +984,6 @@ const BasicTabComponent = ({
                                         "INSURANCE_VALID_FROM_REQUIRED"
                                     ),
                                 },
-                                ({ getFieldValue }) => ({
-                                    validator(_, value) {
-                                        if (!value) return Promise.resolve();
-
-                                        const enrollmentStartDay =
-                                            getFieldValue("enrollmentStartDay");
-                                        if (
-                                            enrollmentStartDay &&
-                                            value.isBefore(
-                                                enrollmentStartDay,
-                                                "day"
-                                            )
-                                        ) {
-                                            return Promise.reject(
-                                                new Error(
-                                                    "Bảo hiểm có hiệu lực từ phải sau ngày bắt đầu đăng ký"
-                                                )
-                                            );
-                                        }
-
-                                        return Promise.resolve();
-                                    },
-                                }),
                             ]}
                         >
                             <DatePicker
@@ -1014,41 +991,6 @@ const BasicTabComponent = ({
                                 size="large"
                                 style={{ width: "100%" }}
                                 format="DD/MM/YYYY"
-                                disabled={
-                                    !form.getFieldValue("enrollmentStartDay")
-                                }
-                                disabledDate={(current) => {
-                                    // Disable past dates (before today)
-                                    if (
-                                        current &&
-                                        current.isBefore(new Date(), "day")
-                                    ) {
-                                        return true;
-                                    }
-
-                                    const enrollmentStartDay =
-                                        form.getFieldValue(
-                                            "enrollmentStartDay"
-                                        );
-
-                                    // Disable dates before enrollment start day
-                                    if (
-                                        enrollmentStartDay &&
-                                        current &&
-                                        (current.isBefore(
-                                            enrollmentStartDay,
-                                            "day"
-                                        ) ||
-                                            current.isSame(
-                                                enrollmentStartDay,
-                                                "day"
-                                            ))
-                                    ) {
-                                        return true;
-                                    }
-
-                                    return false;
-                                }}
                             />
                         </Form.Item>
                     </Col>

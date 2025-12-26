@@ -244,27 +244,6 @@ export const basePolicySchema = z
     )
     .refine(
         (data) => {
-            // insuranceValidFrom >= enrollmentStartDay
-            if (data.enrollmentStartDay && data.insuranceValidFrom) {
-                const enrollStart = data.enrollmentStartDay.valueOf
-                    ? data.enrollmentStartDay.valueOf()
-                    : new Date(data.enrollmentStartDay).valueOf();
-                const validFrom = data.insuranceValidFrom.valueOf
-                    ? data.insuranceValidFrom.valueOf()
-                    : new Date(data.insuranceValidFrom).valueOf();
-                return validFrom >= enrollStart;
-            }
-            return true;
-        },
-        {
-            message: getBasePolicyError(
-                "INSURANCE_VALID_FROM_BEFORE_ENROLLMENT_START"
-            ),
-            path: ["insuranceValidFrom"],
-        }
-    )
-    .refine(
-        (data) => {
             // payoutCap should be >= fixPayoutAmount if both exist
             if (
                 data.payoutCap &&

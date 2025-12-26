@@ -85,6 +85,7 @@ export const POLICY_MESSAGES = {
 
       // Server errors
       CREATION_FAILED: "Tạo chính sách thất bại. Vui lòng thử lại!",
+      PROFILE_IN_DELETION_STATE: "Công ty đang trong quá trình hủy, không thể tạo gói bảo hiểm mới!",
       PRODUCT_CODE_EXISTS: "Mã sản phẩm đã tồn tại! Vui lòng sử dụng mã khác.",
       SERVER_ERROR: "Máy chủ đang gặp sự cố. Vui lòng thử lại sau!",
       SERIALIZATION_FAILED: "Lỗi xử lý dữ liệu. Vui lòng thử lại!",

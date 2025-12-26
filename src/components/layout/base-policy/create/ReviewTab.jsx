@@ -312,9 +312,9 @@ const ReviewTabComponent = ({
                         <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'product_name')} span={2}>
                             <Text strong>{basicData.productName || 'Chưa nhập'}</Text>
                         </Descriptions.Item>
-                        <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'product_code')}>
+                        {/* <Descriptions.Item label={dict.getFieldLabel('BasePolicy', 'product_code')}>
                             <Text code>{basicData.productCode ? basicData.productCode : 'Sẽ được tạo khi tạo gói'}</Text>
-                        </Descriptions.Item>
+                        </Descriptions.Item> */}
                         {/* <Descriptions.Item label="Đối tác bảo hiểm">
                             {basicData.insuranceProviderId || 'Chưa nhập'}
                         </Descriptions.Item> */}

@@ -633,40 +633,40 @@ export default function ClaimStatusSection({
                             </div>
                           ),
                         },
-                        {
-                          title: "Giá trị baseline",
-                          dataIndex: "baseline_value",
-                          key: "baseline_value",
-                          width: 130,
-                          render: (val) => (
-                            <Text
-                              style={{
-                                fontSize: "13px",
-                                fontFamily: "monospace",
-                              }}
-                            >
-                              {val ? val.toFixed(4) : "-"}
-                            </Text>
-                          ),
-                        },
-                        {
-                          title: "Giá trị đo được",
-                          dataIndex: "measured_value",
-                          key: "measured_value",
-                          width: 130,
-                          render: (val) => (
-                            <Text
-                              strong
-                              style={{
-                                fontSize: "13px",
-                                color: "#1890ff",
-                                fontFamily: "monospace",
-                              }}
-                            >
-                              {val ? val.toFixed(4) : "-"}
-                            </Text>
-                          ),
-                        },
+                        // {
+                        //   title: "Giá trị baseline",
+                        //   dataIndex: "baseline_value",
+                        //   key: "baseline_value",
+                        //   width: 130,
+                        //   render: (val) => (
+                        //     <Text
+                        //       style={{
+                        //         fontSize: "13px",
+                        //         fontFamily: "monospace",
+                        //       }}
+                        //     >
+                        //       {val ? val.toFixed(4) : "-"}
+                        //     </Text>
+                        //   ),
+                        // },
+                        // {
+                        //   title: "Giá trị đo được",
+                        //   dataIndex: "measured_value",
+                        //   key: "measured_value",
+                        //   width: 130,
+                        //   render: (val) => (
+                        //     <Text
+                        //       strong
+                        //       style={{
+                        //         fontSize: "13px",
+                        //         color: "#1890ff",
+                        //         fontFamily: "monospace",
+                        //       }}
+                        //     >
+                        //       {val ? val.toFixed(4) : "-"}
+                        //     </Text>
+                        //   ),
+                        // },
                         {
                           title: "Ngưỡng cảnh báo",
                           dataIndex: "early_warning_threshold",
